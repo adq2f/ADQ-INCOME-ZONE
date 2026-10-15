@@ -4,7 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCffmDp9xRUcLkqe5q4NiQubaT0iMlLDm4",
+  apiKey: "AIzaSyCffmDp9xRUcLkqe5q4NiQubaT0iMIlDm4",
   authDomain: "adq-income-zone.firebaseapp.com",
   projectId: "adq-income-zone",
   storageBucket: "adq-income-zone.firebasestorage.app",
