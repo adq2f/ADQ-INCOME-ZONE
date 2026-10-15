@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>নোটিফিকেশন — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .notif-item {
+      display: flex;
+      gap: 14px;
+      padding: 16px;
+      background: white;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border-left: 4px solid #6366f1;
+      transition: 0.2s;
+    }
+    .notif-item.notice-type { border-left-color: #f59e0b; }
+    .notif-item.task-type { border-left-color: #6366f1; }
+    .notif-item.good-type { border-left-color: #10b981; background: #f0fdf4; }
+    .notif-item.bad-type { border-left-color: #ef4444; background: #fef2f2; }
+    .notif-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+      background: #eef2ff;
+    }
+    .notif-content { flex: 1; }
+    .notif-content h4 {
+      font-size: 15px; font-weight: 600;
+      color: #0f172a; margin-bottom: 4px;
+    }
+    .notif-content p {
+      font-size: 13px; color: #64748b; line-height: 1.5;
+    }
+    .notif-time {
+      font-size: 11px; color: #94a3b8;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
+    </div>
+    <div class="navbar-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 style="margin-bottom:16px; color:#0f172a">🔔 নোটিফিকেশন</h2>
+    <div id="notifList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+
+      const notifList = document.getElementById("notifList");
+      const notifications = [];
+
+      // 1. Active notices
+      try {
+        const noticesQ = query(collection(db, "notices"), where("active", "==", true));
+        const noticesSnap = await getDocs(noticesQ);
+        noticesSnap.forEach(d => {
+          const n = d.data();
+          notifications.push({
+            type: "notice",
+            icon: "📢",
+            title: n.title,
+            message: n.message,
+            time: n.createdAt?.toDate?.() || new Date(),
+            sortTime: n.createdAt?.toMillis?.() || Date.now()
+          });
+        });
+      } catch (e) {}
+
+      // 2. Recent tasks
+      try {
+        const tasksQ = query(collection(db, "tasks"), where("active", "==", true), limit(5));
+        const tasksSnap = await getDocs(tasksQ);
+        tasksSnap.forEach(d => {
+          const t = d.data();
+          notifications.push({
+            type: "task",
+            icon: "🎯",
+            title: "নতুন Task: " + t.title,
+            message: `প্রতি account ৳${t.pricePerAccount}`,
+            time: t.createdAt?.toDate?.() || new Date(),
+            sortTime: t.createdAt?.toMillis?.() || Date.now()
+          });
+        });
+      } catch (e) {}
+
+      // 3. Recent submission results
+      try {
+        const subsQ = query(
+          collection(db, "submissions"),
+          where("userId", "==", user.uid),
+          orderBy("submittedAt", "desc"),
+          limit(15)
+        );
+        const subsSnap = await getDocs(subsQ);
+        subsSnap.forEach(d => {
+          const s = d.data();
+          if (s.status === "good") {
+            notifications.push({
+              type: "good",
+              icon: "✅",
+              title: "Good account approved",
+              message: `UID ${s.uid} — ৳${s.price} যোগ হয়েছে`,
+              time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date(),
+              sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now()
+            });
+          } else if (s.status === "bad") {
+            notifications.push({
+              type: "bad",
+              icon: "❌",
+              title: "Bad account detected",
+              message: `UID ${s.uid} — কোনো reward নেই`,
+              time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date(),
+              sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now()
+            });
+          }
+        });
+      } catch (e) {}
+
+      // Sort by newest first
+      notifications.sort((a, b) => b.sortTime - a.sortTime);
+
+      if (notifications.length === 0) {
+        notifList.innerHTML = `
+          <div class="card" style="text-align:center; padding:40px 20px">
+            <div style="font-size:48px; margin-bottom:12px">🔕</div>
+            <h3>কোনো নোটিফিকেশন নেই</h3>
+            <p style="color:#64748b; margin-top:6px">নতুন কিছু এলে এখানে দেখতে পাবেন</p>
+          </div>
+        `;
+        return;
+      }
+
+      notifList.innerHTML = notifications.map(n => {
+        const timeStr = n.time.toLocaleString("bn-BD", {
+          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+        });
+        return `
+          <div class="notif-item ${n.type}-type">
+            <div class="notif-icon">${n.icon}</div>
+            <div class="notif-content">
+              <h4>${n.title}</h4>
+              <p>${n.message}</p>
+              <div class="notif-time">🕐 ${timeStr}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    });
+  </script>
+</body>
+</html>
