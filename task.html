@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit - ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <h2>💰 ADQ Income Zone</h2>
+    <div>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#" id="logoutBtn">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="taskInfo" class="loading">Loading...</div>
+
+    <div class="tabs">
+      <button id="tabSingle" class="active">📝 Single Submit</button>
+      <button id="tabBulk">📋 Bulk Submit</button>
+    </div>
+
+    <!-- Single Submit -->
+    <div id="singleSection" class="card">
+      <h3>Submit One Account</h3>
+      <input type="text" id="uid" placeholder="Facebook UID">
+      <input type="text" id="password" placeholder="Password">
+      <input type="text" id="twoFA" placeholder="2FA Key">
+      <button class="btn-green btn-full" id="singleSubmitBtn">✅ Submit</button>
+    </div>
+
+    <!-- Bulk Submit -->
+    <div id="bulkSection" class="card" style="display:none">
+      <h3>Bulk Submit (Multiple Accounts)</h3>
+      <p style="font-size:13px; color:#666; margin-bottom:10px">
+        Format: <b>UID | Password | 2FA</b> (প্রতি লাইনে একটা)<br>
+        Google Sheet থেকে সরাসরি copy-paste করতে পারো (Tab separated)
+      </p>
+      <textarea id="bulkInput" placeholder="100001	pass123	2FAKEY1
+100002	pass456	2FAKEY2
+100003	pass789	2FAKEY3"></textarea>
+      <p id="bulkCount" style="font-size:13px; color:#667eea; margin-bottom:10px">
+        Detected: 0 accounts
+      </p>
+      <button class="btn-green btn-full" id="bulkSubmitBtn">🚀 Submit All</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      doc, getDoc, collection, addDoc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const params = new URLSearchParams(location.search);
+    const taskId = params.get("id");
+    let task = null;
+    let currentUser = null;
+
+    document.getElementById("logoutBtn").onclick = async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      location.href = "index.html";
+    };
+
+    // Tab switching
+    document.getElementById("tabSingle").onclick = () => {
+      document.getElementById("singleSection").style.display = "block";
+      document.getElementById("bulkSection").style.display = "none";
+      document.getElementById("tabSingle").classList.add("active");
+      document.getElementById("tabBulk").classList.remove("active");
+    };
+    document.getElementById("tabBulk").onclick = () => {
+      document.getElementById("singleSection").style.display = "none";
+      document.getElementById("bulkSection").style.display = "block";
+      document.getElementById("tabBulk").classList.add("active");
+      document.getElementById("tabSingle").classList.remove("active");
+    };
+
+    // Load task
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      currentUser = user;
+
+      if (!taskId) {
+        document.getElementById("taskInfo").innerHTML = "<p>❌ Task ID নেই</p>";
+        return;
+      }
+
+      const snap = await getDoc(doc(db, "tasks", taskId));
+      if (!snap.exists()) {
+        document.getElementById("taskInfo").innerHTML = "<p>❌ Task পাওয়া যায়নি</p>";
+        return;
+      }
+      task = snap.data();
+      document.getElementById("taskInfo").innerHTML = `
+        <div class="card">
+          <h2>🎯 ${task.title}</h2>
+          <span class="price">৳${task.pricePerAccount} / account</span>
+          <p style="color:#666; margin-top:8px">${task.description || ""}</p>
+        </div>
+      `;
+    });
+
+    // Parse bulk input (support Tab, comma, pipe, multiple spaces)
+    function parseBulk(text) {
+      const lines = text.trim().split("\n");
+      const result = [];
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const parts = line.split(/[\t,|]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
+        if (parts.length >= 3) {
+          result.push({ uid: parts[0], password: parts[1], twoFA: parts[2] });
+        }
+      }
+      return result;
+    }
+
+    // Update count on typing
+    document.getElementById("bulkInput").addEventListener("input", (e) => {
+      const items = parseBulk(e.target.value);
+      document.getElementById("bulkCount").textContent = `Detected: ${items.length} accounts`;
+    });
+
+    // Single submit
+    document.getElementById("singleSubmitBtn").onclick = async () => {
+      const uid = document.getElementById("uid").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const twoFA = document.getElementById("twoFA").value.trim();
+      const btn = document.getElementById("singleSubmitBtn");
+
+      if (!uid || !password || !twoFA) return alert("সব ঘর পূরণ করো!");
+      if (!task) return alert("Task load হয়নি!");
+
+      btn.disabled = true; btn.textContent = "Submitting...";
+
+      try {
+        await addDoc(collection(db, "submissions"), {
+          taskId: taskId,
+          taskTitle: task.title,
+          userId: currentUser.uid,
+          uid, password, twoFA,
+          status: "pending",
+          price: task.pricePerAccount,
+          earned: 0,
+          submittedAt: new Date(),
+          checkedAt: null
+        });
+
+        // Update user pending count
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          totalPending: increment(1)
+        });
+
+        alert("✅ Submit সফল! Status: ⏳ Pending");
+        document.getElementById("uid").value = "";
+        document.getElementById("password").value = "";
+        document.getElementById("twoFA").value = "";
+        btn.disabled = false; btn.textContent = "✅ Submit";
+      } catch (e) {
+        alert("❌ " + e.message);
+        btn.disabled = false; btn.textContent = "✅ Submit";
+      }
+    };
+
+    // Bulk submit
+    document.getElementById("bulkSubmitBtn").onclick = async () => {
+      const text = document.getElementById("bulkInput").value;
+      const items = parseBulk(text);
+      const btn = document.getElementById("bulkSubmitBtn");
+
+      if (items.length === 0) return alert("কোনো account পাওয়া যায়নি!");
+      if (items.length > 500) return alert("একবারে সর্বোচ্চ 500 account!");
+      if (!task) return alert("Task load হয়নি!");
+
+      if (!confirm(`${items.length} টা account submit করবে?`)) return;
+
+      btn.disabled = true; btn.textContent = `Submitting ${items.length}...`;
+
+      let success = 0;
+      try {
+        for (const item of items) {
+          await addDoc(collection(db, "submissions"), {
+            taskId: taskId,
+            taskTitle: task.title,
+            userId: currentUser.uid,
+            uid: item.uid,
+            password: item.password,
+            twoFA: item.twoFA,
+            status: "pending",
+            price: task.pricePerAccount,
+            earned: 0,
+            submittedAt: new Date(),
+            checkedAt: null
+          });
+          success++;
+        }
+
+        // Update user pending count
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          totalPending: increment(success)
+        });
+
+        alert(`✅ ${success} টা account submit সফল!\nStatus: ⏳ Pending`);
+        document.getElementById("bulkInput").value = "";
+        document.getElementById("bulkCount").textContent = "Detected: 0 accounts";
+      } catch (e) {
+        alert(`❌ Error: ${e.message}\n${success} টা submit হয়েছে।`);
+      }
+      btn.disabled = false; btn.textContent = "🚀 Submit All";
+    };
+  </script>
+</body>
+</html>
