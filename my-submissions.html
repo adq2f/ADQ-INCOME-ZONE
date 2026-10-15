@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Submissions — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .filter-tab {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: white;
+      color: #64748b;
+      border: 2px solid #e2e8f0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .filter-tab.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border-color: #6366f1;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+    .sub-card {
+      background: white;
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border-left: 4px solid #94a3b8;
+    }
+    .sub-card.good { border-left-color: #10b981; background: #f0fdf4; }
+    .sub-card.bad { border-left-color: #ef4444; background: #fef2f2; }
+    .sub-card.pending { border-left-color: #f59e0b; background: #fffbeb; }
+    .sub-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+    .sub-uid {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-all;
+    }
+    .sub-meta {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .sub-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .sub-earned {
+      font-size: 14px;
+      font-weight: 700;
+      color: #10b981;
+    }
+    .sub-earned.zero { color: #94a3b8; }
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: #64748b;
+    }
+    .empty-state .emoji { font-size: 56px; margin-bottom: 12px; }
+    .count-badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #6366f1;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
+    </div>
+    <div class="navbar-links">
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="wallet.html">Wallet</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2 style="margin-bottom:16px; color:#0f172a">
+      📁 আমার Submissions <span class="count-badge" id="totalCount">0</span>
+    </h2>
+
+    <div class="filter-tabs">
+      <div class="filter-tab active" data-filter="all">সব</div>
+      <div class="filter-tab" data-filter="pending">⏳ Pending</div>
+      <div class="filter-tab" data-filter="good">✅ Good</div>
+      <div class="filter-tab" data-filter="bad">❌ Bad</div>
+    </div>
+
+    <div id="subList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let allSubs = [];
+    let currentFilter = "all";
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+
+      try {
+        const q = query(
+          collection(db, "submissions"),
+          where("userId", "==", user.uid),
+          orderBy("submittedAt", "desc")
+        );
+        const snap = await getDocs(q);
+        allSubs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        document.getElementById("totalCount").textContent = allSubs.length;
+        renderSubs();
+      } catch (e) {
+        document.getElementById("subList").innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    });
+
+    function renderSubs() {
+      const list = document.getElementById("subList");
+      const filtered = currentFilter === "all"
+        ? allSubs
+        : allSubs.filter(s => s.status === currentFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="emoji">📭</div>
+            <h3>কোনো submission নেই</h3>
+            <p style="margin-top:6px">${currentFilter === "all" ? "Task submit করে শুরু করুন" : "এই filter-এ কিছু নেই"}</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(s => {
+        const date = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
+          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+        }) || "";
+        const icon = s.status === "good" ? "✅" : s.status === "bad" ? "❌" : "⏳";
+        const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
+
+        return `
+          <div class="sub-card ${s.status}">
+            <div class="sub-top">
+              <div class="sub-uid">${s.uid}</div>
+              <span class="badge badge-${s.status}">${icon} ${s.status}</span>
+            </div>
+            <div class="sub-meta">🎯 ${s.taskTitle || "Unknown Task"}</div>
+            <div class="sub-meta">🕐 ${date}</div>
+            <div class="sub-bottom">
+              <span style="font-size:12px; color:#64748b">Reward</span>
+              <span class="sub-earned ${s.status === "good" ? "" : "zero"}">${earned}</span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Filter tabs
+    document.querySelectorAll(".filter-tab").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".filter-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentFilter = tab.dataset.filter;
+        renderSubs();
+      };
+    });
+  </script>
+</body>
+</html>
