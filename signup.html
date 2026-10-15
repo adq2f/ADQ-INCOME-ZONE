@@ -3,23 +3,50 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - ADQ Income Zone</title>
+  <title>রেজিস্ট্রেশন - ADQ Income Zone</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { display: flex; align-items: center; justify-content: center; padding: 20px; }
-    .card { max-width: 400px; width: 100%; }
-  </style>
 </head>
 <body>
-  <div class="card">
-    <h1 style="text-align:center">📝 Sign Up</h1>
-    <input type="text" id="username" placeholder="Username">
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password (min 6)">
-    <button class="btn-full" id="signupBtn">Create Account</button>
-    <p style="text-align:center; margin-top:14px; color:#666">
-      Already have account? <a href="login.html" style="color:#667eea">Login</a>
-    </p>
+  <div class="auth-page">
+    <div class="auth-logo">💰</div>
+
+    <div class="auth-card">
+      <h1>রেজিস্ট্রেশন করুন</h1>
+      <p class="subtitle">আপনার অ্যাকাউন্ট তৈরি করতে তথ্য দিন</p>
+
+      <div id="successBox" style="display:none" class="alert-success">
+        <div class="check-icon">✓</div>
+        <div>রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।</div>
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input type="text" id="username" placeholder="আপনার নাম" class="no-icon-padding">
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">✉️</span>
+        <input type="email" id="email" placeholder="ইমেইল এড্রেস">
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" placeholder="পাসওয়ার্ড">
+        <button type="button" class="toggle-pass" onclick="togglePass('password', this)">👁️</button>
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">🛡️</span>
+        <input type="password" id="confirmPassword" placeholder="কনফার্ম পাসওয়ার্ড">
+        <button type="button" class="toggle-pass" onclick="togglePass('confirmPassword', this)">👁️</button>
+      </div>
+
+      <button class="btn-full" id="signupBtn" style="margin-top:8px">একাউন্ট তৈরি করুন</button>
+
+      <p class="switch-link">
+        ইতিমধ্যে একাউন্ট আছে? <a href="login.html">লগইন করুন</a>
+      </p>
+    </div>
   </div>
 
   <script type="module">
@@ -27,31 +54,51 @@
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    window.togglePass = function(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+      }
+    };
+
     document.getElementById("signupBtn").onclick = async () => {
       const username = document.getElementById("username").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
       const btn = document.getElementById("signupBtn");
 
-      if (!username || !email || !password) return alert("সব ঘর পূরণ করো!");
-      if (password.length < 6) return alert("Password কমপক্ষে ৬ অক্ষর!");
+      if (!username || !email || !password || !confirmPassword) {
+        return alert("সব ঘর পূরণ করুন!");
+      }
+      if (password.length < 6) return alert("পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে!");
+      if (password !== confirmPassword) return alert("পাসওয়ার্ড দুটো মিলছে না!");
 
-      btn.disabled = true; btn.textContent = "Creating...";
+      btn.disabled = true;
+      btn.textContent = "তৈরি হচ্ছে...";
 
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         await setDoc(doc(db, "users", cred.user.uid), {
-          username, email, role: "user",
-          balance: 0, totalGood: 0, totalBad: 0, totalPending: 0,
+          username, email,
+          role: "user",
+          balance: 0,
+          totalGood: 0, totalBad: 0, totalPending: 0,
           createdAt: new Date()
         });
-        alert("✅ Account তৈরি হয়েছে!");
-        location.href = "dashboard.html";
+
+        document.getElementById("successBox").style.display = "flex";
+        setTimeout(() => location.href = "dashboard.html", 1500);
       } catch (e) {
         alert("❌ " + e.message);
-        btn.disabled = false; btn.textContent = "Create Account";
+        btn.disabled = false;
+        btn.textContent = "একাউন্ট তৈরি করুন";
       }
-    }
+    };
   </script>
 </body>
 </html>
