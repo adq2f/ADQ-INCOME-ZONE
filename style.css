@@ -1047,3 +1047,54 @@ body::before {
   .container { padding: 16px 12px 100px; }
   .card { padding: 18px; }
 }
+/* ============ DASH SUMMARY ============ */
+.dash-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 18px;
+  animation: fadeInUp 0.5s var(--ease) both;
+  animation-delay: 0.1s;
+}
+
+.dash-summary-item {
+  background: white;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(15,23,42,0.04);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.3s var(--ease);
+}
+
+.dash-summary-item.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: rgba(99,102,241,0.2);
+}
+
+.dash-summary-item .s-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.dash-summary-item .s-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.dash-summary-item .s-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  margin-top: 2px;
+}
