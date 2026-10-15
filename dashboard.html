@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <h2>💰 ADQ Income Zone</h2>
+    <div>
+      <a href="index.html">Home</a>
+      <a href="wallet.html">Wallet</a>
+      <a href="#" id="logoutBtn">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="userInfo" class="loading">Loading...</div>
+
+    <div class="balance-box">
+      <h3>Current Balance</h3>
+      <div class="amount" id="balance">৳0</div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="num" id="totalGood">0</div>
+        <div class="label">✅ Good</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="totalBad">0</div>
+        <div class="label">❌ Bad</div>
+      </div>
+      <div class="stat-box">
+        <div class="num" id="totalPending">0</div>
+        <div class="label">⏳ Pending</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📋 My Submissions</h3>
+      <div id="submissions" class="loading">Loading...</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      doc, getDoc, collection, query, where, orderBy, limit, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    document.getElementById("logoutBtn").onclick = async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      location.href = "index.html";
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+
+      // Load user data
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (!userSnap.exists()) return;
+
+      const u = userSnap.data();
+      document.getElementById("userInfo").innerHTML = `
+        <div class="card">
+          <h2>👋 Welcome, ${u.username}</h2>
+          <p style="color:#666">${u.email}</p>
+        </div>
+      `;
+      document.getElementById("balance").textContent = "৳" + (u.balance || 0);
+      document.getElementById("totalGood").textContent = u.totalGood || 0;
+      document.getElementById("totalBad").textContent = u.totalBad || 0;
+      document.getElementById("totalPending").textContent = u.totalPending || 0;
+
+      // Load recent submissions
+      const q = query(
+        collection(db, "submissions"),
+        where("userId", "==", user.uid),
+        orderBy("submittedAt", "desc"),
+        limit(20)
+      );
+      const snap = await getDocs(q);
+      const list = document.getElementById("submissions");
+
+      if (snap.empty) {
+        list.innerHTML = `<p style="color:#666">এখনো কোনো submission নেই। <a href="index.html">Task দেখো</a></p>`;
+        return;
+      }
+
+      list.innerHTML = snap.docs.map(d => {
+        const s = d.data();
+        const cls = s.status === "good" ? "badge-good"
+                  : s.status === "bad" ? "badge-bad" : "badge-pending";
+        const icon = s.status === "good" ? "✅"
+                   : s.status === "bad" ? "❌" : "⏳";
+        return `
+          <div class="list-item">
+            <div>
+              <div><b>${s.uid}</b></div>
+              <div style="font-size:12px; color:#999">${s.taskTitle || ""}</div>
+            </div>
+            <span class="badge ${cls}">${icon} ${s.status}</span>
+          </div>
+        `;
+      }).join("");
+    });
+  </script>
+</body>
+</html>
