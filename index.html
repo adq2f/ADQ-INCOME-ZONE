@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <h2>💰 ADQ Income Zone</h2>
+    <div id="navLinks">
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Notice Board -->
+    <div id="noticeArea"></div>
+
+    <!-- Tasks -->
+    <h2 style="margin: 16px 0 12px;">📋 Available Tasks</h2>
+    <div id="taskList" class="loading">Loading tasks...</div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      collection, query, where, orderBy, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Navbar update
+    onAuthStateChanged(auth, (user) => {
+      const nav = document.getElementById("navLinks");
+      if (user) {
+        nav.innerHTML = `
+          <a href="dashboard.html">Dashboard</a>
+          <a href="wallet.html">Wallet</a>
+          <a href="#" id="logoutBtn">Logout</a>
+        `;
+        document.getElementById("logoutBtn").onclick = async (e) => {
+          e.preventDefault();
+          await signOut(auth);
+          location.reload();
+        };
+      }
+    });
+
+    // Load Notice
+    async function loadNotice() {
+      const area = document.getElementById("noticeArea");
+      try {
+        const q = query(
+          collection(db, "notices"),
+          where("active", "==", true),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) { area.innerHTML = ""; return; }
+        const n = snap.docs[0].data();
+        area.innerHTML = `
+          <div class="notice">
+            <h3>📢 ${n.title}</h3>
+            <p>${n.message}</p>
+          </div>
+        `;
+      } catch (e) { area.innerHTML = ""; }
+    }
+
+    // Load Tasks
+    async function loadTasks() {
+      const list = document.getElementById("taskList");
+      try {
+        const q = query(
+          collection(db, "tasks"),
+          where("active", "==", true),
+          orderBy("createdAt", "desc")
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          list.innerHTML = `<div class="card" style="text-align:center; color:#666">
+            এখনো কোনো task নেই।
+          </div>`;
+          return;
+        }
+        list.innerHTML = snap.docs.map(d => {
+          const t = d.data();
+          return `
+            <div class="task-card">
+              <h3>${t.title}</h3>
+              <span class="price">৳${t.pricePerAccount} / account</span>
+              <p>${t.description || ""}</p>
+              <button onclick="location.href='task.html?id=${d.id}'">Submit Now</button>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<div class="card" style="color:red">Error: ${e.message}</div>`;
+      }
+    }
+
+    loadNotice();
+    loadTasks();
+  </script>
+</body>
+</html>
