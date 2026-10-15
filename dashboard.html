@@ -4,174 +4,184 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ড্যাশবোর্ড — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
   <style>
-    /* Welcome Card */
-    .welcome-card {
+    /* ===== WELCOME ===== */
+    .dash-welcome {
       background: white;
-      padding: 20px;
-      border-radius: 18px;
+      padding: 18px;
+      border-radius: 16px;
       margin-bottom: 14px;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
     }
-    .welcome-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
+    .dash-welcome .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       display: flex;
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 700;
       flex-shrink: 0;
-      box-shadow: 0 8px 20px rgba(99,102,241,0.3);
     }
-    .welcome-text h3 {
-      font-size: 16px;
+    .dash-welcome h3 {
+      font-size: 15px;
       color: #0f172a;
-      margin-bottom: 2px;
       font-weight: 700;
+      margin-bottom: 2px;
     }
-    .welcome-text p {
+    .dash-welcome p {
       font-size: 12px;
       color: #64748b;
       word-break: break-all;
     }
 
-    /* Balance Box */
-    .balance-box {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+    /* ===== BALANCE ===== */
+    .dash-balance {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
       color: white;
-      padding: 26px 22px;
+      padding: 24px 20px;
       border-radius: 20px;
       margin-bottom: 14px;
-      box-shadow: 0 16px 40px rgba(99,102,241,0.35);
+      box-shadow: 0 12px 32px rgba(99,102,241,0.32);
       position: relative;
       overflow: hidden;
     }
-    .balance-box::before {
+    .dash-balance::before {
       content: '';
       position: absolute;
-      top: -60%;
-      right: -30%;
-      width: 240px;
-      height: 240px;
-      background: radial-gradient(circle, rgba(255,255,255,0.18), transparent);
+      top: -80px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.2), transparent 70%);
       border-radius: 50%;
     }
-    .balance-label {
-      font-size: 12px;
-      opacity: 0.9;
-      letter-spacing: 1px;
+    .dash-balance-label {
+      font-size: 11px;
+      opacity: 0.85;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       position: relative;
       z-index: 1;
     }
-    .balance-amount {
-      font-size: 40px;
+    .dash-balance-amount {
+      font-size: 38px;
       font-weight: 800;
       letter-spacing: -1.5px;
+      margin-bottom: 18px;
       position: relative;
       z-index: 1;
-      margin-bottom: 16px;
+      line-height: 1;
     }
-    .balance-actions {
-      display: flex;
+    .dash-balance-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
       position: relative;
       z-index: 1;
     }
-    .balance-btn {
-      flex: 1;
-      padding: 10px;
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.3);
+    .dash-balance-actions a,
+    .dash-balance-actions button {
+      padding: 11px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.28);
       border-radius: 10px;
       color: white;
       font-size: 13px;
       font-weight: 600;
       text-align: center;
       text-decoration: none;
-      backdrop-filter: blur(10px);
-      transition: 0.2s;
       cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+      margin: 0;
+      box-shadow: none;
+      width: 100%;
     }
-    .balance-btn:hover {
+    .dash-balance-actions a:hover,
+    .dash-balance-actions button:hover {
       background: rgba(255,255,255,0.3);
+      transform: translateY(-1px);
     }
 
-    /* Stats */
-    .stat-grid {
+    /* ===== STATS ===== */
+    .dash-stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 20px;
     }
-    .stat-item {
+    .dash-stat {
       background: white;
-      padding: 16px 8px;
+      padding: 16px 10px;
       border-radius: 14px;
       text-align: center;
       box-shadow: 0 2px 12px rgba(15,23,42,0.05);
       border: 1px solid rgba(15,23,42,0.04);
     }
-    .stat-item .icon {
-      font-size: 20px;
-      margin-bottom: 4px;
+    .dash-stat .ic {
+      font-size: 22px;
+      margin-bottom: 6px;
+      line-height: 1;
     }
-    .stat-item .num {
+    .dash-stat .n {
       font-size: 22px;
       font-weight: 800;
+      line-height: 1.1;
       letter-spacing: -0.5px;
     }
-    .stat-item .label {
+    .dash-stat .l {
       font-size: 10px;
       color: #64748b;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
-      margin-top: 2px;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
     }
-    .stat-item.good .num { color: #10b981; }
-    .stat-item.bad .num { color: #ef4444; }
-    .stat-item.pending .num { color: #f59e0b; }
+    .dash-stat.g .n { color: #10b981; }
+    .dash-stat.b .n { color: #ef4444; }
+    .dash-stat.p .n { color: #f59e0b; }
 
-    /* Section Title */
-    .section-title {
+    /* ===== SECTION HEADER ===== */
+    .dash-section-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin: 20px 0 12px;
+      margin: 22px 0 12px;
     }
-    .section-title h3 {
+    .dash-section-head h3 {
       font-size: 16px;
       font-weight: 700;
       color: #0f172a;
     }
-    .section-title a {
+    .dash-section-head a {
       font-size: 12px;
       color: #6366f1;
       text-decoration: none;
       font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #eef2ff;
     }
 
-    /* Quick Actions */
-    .quick-grid {
+    /* ===== QUICK ACTIONS ===== */
+    .dash-quick {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      margin-bottom: 14px;
     }
-    .quick-item {
+    .dash-quick-item {
       background: white;
-      padding: 16px 8px;
+      padding: 14px 8px;
       border-radius: 14px;
       text-align: center;
       text-decoration: none;
@@ -179,23 +189,37 @@
       box-shadow: 0 2px 12px rgba(15,23,42,0.05);
       border: 1px solid rgba(15,23,42,0.04);
       transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
     }
-    .quick-item:hover {
+    .dash-quick-item:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(99,102,241,0.15);
+      box-shadow: 0 8px 20px rgba(99,102,241,0.2);
+      border-color: #6366f1;
     }
-    .quick-item .icon {
-      font-size: 24px;
-      margin-bottom: 4px;
+    .dash-quick-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
     }
-    .quick-item .label {
+    .qi-purple { background: #eef2ff; }
+    .qi-green { background: #d1fae5; }
+    .qi-orange { background: #fef3c7; }
+    .qi-blue { background: #dbeafe; }
+    .dash-quick-label {
       font-size: 11px;
       font-weight: 600;
       color: #475569;
     }
 
-    /* Notice compact */
-    .notice-compact {
+    /* ===== NOTICE ===== */
+    .dash-notice {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
       border-left: 4px solid #f59e0b;
       padding: 14px 16px;
@@ -203,20 +227,20 @@
       margin-bottom: 14px;
       box-shadow: 0 4px 16px rgba(245,158,11,0.15);
     }
-    .notice-compact h4 {
+    .dash-notice h4 {
       font-size: 14px;
       color: #92400e;
       font-weight: 700;
       margin-bottom: 4px;
     }
-    .notice-compact p {
+    .dash-notice p {
       font-size: 13px;
       color: #78350f;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
-    /* Task Card */
-    .task-item {
+    /* ===== TASK CARD ===== */
+    .dash-task {
       background: white;
       padding: 16px;
       border-radius: 14px;
@@ -226,15 +250,52 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      transition: 0.2s;
     }
-    .task-item-left h4 {
-      font-size: 15px;
+    .dash-task:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(99,102,241,0.15);
+      border-color: #6366f1;
+    }
+    .dash-task-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .dash-task-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b5998, #1877f2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: white;
+      font-weight: 800;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(24,119,242,0.3);
+    }
+    .dash-task-logo.default {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    }
+    .dash-task-info {
+      min-width: 0;
+      flex: 1;
+    }
+    .dash-task-info h4 {
+      font-size: 14px;
       color: #0f172a;
-      margin-bottom: 4px;
       font-weight: 700;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .task-item-left .price {
+    .dash-task-info .price {
       display: inline-block;
       background: #d1fae5;
       color: #065f46;
@@ -243,22 +304,22 @@
       font-size: 12px;
       font-weight: 700;
     }
-    .task-item-btn {
-      padding: 8px 14px;
+    .dash-task-btn {
+      padding: 9px 16px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
       border: none;
       border-radius: 10px;
       font-size: 12px;
-      font-weight: 600;
+      font-weight: 700;
       text-decoration: none;
       white-space: nowrap;
       flex-shrink: 0;
       box-shadow: 0 4px 12px rgba(99,102,241,0.3);
     }
 
-    /* Recent Submission */
-    .recent-item {
+    /* ===== RECENT SUB ===== */
+    .dash-recent {
       background: white;
       padding: 14px;
       border-radius: 12px;
@@ -269,23 +330,41 @@
       align-items: center;
       gap: 10px;
     }
-    .recent-item .uid {
+    .dash-recent-info {
+      min-width: 0;
+      flex: 1;
+    }
+    .dash-recent-info .uid {
       font-size: 14px;
       font-weight: 700;
       color: #0f172a;
+      word-break: break-all;
     }
-    .recent-item .time {
+    .dash-recent-info .time {
       font-size: 11px;
       color: #94a3b8;
       margin-top: 2px;
     }
-    .recent-item .earned {
+    .dash-recent-earned {
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 800;
       color: #10b981;
       white-space: nowrap;
+      flex-shrink: 0;
     }
-    .recent-item .earned.zero { color: #94a3b8; }
+    .dash-recent-earned.zero { color: #94a3b8; }
+
+    /* ===== EMPTY ===== */
+    .dash-empty {
+      background: white;
+      padding: 30px 20px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      color: #64748b;
+    }
+    .dash-empty .em { font-size: 40px; margin-bottom: 8px; }
+    .dash-empty p { font-size: 13px; }
   </style>
 </head>
 <body>
@@ -307,40 +386,40 @@
   <div class="container">
 
     <!-- Welcome -->
-    <div class="welcome-card">
-      <div class="welcome-avatar" id="avatar">U</div>
-      <div class="welcome-text">
+    <div class="dash-welcome">
+      <div class="avatar" id="avatar">U</div>
+      <div style="min-width:0; flex:1">
         <h3>👋 স্বাগতম, <span id="username">...</span></h3>
         <p id="email">...</p>
       </div>
     </div>
 
     <!-- Balance -->
-    <div class="balance-box">
-      <div class="balance-label">💰 আপনার ব্যালেন্স</div>
-      <div class="balance-amount" id="balance">৳0</div>
-      <div class="balance-actions">
-        <div class="balance-btn" onclick="alert('শীঘ্রই আসছে!')">📥 Withdraw</div>
-        <a href="wallet.html" class="balance-btn">📜 History</a>
+    <div class="dash-balance">
+      <div class="dash-balance-label">💰 আপনার ব্যালেন্স</div>
+      <div class="dash-balance-amount" id="balance">৳0</div>
+      <div class="dash-balance-actions">
+        <button onclick="alert('শীঘ্রই আসছে! 🚀')">📥 Withdraw</button>
+        <a href="wallet.html">📜 History</a>
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="stat-grid">
-      <div class="stat-item good">
-        <div class="icon">✅</div>
-        <div class="num" id="statGood">0</div>
-        <div class="label">Good</div>
+    <div class="dash-stats">
+      <div class="dash-stat g">
+        <div class="ic">✅</div>
+        <div class="n" id="statGood">0</div>
+        <div class="l">Good</div>
       </div>
-      <div class="stat-item bad">
-        <div class="icon">❌</div>
-        <div class="num" id="statBad">0</div>
-        <div class="label">Bad</div>
+      <div class="dash-stat b">
+        <div class="ic">❌</div>
+        <div class="n" id="statBad">0</div>
+        <div class="l">Bad</div>
       </div>
-      <div class="stat-item pending">
-        <div class="icon">⏳</div>
-        <div class="num" id="statPending">0</div>
-        <div class="label">Pending</div>
+      <div class="dash-stat p">
+        <div class="ic">⏳</div>
+        <div class="n" id="statPending">0</div>
+        <div class="l">Pending</div>
       </div>
     </div>
 
@@ -348,37 +427,37 @@
     <div id="noticeArea"></div>
 
     <!-- Quick Actions -->
-    <div class="section-title">
+    <div class="dash-section-head">
       <h3>⚡ Quick Actions</h3>
     </div>
-    <div class="quick-grid">
-      <a href="index.html" class="quick-item">
-        <div class="icon">📤</div>
-        <div class="label">Submit</div>
+    <div class="dash-quick">
+      <a href="index.html" class="dash-quick-item">
+        <div class="dash-quick-icon qi-purple">📤</div>
+        <div class="dash-quick-label">Submit</div>
       </a>
-      <a href="my-submissions.html" class="quick-item">
-        <div class="icon">📁</div>
-        <div class="label">My Subs</div>
+      <a href="my-submissions.html" class="dash-quick-item">
+        <div class="dash-quick-icon qi-green">📁</div>
+        <div class="dash-quick-label">My Subs</div>
       </a>
-      <a href="wallet.html" class="quick-item">
-        <div class="icon">💰</div>
-        <div class="label">Wallet</div>
+      <a href="wallet.html" class="dash-quick-item">
+        <div class="dash-quick-icon qi-orange">💰</div>
+        <div class="dash-quick-label">Wallet</div>
       </a>
-      <a href="notifications.html" class="quick-item">
-        <div class="icon">🔔</div>
-        <div class="label">Notifs</div>
+      <a href="notifications.html" class="dash-quick-item">
+        <div class="dash-quick-icon qi-blue">🔔</div>
+        <div class="dash-quick-label">Notifs</div>
       </a>
     </div>
 
-    <!-- Available Tasks -->
-    <div class="section-title">
+    <!-- Tasks -->
+    <div class="dash-section-head">
       <h3>🎯 Available Tasks</h3>
       <a href="index.html">সব দেখো →</a>
     </div>
     <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
 
-    <!-- Recent Submissions -->
-    <div class="section-title">
+    <!-- Recent -->
+    <div class="dash-section-head">
       <h3>📋 সাম্প্রতিক Submission</h3>
       <a href="my-submissions.html">সব দেখো →</a>
     </div>
@@ -390,10 +469,9 @@
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
-      doc, getDoc, collection, query, where, orderBy, limit, getDocs
+      doc, getDoc, collection, query, where, getDocs, limit
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Logout
     document.getElementById("logoutBtn").onclick = async (e) => {
       e.preventDefault();
       if (!confirm("লগআউট করতে চান?")) return;
@@ -404,45 +482,42 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
 
-      // Load user data
       const userSnap = await getDoc(doc(db, "users", user.uid));
       if (!userSnap.exists()) { location.href = "login.html"; return; }
       const u = userSnap.data();
 
-      // Welcome
       document.getElementById("username").textContent = u.username || "User";
       document.getElementById("email").textContent = u.email || "";
       document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
-
-      // Balance
       document.getElementById("balance").textContent = "৳" + (u.balance || 0);
-
-      // Stats
       document.getElementById("statGood").textContent = u.totalGood || 0;
       document.getElementById("statBad").textContent = u.totalBad || 0;
       document.getElementById("statPending").textContent = u.totalPending || 0;
 
-      // Load everything else
       loadNotice();
       loadTasks();
       loadRecentSubmissions(user.uid);
     });
 
-    // Notice
+    // Notice (no index needed)
     async function loadNotice() {
       const area = document.getElementById("noticeArea");
       try {
-        const q = query(
-          collection(db, "notices"),
-          where("active", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(1)
-        );
+        const q = query(collection(db, "notices"), where("active", "==", true));
         const snap = await getDocs(q);
         if (snap.empty) { area.innerHTML = ""; return; }
-        const n = snap.docs[0].data();
+
+        // Manual sort by createdAt desc
+        const notices = snap.docs.map(d => d.data());
+        notices.sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() || 0;
+          const tb = b.createdAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+        const n = notices[0];
+
         area.innerHTML = `
-          <div class="notice-compact">
+          <div class="dash-notice">
             <h4>📢 ${n.title}</h4>
             <p>${n.message}</p>
           </div>
@@ -450,87 +525,101 @@
       } catch (e) { area.innerHTML = ""; }
     }
 
-    // Tasks
+    // Tasks (no index needed)
     async function loadTasks() {
       const list = document.getElementById("taskList");
       try {
-        const q = query(
-          collection(db, "tasks"),
-          where("active", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(3)
-        );
+        const q = query(collection(db, "tasks"), where("active", "==", true));
         const snap = await getDocs(q);
 
         if (snap.empty) {
           list.innerHTML = `
-            <div class="card" style="text-align:center; color:#64748b; padding:30px">
-              <div style="font-size:36px; margin-bottom:8px">📭</div>
-              এখনো কোনো task নেই
+            <div class="dash-empty">
+              <div class="em">📭</div>
+              <p>এখনো কোনো task নেই</p>
             </div>
           `;
           return;
         }
 
-        list.innerHTML = snap.docs.map(d => {
-          const t = d.data();
+        // Manual sort + limit 3
+        const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        tasks.sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() || 0;
+          const tb = b.createdAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+        const top3 = tasks.slice(0, 3);
+
+        list.innerHTML = top3.map(t => {
+          // Detect Facebook task
+          const isFB = /facebook|fb/i.test(t.title || "");
+          const logoClass = isFB ? "dash-task-logo" : "dash-task-logo default";
+          const logoText = isFB ? "f" : (t.title || "T").charAt(0).toUpperCase();
+
           return `
-            <div class="task-item">
-              <div class="task-item-left">
-                <h4>${t.title}</h4>
-                <span class="price">৳${t.pricePerAccount}/account</span>
+            <div class="dash-task">
+              <div class="dash-task-left">
+                <div class="${logoClass}">${logoText}</div>
+                <div class="dash-task-info">
+                  <h4>${t.title}</h4>
+                  <span class="price">৳${t.pricePerAccount}/account</span>
+                </div>
               </div>
-              <a href="task.html?id=${d.id}" class="task-item-btn">Submit →</a>
+              <a href="task.html?id=${t.id}" class="dash-task-btn">Submit →</a>
             </div>
           `;
         }).join("");
       } catch (e) {
-        list.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">Error: ${e.message}</p></div>`;
       }
     }
 
-    // Recent Submissions
+    // Recent (no index needed)
     async function loadRecentSubmissions(uid) {
       const list = document.getElementById("recentList");
       try {
-        const q = query(
-          collection(db, "submissions"),
-          where("userId", "==", uid),
-          orderBy("submittedAt", "desc"),
-          limit(5)
-        );
+        const q = query(collection(db, "submissions"), where("userId", "==", uid));
         const snap = await getDocs(q);
 
         if (snap.empty) {
           list.innerHTML = `
-            <div class="card" style="text-align:center; color:#64748b; padding:30px">
-              <div style="font-size:36px; margin-bottom:8px">📭</div>
-              এখনো কোনো submission নেই
+            <div class="dash-empty">
+              <div class="em">📭</div>
+              <p>এখনো কোনো submission নেই</p>
             </div>
           `;
           return;
         }
 
-        list.innerHTML = snap.docs.map(d => {
-          const s = d.data();
+        // Manual sort + limit 5
+        const subs = snap.docs.map(d => d.data());
+        subs.sort((a, b) => {
+          const ta = a.submittedAt?.toMillis?.() || 0;
+          const tb = b.submittedAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+        const top5 = subs.slice(0, 5);
+
+        list.innerHTML = top5.map(s => {
           const icon = s.status === "good" ? "✅" : s.status === "bad" ? "❌" : "⏳";
-          const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
+          const earned = s.status === "good" ? `+৳${s.price || 0}`
+                        : s.status === "bad" ? "৳0" : "Pending";
           const time = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
           }) || "";
-
           return `
-            <div class="recent-item">
-              <div>
+            <div class="dash-recent">
+              <div class="dash-recent-info">
                 <div class="uid">${icon} ${s.uid}</div>
                 <div class="time">🕐 ${time}</div>
               </div>
-              <span class="earned ${s.status === "good" ? "" : "zero"}">${earned}</span>
+              <span class="dash-recent-earned ${s.status === "good" ? "" : "zero"}">${earned}</span>
             </div>
           `;
         }).join("");
       } catch (e) {
-        list.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">Error: ${e.message}</p></div>`;
       }
     }
   </script>
