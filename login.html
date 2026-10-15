@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>লগইন - ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-logo">💰</div>
+
+    <div class="auth-card">
+      <h1>লগইন করুন</h1>
+      <p class="subtitle">আপনার অ্যাকাউন্টে প্রবেশ করতে তথ্য দিন</p>
+
+      <div id="successBox" style="display:none" class="alert-success">
+        <div class="check-icon">✓</div>
+        <div>রেজিস্ট্রেশন সফল হয়েছে! এখন লগইন করুন।</div>
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">👤</span>
+        <input type="email" id="email" placeholder="মোবাইল নাম্বার বা ইমেইল">
+      </div>
+
+      <div class="input-group">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" placeholder="পাসওয়ার্ড">
+        <button type="button" class="toggle-pass" onclick="togglePass('password', this)">👁️</button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin: 8px 0 16px; font-size: 13px;">
+        <label style="color: var(--gray); display: flex; align-items: center; gap: 6px;">
+          <input type="checkbox" style="width:auto; margin:0;"> মনে রাখুন
+        </label>
+        <a href="#" style="color: var(--primary); text-decoration: none;">পাসওয়ার্ড ভুলে গেছেন?</a>
+      </div>
+
+      <button class="btn-full" id="loginBtn">প্রবেশ করুন</button>
+
+      <p class="switch-link">
+        অ্যাকাউন্ট নেই? <a href="signup.html">রেজিস্ট্রেশন করুন</a>
+      </p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth } from "./firebase.js";
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    window.togglePass = function(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === "password") {
+        input.type = "text"; btn.textContent = "🙈";
+      } else {
+        input.type = "password"; btn.textContent = "👁️";
+      }
+    };
+
+    // Auto show success if coming from signup
+    if (new URLSearchParams(location.search).get("registered") === "1") {
+      document.getElementById("successBox").style.display = "flex";
+    }
+
+    document.getElementById("loginBtn").onclick = async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("loginBtn");
+
+      if (!email || !password) return alert("সব ঘর পূরণ করুন!");
+
+      btn.disabled = true;
+      btn.textContent = "লগইন হচ্ছে...";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        location.href = "dashboard.html";
+      } catch (e) {
+        alert("❌ " + e.message);
+        btn.disabled = false;
+        btn.textContent = "প্রবেশ করুন";
+      }
+    };
+  </script>
+</body>
+</html>
