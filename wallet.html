@@ -3,92 +3,469 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallet - ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ওয়ালেট — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=7">
+  <style>
+    /* Wallet-specific styles */
+    .wallet-balance {
+      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+      color: white;
+      padding: 28px 24px;
+      border-radius: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 20px 50px rgba(16,185,129,0.4),
+                  inset 0 1px 0 rgba(255,255,255,0.2);
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s var(--ease) both;
+    }
+    .wallet-balance::before {
+      content: '';
+      position: absolute;
+      top: -80px; right: -60px;
+      width: 240px; height: 240px;
+      background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%);
+      border-radius: 50%;
+      animation: bounce 6s ease-in-out infinite;
+    }
+    .wallet-balance-label {
+      font-size: 11px;
+      opacity: 0.9;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .wallet-balance-amount {
+      font-size: 46px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      line-height: 1;
+      font-family: 'Inter', sans-serif;
+    }
+    .wallet-balance-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .wallet-balance-actions a,
+    .wallet-balance-actions button {
+      padding: 12px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 12px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.3s var(--ease);
+      margin: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      backdrop-filter: blur(10px);
+    }
+    .wallet-balance-actions a svg,
+    .wallet-balance-actions button svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .wallet-balance-actions a:hover,
+    .wallet-balance-actions button:hover {
+      background: rgba(255,255,255,0.35);
+      transform: translateY(-2px);
+    }
+
+    /* Stats Grid */
+    .wallet-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .w-stat {
+      background: white;
+      padding: 16px 10px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+      border: 1px solid rgba(15,23,42,0.04);
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s var(--ease) both;
+      transition: all 0.3s var(--ease);
+    }
+    .w-stat:nth-child(1) { animation-delay: 0.1s; }
+    .w-stat:nth-child(2) { animation-delay: 0.15s; }
+    .w-stat:nth-child(3) { animation-delay: 0.2s; }
+    .w-stat::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      opacity: 0.7;
+    }
+    .w-stat.g::before { background: linear-gradient(90deg, transparent, #10b981, transparent); }
+    .w-stat.b::before { background: linear-gradient(90deg, transparent, #ef4444, transparent); }
+    .w-stat.p::before { background: linear-gradient(90deg, transparent, #f59e0b, transparent); }
+    .w-stat:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(15,23,42,0.12);
+    }
+    .w-icon {
+      font-size: 22px;
+      margin-bottom: 4px;
+      display: block;
+      transition: transform 0.3s var(--ease-bounce);
+    }
+    .w-stat:hover .w-icon { transform: scale(1.15) rotate(-5deg); }
+    .w-num {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: -0.5px;
+    }
+    .w-stat.g .w-num { color: #10b981; }
+    .w-stat.b .w-num { color: #ef4444; }
+    .w-stat.p .w-num { color: #f59e0b; }
+    .w-label {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* Filter tabs */
+    .wallet-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .wallet-tabs::-webkit-scrollbar { display: none; }
+    .w-tab {
+      flex: 1;
+      min-width: 80px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: white;
+      color: #64748b;
+      border: 2px solid #e2e8f0;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.25s;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .w-tab.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border-color: #6366f1;
+      box-shadow: 0 6px 16px rgba(99,102,241,0.35);
+    }
+
+    /* History item */
+    .hist-item {
+      background: white;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+      border-left: 4px solid #94a3b8;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      animation: fadeInUp 0.4s var(--ease) both;
+      transition: all 0.25s var(--ease);
+    }
+    .hist-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 8px 20px rgba(15,23,42,0.1);
+    }
+    .hist-item.good { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
+    .hist-item.bad { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
+    .hist-item.pending { border-left-color: #f59e0b; background: linear-gradient(90deg, #fffbeb 0%, white 30%); }
+
+    .hist-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+    .hist-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .hist-item.good .hist-icon { background: #d1fae5; }
+    .hist-item.bad .hist-icon { background: #fee2e2; }
+    .hist-item.pending .hist-icon { background: #fef3c7; }
+
+    .hist-info { min-width: 0; flex: 1; }
+    .hist-info .u {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+      word-break: break-all;
+      margin-bottom: 2px;
+    }
+    .hist-info .m {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .hist-amount {
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      white-space: nowrap;
+      flex-shrink: 0;
+      padding: 5px 10px;
+      border-radius: 8px;
+    }
+    .hist-item.good .hist-amount { color: #10b981; background: #f0fdf4; }
+    .hist-item.bad .hist-amount { color: #94a3b8; background: #f1f5f9; }
+    .hist-item.pending .hist-amount { color: #f59e0b; background: #fffbeb; font-size: 12px; }
+
+    /* Count badge */
+    .count-badge {
+      display: inline-block;
+      background: #eef2ff;
+      color: #6366f1;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+  </style>
 </head>
 <body>
+
+  <!-- Navbar -->
   <div class="navbar">
-    <h2>💰 ADQ Income Zone</h2>
-    <div>
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="#" id="logoutBtn">Logout</a>
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
     </div>
+    <button class="nav-logout" id="logoutBtn" title="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
   </div>
 
   <div class="container">
-    <div class="balance-box">
-      <h3>Current Balance</h3>
-      <div class="amount" id="balance">৳0</div>
+
+    <!-- Balance Box -->
+    <div class="wallet-balance">
+      <div class="wallet-balance-label">💰 মোট ব্যালেন্স</div>
+      <div class="wallet-balance-amount" id="balance">৳0</div>
+      <div class="wallet-balance-actions">
+        <button onclick="alert('শীঘ্রই আসছে! 🚀')">
+          <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Withdraw
+        </button>
+        <button onclick="alert('শীঘ্রই আসছে! 🚀')">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add Money
+        </button>
+      </div>
     </div>
 
-    <h2 style="margin: 16px 0 12px;">📜 Balance History</h2>
-    <div id="history" class="loading">Loading...</div>
+    <!-- Stats Grid (এখানে থাকবে) -->
+    <div class="wallet-stats">
+      <div class="w-stat g">
+        <span class="w-icon">✅</span>
+        <div class="w-num" id="statGood">0</div>
+        <div class="w-label">Good</div>
+      </div>
+      <div class="w-stat b">
+        <span class="w-icon">❌</span>
+        <div class="w-num" id="statBad">0</div>
+        <div class="w-label">Bad</div>
+      </div>
+      <div class="w-stat p">
+        <span class="w-icon">⏳</span>
+        <div class="w-num" id="statPending">0</div>
+        <div class="w-label">Pending</div>
+      </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="dash-section-head">
+      <h3>📜 Transaction History <span class="count-badge" id="totalCount">0</span></h3>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="wallet-tabs">
+      <button class="w-tab active" data-filter="all">সব</button>
+      <button class="w-tab" data-filter="pending">⏳ Pending</button>
+      <button class="w-tab" data-filter="good">✅ Good</button>
+      <button class="w-tab" data-filter="bad">❌ Bad</button>
+    </div>
+
+    <!-- History List -->
+    <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+
   </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <a href="index.html" data-page="home">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span class="nav-label">Home</span>
+    </a>
+    <a href="dashboard.html" data-page="dashboard">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+    <a href="index.html#tasks" data-page="submit">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+      <span class="nav-label">Submit</span>
+    </a>
+    <a href="wallet.html" data-page="wallet">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span>
+      <span class="nav-label">Wallet</span>
+    </a>
+    <a href="profile.html" data-page="profile">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span class="nav-label">Profile</span>
+    </a>
+  </nav>
 
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import {
-      doc, getDoc, collection, query, where, orderBy, limit, getDocs
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    document.getElementById("logoutBtn").onclick = async (e) => {
-      e.preventDefault();
+    // Auto-highlight bottom nav
+    (function() {
+      const f = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      let p = 'home';
+      if (f === 'dashboard.html') p = 'dashboard';
+      else if (f === 'wallet.html') p = 'wallet';
+      else if (f === 'profile.html') p = 'profile';
+      else if (f === 'task.html') p = 'submit';
+      document.querySelectorAll('.bottom-nav a').forEach(a => {
+        if (a.dataset.page === p) a.classList.add('active');
+      });
+    })();
+
+    document.getElementById("logoutBtn").onclick = async () => {
+      if (!confirm("লগআউট করতে চান?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
 
+    let allHistory = [];
+    let currentFilter = "all";
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
 
-      // Load balance
+      // Load balance + stats from user doc
       const userSnap = await getDoc(doc(db, "users", user.uid));
       if (userSnap.exists()) {
-        document.getElementById("balance").textContent = "৳" + (userSnap.data().balance || 0);
+        const u = userSnap.data();
+        document.getElementById("balance").textContent = "৳" + (u.balance || 0);
+        document.getElementById("statGood").textContent = u.totalGood || 0;
+        document.getElementById("statBad").textContent = u.totalBad || 0;
+        document.getElementById("statPending").textContent = u.totalPending || 0;
       }
 
       // Load history
+      await loadHistory(user.uid);
+    });
+
+    async function loadHistory(uid) {
+      const list = document.getElementById("historyList");
       try {
-        const q = query(
-          collection(db, "submissions"),
-          where("userId", "==", user.uid),
-          orderBy("submittedAt", "desc"),
-          limit(50)
-        );
+        const q = query(collection(db, "submissions"), where("userId", "==", uid));
         const snap = await getDocs(q);
-        const list = document.getElementById("history");
+        allHistory = snap.docs.map(d => d.data())
+          .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
 
-        if (snap.empty) {
-          list.innerHTML = `<div class="card" style="text-align:center; color:#666">
-            এখনো কোনো transaction নেই।
-          </div>`;
-          return;
-        }
-
-        list.innerHTML = snap.docs.map(d => {
-          const s = d.data();
-          const icon = s.status === "good" ? "✅"
-                     : s.status === "bad" ? "❌" : "⏳";
-          const label = s.status === "good" ? `+৳${s.price}`
-                      : s.status === "bad" ? "৳0" : "Pending";
-          const cls = s.status === "good" ? "badge-good"
-                    : s.status === "bad" ? "badge-bad" : "badge-pending";
-          const date = s.submittedAt?.toDate?.().toLocaleString("bn-BD") || "";
-
-          return `
-            <div class="list-item">
-              <div>
-                <div><b>${s.uid}</b></div>
-                <div style="font-size:12px; color:#999">${s.taskTitle || ""} • ${date}</div>
-              </div>
-              <span class="badge ${cls}">${icon} ${label}</span>
-            </div>
-          `;
-        }).join("");
+        document.getElementById("totalCount").textContent = allHistory.length;
+        renderHistory();
       } catch (e) {
-        document.getElementById("history").innerHTML = `<p style="color:red">${e.message}</p>`;
+        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">${e.message}</p></div>`;
       }
+    }
+
+    function renderHistory() {
+      const list = document.getElementById("historyList");
+      const filtered = currentFilter === "all"
+        ? allHistory
+        : allHistory.filter(h => h.status === currentFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="dash-empty">
+            <div class="em">📭</div>
+            <p>${currentFilter === "all" ? "এখনো কোনো transaction নেই" : "এই filter-এ কিছু নেই"}</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map((h, i) => {
+        const ic = h.status === "good" ? "✅" : h.status === "bad" ? "❌" : "⏳";
+        const amount = h.status === "good" ? `+৳${h.price || 0}`
+                       : h.status === "bad" ? "৳0" : "Pending";
+        const time = h.submittedAt?.toDate?.().toLocaleString("bn-BD", {
+          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+        }) || "";
+
+        return `
+          <div class="hist-item ${h.status}" style="animation-delay:${i * 0.03}s">
+            <div class="hist-left">
+              <div class="hist-icon">${ic}</div>
+              <div class="hist-info">
+                <div class="u">UID ${h.uid}</div>
+                <div class="m">🎯 ${h.taskTitle || "Task"} • 🕐 ${time}</div>
+              </div>
+            </div>
+            <div class="hist-amount">${amount}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // Filter tabs
+    document.querySelectorAll(".w-tab").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".w-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentFilter = tab.dataset.filter;
+        renderHistory();
+      };
     });
   </script>
 </body>
