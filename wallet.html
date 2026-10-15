@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wallet - ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="navbar">
+    <h2>💰 ADQ Income Zone</h2>
+    <div>
+      <a href="index.html">Home</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="#" id="logoutBtn">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="balance-box">
+      <h3>Current Balance</h3>
+      <div class="amount" id="balance">৳0</div>
+    </div>
+
+    <h2 style="margin: 16px 0 12px;">📜 Balance History</h2>
+    <div id="history" class="loading">Loading...</div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      doc, getDoc, collection, query, where, orderBy, limit, getDocs
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    document.getElementById("logoutBtn").onclick = async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      location.href = "index.html";
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+
+      // Load balance
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        document.getElementById("balance").textContent = "৳" + (userSnap.data().balance || 0);
+      }
+
+      // Load history
+      try {
+        const q = query(
+          collection(db, "submissions"),
+          where("userId", "==", user.uid),
+          orderBy("submittedAt", "desc"),
+          limit(50)
+        );
+        const snap = await getDocs(q);
+        const list = document.getElementById("history");
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="card" style="text-align:center; color:#666">
+            এখনো কোনো transaction নেই।
+          </div>`;
+          return;
+        }
+
+        list.innerHTML = snap.docs.map(d => {
+          const s = d.data();
+          const icon = s.status === "good" ? "✅"
+                     : s.status === "bad" ? "❌" : "⏳";
+          const label = s.status === "good" ? `+৳${s.price}`
+                      : s.status === "bad" ? "৳0" : "Pending";
+          const cls = s.status === "good" ? "badge-good"
+                    : s.status === "bad" ? "badge-bad" : "badge-pending";
+          const date = s.submittedAt?.toDate?.().toLocaleString("bn-BD") || "";
+
+          return `
+            <div class="list-item">
+              <div>
+                <div><b>${s.uid}</b></div>
+                <div style="font-size:12px; color:#999">${s.taskTitle || ""} • ${date}</div>
+              </div>
+              <span class="badge ${cls}">${icon} ${label}</span>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        document.getElementById("history").innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
