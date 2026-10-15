@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
   <style>
     .platform-picker {
       display: flex; gap: 8px; overflow-x: auto;
@@ -52,10 +52,6 @@
       border: 1px solid #e2e8f0; border-radius: 8px;
       font-size: 12px; margin: 0; background: white;
     }
-    .field-row input[type="text"]:focus {
-      border-color: #6366f1; outline: none;
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-    }
     .time-row {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 10px; margin-bottom: 12px;
@@ -79,6 +75,75 @@
     .task-status.open { background: #d1fae5; color: #065f46; }
     .task-status.closed { background: #fee2e2; color: #991b1b; }
     .task-status.waiting { background: #fef3c7; color: #92400e; }
+
+    /* Range Preview Table */
+    .range-preview {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .range-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .range-header h4 {
+      font-size: 14px;
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .range-header .count {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .preview-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      border-left: 3px solid #6366f1;
+    }
+    .preview-user {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+    .preview-info { flex: 1; min-width: 0; }
+    .preview-info .u { font-weight: 700; color: #0f172a; font-size: 12px; }
+    .preview-info .m { color: #94a3b8; font-size: 10px; margin-top: 2px; }
+
+    .csv-tip {
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #4f46e5;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .csv-tip b { color: #4338ca; }
   </style>
 </head>
 <body>
@@ -193,21 +258,59 @@
 
     <!-- ============ RESULT SECTION ============ -->
     <div id="resultSection" style="display:none">
-      <div class="admin-form-card">
-        <h3>📥 Step 1: Download Submissions</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">
-          Task select করে সব submission এক file-এ download করো (CSV)
-        </p>
-        <select id="downloadTask" class="admin-input"></select>
-        <button class="btn btn-primary btn-full" id="downloadBtn">📥 Download CSV</button>
-      </div>
 
+      <!-- STEP 1: Time Range select -->
       <div class="admin-form-card">
-        <h3>✅ Step 2: Upload Result</h3>
+        <h3>📥 Step 1: Time Range Select</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">
+          কোন Task-এর, কোন সময়ের submission-এর result publish করবে সেটা select করো।
+        </p>
+
+        <label class="label-text">Task Select</label>
         <select id="resultTask" class="admin-input"></select>
 
+        <label class="label-text">Time Range</label>
+        <div class="time-row">
+          <div>
+            <span class="time-input-label">শুরু</span>
+            <input type="datetime-local" id="filterStart" class="admin-input">
+          </div>
+          <div>
+            <span class="time-input-label">শেষ</span>
+            <input type="datetime-local" id="filterEnd" class="admin-input">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <button class="btn btn-primary" style="flex:1;margin:0" id="loadBtn">🔍 Load Submissions</button>
+          <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="clearRangeBtn">✕</button>
+        </div>
+
+        <div class="csv-tip">
+          💡 <b>Tip:</b> Time range না দিলে সব submission load হবে। নির্দিষ্ট range দিলে শুধু সেই সময়ের submission দেখাবে।
+        </div>
+      </div>
+
+      <!-- STEP 2: Preview -->
+      <div class="admin-form-card" id="previewCard" style="display:none">
+        <h3>👀 Step 2: Preview Submissions</h3>
+        <div class="range-preview">
+          <div class="range-header">
+            <h4>Total Submissions</h4>
+            <span class="count" id="rangeCount">0</span>
+          </div>
+          <div id="previewList"></div>
+        </div>
+
+        <button class="btn btn-primary btn-full" style="margin-top:12px" id="downloadBtn">📥 Download CSV</button>
+      </div>
+
+      <!-- STEP 3: Process -->
+      <div class="admin-form-card" id="processCard" style="display:none">
+        <h3>✅ Step 3: Bad UID paste & Process</h3>
         <div class="bulk-hint">
-          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)
+          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)।
+          Match হলে ❌ Bad, না হলে ✅ Good হবে এবং balance auto add হবে।
         </div>
         <textarea id="badUids" class="admin-input admin-textarea bulk-textarea" placeholder="100005
 100012
@@ -215,6 +318,7 @@
 
         <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
       </div>
+
       <div id="resultOutput"></div>
     </div>
   </div>
@@ -260,6 +364,8 @@
     });
 
     let currentUser = null;
+    let loadedSubmissions = [];
+    let loadedTask = null;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
@@ -440,113 +546,182 @@
       loadNotices();
     };
 
-    // ===== DROPDOWNS =====
+    // ===== DROPDOWN =====
     async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
-      const opts = '<option value="">-- Task Select --</option>' +
+      document.getElementById("resultTask").innerHTML =
+        '<option value="">-- Task Select --</option>' +
         snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
-      document.getElementById("downloadTask").innerHTML = opts;
-      document.getElementById("resultTask").innerHTML = opts;
     }
 
-    // ===== DOWNLOAD CSV =====
-    document.getElementById("downloadBtn").onclick = async () => {
-      const taskId = document.getElementById("downloadTask").value;
+    // ===== CLEAR RANGE =====
+    document.getElementById("clearRangeBtn").onclick = () => {
+      document.getElementById("filterStart").value = "";
+      document.getElementById("filterEnd").value = "";
+      document.getElementById("previewCard").style.display = "none";
+      document.getElementById("processCard").style.display = "none";
+      document.getElementById("resultOutput").innerHTML = "";
+      loadedSubmissions = [];
+    };
+
+    // ===== LOAD SUBMISSIONS =====
+    document.getElementById("loadBtn").onclick = async () => {
+      const taskId = document.getElementById("resultTask").value;
+      const startVal = document.getElementById("filterStart").value;
+      const endVal = document.getElementById("filterEnd").value;
+
       if (!taskId) return alert("Task select করো!");
 
-      const btn = document.getElementById("downloadBtn");
-      btn.disabled = true; btn.textContent = "Downloading...";
+      const btn = document.getElementById("loadBtn");
+      btn.disabled = true; btn.textContent = "Loading...";
 
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
-        const task = taskSnap.data();
-        const fields = task.fields || [{ key: "uid", label: "UID" }];
+        loadedTask = { id: taskId, ...taskSnap.data() };
 
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
+        let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        if (snap.empty) {
-          alert("❌ কোনো submission নেই!");
-          btn.disabled = false; btn.textContent = "📥 Download CSV";
+        // Filter by time range if provided
+        if (startVal) {
+          const startTs = new Date(startVal).getTime();
+          subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) >= startTs);
+        }
+        if (endVal) {
+          const endTs = new Date(endVal).getTime();
+          subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) <= endTs);
+        }
+
+        // Filter only pending? No — show all but mark
+        subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+        loadedSubmissions = subs;
+
+        // Show preview
+        document.getElementById("previewCard").style.display = "block";
+        document.getElementById("processCard").style.display = "block";
+        document.getElementById("rangeCount").textContent = subs.length;
+
+        if (subs.length === 0) {
+          document.getElementById("previewList").innerHTML = `
+            <div style="text-align:center;padding:30px;color:#94a3b8">
+              <div style="font-size:36px;margin-bottom:8px">📭</div>
+              এই range-এ কোনো submission নেই
+            </div>
+          `;
           return;
         }
 
-        // CSV Headers
-        const headers = [
-          "Username", "Email",
-          ...fields.map(f => f.label),
-          "Status", "Submitted At"
-        ];
+        // Preview list
+        document.getElementById("previewList").innerHTML = subs.slice(0, 100).map(s => {
+          const initial = (s.uid || s.email || "?").charAt(0).toUpperCase();
+          const fields = loadedTask.fields || [];
+          const fieldStr = fields.map(f => `${f.label}: ${s[f.key] || "-"}`).join(" • ");
+          const timeStr = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+          const statusBadge = s.status === "pending" ? "⏳"
+                            : s.status === "good" ? "✅" : "❌";
+          return `
+            <div class="preview-row">
+              <div class="preview-user">${initial}</div>
+              <div class="preview-info">
+                <div class="u">${statusBadge} ${s.uid || s.email || "N/A"}</div>
+                <div class="m">${fieldStr.substring(0, 100)} • 🕐 ${timeStr}</div>
+              </div>
+            </div>
+          `;
+        }).join("") + (subs.length > 100 ? `<div style="text-align:center;padding:10px;color:#94a3b8;font-size:12px">... এবং আরো ${subs.length - 100} টা</div>` : "");
 
-        // CSV Rows
-        const rows = [];
-        for (const d of snap.docs) {
-          const s = d.data();
-          const userSnap = await getDoc(doc(db, "users", s.userId));
-          const user = userSnap.exists() ? userSnap.data() : { username: "?", email: "?" };
-
-          const row = [
-            user.username || "?",
-            user.email || "?",
-            ...fields.map(f => s[f.key] || ""),
-            s.status,
-            s.submittedAt?.toDate?.().toLocaleString("en-GB") || ""
-          ];
-          rows.push(row);
-        }
-
-        // Create CSV
-        const escapeCSV = (v) => `"${String(v).replace(/"/g, '""')}"`;
-        const csv = [headers, ...rows].map(r => r.map(escapeCSV).join(",")).join("\n");
-
-        // Download
-        const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        const dateStr = new Date().toISOString().split("T")[0];
-        a.href = url;
-        a.download = `${task.title.replace(/\s+/g, "_")}_${dateStr}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-
-        alert(`✅ ${rows.length} টা submission download হয়েছে!`);
       } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "📥 Download CSV";
+      btn.disabled = false; btn.textContent = "🔍 Load Submissions";
     };
 
-    // ===== RESULT PROCESS =====
-    document.getElementById("processBtn").onclick = async () => {
-      const taskId = document.getElementById("resultTask").value;
-      const badText = document.getElementById("badUids").value.trim();
-      const btn = document.getElementById("processBtn");
-      const output = document.getElementById("resultOutput");
+    // ===== DOWNLOAD CSV =====
+    document.getElementById("downloadBtn").onclick = () => {
+      if (loadedSubmissions.length === 0) return alert("কোনো submission নেই!");
+      if (!loadedTask) return alert("Task load হয়নি!");
 
-      if (!taskId) return alert("Task select করো!");
+      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
+
+      // Headers: শুধু admin-set field + Submission Time
+      const headers = [
+        ...fields.map(f => f.label),
+        "Submitted At"
+      ];
+
+      // Rows
+      const rows = loadedSubmissions.map(s => {
+        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }) || "";
+        return [
+          ...fields.map(f => s[f.key] || ""),
+          timeStr
+        ];
+      });
+
+      // Escape CSV values
+      const escapeCSV = (v) => {
+        const str = String(v);
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      // Create CSV (NO BOM)
+      const csvContent = [
+        headers.map(escapeCSV).join(","),
+        ...rows.map(r => r.map(escapeCSV).join(","))
+      ].join("\r\n");
+
+      // Download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const dateStr = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
+      a.href = url;
+      a.download = `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      alert(`✅ ${rows.length} টা submission download হয়েছে!`);
+    };
+
+    // ===== PROCESS RESULT =====
+    document.getElementById("processBtn").onclick = async () => {
+      if (loadedSubmissions.length === 0) return alert("আগে Load Submissions করো!");
+      if (!loadedTask) return alert("Task load হয়নি!");
+
+      const badText = document.getElementById("badUids").value.trim();
       if (!badText) return alert("Bad UID list paste করো!");
 
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
+      const btn = document.getElementById("processBtn");
+      const output = document.getElementById("resultOutput");
+
+      // Confirm
+      const pendingSubs = loadedSubmissions.filter(s => s.status === "pending");
+      if (pendingSubs.length === 0) {
+        return alert("এই range-এ কোনো pending submission নেই!");
+      }
+      if (!confirm(`${pendingSubs.length} টা pending submission process করবে?`)) return;
+
       btn.disabled = true; btn.textContent = "Processing...";
 
       try {
-        const taskSnap = await getDoc(doc(db, "tasks", taskId));
-        const price = taskSnap.data().pricePerAccount;
-
-        const q = query(
-          collection(db, "submissions"),
-          where("taskId", "==", taskId),
-          where("status", "==", "pending")
-        );
-        const snap = await getDocs(q);
-
+        const price = loadedTask.pricePerAccount;
         let goodCount = 0, badCount = 0;
         const userUpdates = {};
 
-        for (const subDoc of snap.docs) {
-          const sub = subDoc.data();
+        for (const sub of pendingSubs) {
           const isBad = badSet.has(sub.uid);
 
-          await updateDoc(doc(db, "submissions", subDoc.id), {
+          await updateDoc(doc(db, "submissions", sub.id), {
             status: isBad ? "bad" : "good",
             earned: isBad ? 0 : price,
             checkedAt: new Date()
@@ -573,13 +748,16 @@
         output.innerHTML = `
           <div class="result-box">
             <h3>✅ Result Processed!</h3>
-            <p>Total: <b>${snap.size}</b></p>
+            <p>Task: <b>${loadedTask.title}</b></p>
+            <p>Total Processed: <b>${pendingSubs.length}</b></p>
             <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
             <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
             <p style="color:#f59e0b">💰 Total Added: <span class="big">৳${goodCount * price}</span></p>
           </div>
         `;
         document.getElementById("badUids").value = "";
+        // Reload to show updated status
+        setTimeout(() => document.getElementById("loadBtn").click(), 500);
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🚀 Process Result";
     };
