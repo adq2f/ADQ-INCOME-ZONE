@@ -3,46 +3,387 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css">
+  <title>ড্যাশবোর্ড — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=3">
+  <style>
+    /* Welcome Card */
+    .welcome-card {
+      background: white;
+      padding: 20px;
+      border-radius: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .welcome-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 8px 20px rgba(99,102,241,0.3);
+    }
+    .welcome-text h3 {
+      font-size: 16px;
+      color: #0f172a;
+      margin-bottom: 2px;
+      font-weight: 700;
+    }
+    .welcome-text p {
+      font-size: 12px;
+      color: #64748b;
+      word-break: break-all;
+    }
+
+    /* Balance Box */
+    .balance-box {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+      color: white;
+      padding: 26px 22px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      box-shadow: 0 16px 40px rgba(99,102,241,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .balance-box::before {
+      content: '';
+      position: absolute;
+      top: -60%;
+      right: -30%;
+      width: 240px;
+      height: 240px;
+      background: radial-gradient(circle, rgba(255,255,255,0.18), transparent);
+      border-radius: 50%;
+    }
+    .balance-label {
+      font-size: 12px;
+      opacity: 0.9;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    .balance-amount {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      position: relative;
+      z-index: 1;
+      margin-bottom: 16px;
+    }
+    .balance-actions {
+      display: flex;
+      gap: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .balance-btn {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 10px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+      backdrop-filter: blur(10px);
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .balance-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Stats */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .stat-item {
+      background: white;
+      padding: 16px 8px;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+    }
+    .stat-item .icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    .stat-item .num {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .stat-item .label {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+    .stat-item.good .num { color: #10b981; }
+    .stat-item.bad .num { color: #ef4444; }
+    .stat-item.pending .num { color: #f59e0b; }
+
+    /* Section Title */
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 20px 0 12px;
+    }
+    .section-title h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .section-title a {
+      font-size: 12px;
+      color: #6366f1;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* Quick Actions */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .quick-item {
+      background: white;
+      padding: 16px 8px;
+      border-radius: 14px;
+      text-align: center;
+      text-decoration: none;
+      color: #0f172a;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+      transition: 0.2s;
+    }
+    .quick-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99,102,241,0.15);
+    }
+    .quick-item .icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+    .quick-item .label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    /* Notice compact */
+    .notice-compact {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-left: 4px solid #f59e0b;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 16px rgba(245,158,11,0.15);
+    }
+    .notice-compact h4 {
+      font-size: 14px;
+      color: #92400e;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .notice-compact p {
+      font-size: 13px;
+      color: #78350f;
+      line-height: 1.4;
+    }
+
+    /* Task Card */
+    .task-item {
+      background: white;
+      padding: 16px;
+      border-radius: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .task-item-left h4 {
+      font-size: 15px;
+      color: #0f172a;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .task-item-left .price {
+      display: inline-block;
+      background: #d1fae5;
+      color: #065f46;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .task-item-btn {
+      padding: 8px 14px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+
+    /* Recent Submission */
+    .recent-item {
+      background: white;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .recent-item .uid {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .recent-item .time {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+    .recent-item .earned {
+      font-size: 13px;
+      font-weight: 700;
+      color: #10b981;
+      white-space: nowrap;
+    }
+    .recent-item .earned.zero { color: #94a3b8; }
+  </style>
 </head>
 <body>
+
+  <!-- Navbar -->
   <div class="navbar">
-    <h2>💰 ADQ Income Zone</h2>
-    <div>
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
+    </div>
+    <div class="navbar-links">
       <a href="index.html">Home</a>
       <a href="wallet.html">Wallet</a>
+      <a href="profile.html">Profile</a>
       <a href="#" id="logoutBtn">Logout</a>
     </div>
   </div>
 
   <div class="container">
-    <div id="userInfo" class="loading">Loading...</div>
 
+    <!-- Welcome -->
+    <div class="welcome-card">
+      <div class="welcome-avatar" id="avatar">U</div>
+      <div class="welcome-text">
+        <h3>👋 স্বাগতম, <span id="username">...</span></h3>
+        <p id="email">...</p>
+      </div>
+    </div>
+
+    <!-- Balance -->
     <div class="balance-box">
-      <h3>Current Balance</h3>
-      <div class="amount" id="balance">৳0</div>
-    </div>
-
-    <div class="stats-grid">
-      <div class="stat-box">
-        <div class="num" id="totalGood">0</div>
-        <div class="label">✅ Good</div>
-      </div>
-      <div class="stat-box">
-        <div class="num" id="totalBad">0</div>
-        <div class="label">❌ Bad</div>
-      </div>
-      <div class="stat-box">
-        <div class="num" id="totalPending">0</div>
-        <div class="label">⏳ Pending</div>
+      <div class="balance-label">💰 আপনার ব্যালেন্স</div>
+      <div class="balance-amount" id="balance">৳0</div>
+      <div class="balance-actions">
+        <div class="balance-btn" onclick="alert('শীঘ্রই আসছে!')">📥 Withdraw</div>
+        <a href="wallet.html" class="balance-btn">📜 History</a>
       </div>
     </div>
 
-    <div class="card">
-      <h3>📋 My Submissions</h3>
-      <div id="submissions" class="loading">Loading...</div>
+    <!-- Stats -->
+    <div class="stat-grid">
+      <div class="stat-item good">
+        <div class="icon">✅</div>
+        <div class="num" id="statGood">0</div>
+        <div class="label">Good</div>
+      </div>
+      <div class="stat-item bad">
+        <div class="icon">❌</div>
+        <div class="num" id="statBad">0</div>
+        <div class="label">Bad</div>
+      </div>
+      <div class="stat-item pending">
+        <div class="icon">⏳</div>
+        <div class="num" id="statPending">0</div>
+        <div class="label">Pending</div>
+      </div>
     </div>
+
+    <!-- Notice -->
+    <div id="noticeArea"></div>
+
+    <!-- Quick Actions -->
+    <div class="section-title">
+      <h3>⚡ Quick Actions</h3>
+    </div>
+    <div class="quick-grid">
+      <a href="index.html" class="quick-item">
+        <div class="icon">📤</div>
+        <div class="label">Submit</div>
+      </a>
+      <a href="my-submissions.html" class="quick-item">
+        <div class="icon">📁</div>
+        <div class="label">My Subs</div>
+      </a>
+      <a href="wallet.html" class="quick-item">
+        <div class="icon">💰</div>
+        <div class="label">Wallet</div>
+      </a>
+      <a href="notifications.html" class="quick-item">
+        <div class="icon">🔔</div>
+        <div class="label">Notifs</div>
+      </a>
+    </div>
+
+    <!-- Available Tasks -->
+    <div class="section-title">
+      <h3>🎯 Available Tasks</h3>
+      <a href="index.html">সব দেখো →</a>
+    </div>
+    <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+
+    <!-- Recent Submissions -->
+    <div class="section-title">
+      <h3>📋 সাম্প্রতিক Submission</h3>
+      <a href="my-submissions.html">সব দেখো →</a>
+    </div>
+    <div id="recentList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+
   </div>
 
   <script type="module">
@@ -52,8 +393,10 @@
       doc, getDoc, collection, query, where, orderBy, limit, getDocs
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // Logout
     document.getElementById("logoutBtn").onclick = async (e) => {
       e.preventDefault();
+      if (!confirm("লগআউট করতে চান?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
@@ -63,52 +406,133 @@
 
       // Load user data
       const userSnap = await getDoc(doc(db, "users", user.uid));
-      if (!userSnap.exists()) return;
-
+      if (!userSnap.exists()) { location.href = "login.html"; return; }
       const u = userSnap.data();
-      document.getElementById("userInfo").innerHTML = `
-        <div class="card">
-          <h2>👋 Welcome, ${u.username}</h2>
-          <p style="color:#666">${u.email}</p>
-        </div>
-      `;
+
+      // Welcome
+      document.getElementById("username").textContent = u.username || "User";
+      document.getElementById("email").textContent = u.email || "";
+      document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
+
+      // Balance
       document.getElementById("balance").textContent = "৳" + (u.balance || 0);
-      document.getElementById("totalGood").textContent = u.totalGood || 0;
-      document.getElementById("totalBad").textContent = u.totalBad || 0;
-      document.getElementById("totalPending").textContent = u.totalPending || 0;
 
-      // Load recent submissions
-      const q = query(
-        collection(db, "submissions"),
-        where("userId", "==", user.uid),
-        orderBy("submittedAt", "desc"),
-        limit(20)
-      );
-      const snap = await getDocs(q);
-      const list = document.getElementById("submissions");
+      // Stats
+      document.getElementById("statGood").textContent = u.totalGood || 0;
+      document.getElementById("statBad").textContent = u.totalBad || 0;
+      document.getElementById("statPending").textContent = u.totalPending || 0;
 
-      if (snap.empty) {
-        list.innerHTML = `<p style="color:#666">এখনো কোনো submission নেই। <a href="index.html">Task দেখো</a></p>`;
-        return;
-      }
+      // Load everything else
+      loadNotice();
+      loadTasks();
+      loadRecentSubmissions(user.uid);
+    });
 
-      list.innerHTML = snap.docs.map(d => {
-        const s = d.data();
-        const cls = s.status === "good" ? "badge-good"
-                  : s.status === "bad" ? "badge-bad" : "badge-pending";
-        const icon = s.status === "good" ? "✅"
-                   : s.status === "bad" ? "❌" : "⏳";
-        return `
-          <div class="list-item">
-            <div>
-              <div><b>${s.uid}</b></div>
-              <div style="font-size:12px; color:#999">${s.taskTitle || ""}</div>
-            </div>
-            <span class="badge ${cls}">${icon} ${s.status}</span>
+    // Notice
+    async function loadNotice() {
+      const area = document.getElementById("noticeArea");
+      try {
+        const q = query(
+          collection(db, "notices"),
+          where("active", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) { area.innerHTML = ""; return; }
+        const n = snap.docs[0].data();
+        area.innerHTML = `
+          <div class="notice-compact">
+            <h4>📢 ${n.title}</h4>
+            <p>${n.message}</p>
           </div>
         `;
-      }).join("");
-    });
+      } catch (e) { area.innerHTML = ""; }
+    }
+
+    // Tasks
+    async function loadTasks() {
+      const list = document.getElementById("taskList");
+      try {
+        const q = query(
+          collection(db, "tasks"),
+          where("active", "==", true),
+          orderBy("createdAt", "desc"),
+          limit(3)
+        );
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          list.innerHTML = `
+            <div class="card" style="text-align:center; color:#64748b; padding:30px">
+              <div style="font-size:36px; margin-bottom:8px">📭</div>
+              এখনো কোনো task নেই
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = snap.docs.map(d => {
+          const t = d.data();
+          return `
+            <div class="task-item">
+              <div class="task-item-left">
+                <h4>${t.title}</h4>
+                <span class="price">৳${t.pricePerAccount}/account</span>
+              </div>
+              <a href="task.html?id=${d.id}" class="task-item-btn">Submit →</a>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+      }
+    }
+
+    // Recent Submissions
+    async function loadRecentSubmissions(uid) {
+      const list = document.getElementById("recentList");
+      try {
+        const q = query(
+          collection(db, "submissions"),
+          where("userId", "==", uid),
+          orderBy("submittedAt", "desc"),
+          limit(5)
+        );
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          list.innerHTML = `
+            <div class="card" style="text-align:center; color:#64748b; padding:30px">
+              <div style="font-size:36px; margin-bottom:8px">📭</div>
+              এখনো কোনো submission নেই
+            </div>
+          `;
+          return;
+        }
+
+        list.innerHTML = snap.docs.map(d => {
+          const s = d.data();
+          const icon = s.status === "good" ? "✅" : s.status === "bad" ? "❌" : "⏳";
+          const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
+          const time = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+
+          return `
+            <div class="recent-item">
+              <div>
+                <div class="uid">${icon} ${s.uid}</div>
+                <div class="time">🕐 ${time}</div>
+              </div>
+              <span class="earned ${s.status === "good" ? "" : "zero"}">${earned}</span>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">Error: ${e.message}</p>`;
+      }
+    }
   </script>
 </body>
 </html>
