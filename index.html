@@ -4,100 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
+
   <div class="navbar">
-    <h2>💰 ADQ Income Zone</h2>
-    <div id="navLinks">
-      <a href="login.html">Login</a>
-      <a href="signup.html">Sign Up</a>
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
     </div>
+    <button class="nav-logout" id="logoutBtn" style="display:none" title="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+    <a href="login.html" id="loginBtnTop" style="padding:8px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:10px;text-decoration:none;font-size:13px;font-weight:600;box-shadow:0 6px 16px rgba(99,102,241,0.35)">Login</a>
   </div>
 
   <div class="container">
-    <!-- Notice Board -->
     <div id="noticeArea"></div>
 
-    <!-- Tasks -->
-    <h2 style="margin: 16px 0 12px;">📋 Available Tasks</h2>
-    <div id="taskList" class="loading">Loading tasks...</div>
+    <div class="dash-section-head">
+      <h3>🎯 Available Tasks</h3>
+    </div>
+    <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" data-page="home">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span class="nav-label">Home</span>
+    </a>
+    <a href="dashboard.html" data-page="dashboard">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+    <a href="index.html#tasks" data-page="submit">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+      <span class="nav-label">Submit</span>
+    </a>
+    <a href="wallet.html" data-page="wallet">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span>
+      <span class="nav-label">Wallet</span>
+    </a>
+    <a href="profile.html" data-page="profile">
+      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span class="nav-label">Profile</span>
+    </a>
+  </nav>
 
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import {
-      collection, query, where, orderBy, getDocs
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Navbar update
+    (function() {
+      const f = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      document.querySelectorAll('.bottom-nav a').forEach(a => {
+        if (a.dataset.page === 'home') a.classList.add('active');
+      });
+    })();
+
     onAuthStateChanged(auth, (user) => {
-      const nav = document.getElementById("navLinks");
       if (user) {
-        nav.innerHTML = `
-          <a href="dashboard.html">Dashboard</a>
-          <a href="wallet.html">Wallet</a>
-          <a href="#" id="logoutBtn">Logout</a>
-        `;
-        document.getElementById("logoutBtn").onclick = async (e) => {
-          e.preventDefault();
+        document.getElementById("logoutBtn").style.display = "flex";
+        document.getElementById("loginBtnTop").style.display = "none";
+        document.getElementById("logoutBtn").onclick = async () => {
+          if (!confirm("লগআউট করতে চান?")) return;
           await signOut(auth);
           location.reload();
         };
       }
     });
 
-    // Load Notice
     async function loadNotice() {
-      const area = document.getElementById("noticeArea");
       try {
-        const q = query(
-          collection(db, "notices"),
-          where("active", "==", true),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "notices"), where("active", "==", true));
         const snap = await getDocs(q);
-        if (snap.empty) { area.innerHTML = ""; return; }
-        const n = snap.docs[0].data();
-        area.innerHTML = `
+        if (snap.empty) return;
+        const n = snap.docs.map(d => d.data()).sort((a, b) =>
+          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
+        )[0];
+        document.getElementById("noticeArea").innerHTML = `
           <div class="notice">
             <h3>📢 ${n.title}</h3>
             <p>${n.message}</p>
           </div>
         `;
-      } catch (e) { area.innerHTML = ""; }
+      } catch (e) {}
     }
 
-    // Load Tasks
     async function loadTasks() {
       const list = document.getElementById("taskList");
       try {
-        const q = query(
-          collection(db, "tasks"),
-          where("active", "==", true),
-          orderBy("createdAt", "desc")
-        );
+        const q = query(collection(db, "tasks"), where("active", "==", true));
         const snap = await getDocs(q);
         if (snap.empty) {
-          list.innerHTML = `<div class="card" style="text-align:center; color:#666">
-            এখনো কোনো task নেই।
-          </div>`;
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো task নেই</p></div>`;
           return;
         }
-        list.innerHTML = snap.docs.map(d => {
-          const t = d.data();
+        const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+        list.innerHTML = tasks.map((t, i) => {
+          const isFB = /facebook|fb/i.test(t.title || "");
+          const cls = isFB ? "task-card-logo" : "task-card-logo default";
+          const txt = isFB ? "f" : (t.title || "T").charAt(0).toUpperCase();
           return `
-            <div class="task-card">
-              <h3>${t.title}</h3>
-              <span class="price">৳${t.pricePerAccount} / account</span>
-              <p>${t.description || ""}</p>
-              <button onclick="location.href='task.html?id=${d.id}'">Submit Now</button>
+            <div class="task-card" style="animation-delay:${i * 0.05}s">
+              <div class="${cls}">${txt}</div>
+              <div class="task-card-body">
+                <h3>${t.title}</h3>
+                <span class="price">৳${t.pricePerAccount}/account</span>
+                <p>${t.description || "Submit করুন এবং আয় করুন"}</p>
+                <a href="task.html?id=${t.id}" class="dash-task-btn">Submit Now →</a>
+              </div>
             </div>
           `;
         }).join("");
       } catch (e) {
-        list.innerHTML = `<div class="card" style="color:red">Error: ${e.message}</div>`;
+        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">${e.message}</p></div>`;
       }
     }
 
