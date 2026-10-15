@@ -4,7 +4,141 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
+  <style>
+    .platform-picker {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+    }
+    .platform-picker::-webkit-scrollbar { display: none; }
+    .platform-opt {
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: 0.25s;
+    }
+    .platform-opt.active {
+      border-color: #6366f1;
+      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+      color: #4f46e5;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+    }
+    .platform-opt .ic { font-size: 16px; }
+
+    .field-builder {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px dashed #cbd5e1;
+    }
+    .field-builder-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      background: white;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    .field-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: #6366f1;
+    }
+    .field-row label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+      min-width: 70px;
+      margin: 0;
+    }
+    .field-row input[type="text"] {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 12px;
+      margin: 0;
+      background: white;
+    }
+    .field-row input[type="text"]:focus {
+      border-color: #6366f1;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+
+    /* Report Card */
+    .report-card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      border-left: 4px solid #6366f1;
+    }
+    .report-card.published { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 25%); }
+    .report-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 10px;
+    }
+    .report-head h4 { font-size: 15px; color: #0f172a; font-weight: 700; }
+    .report-date { font-size: 11px; color: #94a3b8; }
+    .report-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .report-stat {
+      background: #f8fafc;
+      padding: 10px 6px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .report-stat .v { font-size: 16px; font-weight: 800; font-family: 'Inter'; }
+    .report-stat .l { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .report-stat.g .v { color: #10b981; }
+    .report-stat.b .v { color: #ef4444; }
+    .report-stat.t .v { color: #f59e0b; }
+
+    /* Badge */
+    .pub-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pub-badge.pub { background: #d1fae5; color: #065f46; }
+    .pub-badge.draft { background: #fef3c7; color: #92400e; }
+  </style>
 </head>
 <body>
 
@@ -22,45 +156,131 @@
     <div class="tabs">
       <button id="tabTask" class="active">📋 Tasks</button>
       <button id="tabNotice">📢 Notice</button>
+      <button id="tabReport">📊 Reports</button>
       <button id="tabResult">✅ Result</button>
     </div>
 
-    <!-- TASK SECTION -->
+    <!-- ============ TASK SECTION ============ -->
     <div id="taskSection">
       <div class="admin-form-card">
         <h3>➕ নতুন Task যোগ করুন</h3>
-        <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title (e.g. Facebook ID Submit)">
-        <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description"></textarea>
+
+        <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title">
+        <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description (optional)"></textarea>
+
+        <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 8px">Platform</label>
+        <div class="platform-picker" id="platformPicker">
+          <div class="platform-opt active" data-platform="Facebook"><span class="ic">📘</span> Facebook</div>
+          <div class="platform-opt" data-platform="Twitter"><span class="ic">🐦</span> Twitter</div>
+          <div class="platform-opt" data-platform="Instagram"><span class="ic">📷</span> Instagram</div>
+          <div class="platform-opt" data-platform="LinkedIn"><span class="ic">💼</span> LinkedIn</div>
+          <div class="platform-opt" data-platform="TikTok"><span class="ic">🎵</span> TikTok</div>
+          <div class="platform-opt" data-platform="Gmail"><span class="ic">📧</span> Gmail</div>
+          <div class="platform-opt" data-platform="WhatsApp"><span class="ic">💬</span> WhatsApp</div>
+          <div class="platform-opt" data-platform="Other"><span class="ic">🔗</span> Other</div>
+        </div>
+
         <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
+
+        <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 8px">Deadline</label>
+        <input type="datetime-local" id="taskDeadline" class="admin-input">
+
+        <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 8px">Task Rules (optional)</label>
+        <textarea id="taskRules" class="admin-input admin-textarea" placeholder="Task এর নিয়ম লিখো..."></textarea>
+
+        <div class="field-builder">
+          <div class="field-builder-title">⚙️ Required Fields (কোন data user দেবে)</div>
+
+          <div class="field-row">
+            <input type="checkbox" id="fUid" checked>
+            <label for="fUid">UID</label>
+            <input type="text" id="fUidLabel" placeholder="Label (e.g. Facebook UID)" value="Facebook UID">
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="fPass" checked>
+            <label for="fPass">Password</label>
+            <input type="text" id="fPassLabel" placeholder="Label" value="Password">
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="f2fa" checked>
+            <label for="f2fa">2FA Key</label>
+            <input type="text" id="f2faLabel" placeholder="Label" value="2FA Key">
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="fEmail">
+            <label for="fEmail">Email</label>
+            <input type="text" id="fEmailLabel" placeholder="Label" value="Email">
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="fOtp">
+            <label for="fOtp">OTP Code</label>
+            <input type="text" id="fOtpLabel" placeholder="Label" value="OTP Code">
+          </div>
+
+          <div class="field-row">
+            <input type="checkbox" id="fCustom">
+            <label for="fCustom">Custom</label>
+            <input type="text" id="fCustomLabel" placeholder="Custom field name">
+          </div>
+        </div>
+
         <button class="btn btn-success btn-full" id="addTaskBtn">Add Task</button>
       </div>
+
       <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
       <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
-    <!-- NOTICE SECTION -->
+    <!-- ============ NOTICE SECTION ============ -->
     <div id="noticeSection" style="display:none">
       <div class="admin-form-card">
-        <h3>📢 Notice পোস্ট করুন</h3>
+        <h3>📢 Global Notice</h3>
         <input type="text" id="noticeTitle" class="admin-input" placeholder="Notice Title">
         <textarea id="noticeMsg" class="admin-input admin-textarea" placeholder="Notice Message"></textarea>
-        <button class="btn btn-success btn-full" id="addNoticeBtn">Publish Notice</button>
+        <button class="btn btn-success btn-full" id="addNoticeBtn">Publish</button>
       </div>
       <h3 style="margin:16px 0 12px">📢 Active Notices</h3>
       <div id="noticeList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
-    <!-- RESULT SECTION -->
+    <!-- ============ REPORT SECTION ============ -->
+    <div id="reportSection" style="display:none">
+      <div class="admin-form-card">
+        <h3>📊 Daily Report Generate</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">
+          প্রতিদিনের submission-এর result publish করো — user রা দেখতে পারবে।
+        </p>
+
+        <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:10px 0 8px">Task Select</label>
+        <select id="reportTask" class="admin-input"></select>
+
+        <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 8px">Report Date</label>
+        <input type="date" id="reportDate" class="admin-input">
+
+        <button class="btn btn-orange btn-full" id="generateReportBtn">📊 Generate Report</button>
+      </div>
+
+      <h3 style="margin:16px 0 12px">📊 Published Reports</h3>
+      <div id="reportList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    </div>
+
+    <!-- ============ RESULT SECTION ============ -->
     <div id="resultSection" style="display:none">
       <div class="admin-form-card">
-        <h3>✅ Result Process করুন</h3>
+        <h3>✅ Result Process</h3>
         <select id="resultTask" class="admin-input"></select>
+
         <div class="bulk-hint">
-          <b>Bad UID list</b> paste করুন (প্রতি লাইনে একটা)
+          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)
         </div>
         <textarea id="badUids" class="admin-input admin-textarea bulk-textarea" placeholder="100005
 100012
 100045"></textarea>
+
         <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
       </div>
       <div id="resultOutput"></div>
@@ -87,7 +307,7 @@
     };
 
     // Tabs
-    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabResult: "resultSection" };
+    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabReport: "reportSection", tabResult: "resultSection" };
     Object.keys(tabs).forEach(tabId => {
       document.getElementById(tabId).onclick = () => {
         Object.keys(tabs).forEach(t => {
@@ -96,6 +316,16 @@
         });
         document.getElementById(tabId).classList.add("active");
         document.getElementById(tabs[tabId]).style.display = "block";
+      };
+    });
+
+    // Platform picker
+    let selectedPlatform = "Facebook";
+    document.querySelectorAll(".platform-opt").forEach(opt => {
+      opt.onclick = () => {
+        document.querySelectorAll(".platform-opt").forEach(o => o.classList.remove("active"));
+        opt.classList.add("active");
+        selectedPlatform = opt.dataset.platform;
       };
     });
 
@@ -112,7 +342,8 @@
       }
       loadTasks();
       loadNotices();
-      loadResultTaskDropdown();
+      loadReports();
+      loadDropdowns();
     });
 
     // ===== ADD TASK =====
@@ -120,20 +351,52 @@
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
       const pricePerAccount = parseFloat(document.getElementById("taskPrice").value);
+      const deadlineVal = document.getElementById("taskDeadline").value;
+      const rules = document.getElementById("taskRules").value.trim();
       const btn = document.getElementById("addTaskBtn");
 
       if (!title || !pricePerAccount) return alert("Title & Price দিন!");
+
+      // Collect fields
+      const fields = [];
+      const fieldConfig = [
+        { check: "fUid", label: "fUidLabel", key: "uid" },
+        { check: "fPass", label: "fPassLabel", key: "password" },
+        { check: "f2fa", label: "f2faLabel", key: "twoFA" },
+        { check: "fEmail", label: "fEmailLabel", key: "email" },
+        { check: "fOtp", label: "fOtpLabel", key: "otp" },
+        { check: "fCustom", label: "fCustomLabel", key: "custom" }
+      ];
+
+      for (const f of fieldConfig) {
+        if (document.getElementById(f.check).checked) {
+          const label = document.getElementById(f.label).value.trim() || f.key;
+          fields.push({ key: f.key, label });
+        }
+      }
+
+      if (fields.length === 0) return alert("কমপক্ষে একটা field select করো!");
+
       btn.disabled = true; btn.textContent = "Adding...";
 
       try {
         await addDoc(collection(db, "tasks"), {
-          title, description, pricePerAccount, active: true, createdAt: new Date()
+          title, description, pricePerAccount,
+          platform: selectedPlatform,
+          fields,
+          rules,
+          deadline: deadlineVal ? new Date(deadlineVal) : null,
+          active: true,
+          createdAt: new Date()
         });
         alert("✅ Task added!");
         document.getElementById("taskTitle").value = "";
         document.getElementById("taskDesc").value = "";
         document.getElementById("taskPrice").value = "";
+        document.getElementById("taskDeadline").value = "";
+        document.getElementById("taskRules").value = "";
         loadTasks();
+        loadDropdowns();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "Add Task";
     };
@@ -150,17 +413,35 @@
       const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
 
-      list.innerHTML = tasks.map(t => `
-        <div class="task-card">
-          <div class="task-card-logo default">${(t.title || "T").charAt(0).toUpperCase()}</div>
-          <div class="task-card-body">
-            <h3>${t.title}</h3>
-            <span class="price">৳${t.pricePerAccount}/account</span>
-            <p>${t.description || ""}</p>
-            <button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
+      const platformIcons = {
+        Facebook: "📘", Twitter: "🐦", Instagram: "📷",
+        LinkedIn: "💼", TikTok: "🎵", Gmail: "📧",
+        WhatsApp: "💬", Other: "🔗"
+      };
+
+      list.innerHTML = tasks.map(t => {
+        const ic = platformIcons[t.platform] || "🔗";
+        const fieldCount = (t.fields || []).length;
+        const deadlineStr = t.deadline?.toDate?.().toLocaleString("bn-BD", {
+          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+        }) || "No deadline";
+
+        return `
+          <div class="task-card">
+            <div class="task-card-logo default">${ic}</div>
+            <div class="task-card-body">
+              <h3>${t.title}</h3>
+              <span class="price">৳${t.pricePerAccount}/account</span>
+              <p style="font-size:12px;color:#64748b;margin-top:6px">
+                🌐 ${t.platform || "Other"} • 📝 ${fieldCount} fields • ⏰ ${deadlineStr}
+              </p>
+              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;margin:0" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
+              </div>
+            </div>
           </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
     }
 
     window.deleteTask = async (id) => {
@@ -169,11 +450,11 @@
       loadTasks();
     };
 
-    // ===== ADD NOTICE =====
+    // ===== NOTICE =====
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
-      if (!title || !message) return alert("সব ঘর পূরণ করুন!");
+      if (!title || !message) return alert("সব ঘর পূরণ করো!");
 
       try {
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
@@ -216,23 +497,115 @@
       loadNotices();
     };
 
-    // ===== RESULT PROCESS =====
-    async function loadResultTaskDropdown() {
-      const sel = document.getElementById("resultTask");
+    // ===== REPORT =====
+    async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
-      sel.innerHTML = '<option value="">-- Task Select --</option>' +
+      const opts = '<option value="">-- Task Select --</option>' +
         snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
+      document.getElementById("resultTask").innerHTML = opts;
+      document.getElementById("reportTask").innerHTML = opts;
     }
 
+    document.getElementById("generateReportBtn").onclick = async () => {
+      const taskId = document.getElementById("reportTask").value;
+      const dateVal = document.getElementById("reportDate").value;
+      const btn = document.getElementById("generateReportBtn");
+
+      if (!taskId) return alert("Task select করো!");
+      if (!dateVal) return alert("Date select করো!");
+
+      btn.disabled = true; btn.textContent = "Generating...";
+
+      try {
+        const taskSnap = await getDoc(doc(db, "tasks", taskId));
+        const task = taskSnap.data();
+
+        // Get all submissions of this task
+        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const snap = await getDocs(q);
+
+        // Filter by date
+        const reportDate = new Date(dateVal);
+        const reportDateStr = reportDate.toDateString();
+
+        let goodCount = 0, badCount = 0, pendingCount = 0;
+        let totalEarned = 0;
+
+        snap.forEach(d => {
+          const s = d.data();
+          const sDate = s.submittedAt?.toDate?.();
+          if (!sDate) return;
+          if (sDate.toDateString() !== reportDateStr) return;
+
+          if (s.status === "good") { goodCount++; totalEarned += s.price || 0; }
+          else if (s.status === "bad") badCount++;
+          else pendingCount++;
+        });
+
+        await addDoc(collection(db, "reports"), {
+          taskId, taskTitle: task.title,
+          platform: task.platform,
+          pricePerAccount: task.pricePerAccount,
+          date: dateVal,
+          goodCount, badCount, pendingCount,
+          totalEarned,
+          totalSubmissions: goodCount + badCount + pendingCount,
+          publishedAt: new Date()
+        });
+
+        alert("✅ Report published!");
+        loadReports();
+        document.getElementById("reportDate").value = "";
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "📊 Generate Report";
+    };
+
+    async function loadReports() {
+      const list = document.getElementById("reportList");
+      const q = query(collection(db, "reports"));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        list.innerHTML = `<div class="dash-empty"><div class="em">📊</div><p>এখনো কোনো report publish হয়নি</p></div>`;
+        return;
+      }
+      const reports = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.publishedAt?.toMillis?.() || 0) - (a.publishedAt?.toMillis?.() || 0));
+
+      list.innerHTML = reports.map(r => {
+        const dateStr = r.date ? new Date(r.date).toLocaleDateString("bn-BD", { day: "numeric", month: "long", year: "numeric" }) : "";
+        return `
+          <div class="report-card published">
+            <div class="report-head">
+              <div>
+                <h4>${r.taskTitle}</h4>
+                <div class="report-date">📅 ${dateStr}</div>
+              </div>
+              <span class="pub-badge pub">PUBLISHED</span>
+            </div>
+            <div class="report-stats">
+              <div class="report-stat g"><div class="v">${r.goodCount || 0}</div><div class="l">Good</div></div>
+              <div class="report-stat b"><div class="v">${r.badCount || 0}</div><div class="l">Bad</div></div>
+              <div class="report-stat t"><div class="v">${r.pendingCount || 0}</div><div class="l">Pending</div></div>
+            </div>
+            <p style="font-size:13px;color:#64748b;margin-top:8px">
+              💰 Total Earned: <b style="color:#10b981">৳${r.totalEarned || 0}</b> • 📊 Total: ${r.totalSubmissions || 0}
+            </p>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // ===== RESULT PROCESS =====
     document.getElementById("processBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       const badText = document.getElementById("badUids").value.trim();
       const btn = document.getElementById("processBtn");
       const output = document.getElementById("resultOutput");
 
-      if (!taskId) return alert("Task select করুন!");
-      if (!badText) return alert("Bad UID list paste করুন!");
+      if (!taskId) return alert("Task select করো!");
+      if (!badText) return alert("Bad UID list paste করো!");
 
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       btn.disabled = true; btn.textContent = "Processing...";
