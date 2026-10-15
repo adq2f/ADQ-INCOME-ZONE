@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .card { max-width: 400px; width: 100%; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1 style="text-align:center">📝 Sign Up</h1>
+    <input type="text" id="username" placeholder="Username">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password (min 6)">
+    <button class="btn-full" id="signupBtn">Create Account</button>
+    <p style="text-align:center; margin-top:14px; color:#666">
+      Already have account? <a href="login.html" style="color:#667eea">Login</a>
+    </p>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    document.getElementById("signupBtn").onclick = async () => {
+      const username = document.getElementById("username").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const btn = document.getElementById("signupBtn");
+
+      if (!username || !email || !password) return alert("সব ঘর পূরণ করো!");
+      if (password.length < 6) return alert("Password কমপক্ষে ৬ অক্ষর!");
+
+      btn.disabled = true; btn.textContent = "Creating...";
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          username, email, role: "user",
+          balance: 0, totalGood: 0, totalBad: 0, totalPending: 0,
+          createdAt: new Date()
+        });
+        alert("✅ Account তৈরি হয়েছে!");
+        location.href = "dashboard.html";
+      } catch (e) {
+        alert("❌ " + e.message);
+        btn.disabled = false; btn.textContent = "Create Account";
+      }
+    }
+  </script>
+</body>
+</html>
