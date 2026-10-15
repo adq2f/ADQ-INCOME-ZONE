@@ -4,7 +4,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>সাবমিট — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
+  <style>
+    .task-info-header {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 22px;
+      border-radius: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 12px 32px rgba(99,102,241,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .task-info-header::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -30%;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.15), transparent);
+      border-radius: 50%;
+    }
+    .task-info-header h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      position: relative;
+    }
+    .task-info-header .platform-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .task-info-header .price-big {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'Inter';
+      position: relative;
+    }
+    .task-info-header .deadline-info {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 8px;
+      position: relative;
+    }
+    .rules-box {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border-left: 4px solid #f59e0b;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #78350f;
+      line-height: 1.6;
+    }
+    .rules-box b { color: #92400e; }
+  </style>
 </head>
 <body>
 
@@ -21,28 +79,22 @@
   <div class="container">
     <div id="taskInfo" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
 
-    <div class="tabs">
-      <button id="tabSingle" class="active">📝 Single Submit</button>
-      <button id="tabBulk">📋 Bulk Submit</button>
-    </div>
-
-    <div id="singleSection" class="card">
-      <h3>Submit One Account</h3>
-      <input type="text" id="uid" class="admin-input" placeholder="Facebook UID">
-      <input type="text" id="password" class="admin-input" placeholder="Password">
-      <input type="text" id="twoFA" class="admin-input" placeholder="2FA Key">
-      <button class="btn btn-success btn-full" id="singleSubmitBtn">✅ Submit</button>
-    </div>
-
-    <div id="bulkSection" class="card" style="display:none">
-      <h3>Bulk Submit</h3>
-      <div class="bulk-hint">
-        Format: <b>UID | Password | 2FA</b> (প্রতি লাইনে একটা)<br>
-        Google Sheet থেকে সরাসরি copy-paste করতে পারো
+    <div id="singleSection" style="display:none">
+      <div class="admin-form-card">
+        <h3>📝 Single Submit</h3>
+        <div id="dynamicFields"></div>
+        <button class="btn btn-success btn-full" id="singleSubmitBtn">✅ Submit</button>
       </div>
-      <textarea id="bulkInput" class="bulk-textarea" placeholder="100001	pass123	2FAKEY1
-100002	pass456	2FAKEY2"></textarea>
-      <div id="bulkCount" class="bulk-count">📊 Detected: 0 accounts</div>
+    </div>
+
+    <div class="admin-form-card" style="margin-top:16px" id="bulkSection">
+      <h3>📋 Bulk Submit</h3>
+      <div class="bulk-hint">
+        <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
+        (প্রতি লাইনে একটা) — Google Sheet থেকে copy-paste
+      </div>
+      <textarea id="bulkInput" class="bulk-textarea" placeholder="Loading..."></textarea>
+      <div id="bulkCount" class="bulk-count">📊 Detected: 0</div>
       <button class="btn btn-success btn-full" id="bulkSubmitBtn">🚀 Submit All</button>
     </div>
   </div>
@@ -60,12 +112,6 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, addDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    (function() {
-      document.querySelectorAll('.bottom-nav a').forEach(a => {
-        if (a.dataset.page === 'submit') a.classList.add('active');
-      });
-    })();
-
     const params = new URLSearchParams(location.search);
     const taskId = params.get("id");
     let task = null, currentUser = null;
@@ -74,19 +120,6 @@
       if (!confirm("লগআউট?")) return;
       await signOut(auth);
       location.href = "index.html";
-    };
-
-    document.getElementById("tabSingle").onclick = () => {
-      document.getElementById("singleSection").style.display = "block";
-      document.getElementById("bulkSection").style.display = "none";
-      document.getElementById("tabSingle").classList.add("active");
-      document.getElementById("tabBulk").classList.remove("active");
-    };
-    document.getElementById("tabBulk").onclick = () => {
-      document.getElementById("singleSection").style.display = "none";
-      document.getElementById("bulkSection").style.display = "block";
-      document.getElementById("tabBulk").classList.add("active");
-      document.getElementById("tabSingle").classList.remove("active");
     };
 
     onAuthStateChanged(auth, async (user) => {
@@ -102,29 +135,76 @@
         return;
       }
       task = snap.data();
-      const isFB = /facebook|fb/i.test(task.title || "");
-      const cls = isFB ? "task-card-logo" : "task-card-logo default";
-      const txt = isFB ? "f" : (task.title || "T").charAt(0).toUpperCase();
+
+      // Platform icons
+      const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
+      const pIcon = icons[task.platform] || "🔗";
+
+      // Deadline check
+      let deadlineStr = "";
+      let expired = false;
+      if (task.deadline?.toDate) {
+        const d = task.deadline.toDate();
+        deadlineStr = "⏰ Deadline: " + d.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        if (d < new Date()) expired = true;
+      }
+
       document.getElementById("taskInfo").innerHTML = `
-        <div class="task-card" style="margin-bottom:16px">
-          <div class="${cls}">${txt}</div>
-          <div class="task-card-body">
-            <h3>${task.title}</h3>
-            <span class="price">৳${task.pricePerAccount}/account</span>
-            <p>${task.description || ""}</p>
-          </div>
+        <div class="task-info-header">
+          <div class="platform-tag">${pIcon} ${task.platform || "Task"}</div>
+          <h2>${task.title}</h2>
+          <div class="price-big">৳${task.pricePerAccount} <span style="font-size:13px;font-weight:500">/ account</span></div>
+          ${deadlineStr ? `<div class="deadline-info">${deadlineStr} ${expired ? '❌ (Expired)' : ''}</div>` : ''}
         </div>
+        ${task.rules ? `<div class="rules-box"><b>📋 Rules:</b><br>${task.rules}</div>` : ''}
       `;
+
+      if (expired) {
+        document.getElementById("singleSection").style.display = "none";
+        document.getElementById("bulkSection").style.display = "none";
+        return;
+      }
+
+      // Build dynamic fields
+      const fields = task.fields || [
+        { key: "uid", label: "UID" },
+        { key: "password", label: "Password" },
+        { key: "twoFA", label: "2FA Key" }
+      ];
+
+      document.getElementById("dynamicFields").innerHTML = fields.map(f => `
+        <input type="text" id="dyn_${f.key}" class="admin-input" placeholder="${f.label}">
+      `).join("");
+
+      // Show single section
+      document.getElementById("singleSection").style.display = "block";
+
+      // Update bulk hint
+      document.getElementById("bulkFormatHint").textContent = fields.map(f => f.label).join(" | ");
+      document.getElementById("bulkInput").placeholder = fields.map((f, i) =>
+        `value${i+1}_for_${f.label.replace(/\s/g, "_")}`
+      ).join("\t");
     });
 
+    // Parse bulk based on task fields
     function parseBulk(text) {
+      if (!task) return [];
+      const fields = task.fields || [
+        { key: "uid", label: "UID" },
+        { key: "password", label: "Password" },
+        { key: "twoFA", label: "2FA Key" }
+      ];
+      const fieldCount = fields.length;
       const lines = text.trim().split("\n");
       const result = [];
+
       for (const line of lines) {
         if (!line.trim()) continue;
         const parts = line.split(/[\t,|]+|\s{2,}/).map(p => p.trim()).filter(Boolean);
-        if (parts.length >= 3) {
-          result.push({ uid: parts[0], password: parts[1], twoFA: parts[2] });
+        if (parts.length >= fieldCount) {
+          const item = {};
+          fields.forEach((f, i) => { item[f.key] = parts[i] || ""; });
+          result.push(item);
         }
       }
       return result;
@@ -135,20 +215,30 @@
       document.getElementById("bulkCount").textContent = `📊 Detected: ${items.length} accounts`;
     });
 
+    // SINGLE SUBMIT
     document.getElementById("singleSubmitBtn").onclick = async () => {
-      const uid = document.getElementById("uid").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const twoFA = document.getElementById("twoFA").value.trim();
+      if (!task) return;
+      const fields = task.fields || [
+        { key: "uid", label: "UID" },
+        { key: "password", label: "Password" },
+        { key: "twoFA", label: "2FA Key" }
+      ];
+
+      const submission = {};
+      for (const f of fields) {
+        const val = document.getElementById(`dyn_${f.key}`).value.trim();
+        if (!val) return alert(`${f.label} দাও!`);
+        submission[f.key] = val;
+      }
+
       const btn = document.getElementById("singleSubmitBtn");
-
-      if (!uid || !password || !twoFA) return alert("সব ঘর পূরণ করুন!");
-      if (!task) return alert("Task load হয়নি!");
-
       btn.disabled = true; btn.textContent = "Submitting...";
+
       try {
         await addDoc(collection(db, "submissions"), {
-          taskId, taskTitle: task.title, userId: currentUser.uid,
-          uid, password, twoFA,
+          taskId, taskTitle: task.title, taskPlatform: task.platform,
+          userId: currentUser.uid,
+          ...submission,
           status: "pending", price: task.pricePerAccount, earned: 0,
           submittedAt: new Date(), checkedAt: null
         });
@@ -156,21 +246,20 @@
           totalPending: increment(1)
         });
         alert("✅ Submit সফল! Status: ⏳ Pending");
-        document.getElementById("uid").value = "";
-        document.getElementById("password").value = "";
-        document.getElementById("twoFA").value = "";
+        fields.forEach(f => { document.getElementById(`dyn_${f.key}`).value = ""; });
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "✅ Submit";
     };
 
+    // BULK SUBMIT
     document.getElementById("bulkSubmitBtn").onclick = async () => {
+      if (!task) return;
       const text = document.getElementById("bulkInput").value;
       const items = parseBulk(text);
       const btn = document.getElementById("bulkSubmitBtn");
 
       if (items.length === 0) return alert("কোনো account পাওয়া যায়নি!");
       if (items.length > 500) return alert("সর্বোচ্চ ৫০০ account!");
-      if (!task) return alert("Task load হয়নি!");
       if (!confirm(`${items.length} টা account submit করবে?`)) return;
 
       btn.disabled = true; btn.textContent = `Submitting ${items.length}...`;
@@ -178,8 +267,9 @@
       try {
         for (const item of items) {
           await addDoc(collection(db, "submissions"), {
-            taskId, taskTitle: task.title, userId: currentUser.uid,
-            uid: item.uid, password: item.password, twoFA: item.twoFA,
+            taskId, taskTitle: task.title, taskPlatform: task.platform,
+            userId: currentUser.uid,
+            ...item,
             status: "pending", price: task.pricePerAccount, earned: 0,
             submittedAt: new Date(), checkedAt: null
           });
