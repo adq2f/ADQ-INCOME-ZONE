@@ -3,17 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Admin — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
+
   <div class="navbar">
-    <h2>🛡️ Admin Panel</h2>
-    <div>
-      <a href="index.html">Home</a>
-      <a href="dashboard.html">Dashboard</a>
-      <a href="#" id="logoutBtn">Logout</a>
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>Admin Panel</span>
     </div>
+    <button class="nav-logout" id="logoutBtn" title="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
   </div>
 
   <div class="container">
@@ -25,68 +27,67 @@
 
     <!-- TASK SECTION -->
     <div id="taskSection">
-      <div class="card">
-        <h3>➕ Add New Task</h3>
-        <input type="text" id="taskTitle" placeholder="Task Title">
-        <textarea id="taskDesc" placeholder="Description"></textarea>
-        <input type="number" id="taskPrice" placeholder="Price per account (৳)" min="1">
-        <button class="btn-green btn-full" id="addTaskBtn">Add Task</button>
+      <div class="admin-form-card">
+        <h3>➕ নতুন Task যোগ করুন</h3>
+        <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title (e.g. Facebook ID Submit)">
+        <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description"></textarea>
+        <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
+        <button class="btn btn-success btn-full" id="addTaskBtn">Add Task</button>
       </div>
-
-      <h3 style="margin: 16px 0 12px;">📋 All Tasks</h3>
-      <div id="taskList" class="loading">Loading...</div>
+      <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
+      <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
     <!-- NOTICE SECTION -->
     <div id="noticeSection" style="display:none">
-      <div class="card">
-        <h3>📢 Post Notice</h3>
-        <input type="text" id="noticeTitle" placeholder="Notice Title">
-        <textarea id="noticeMsg" placeholder="Notice Message"></textarea>
-        <button class="btn-green btn-full" id="addNoticeBtn">Publish Notice</button>
+      <div class="admin-form-card">
+        <h3>📢 Notice পোস্ট করুন</h3>
+        <input type="text" id="noticeTitle" class="admin-input" placeholder="Notice Title">
+        <textarea id="noticeMsg" class="admin-input admin-textarea" placeholder="Notice Message"></textarea>
+        <button class="btn btn-success btn-full" id="addNoticeBtn">Publish Notice</button>
       </div>
-
-      <h3 style="margin: 16px 0 12px;">📢 Active Notices</h3>
-      <div id="noticeList" class="loading">Loading...</div>
+      <h3 style="margin:16px 0 12px">📢 Active Notices</h3>
+      <div id="noticeList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
     <!-- RESULT SECTION -->
     <div id="resultSection" style="display:none">
-      <div class="card">
-        <h3>✅ Upload Result (Bad UID List)</h3>
-        <select id="resultTask"></select>
-        <p style="font-size:13px; color:#666; margin:8px 0">
-          Bad UID list paste করো (প্রতি লাইনে একটা):
-        </p>
-        <textarea id="badUids" placeholder="100005
+      <div class="admin-form-card">
+        <h3>✅ Result Process করুন</h3>
+        <select id="resultTask" class="admin-input"></select>
+        <div class="bulk-hint">
+          <b>Bad UID list</b> paste করুন (প্রতি লাইনে একটা)
+        </div>
+        <textarea id="badUids" class="admin-input admin-textarea bulk-textarea" placeholder="100005
 100012
 100045"></textarea>
-        <button class="btn-orange btn-full" id="processBtn">🚀 Process Result</button>
+        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
       </div>
-
       <div id="resultOutput"></div>
     </div>
   </div>
 
+  <nav class="bottom-nav">
+    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
+    <a href="dashboard.html" data-page="dashboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  </nav>
+
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import {
-      doc, getDoc, collection, addDoc, updateDoc, query, where, getDocs, orderBy, limit
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, addDoc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    document.getElementById("logoutBtn").onclick = async (e) => {
-      e.preventDefault();
+    document.getElementById("logoutBtn").onclick = async () => {
+      if (!confirm("লগআউট?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
 
     // Tabs
-    const tabs = {
-      tabTask: "taskSection",
-      tabNotice: "noticeSection",
-      tabResult: "resultSection"
-    };
+    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabResult: "resultSection" };
     Object.keys(tabs).forEach(tabId => {
       document.getElementById(tabId).onclick = () => {
         Object.keys(tabs).forEach(t => {
@@ -100,37 +101,33 @@
 
     let currentUser = null;
 
-    // Auth + Admin check
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       currentUser = user;
-
       const snap = await getDoc(doc(db, "users", user.uid));
       if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ তুমি admin না!");
-        location.href = "index.html";
+        alert("❌ আপনি admin না!");
+        location.href = "dashboard.html";
         return;
       }
-
       loadTasks();
       loadNotices();
       loadResultTaskDropdown();
     });
 
-    // ============ TASK ============
+    // ===== ADD TASK =====
     document.getElementById("addTaskBtn").onclick = async () => {
       const title = document.getElementById("taskTitle").value.trim();
-      const desc = document.getElementById("taskDesc").value.trim();
-      const price = parseFloat(document.getElementById("taskPrice").value);
+      const description = document.getElementById("taskDesc").value.trim();
+      const pricePerAccount = parseFloat(document.getElementById("taskPrice").value);
       const btn = document.getElementById("addTaskBtn");
 
-      if (!title || !price) return alert("Title & Price দাও!");
+      if (!title || !pricePerAccount) return alert("Title & Price দিন!");
       btn.disabled = true; btn.textContent = "Adding...";
 
       try {
         await addDoc(collection(db, "tasks"), {
-          title, description: desc, pricePerAccount: price,
-          active: true, createdAt: new Date()
+          title, description, pricePerAccount, active: true, createdAt: new Date()
         });
         alert("✅ Task added!");
         document.getElementById("taskTitle").value = "";
@@ -143,24 +140,27 @@
 
     async function loadTasks() {
       const list = document.getElementById("taskList");
-      const q = query(collection(db, "tasks"), orderBy("createdAt", "desc"));
+      const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
 
       if (snap.empty) {
-        list.innerHTML = `<p style="color:#666">কোনো task নেই।</p>`;
+        list.innerHTML = `<div class="dash-empty"><p>কোনো task নেই</p></div>`;
         return;
       }
-      list.innerHTML = snap.docs.map(d => {
-        const t = d.data();
-        return `
-          <div class="task-card">
+      const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+      list.innerHTML = tasks.map(t => `
+        <div class="task-card">
+          <div class="task-card-logo default">${(t.title || "T").charAt(0).toUpperCase()}</div>
+          <div class="task-card-body">
             <h3>${t.title}</h3>
             <span class="price">৳${t.pricePerAccount}/account</span>
             <p>${t.description || ""}</p>
-            <button class="btn-red" onclick="deleteTask('${d.id}')">Delete</button>
+            <button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
           </div>
-        `;
-      }).join("");
+        </div>
+      `).join("");
     }
 
     window.deleteTask = async (id) => {
@@ -169,21 +169,18 @@
       loadTasks();
     };
 
-    // ============ NOTICE ============
+    // ===== ADD NOTICE =====
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
-
-      if (!title || !message) return alert("সব ঘর পূরণ করো!");
+      if (!title || !message) return alert("সব ঘর পূরণ করুন!");
 
       try {
-        // Deactivate old notices
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
         const oldSnap = await getDocs(oldQ);
         for (const d of oldSnap.docs) {
           await updateDoc(doc(db, "notices", d.id), { active: false });
         }
-
         await addDoc(collection(db, "notices"), {
           title, message, active: true, createdAt: new Date()
         });
@@ -198,9 +195,8 @@
       const list = document.getElementById("noticeList");
       const q = query(collection(db, "notices"), where("active", "==", true));
       const snap = await getDocs(q);
-
       if (snap.empty) {
-        list.innerHTML = `<p style="color:#666">কোনো notice নেই।</p>`;
+        list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`;
         return;
       }
       list.innerHTML = snap.docs.map(d => {
@@ -209,7 +205,7 @@
           <div class="notice">
             <h3>📢 ${n.title}</h3>
             <p>${n.message}</p>
-            <button class="btn-red" style="margin-top:8px" onclick="deleteNotice('${d.id}')">Delete</button>
+            <button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button>
           </div>
         `;
       }).join("");
@@ -220,7 +216,7 @@
       loadNotices();
     };
 
-    // ============ RESULT PROCESS ============
+    // ===== RESULT PROCESS =====
     async function loadResultTaskDropdown() {
       const sel = document.getElementById("resultTask");
       const q = query(collection(db, "tasks"), where("active", "==", true));
@@ -235,21 +231,16 @@
       const btn = document.getElementById("processBtn");
       const output = document.getElementById("resultOutput");
 
-      if (!taskId) return alert("Task select করো!");
-      if (!badText) return alert("Bad UID list paste করো!");
+      if (!taskId) return alert("Task select করুন!");
+      if (!badText) return alert("Bad UID list paste করুন!");
 
-      const badList = badText.split("\n").map(x => x.trim()).filter(Boolean);
-      const badSet = new Set(badList);
-
+      const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       btn.disabled = true; btn.textContent = "Processing...";
 
       try {
-        // Get task price
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
-        const task = taskSnap.data();
-        const price = task.pricePerAccount;
+        const price = taskSnap.data().pricePerAccount;
 
-        // Get all pending submissions of this task
         const q = query(
           collection(db, "submissions"),
           where("taskId", "==", taskId),
@@ -270,20 +261,11 @@
             checkedAt: new Date()
           });
 
-          if (!userUpdates[sub.userId]) {
-            userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
-          }
-          if (isBad) {
-            userUpdates[sub.userId].bad++;
-            badCount++;
-          } else {
-            userUpdates[sub.userId].good++;
-            userUpdates[sub.userId].earned += price;
-            goodCount++;
-          }
+          if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
+          if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
+          else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
         }
 
-        // Update users (balance, counts)
         for (const [userId, data] of Object.entries(userUpdates)) {
           const uRef = doc(db, "users", userId);
           const uSnap = await getDoc(uRef);
@@ -298,18 +280,16 @@
         }
 
         output.innerHTML = `
-          <div class="card">
+          <div class="result-box">
             <h3>✅ Result Processed!</h3>
-            <p>Total: ${snap.size}</p>
-            <p style="color:#16a34a">✅ Good: ${goodCount}</p>
-            <p style="color:#dc2626">❌ Bad: ${badCount}</p>
-            <p>💰 Total Added: ৳${goodCount * price}</p>
+            <p>Total Processed: <b>${snap.size}</b></p>
+            <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
+            <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
+            <p style="color:#f59e0b">💰 Total Added: <span class="big">৳${goodCount * price}</span></p>
           </div>
         `;
         document.getElementById("badUids").value = "";
-      } catch (e) {
-        alert("❌ " + e.message);
-      }
+      } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🚀 Process Result";
     };
   </script>
