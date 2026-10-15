@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ড্যাশবোর্ড — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -19,10 +19,9 @@
     </button>
   </div>
 
-  <!-- ============ MAIN CONTENT ============ -->
   <div class="container">
 
-    <!-- Welcome Card -->
+    <!-- ============ WELCOME ============ -->
     <div class="dash-welcome animate-in">
       <div class="avatar" id="avatar">U</div>
       <div style="min-width:0; flex:1">
@@ -31,7 +30,7 @@
       </div>
     </div>
 
-    <!-- Balance Box -->
+    <!-- ============ BALANCE ============ -->
     <div class="dash-balance">
       <div class="dash-balance-label">💰 আপনার ব্যালেন্স</div>
       <div class="dash-balance-amount" id="balance">৳0</div>
@@ -47,29 +46,28 @@
       </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="dash-stats">
-      <div class="dash-stat g">
-        <div class="ic">✅</div>
-        <div class="n" id="statGood">0</div>
-        <div class="l">Good</div>
-      </div>
-      <div class="dash-stat b">
-        <div class="ic">❌</div>
-        <div class="n" id="statBad">0</div>
-        <div class="l">Bad</div>
-      </div>
-      <div class="dash-stat p">
-        <div class="ic">⏳</div>
-        <div class="n" id="statPending">0</div>
-        <div class="l">Pending</div>
-      </div>
+    <!-- ============ QUICK SUMMARY ============ -->
+    <div class="dash-summary">
+      <a href="my-submissions.html" class="dash-summary-item clickable">
+        <span class="s-icon">📊</span>
+        <div>
+          <div class="s-value" id="totalSubs">0</div>
+          <div class="s-label">Total Subs</div>
+        </div>
+      </a>
+      <a href="wallet.html" class="dash-summary-item clickable">
+        <span class="s-icon">💰</span>
+        <div>
+          <div class="s-value" id="earnedTotal">৳0</div>
+          <div class="s-label">Total Earned</div>
+        </div>
+      </a>
     </div>
 
-    <!-- Notice Area -->
+    <!-- ============ NOTICE ============ -->
     <div id="noticeArea"></div>
 
-    <!-- Quick Actions -->
+    <!-- ============ QUICK ACTIONS ============ -->
     <div class="dash-section-head">
       <h3>⚡ Quick Actions</h3>
     </div>
@@ -100,23 +98,23 @@
       </a>
     </div>
 
-    <!-- Available Tasks -->
+    <!-- ============ TASKS ============ -->
     <div class="dash-section-head">
       <h3>🎯 Available Tasks</h3>
       <a href="index.html">সব দেখো →</a>
     </div>
     <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
 
-    <!-- Recent Submissions -->
+    <!-- ============ RECENT ============ -->
     <div class="dash-section-head">
-      <h3>📋 সাম্প্রতিক Submission</h3>
+      <h3>📋 সাম্প্রতিক Activity</h3>
       <a href="my-submissions.html">সব দেখো →</a>
     </div>
     <div id="recentList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
 
   </div>
 
-  <!-- ============ BOTTOM NAVIGATION ============ -->
+  <!-- ============ BOTTOM NAV ============ -->
   <nav class="bottom-nav">
     <a href="index.html" data-page="home">
       <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
@@ -140,13 +138,12 @@
     </a>
   </nav>
 
-  <!-- ============ SCRIPTS ============ -->
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ===== Auto-highlight bottom nav =====
+    // Auto-highlight bottom nav
     (function() {
       const f = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
       let p = 'home';
@@ -154,19 +151,19 @@
       else if (f === 'wallet.html') p = 'wallet';
       else if (f === 'profile.html') p = 'profile';
       else if (f === 'task.html') p = 'submit';
+      else if (f === 'my-submissions.html') p = 'dashboard';
       document.querySelectorAll('.bottom-nav a').forEach(a => {
         if (a.dataset.page === p) a.classList.add('active');
       });
     })();
 
-    // ===== Logout =====
+    // Logout
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট করতে চান?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
 
-    // ===== Load User Data =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
 
@@ -178,16 +175,24 @@
       document.getElementById("email").textContent = u.email || "";
       document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
       document.getElementById("balance").textContent = "৳" + (u.balance || 0);
-      document.getElementById("statGood").textContent = u.totalGood || 0;
-      document.getElementById("statBad").textContent = u.totalBad || 0;
-      document.getElementById("statPending").textContent = u.totalPending || 0;
+      document.getElementById("earnedTotal").textContent = "৳" + (u.balance || 0);
 
       loadNotice();
       loadTasks();
       loadRecent(user.uid);
+      loadTotalSubs(user.uid);
     });
 
-    // ===== Load Notice =====
+    async function loadTotalSubs(uid) {
+      try {
+        const q = query(collection(db, "submissions"), where("userId", "==", uid));
+        const snap = await getDocs(q);
+        document.getElementById("totalSubs").textContent = snap.size;
+      } catch (e) {
+        document.getElementById("totalSubs").textContent = "0";
+      }
+    }
+
     async function loadNotice() {
       try {
         const q = query(collection(db, "notices"), where("active", "==", true));
@@ -202,21 +207,18 @@
             <p>${n.message}</p>
           </div>
         `;
-      } catch (e) { console.log("Notice error:", e); }
+      } catch (e) {}
     }
 
-    // ===== Load Tasks =====
     async function loadTasks() {
       const list = document.getElementById("taskList");
       try {
         const q = query(collection(db, "tasks"), where("active", "==", true));
         const snap = await getDocs(q);
-
         if (snap.empty) {
           list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো task নেই</p></div>`;
           return;
         }
-
         const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
           .slice(0, 3);
@@ -243,18 +245,15 @@
       }
     }
 
-    // ===== Load Recent Submissions =====
     async function loadRecent(uid) {
       const list = document.getElementById("recentList");
       try {
         const q = query(collection(db, "submissions"), where("userId", "==", uid));
         const snap = await getDocs(q);
-
         if (snap.empty) {
           list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো submission নেই</p></div>`;
           return;
         }
-
         const subs = snap.docs.map(d => d.data())
           .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0))
           .slice(0, 5);
@@ -281,6 +280,5 @@
       }
     }
   </script>
-
 </body>
 </html>
