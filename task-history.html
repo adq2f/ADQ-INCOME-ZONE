@@ -4,7 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Task History — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=31">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    .task-group-card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.06);
+      border-left: 4px solid #6366f1;
+    }
+    .task-group-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .task-group-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 4px;
+    }
+    .task-group-meta {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+    .task-group-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tg-stat {
+      background: #f8fafc;
+      padding: 10px 6px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .tg-stat .v { font-size: 18px; font-weight: 800; font-family: 'Inter'; }
+    .tg-stat.good .v { color: #10b981; }
+    .tg-stat.bad .v { color: #ef4444; }
+    .tg-stat.pending .v { color: #f59e0b; }
+    .tg-stat .l {
+      font-size: 10px; color: #64748b;
+      font-weight: 700; text-transform: uppercase; margin-top: 2px;
+    }
+    .task-group-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .task-group-actions button {
+      flex: 1;
+      min-width: 130px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .btn-xlsx-submit {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
+    }
+    .btn-xlsx-result {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    .task-group-actions button:hover { transform: translateY(-1px); }
+    .task-group-actions button:disabled {
+      background: #cbd5e1;
+      color: white;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+  </style>
 </head>
 <body>
 
@@ -24,14 +108,13 @@
   <div class="container">
     <div class="card" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white">
       <h2 style="color: white; font-size: 18px; margin-bottom: 4px">📊 Task History</h2>
-      <p style="opacity: 0.9; font-size: 13px; margin: 0">শুধু তোমার submitted Task-এর status</p>
+      <p style="opacity: 0.9; font-size: 13px; margin: 0">Task অনুযায়ী submission এবং download</p>
     </div>
 
     <div class="tabs">
       <button class="active" data-filter="all">সব</button>
-      <button data-filter="pending">⏳ Pending</button>
-      <button data-filter="good">✅ Good</button>
-      <button data-filter="bad">❌ Bad</button>
+      <button data-filter="open">🟢 Open</button>
+      <button data-filter="processed">✅ Processed</button>
     </div>
 
     <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
@@ -48,9 +131,8 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Smart back
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
         history.back();
@@ -59,8 +141,10 @@
       }
     };
 
-    let allSubs = [];
+    let currentUser = null;
+    let allTaskGroups = [];
     let currentFilter = "all";
+    let taskCache = {};
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -70,53 +154,259 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
+      currentUser = user;
+      await loadHistory();
+    });
+
+    async function loadHistory() {
+      const list = document.getElementById("historyList");
       try {
-        const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
+        const q = query(collection(db, "submissions"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
-        allSubs = snap.docs.map(d => d.data())
-          .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+        const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        if (subs.length === 0) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো submission নেই</p></div>`;
+          return;
+        }
+
+        // Group by task
+        const groups = {};
+        subs.forEach(s => {
+          if (!groups[s.taskId]) {
+            groups[s.taskId] = {
+              taskId: s.taskId,
+              taskTitle: s.taskTitle || "Task",
+              taskPlatform: s.taskPlatform || "Other",
+              items: []
+            };
+          }
+          groups[s.taskId].items.push(s);
+        });
+
+        // Fetch task details (for fields + endTime)
+        for (const taskId of Object.keys(groups)) {
+          if (!taskCache[taskId]) {
+            try {
+              const tSnap = await getDoc(doc(db, "tasks", taskId));
+              if (tSnap.exists()) taskCache[taskId] = tSnap.data();
+            } catch (e) {}
+          }
+        }
+
+        allTaskGroups = Object.values(groups).map(g => {
+          const task = taskCache[g.taskId] || {};
+          const end = task.endTime?.toDate?.();
+          const now = new Date();
+          const isClosed = end && now > end;
+
+          const good = g.items.filter(i => i.status === "good").length;
+          const bad = g.items.filter(i => i.status === "bad").length;
+          const pending = g.items.filter(i => i.status === "pending").length;
+          const isProcessed = pending === 0 && g.items.length > 0;
+
+          return {
+            ...g,
+            isClosed,
+            isProcessed,
+            good,
+            bad,
+            pending,
+            task
+          };
+        }).sort((a, b) => {
+          // Sort: newest first
+          const aTime = Math.max(...a.items.map(i => i.submittedAt?.toMillis?.() || 0));
+          const bTime = Math.max(...b.items.map(i => i.submittedAt?.toMillis?.() || 0));
+          return bTime - aTime;
+        });
+
         renderHistory();
       } catch (e) {
-        document.getElementById("historyList").innerHTML = `<p style="color:red">${e.message}</p>`;
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
       }
-    });
+    }
 
     function renderHistory() {
       const list = document.getElementById("historyList");
-      const filtered = currentFilter === "all" ? allSubs : allSubs.filter(s => s.status === currentFilter);
+      let filtered = allTaskGroups;
+      if (currentFilter === "open") filtered = allTaskGroups.filter(g => !g.isProcessed);
+      else if (currentFilter === "processed") filtered = allTaskGroups.filter(g => g.isProcessed);
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো submission নেই</p></div>`;
+        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এই filter-এ কিছু নেই</p></div>`;
         return;
       }
 
-      // Group by task
-      const groups = {};
-      filtered.forEach(s => {
-        const key = s.taskId;
-        if (!groups[key]) groups[key] = { title: s.taskTitle, taskId: key, items: [] };
-        groups[key].items.push(s);
-      });
+      const platformIcons = {
+        Facebook: "📘", Twitter: "🐦", Instagram: "📷",
+        LinkedIn: "💼", TikTok: "🎵", Gmail: "📧",
+        WhatsApp: "💬", Other: "🔗"
+      };
 
-      list.innerHTML = Object.values(groups).map(g => {
-        const good = g.items.filter(i => i.status === "good").length;
-        const bad = g.items.filter(i => i.status === "bad").length;
-        const pending = g.items.filter(i => i.status === "pending").length;
+      list.innerHTML = filtered.map(g => {
+        const icon = platformIcons[g.taskPlatform] || "🔗";
+        const submitDisabled = !g.isClosed;
+        const resultDisabled = !g.isProcessed;
+
         return `
-          <div class="card" style="margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
-              <h3 style="font-size:15px;color:#0f172a;margin:0">🎯 ${g.title || "Task"}</h3>
-              <span style="font-size:12px;color:#64748b">${g.items.length} subs</span>
+          <div class="task-group-card">
+            <div class="task-group-head">
+              <div>
+                <div class="task-group-title">${icon} ${g.taskTitle}</div>
+                <div class="task-group-meta">📊 ${g.items.length} submissions • 🌐 ${g.taskPlatform}</div>
+              </div>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-              <div class="w-stat g"><div class="w-num">${good}</div><div class="w-label">Good</div></div>
-              <div class="w-stat b"><div class="w-num">${bad}</div><div class="w-label">Bad</div></div>
-              <div class="w-stat p"><div class="w-num">${pending}</div><div class="w-label">Pending</div></div>
+
+            <div class="task-group-stats">
+              <div class="tg-stat good"><div class="v">${g.good}</div><div class="l">Good</div></div>
+              <div class="tg-stat bad"><div class="v">${g.bad}</div><div class="l">Bad</div></div>
+              <div class="tg-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
+            </div>
+
+            <div class="task-group-actions">
+              <button class="btn-xlsx-submit" 
+                onclick="downloadSubmitXLSX('${g.taskId}')" 
+                ${submitDisabled ? 'disabled' : ''}
+                title="${submitDisabled ? 'Task closed হলে download পারবে' : ''}">
+                📊 My Submissions XLSX
+              </button>
+              <button class="btn-xlsx-result" 
+                onclick="downloadResultXLSX('${g.taskId}')" 
+                ${resultDisabled ? 'disabled' : ''}
+                title="${resultDisabled ? 'Result publish হলে download পারবে' : ''}">
+                📥 Result XLSX
+              </button>
             </div>
           </div>
         `;
       }).join("");
     }
+
+    // ✅ Download USER's own submitted data (task closed হলে)
+    window.downloadSubmitXLSX = function(taskId) {
+      if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
+      const group = allTaskGroups.find(g => g.taskId === taskId);
+      if (!group) return alert("Task পাওয়া যায়নি!");
+
+      const task = taskCache[taskId] || {};
+      const fields = task.fields || [
+        { key: "uid", label: "UID" },
+        { key: "password", label: "Password" },
+        { key: "2fa_key", label: "2FA Key" }
+      ];
+
+      const sheetData = group.items.map((s, idx) => {
+        const row = { "#": idx + 1 };
+        fields.forEach(f => {
+          let v = s[f.key];
+          if ((v === undefined || v === null || v === "") && f.label) {
+            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
+            for (const k of Object.keys(s)) {
+              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
+            }
+          }
+          row[f.label] = (v === undefined || v === null) ? "" : String(v);
+        });
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }) || "";
+        row["Status"] = s.status || "pending";
+        return row;
+      });
+
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "My Submissions");
+
+      const colWidths = [{ wch: 5 }];
+      fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
+      colWidths.push({ wch: 20 });
+      colWidths.push({ wch: 12 });
+      ws["!cols"] = colWidths;
+
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_my_submissions_${dateStr}.xlsx`);
+    };
+
+    // ✅ Download result with GOOD/BAD IDs (result published হলে)
+    window.downloadResultXLSX = function(taskId) {
+      if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
+      const group = allTaskGroups.find(g => g.taskId === taskId);
+      if (!group) return alert("Task পাওয়া যায়নি!");
+
+      const task = taskCache[taskId] || {};
+      const fields = task.fields || [
+        { key: "uid", label: "UID" }
+      ];
+
+      // GOOD + BAD only (pending নেই)
+      const goodItems = group.items.filter(i => i.status === "good");
+      const badItems = group.items.filter(i => i.status === "bad");
+
+      // First sheet: GOOD
+      const goodSheet = goodItems.map((s, idx) => {
+        const row = { "#": idx + 1 };
+        fields.forEach(f => {
+          let v = s[f.key];
+          if ((v === undefined || v === null || v === "") && f.label) {
+            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
+            for (const k of Object.keys(s)) {
+              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
+            }
+          }
+          row[f.label] = (v === undefined || v === null) ? "" : String(v);
+        });
+        row["Earned"] = "৳" + (s.price || 0);
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
+        return row;
+      });
+
+      // Second sheet: BAD
+      const badSheet = badItems.map((s, idx) => {
+        const row = { "#": idx + 1 };
+        fields.forEach(f => {
+          let v = s[f.key];
+          if ((v === undefined || v === null || v === "") && f.label) {
+            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
+            for (const k of Object.keys(s)) {
+              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
+            }
+          }
+          row[f.label] = (v === undefined || v === null) ? "" : String(v);
+        });
+        row["Earned"] = "৳0";
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
+        return row;
+      });
+
+      const wb = XLSX.utils.book_new();
+
+      // GOOD sheet
+      const wsGood = XLSX.utils.json_to_sheet(goodSheet.length ? goodSheet : [{ "No Data": "No good accounts" }]);
+      XLSX.utils.book_append_sheet(wb, wsGood, "GOOD Accounts");
+
+      // BAD sheet
+      const wsBad = XLSX.utils.json_to_sheet(badSheet.length ? badSheet : [{ "No Data": "No bad accounts" }]);
+      XLSX.utils.book_append_sheet(wb, wsBad, "BAD Accounts");
+
+      // Summary sheet
+      const totalEarned = goodItems.reduce((sum, s) => sum + (s.price || 0), 0);
+      const summary = [
+        { "Summary": "Total Submissions", "Value": group.items.length },
+        { "Summary": "✅ GOOD Accounts", "Value": goodItems.length },
+        { "Summary": "❌ BAD Accounts", "Value": badItems.length },
+        { "Summary": "💰 Total Earned", "Value": "৳" + totalEarned }
+      ];
+      const wsSummary = XLSX.utils.json_to_sheet(summary);
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+
+      const now = new Date();
+      const dateStr = now.toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
+    };
 
     document.querySelectorAll(".tabs button").forEach(tab => {
       tab.onclick = () => {
