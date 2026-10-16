@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Password Reset Request — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=13">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-box">
+      <div class="auth-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706)">🔐</div>
+      <h1 class="auth-title">Password Reset</h1>
+      <p class="auth-subtitle">Request দাও → Admin approve করবে → নতুন password পাবে</p>
+
+      <div class="alert alert-error" style="background:#fef3c7;color:#92400e;border-left-color:#f59e0b">
+        <div class="badge-icon" style="background:#f59e0b">!</div>
+        <div>⚠️ এই সাইটে Firebase-এর email link কাজ করে না। Admin তোমাকে সরাসরি password দেবে।</div>
+      </div>
+
+      <div class="field">
+        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <input type="text" id="reqUsername" placeholder="Username">
+      </div>
+
+      <div class="field">
+        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
+        <input type="email" id="reqEmail" placeholder="Registered Email">
+      </div>
+
+      <div class="field">
+        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+        <input type="text" id="reqContact" placeholder="তোমার WhatsApp/Telegram Number">
+      </div>
+
+      <textarea id="reqReason" class="admin-input" style="min-height:80px" placeholder="কারণ লিখো (optional)"></textarea>
+
+      <button class="btn btn-primary btn-full" id="submitReqBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 20px rgba(245,158,11,0.4); margin-top:12px">📩 Submit Reset Request</button>
+
+      <p class="switch-text"><a href="login.html">← Back to Login</a></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase.js";
+    import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    document.getElementById("submitReqBtn").onclick = async () => {
+      const username = document.getElementById("reqUsername").value.trim();
+      const email = document.getElementById("reqEmail").value.trim();
+      const contact = document.getElementById("reqContact").value.trim();
+      const reason = document.getElementById("reqReason").value.trim();
+      const btn = document.getElementById("submitReqBtn");
+
+      if (!username || !email || !contact) return alert("সব ঘর পূরণ করো!");
+
+      btn.disabled = true; btn.textContent = "Submitting...";
+
+      try {
+        // Check if already requested
+        const existing = await getDocs(query(
+          collection(db, "reset_requests"),
+          where("email", "==", email),
+          where("status", "==", "pending")
+        ));
+
+        if (!existing.empty) {
+          alert("⚠️ তোমার একটা pending request আছে! Admin approve করার অপেক্ষা করো।");
+          btn.disabled = false; btn.textContent = "📩 Submit Reset Request";
+          return;
+        }
+
+        await addDoc(collection(db, "reset_requests"), {
+          username, email, contact, reason,
+          status: "pending",
+          requestedAt: new Date()
+        });
+
+        alert("✅ Request submitted! Admin approve করলে তোমাকে জানানো হবে।");
+        location.href = "login.html";
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "📩 Submit Reset Request";
+    };
+  </script>
+</body>
+</html>
