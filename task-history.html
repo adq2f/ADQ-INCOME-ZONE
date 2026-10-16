@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Task History — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     .task-group-card {
@@ -123,7 +123,7 @@
   <nav class="bottom-nav">
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="task-history.html" data-page="history" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
@@ -170,7 +170,6 @@
           return;
         }
 
-        // Group by task
         const groups = {};
         subs.forEach(s => {
           if (!groups[s.taskId]) {
@@ -184,7 +183,6 @@
           groups[s.taskId].items.push(s);
         });
 
-        // Fetch task details (for fields + endTime)
         for (const taskId of Object.keys(groups)) {
           if (!taskCache[taskId]) {
             try {
@@ -199,23 +197,12 @@
           const end = task.endTime?.toDate?.();
           const now = new Date();
           const isClosed = end && now > end;
-
           const good = g.items.filter(i => i.status === "good").length;
           const bad = g.items.filter(i => i.status === "bad").length;
           const pending = g.items.filter(i => i.status === "pending").length;
           const isProcessed = pending === 0 && g.items.length > 0;
-
-          return {
-            ...g,
-            isClosed,
-            isProcessed,
-            good,
-            bad,
-            pending,
-            task
-          };
+          return { ...g, isClosed, isProcessed, good, bad, pending, task };
         }).sort((a, b) => {
-          // Sort: newest first
           const aTime = Math.max(...a.items.map(i => i.submittedAt?.toMillis?.() || 0));
           const bTime = Math.max(...b.items.map(i => i.submittedAt?.toMillis?.() || 0));
           return bTime - aTime;
@@ -248,7 +235,6 @@
         const icon = platformIcons[g.taskPlatform] || "🔗";
         const submitDisabled = !g.isClosed;
         const resultDisabled = !g.isProcessed;
-
         return `
           <div class="task-group-card">
             <div class="task-group-head">
@@ -257,13 +243,11 @@
                 <div class="task-group-meta">📊 ${g.items.length} submissions • 🌐 ${g.taskPlatform}</div>
               </div>
             </div>
-
             <div class="task-group-stats">
               <div class="tg-stat good"><div class="v">${g.good}</div><div class="l">Good</div></div>
               <div class="tg-stat bad"><div class="v">${g.bad}</div><div class="l">Bad</div></div>
               <div class="tg-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
             </div>
-
             <div class="task-group-actions">
               <button class="btn-xlsx-submit" 
                 onclick="downloadSubmitXLSX('${g.taskId}')" 
@@ -283,19 +267,16 @@
       }).join("");
     }
 
-    // ✅ Download USER's own submitted data (task closed হলে)
     window.downloadSubmitXLSX = function(taskId) {
       if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
       const group = allTaskGroups.find(g => g.taskId === taskId);
       if (!group) return alert("Task পাওয়া যায়নি!");
-
       const task = taskCache[taskId] || {};
       const fields = task.fields || [
         { key: "uid", label: "UID" },
         { key: "password", label: "Password" },
         { key: "2fa_key", label: "2FA Key" }
       ];
-
       const sheetData = group.items.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -315,38 +296,27 @@
         row["Status"] = s.status || "pending";
         return row;
       });
-
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "My Submissions");
-
       const colWidths = [{ wch: 5 }];
       fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
       colWidths.push({ wch: 20 });
       colWidths.push({ wch: 12 });
       ws["!cols"] = colWidths;
-
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_my_submissions_${dateStr}.xlsx`);
     };
 
-    // ✅ Download result with GOOD/BAD IDs (result published হলে)
     window.downloadResultXLSX = function(taskId) {
       if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
       const group = allTaskGroups.find(g => g.taskId === taskId);
       if (!group) return alert("Task পাওয়া যায়নি!");
-
       const task = taskCache[taskId] || {};
-      const fields = task.fields || [
-        { key: "uid", label: "UID" }
-      ];
-
-      // GOOD + BAD only (pending নেই)
+      const fields = task.fields || [{ key: "uid", label: "UID" }];
       const goodItems = group.items.filter(i => i.status === "good");
       const badItems = group.items.filter(i => i.status === "bad");
-
-      // First sheet: GOOD
       const goodSheet = goodItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -363,8 +333,6 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
-
-      // Second sheet: BAD
       const badSheet = badItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -381,18 +349,11 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
-
       const wb = XLSX.utils.book_new();
-
-      // GOOD sheet
       const wsGood = XLSX.utils.json_to_sheet(goodSheet.length ? goodSheet : [{ "No Data": "No good accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsGood, "GOOD Accounts");
-
-      // BAD sheet
       const wsBad = XLSX.utils.json_to_sheet(badSheet.length ? badSheet : [{ "No Data": "No bad accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsBad, "BAD Accounts");
-
-      // Summary sheet
       const totalEarned = goodItems.reduce((sum, s) => sum + (s.price || 0), 0);
       const summary = [
         { "Summary": "Total Submissions", "Value": group.items.length },
@@ -402,7 +363,6 @@
       ];
       const wsSummary = XLSX.utils.json_to_sheet(summary);
       XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
