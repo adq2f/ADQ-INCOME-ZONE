@@ -84,7 +84,14 @@
       btn.style.color = input.type === "text" ? "#f59e0b" : "";
     };
 
-    // Check if user is logged in and is admin
+    // ✅ Check if already verified — skip if session valid
+    const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+    const existingSession = sessionStorage.getItem("admin_verified");
+    if (existingSession && (Date.now() - parseInt(existingSession)) < SESSION_DURATION) {
+      // Session still valid — redirect to admin panel
+      location.href = "admin.html";
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         location.href = "login.html";
@@ -103,7 +110,6 @@
       }
     });
 
-    // ✅ Verify admin password
     document.getElementById("verifyBtn").onclick = async () => {
       const pass = document.getElementById("adminPass").value;
       const btn = document.getElementById("verifyBtn");
@@ -119,7 +125,7 @@
         const snap = await getDoc(doc(db, "settings", "admin_pass"));
         if (!snap.exists()) {
           errorBox.style.display = "flex";
-          document.getElementById("errorMsg").textContent = "Admin password set করা হয়নি। Firestore → settings → admin_pass document তৈরি করো।";
+          document.getElementById("errorMsg").textContent = "Admin password set করা হয়নি।";
           btn.disabled = false;
           btn.textContent = "🔓 Verify & Enter Admin Panel";
           return;
@@ -129,16 +135,16 @@
 
         if (pass !== correctPass) {
           errorBox.style.display = "flex";
-          document.getElementById("errorMsg").textContent = "❌ ভুল password! আবার চেষ্টা করো।";
+          document.getElementById("errorMsg").textContent = "❌ ভুল password!";
           btn.disabled = false;
           btn.textContent = "🔓 Verify & Enter Admin Panel";
           return;
         }
 
-        // ✅ Success — 4 hour session
+        // ✅ Success — 12 hour session
         sessionStorage.setItem("admin_verified", Date.now().toString());
 
-        // ✅ Return path support
+        // Return path support
         const returnPath = sessionStorage.getItem("admin_return");
         if (returnPath) {
           sessionStorage.removeItem("admin_return");
