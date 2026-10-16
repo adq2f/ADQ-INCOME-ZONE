@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset Requests — Admin</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=20">
   <style>
     body { background: #f1f5f9; }
     .navbar { background: linear-gradient(135deg, #1e1b4b, #312e81); }
@@ -17,7 +17,6 @@
       margin-bottom: 12px;
       box-shadow: 0 4px 16px rgba(15,23,42,0.06);
       border-left: 4px solid #f59e0b;
-      animation: fadeInUp 0.4s var(--ease);
     }
     .reset-card.approved { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
     .reset-card.rejected { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
@@ -35,32 +34,39 @@
       cursor: pointer; font-weight: 700;
       font-size: 12px; font-family: inherit;
     }
+    .copy-btn {
+      background: #eef2ff; color: #4f46e5;
+      padding: 4px 10px; border-radius: 8px;
+      font-size: 11px; font-weight: 700;
+      border: none; cursor: pointer;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
 
   <div class="navbar">
+    <button class="nav-back" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
     <div class="logo">
       <div class="mark">⚡</div>
       <span>Reset Requests</span>
     </div>
-    <button class="nav-logout" onclick="location.href='admin.html'">
-      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
+    <div style="width:40px"></div>
   </div>
 
   <div class="container">
     <div class="card">
       <h3 style="margin-bottom:6px">🔐 Password Reset Requests</h3>
-      <p style="font-size:13px;color:#64748b;margin-bottom:0">User request approve করলে সেটা "approved" mark হবে। তারপর user-কে নতুন password জানাও (SMS/Telegram)।</p>
+      <p style="font-size:13px;color:#64748b;margin-bottom:0">User-এর contact number কপি করে নতুন password পাঠাও। এরপর Approve করো।</p>
     </div>
-
     <div id="reqList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
 
   <nav class="bottom-nav">
-    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="admin.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Admin</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="admin.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">Admin</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
@@ -71,6 +77,15 @@
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    window.goBack = function() {
+      if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
+        history.back();
+      } else {
+        location.href = "admin.html";
+      }
+    };
+
+    // Admin session check
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime || (Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
       location.href = "admin-login.html";
@@ -78,9 +93,15 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") {
-        location.href = "dashboard.html"; return;
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists() || snap.data().role !== "admin") {
+          location.href = "dashboard.html";
+          return;
+        }
+      } catch (e) {
+        location.href = "dashboard.html";
+        return;
       }
       loadRequests();
     });
@@ -90,7 +111,7 @@
       try {
         const snap = await getDocs(collection(db, "reset_requests"));
         if (snap.empty) {
-          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো request নেই</p></div>`;
+          list.innerHTML = `<div class="dash-empty" style="text-align:center;padding:40px;color:#64748b"><div style="font-size:48px">📭</div><p>কোনো request নেই</p></div>`;
           return;
         }
         const requests = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -105,7 +126,9 @@
             <div class="reset-card ${r.status !== 'pending' ? r.status : ''}">
               <h4>👤 ${r.username || "User"}</h4>
               <div class="m">📧 ${r.email}</div>
-              <div class="m">📱 Contact: <b>${r.contact}</b></div>
+              <div class="m">📱 Contact: <b>${r.contact}</b>
+                <button class="copy-btn" onclick="copyText('${r.contact}')">📋 Copy</button>
+              </div>
               <div class="m">🕐 ${time}</div>
               ${r.reason ? `<div class="reason">"${r.reason}"</div>` : ''}
               ${isPending ? `
@@ -122,24 +145,32 @@
       }
     }
 
+    window.copyText = (text) => {
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied: " + text));
+    };
+
     window.approveReq = async (id) => {
-      if (!confirm("Approve করবে?\n\n⚠️ মনে রাখো: এটা শুধু mark করবে। User-কে তুমি নিজে নতুন password জানাবে (SMS/Telegram)।")) return;
-      await updateDoc(doc(db, "reset_requests", id), {
-        status: "approved",
-        approvedAt: new Date()
-      });
-      alert("✅ Approved! এখন user-কে নতুন password জানাও।");
-      loadRequests();
+      if (!confirm("Approve করবে?\n\n⚠️ মনে রাখো: এটা শুধু mark করবে। User-কে তুমি নিজে নতুন password জানাবে (WhatsApp/SMS)।")) return;
+      try {
+        await updateDoc(doc(db, "reset_requests", id), {
+          status: "approved",
+          approvedAt: new Date()
+        });
+        alert("✅ Approved!");
+        loadRequests();
+      } catch (e) { alert("❌ " + e.message); }
     };
 
     window.rejectReq = async (id) => {
       if (!confirm("Reject করবে?")) return;
-      await updateDoc(doc(db, "reset_requests", id), {
-        status: "rejected",
-        rejectedAt: new Date()
-      });
-      alert("❌ Rejected!");
-      loadRequests();
+      try {
+        await updateDoc(doc(db, "reset_requests", id), {
+          status: "rejected",
+          rejectedAt: new Date()
+        });
+        alert("❌ Rejected!");
+        loadRequests();
+      } catch (e) { alert("❌ " + e.message); }
     };
   </script>
 </body>
