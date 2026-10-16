@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Withdraw — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=11">
+  <style>
+    .pay-method {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      border: 2px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.3s var(--ease);
+      animation: fadeInUp 0.5s var(--ease) both;
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-method:nth-child(1) { animation-delay: 0.05s; }
+    .pay-method:nth-child(2) { animation-delay: 0.1s; }
+    .pay-method:nth-child(3) { animation-delay: 0.15s; }
+    .pay-method:nth-child(4) { animation-delay: 0.2s; }
+
+    .pay-method:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(15,23,42,0.12);
+    }
+    .pay-method.active {
+      border-color: #6366f1;
+      box-shadow: 0 12px 28px rgba(99,102,241,0.25);
+      background: linear-gradient(135deg, #eef2ff 0%, #ffffff 50%);
+    }
+    .pay-method.active::before {
+      content: '✓';
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 24px; height: 24px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.4);
+      animation: scaleIn 0.3s var(--ease-bounce);
+    }
+    .pay-method.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.7);
+    }
+    .pay-method.disabled:hover {
+      transform: none;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+    }
+
+    .pay-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      color: white;
+      font-size: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-logo::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
+    }
+
+    /* bKash */
+    .pay-logo.bkash {
+      background: linear-gradient(135deg, #E2136E, #B0105A);
+    }
+    /* Nagad */
+    .pay-logo.nagad {
+      background: linear-gradient(135deg, #F15A24, #D94315);
+    }
+    /* Rocket */
+    .pay-logo.rocket {
+      background: linear-gradient(135deg, #8B1F8B, #6A156A);
+    }
+    /* Binance */
+    .pay-logo.binance {
+      background: linear-gradient(135deg, #F3BA2F, #D9A420);
+      color: #1a1a1a;
+    }
+    .pay-logo.binance svg {
+      width: 32px;
+      height: 32px;
+      fill: #1a1a1a;
+    }
+
+    .pay-info { flex: 1; min-width: 0; }
+    .pay-info h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 3px;
+    }
+    .pay-info p {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .pay-status {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .pay-status.on { background: #d1fae5; color: #065f46; }
+    .pay-status.off { background: #fee2e2; color: #991b1b; }
+
+    /* Withdraw Form */
+    .withdraw-form-card {
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      margin-top: 16px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+      border: 1px solid rgba(15,23,42,0.04);
+      animation: fadeInUp 0.5s var(--ease) both;
+      display: none;
+    }
+    .withdraw-form-card.show { display: block; }
+
+    .withdraw-form-card h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>ADQ Income Zone</span>
+    </div>
+    <button class="nav-logout" id="logoutBtn" title="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+
+  <div class="container">
+    <div class="wallet-balance" style="background: linear-gradient(135deg, #E2136E 0%, #8b5cf6 100%);">
+      <div class="wallet-balance-label">💰 Available Balance</div>
+      <div class="wallet-balance-amount" id="balance">৳0</div>
+    </div>
+
+    <div class="dash-section-head">
+      <h3>💳 Payment Method Select করুন</h3>
+    </div>
+
+    <div id="methodsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+
+    <!-- Withdraw Form -->
+    <div class="withdraw-form-card" id="withdrawForm">
+      <h3 id="formTitle">💸 Withdraw Request</h3>
+
+      <label class="label-text" style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:0 0 8px">Amount (৳)</label>
+      <input type="number" id="amount" class="admin-input" placeholder="কত টাকা তুলবে?" min="100">
+
+      <label class="label-text" style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 8px" id="accountLabel">Account Number</label>
+      <input type="text" id="accountNum" class="admin-input" placeholder="যে নাম্বারে পাঠাবে">
+
+      <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);padding:12px 14px;border-radius:10px;font-size:12px;color:#92400e;margin:14px 0;line-height:1.5;border-left:4px solid #f59e0b">
+        ⚠️ <b>Minimum Withdraw: ৳100</b><br>
+        Admin approve করার পরে টাকা পাঠানো হবে।
+      </div>
+
+      <button class="btn btn-success btn-full" id="submitWithdrawBtn">🚀 Submit Withdraw Request</button>
+    </div>
+
+    <div class="dash-section-head" style="margin-top:24px">
+      <h3>📜 Withdraw History</h3>
+    </div>
+    <div id="withdrawHistory" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, addDoc, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    document.getElementById("logoutBtn").onclick = async () => {
+      if (!confirm("লগআউট?")) return;
+      await signOut(auth);
+      location.href = "index.html";
+    };
+
+    // Payment method config
+    const PAY_METHODS = {
+      bkash: {
+        name: "bKash",
+        logo: "bKash",
+        logoClass: "bkash",
+        accountLabel: "bKash Number",
+        placeholder: "01XXXXXXXXX"
+      },
+      nagad: {
+        name: "Nagad",
+        logo: "Nagad",
+        logoClass: "nagad",
+        accountLabel: "Nagad Number",
+        placeholder: "01XXXXXXXXX"
+      },
+      rocket: {
+        name: "Rocket",
+        logo: "Rocket",
+        logoClass: "rocket",
+        accountLabel: "Rocket Number",
+        placeholder: "01XXXXXXXXX"
+      },
+      binance: {
+        name: "Binance",
+        logo: "BNB",
+        logoClass: "binance",
+        accountLabel: "Binance Wallet Address / ID",
+        placeholder: "Binance ID or Wallet Address"
+      }
+    };
+
+    let currentUser = null;
+    let userBalance = 0;
+    let selectedMethod = null;
+    let enabledMethods = {};
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      currentUser = user;
+
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      if (userSnap.exists()) {
+        userBalance = userSnap.data().balance || 0;
+        document.getElementById("balance").textContent = "৳" + userBalance;
+      }
+
+      await loadMethodStatus();
+      renderMethods();
+      loadWithdrawHistory();
+    });
+
+    async function loadMethodStatus() {
+      // Load from settings collection
+      try {
+        const snap = await getDoc(doc(db, "settings", "payment_methods"));
+        if (snap.exists()) {
+          enabledMethods = snap.data();
+        } else {
+          // Default: all enabled
+          enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+        }
+      } catch (e) {
+        enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+      }
+    }
+
+    function renderMethods() {
+      const list = document.getElementById("methodsList");
+      const methods = Object.keys(PAY_METHODS);
+
+      list.innerHTML = methods.map(key => {
+        const m = PAY_METHODS[key];
+        const isOn = enabledMethods[key] !== false;
+        return `
+          <div class="pay-method ${isOn ? '' : 'disabled'}" data-key="${key}" data-enabled="${isOn}">
+            <div class="pay-logo ${m.logoClass}">${m.logo}</div>
+            <div class="pay-info">
+              <h4>${m.name}</h4>
+              <p>${m.accountLabel}</p>
+            </div>
+            <span class="pay-status ${isOn ? 'on' : 'off'}">${isOn ? 'ON' : 'OFF'}</span>
+          </div>
+        `;
+      }).join("");
+
+      // Attach click handlers
+      list.querySelectorAll(".pay-method").forEach(el => {
+        el.onclick = () => {
+          if (el.dataset.enabled !== "true") return;
+          list.querySelectorAll(".pay-method").forEach(e => e.classList.remove("active"));
+          el.classList.add("active");
+          selectedMethod = el.dataset.key;
+
+          // Show form
+          const m = PAY_METHODS[selectedMethod];
+          document.getElementById("formTitle").textContent = `💸 ${m.name} Withdraw`;
+          document.getElementById("accountLabel").textContent = m.accountLabel;
+          document.getElementById("accountNum").placeholder = m.placeholder;
+          document.getElementById("withdrawForm").classList.add("show");
+          document.getElementById("withdrawForm").scrollIntoView({ behavior: "smooth", block: "start" });
+        };
+      });
+    }
+
+    document.getElementById("submitWithdrawBtn").onclick = async () => {
+      if (!selectedMethod) return alert("Payment method select করো!");
+      const amount = parseFloat(document.getElementById("amount").value);
+      const accountNum = document.getElementById("accountNum").value.trim();
+
+      if (!amount || amount < 100) return alert("Minimum ৳100!");
+      if (amount > userBalance) return alert(`তোমার balance ৳${userBalance}!`);
+      if (!accountNum) return alert("Account number/ID দাও!");
+
+      const btn = document.getElementById("submitWithdrawBtn");
+      btn.disabled = true; btn.textContent = "Submitting...";
+
+      try {
+        await addDoc(collection(db, "withdrawals"), {
+          userId: currentUser.uid,
+          method: selectedMethod,
+          methodName: PAY_METHODS[selectedMethod].name,
+          amount,
+          accountNum,
+          status: "pending",
+          requestedAt: new Date()
+        });
+
+        // Deduct balance immediately
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          balance: increment(-amount)
+        });
+
+        alert("✅ Withdraw request submitted! Admin approve করলে টাকা পাবে।");
+        document.getElementById("amount").value = "";
+        document.getElementById("accountNum").value = "";
+        location.reload();
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "🚀 Submit Withdraw Request";
+    };
+
+    async function loadWithdrawHistory() {
+      const list = document.getElementById("withdrawHistory");
+      try {
+        const q = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো withdraw নেই</p></div>`;
+          return;
+        }
+        const items = snap.docs.map(d => d.data())
+          .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
+
+        list.innerHTML = items.map(h => {
+          const m = PAY_METHODS[h.method] || { logo: "?", logoClass: "bkash", name: h.methodName };
+          const statusColor = h.status === "pending" ? "badge-pending"
+                            : h.status === "approved" ? "badge-good" : "badge-bad";
+          const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+
+          return `
+            <div class="hist-item" style="border-left-color: ${h.status === 'approved' ? '#10b981' : h.status === 'rejected' ? '#ef4444' : '#f59e0b'}">
+              <div class="hist-left">
+                <div class="pay-logo ${m.logoClass}" style="width:40px;height:40px;border-radius:10px;font-size:12px">${m.logo}</div>
+                <div class="hist-info">
+                  <div class="u">${h.methodName} • ৳${h.amount}</div>
+                  <div class="m">${h.accountNum} • 🕐 ${time}</div>
+                </div>
+              </div>
+              <span class="badge ${statusColor}">${h.status}</span>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
+  </script>
+</body>
+</html>
