@@ -4,197 +4,30 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wallet — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=16">
-  <style>
-    .wallet-balance {
-      background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-      color: white; padding: 28px 24px;
-      border-radius: 24px; margin-bottom: 16px;
-      box-shadow: 0 20px 50px rgba(16,185,129,0.4);
-      position: relative; overflow: hidden;
-    }
-    .wallet-balance::before {
-      content: ''; position: absolute;
-      top: -80px; right: -60px; width: 240px; height: 240px;
-      background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%);
-      border-radius: 50%;
-    }
-    .wallet-balance-label {
-      font-size: 11px; opacity: 0.9;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      font-weight: 600; margin-bottom: 6px;
-      position: relative; z-index: 1;
-    }
-    .wallet-balance-amount {
-      font-size: 46px; font-weight: 800;
-      letter-spacing: -2px; margin-bottom: 20px;
-      position: relative; z-index: 1;
-      line-height: 1; font-family: 'Inter', sans-serif;
-    }
-    .wallet-balance-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px; position: relative; z-index: 1;
-    }
-    .wallet-balance-actions a,
-    .wallet-balance-actions button {
-      padding: 12px;
-      background: rgba(255,255,255,0.2);
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 12px; color: white;
-      font-size: 13px; font-weight: 600;
-      text-align: center; text-decoration: none;
-      cursor: pointer; font-family: inherit;
-      transition: 0.3s; margin: 0; width: 100%;
-      display: flex; align-items: center;
-      justify-content: center; gap: 6px;
-      backdrop-filter: blur(10px);
-    }
-    .wallet-balance-actions a svg,
-    .wallet-balance-actions button svg {
-      width: 16px; height: 16px;
-      stroke: currentColor; fill: none;
-      stroke-width: 2.5;
-    }
-    .wallet-balance-actions a:hover,
-    .wallet-balance-actions button:hover {
-      background: rgba(255,255,255,0.35);
-      transform: translateY(-2px);
-    }
-
-    /* Wallet Info Card */
-    .wallet-info-card {
-      background: white;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-      border: 2px dashed #cbd5e1;
-      transition: 0.3s;
-    }
-    .wallet-info-card.setup {
-      border-style: solid;
-      border-color: #10b981;
-      background: linear-gradient(135deg, #f0fdf4 0%, white 40%);
-    }
-    .wallet-info-card h3 {
-      font-size: 15px; margin-bottom: 10px;
-      color: #0f172a;
-      display: flex; align-items: center;
-      gap: 8px; justify-content: space-between;
-    }
-    .wallet-info-card .edit-btn {
-      padding: 5px 10px;
-      background: #eef2ff;
-      color: #4f46e5;
-      border: none; border-radius: 8px;
-      font-size: 11px; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-    }
-    .wallet-info-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-    .wallet-info-item .k {
-      color: #64748b;
-      font-weight: 600;
-    }
-    .wallet-info-item .v {
-      color: #0f172a;
-      font-weight: 700;
-      font-family: 'Courier New', monospace;
-    }
-    .wallet-info-empty {
-      text-align: center;
-      padding: 20px;
-      color: #94a3b8;
-      font-size: 13px;
-    }
-
-    .w-stat {
-      background: white; padding: 16px 10px;
-      border-radius: 14px; text-align: center;
-      box-shadow: 0 2px 8px rgba(15,23,42,0.06);
-      border: 1px solid rgba(15,23,42,0.04);
-      position: relative; overflow: hidden;
-    }
-    .w-stat::before {
-      content: ''; position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px; opacity: 0.7;
-    }
-    .w-stat.g::before { background: linear-gradient(90deg, transparent, #10b981, transparent); }
-    .w-stat.b::before { background: linear-gradient(90deg, transparent, #ef4444, transparent); }
-    .w-stat.p::before { background: linear-gradient(90deg, transparent, #f59e0b, transparent); }
-    .w-stat .w-icon { font-size: 22px; margin-bottom: 4px; display: block; }
-    .w-stat .w-num {
-      font-size: 22px; font-weight: 800;
-      font-family: 'Inter', sans-serif;
-    }
-    .w-stat.g .w-num { color: #10b981; }
-    .w-stat.b .w-num { color: #ef4444; }
-    .w-stat.p .w-num { color: #f59e0b; }
-    .w-stat .w-label {
-      font-size: 10px; color: #64748b;
-      font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.5px; margin-top: 2px;
-    }
-    .wallet-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px; margin-bottom: 20px;
-    }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(15,23,42,0.7);
-      backdrop-filter: blur(6px);
-      display: none; align-items: center;
-      justify-content: center; padding: 20px;
-      z-index: 1000;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
-      background: white; border-radius: 22px;
-      padding: 24px; width: 100%;
-      max-width: 420px;
-      animation: scaleIn 0.3s var(--ease-bounce);
-    }
-    .modal-box h3 { font-size: 18px; margin-bottom: 6px; color: #0f172a; }
-    .modal-box .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-  </style>
+  <link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 
   <div class="navbar">
-    <button class="nav-back" onclick="history.back()">
+    <button class="nav-back" onclick="goBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="logo">
       <div class="mark">A</div>
       <span>Wallet</span>
     </div>
-    <button class="nav-logout" id="logoutBtn" title="Logout">
+    <button class="nav-logout" id="logoutBtn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
 
   <div class="container">
 
-    <!-- BALANCE -->
     <div class="wallet-balance">
       <div class="wallet-balance-label">💰 Available Balance</div>
       <div class="wallet-balance-amount" id="balance">৳0</div>
       <div class="wallet-balance-actions">
-        <a href="withdraw.html">
+        <a href="withdraw.html" id="withdrawBtnLink">
           <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Withdraw
         </a>
@@ -205,7 +38,6 @@
       </div>
     </div>
 
-    <!-- WALLET SETUP -->
     <div class="wallet-info-card" id="walletSetupCard">
       <h3>
         💳 My Payment Info
@@ -214,14 +46,12 @@
       <div id="walletInfoContent"></div>
     </div>
 
-    <!-- STATS -->
     <div class="wallet-stats">
       <div class="w-stat g"><span class="w-icon">✅</span><div class="w-num" id="statGood">0</div><div class="w-label">Good</div></div>
       <div class="w-stat b"><span class="w-icon">❌</span><div class="w-num" id="statBad">0</div><div class="w-label">Bad</div></div>
       <div class="w-stat p"><span class="w-icon">⏳</span><div class="w-num" id="statPending">0</div><div class="w-label">Pending</div></div>
     </div>
 
-    <!-- WITHDRAW HISTORY -->
     <div class="dash-section-head">
       <h3>📜 Withdraw History</h3>
     </div>
@@ -236,13 +66,13 @@
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
-  <!-- WALLET EDIT MODAL -->
+  <!-- Wallet Modal -->
   <div class="modal-overlay" id="walletModal">
     <div class="modal-box">
       <h3>💳 Wallet Info Setup</h3>
       <p class="sub">তোমার payment info save করো — withdraw-এর সময় auto-fill হবে</p>
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Payment Method</label>
+      <label class="label-text">Payment Method</label>
       <select id="wm-method" class="admin-input">
         <option value="bkash">bKash</option>
         <option value="nagad">Nagad</option>
@@ -250,10 +80,10 @@
         <option value="binance">Binance</option>
       </select>
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 6px">Account Number / Wallet ID</label>
+      <label class="label-text">Account Number / Wallet ID</label>
       <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX / Wallet ID">
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 6px">Account Name (optional)</label>
+      <label class="label-text">Account Name (optional)</label>
       <input type="text" id="wm-name" class="admin-input" placeholder="নাম">
 
       <div style="display:flex;gap:8px;margin-top:16px">
@@ -265,17 +95,37 @@
 
   <script type="module">
     import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "@firebase/auth";
-    import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Smart back
+    window.goBack = function() {
+      if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
+        history.back();
+      } else {
+        location.href = "dashboard.html";
+      }
+    };
 
     let currentUser = null;
     let userData = null;
+    let enabledMethods = {};
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
+
+    // Load enabled methods from settings
+    async function loadEnabledMethods() {
+      try {
+        const snap = await getDoc(doc(db, "settings", "payment_methods"));
+        enabledMethods = snap.exists() ? snap.data() : { bkash: true, nagad: true, rocket: true, binance: true };
+      } catch (e) {
+        enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+      }
+    }
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
@@ -290,9 +140,23 @@
       document.getElementById("statBad").textContent = userData.totalBad || 0;
       document.getElementById("statPending").textContent = userData.totalPending || 0;
 
+      await loadEnabledMethods();
       renderWalletInfo();
+      checkWithdrawAvailability();
       loadWithdrawHistory();
     });
+
+    // Check if withdraw is available at all (at least one method ON)
+    function checkWithdrawAvailability() {
+      const anyEnabled = Object.values(enabledMethods).some(v => v !== false);
+      const link = document.getElementById("withdrawBtnLink");
+      if (!anyEnabled) {
+        link.style.opacity = "0.5";
+        link.style.pointerEvents = "none";
+        link.title = "Withdraw বন্ধ আছে";
+        link.innerHTML = `🚫 Withdraw Off`;
+      }
+    }
 
     function renderWalletInfo() {
       const card = document.getElementById("walletSetupCard");
@@ -320,12 +184,10 @@
     }
 
     window.copyText = (text) => {
-      navigator.clipboard.writeText(text).then(() => {
-        alert("✅ Copied: " + text);
-      });
+      navigator.clipboard.writeText(text).then(() => alert("✅ Copied: " + text));
     };
 
-    // Modal
+    // Edit Modal
     const modal = document.getElementById("walletModal");
     document.getElementById("editWalletBtn").onclick = () => {
       const info = userData?.walletInfo || {};
