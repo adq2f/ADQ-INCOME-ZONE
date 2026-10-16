@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>প্রোফাইল — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <style>
     .refer-card {
       background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
@@ -19,24 +19,18 @@
     .refer-card::before {
       content: '';
       position: absolute;
-      top: -60px;
-      right: -50px;
-      width: 200px;
-      height: 200px;
+      top: -60px; right: -50px;
+      width: 200px; height: 200px;
       background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
       border-radius: 50%;
     }
     .refer-card h3 {
-      color: white;
-      font-size: 16px;
-      margin-bottom: 4px;
-      position: relative;
+      color: white; font-size: 16px;
+      margin-bottom: 4px; position: relative;
     }
     .refer-card .sub {
-      font-size: 12px;
-      opacity: 0.9;
-      margin-bottom: 14px;
-      position: relative;
+      font-size: 12px; opacity: 0.9;
+      margin-bottom: 14px; position: relative;
     }
     .refer-code-box {
       background: rgba(255,255,255,0.2);
@@ -122,6 +116,104 @@
       font-weight: 700;
       margin-top: 4px;
     }
+    .referred-user-item {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ru-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .ru-info { flex: 1; min-width: 0; }
+    .ru-info .name {
+      font-size: 14px; font-weight: 700;
+      color: #0f172a; margin-bottom: 2px;
+    }
+    .ru-info .meta {
+      font-size: 11px; color: #94a3b8;
+    }
+    .ru-earned {
+      background: #f0fdf4;
+      color: #10b981;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Inter';
+    }
+    .refer-earning-item {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+      border-left: 4px solid #8b5cf6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+    .refer-earning-item .left { flex: 1; min-width: 0; }
+    .refer-earning-item .task {
+      font-size: 13px; font-weight: 700;
+      color: #0f172a; margin-bottom: 3px;
+    }
+    .refer-earning-item .from {
+      font-size: 11px; color: #64748b;
+    }
+    .refer-earning-item .earned {
+      background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      color: #065f46;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Inter';
+      flex-shrink: 0;
+    }
+    .refer-earning-item .detail {
+      font-size: 10px; color: #94a3b8;
+      margin-top: 3px;
+    }
+    .refer-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .refer-tab {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.25s;
+    }
+    .refer-tab.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border-color: #6366f1;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
   </style>
 </head>
 <body>
@@ -162,10 +254,10 @@
 
   <div class="container" style="padding-top:0">
 
-    <!-- REFER SECTION -->
+    <!-- REFER CARD -->
     <div class="refer-card">
       <h3>🎁 Refer & Earn</h3>
-      <p class="sub">বন্ধুদের refer করো, প্রতি task-এ commission পাও</p>
+      <p class="sub">বন্ধুদের refer করো, প্রতি good account-এ commission পাও</p>
 
       <div class="refer-code-box">
         <span class="code" id="myReferCode">------</span>
@@ -189,7 +281,25 @@
       </div>
     </div>
 
-    <h3 style="margin:16px 0 12px; color:#0f172a">⚙️ অ্যাকাউন্ট সেটিংস</h3>
+    <!-- REFER DETAILS -->
+    <div class="dash-section-head">
+      <h3>👥 Refer Details</h3>
+    </div>
+
+    <div class="refer-tabs">
+      <button class="refer-tab active" data-reftab="users">👥 Users</button>
+      <button class="refer-tab" data-reftab="earnings">💰 Earnings</button>
+    </div>
+
+    <div id="referUsersTab">
+      <div id="referredUsersList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    </div>
+
+    <div id="referEarningsTab" style="display:none">
+      <div id="referEarningsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    </div>
+
+    <h3 style="margin:20px 0 12px; color:#0f172a">⚙️ অ্যাকাউন্ট সেটিংস</h3>
 
     <a href="wallet.html" class="menu-item">
       <div class="menu-icon green">💰</div>
@@ -225,7 +335,7 @@
         <p>Admin approve করলে নতুন password পাবেন</p>
       </div>
       <div class="menu-arrow">›</div>
-    </button>
+    </a>
 
     <a href="notifications.html" class="menu-item">
       <div class="menu-icon purple">🔔</div>
@@ -270,6 +380,7 @@
     };
 
     let currentUser = null, userData = null;
+    let referredUsers = [];
 
     document.getElementById("logoutBtn").onclick = doLogout;
     document.getElementById("logoutMenuBtn").onclick = doLogout;
@@ -294,7 +405,6 @@
       document.getElementById("statBalance").textContent = "৳" + (userData.balance || 0);
       document.getElementById("statGood").textContent = userData.totalGood || 0;
 
-      // Refer Section
       document.getElementById("myReferCode").textContent = userData.myReferCode || "------";
       document.getElementById("referCount").textContent = userData.referCount || 0;
       document.getElementById("referEarning").textContent = "৳" + (userData.totalReferEarning || 0).toFixed(2);
@@ -303,7 +413,97 @@
       const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
       const subSnap = await getDocs(q);
       document.getElementById("statSubs").textContent = subSnap.size;
+
+      loadReferredUsers();
+      loadReferEarnings();
     });
+
+    async function loadReferredUsers() {
+      const list = document.getElementById("referredUsersList");
+      try {
+        const q = query(collection(db, "users"), where("referredBy", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        referredUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        if (referredUsers.length === 0) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কেউ refer হয়নি</p></div>`;
+          return;
+        }
+
+        const earningsByUser = {};
+        for (const ru of referredUsers) {
+          const eq = query(
+            collection(db, "refer_earnings"),
+            where("referrerId", "==", currentUser.uid),
+            where("referredUserId", "==", ru.id)
+          );
+          const es = await getDocs(eq);
+          let totalEarned = 0;
+          let totalGood = 0;
+          es.forEach(d => {
+            totalEarned += d.data().totalEarned || 0;
+            totalGood += d.data().goodAccounts || 0;
+          });
+          earningsByUser[ru.id] = { totalEarned, totalGood };
+        }
+
+        list.innerHTML = referredUsers.map(ru => {
+          const earn = earningsByUser[ru.id] || { totalEarned: 0, totalGood: 0 };
+          const initial = (ru.username || "U").charAt(0).toUpperCase();
+          const joinDate = ru.createdAt?.toDate?.().toLocaleDateString("bn-BD", {
+            day: "numeric", month: "short", year: "numeric"
+          }) || "";
+
+          return `
+            <div class="referred-user-item">
+              <div class="ru-avatar">${initial}</div>
+              <div class="ru-info">
+                <div class="name">${ru.username || "User"}</div>
+                <div class="meta">📅 ${joinDate} • ✅ ${earn.totalGood} good</div>
+              </div>
+              <div class="ru-earned">৳${earn.totalEarned.toFixed(2)}</div>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
+
+    async function loadReferEarnings() {
+      const list = document.getElementById("referEarningsList");
+      try {
+        const q = query(collection(db, "refer_earnings"), where("referrerId", "==", currentUser.uid));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো refer earning নেই</p></div>`;
+          return;
+        }
+
+        const earnings = snap.docs.map(d => d.data())
+          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+        list.innerHTML = earnings.map(e => {
+          const date = e.createdAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+
+          return `
+            <div class="refer-earning-item">
+              <div class="left">
+                <div class="task">🎯 ${e.taskTitle || "Task"}</div>
+                <div class="from">👤 From: ${e.referredUsername || "User"}</div>
+                <div class="detail">${e.goodAccounts} × ৳${e.commissionPerAccount} • 🕐 ${date}</div>
+              </div>
+              <div class="earned">+৳${(e.totalEarned || 0).toFixed(2)}</div>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
 
     window.copyReferCode = function() {
       const code = userData?.myReferCode || "";
@@ -312,7 +512,7 @@
 
     window.copyReferLink = function() {
       const link = "https://adq-income-zone.vercel.app/signup.html?ref=" + (userData?.myReferCode || "");
-      navigator.clipboard.writeText(link).then(() => alert("✅ Refer link copied!"));
+      navigator.clipboard.writeText(link).then(() => alert("✅ Refer link copied!\n\n" + link));
     };
 
     document.getElementById("changeUsernameBtn").onclick = async () => {
@@ -330,6 +530,16 @@
         alert("✅ নাম সফলভাবে পরিবর্তন হয়েছে!");
       } catch (e) { alert("❌ " + e.message); }
     };
+
+    document.querySelectorAll(".refer-tab").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".refer-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.dataset.reftab;
+        document.getElementById("referUsersTab").style.display = target === "users" ? "block" : "none";
+        document.getElementById("referEarningsTab").style.display = target === "earnings" ? "block" : "none";
+      };
+    });
   </script>
 </body>
 </html>
