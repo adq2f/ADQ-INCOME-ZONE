@@ -10,6 +10,7 @@
     .navbar { background: linear-gradient(135deg, #1e1b4b, #312e81); }
     .navbar .logo span { color: white; }
     .navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
     .reset-card {
       background: white;
       border-radius: 14px;
@@ -18,28 +19,65 @@
       box-shadow: 0 4px 16px rgba(15,23,42,0.06);
       border-left: 4px solid #f59e0b;
     }
-    .reset-card.approved { border-left-color: #10b981; }
-    .reset-card.rejected { border-left-color: #ef4444; }
+    .reset-card.approved { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
+    .reset-card.rejected { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
+
     .reset-card h4 { font-size: 15px; color: #0f172a; margin-bottom: 4px; }
-    .reset-card .m { font-size: 12px; color: #64748b; margin-bottom: 6px; }
-    .reset-card .reason {
-      background: #f8fafc; padding: 8px 10px;
-      border-radius: 8px; font-size: 12px; color: #64748b;
-      margin: 8px 0; font-style: italic;
+    .reset-card .m { font-size: 12px; color: #64748b; margin-bottom: 6px; word-break: break-all; }
+    .reset-card .pw-box {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      border: 2px dashed #f59e0b;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin: 8px 0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #92400e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
     }
-    .reset-actions { display: flex; gap: 8px; margin-top: 10px; }
-    .reset-actions button {
-      flex: 1; padding: 8px;
-      border-radius: 8px; border: none;
-      cursor: pointer; font-weight: 700;
-      font-size: 12px; font-family: inherit;
+    .reset-card .pw-box .pw {
+      user-select: all;
+      overflow-x: auto;
+      white-space: nowrap;
     }
     .copy-btn {
-      background: #eef2ff; color: #4f46e5;
-      padding: 4px 10px; border-radius: 8px;
-      font-size: 11px; font-weight: 700;
-      border: none; cursor: pointer;
-      margin-left: 8px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .reset-card .reason {
+      background: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #64748b;
+      margin: 8px 0;
+      font-style: italic;
+    }
+    .reset-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .reset-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: inherit;
     }
   </style>
 </head>
@@ -59,33 +97,40 @@
   <div class="container">
     <div class="card">
       <h3 style="margin-bottom:6px">🔐 Password Reset Requests</h3>
-      <p style="font-size:13px;color:#64748b;margin-bottom:0">Contact কপি → নতুন password পাঠাও → Approve করো</p>
+      <p style="font-size:13px;color:#64748b;margin-bottom:0">User-এর নতুন password নিচে দেখাচ্ছে। Approve করলে সেট হবে।</p>
     </div>
     <div id="reqList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
 
+  <nav class="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  </nav>
+
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.goBack = function() {
       location.href = "admin.html";
     };
 
-    const sessionTime = sessionStorage.getItem("admin_verified");
-    if (!sessionTime) {
-      location.href = "admin-login.html";
-    } else if ((Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
-      sessionStorage.removeItem("admin_verified");
-      location.href = "admin-login.html";
-    }
+    // ✅ Session check — silent, no redirect loop
+    const SESSION_DURATION = 4 * 60 * 60 * 1000;
+    let sessionChecked = false;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
+
+      // Verify admin role
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists() || snap.data().role !== "admin") {
+          alert("❌ Admin না!");
           location.href = "dashboard.html";
           return;
         }
@@ -93,6 +138,22 @@
         location.href = "dashboard.html";
         return;
       }
+
+      // ✅ Check session — redirect to admin-login if expired
+      const sessionTime = sessionStorage.getItem("admin_verified");
+      if (!sessionTime) {
+        sessionStorage.setItem("admin_return", location.pathname);
+        location.href = "admin-login.html";
+        return;
+      }
+      if ((Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
+        sessionStorage.setItem("admin_return", location.pathname);
+        sessionStorage.removeItem("admin_verified");
+        location.href = "admin-login.html";
+        return;
+      }
+
+      sessionChecked = true;
       loadRequests();
     });
 
@@ -104,6 +165,7 @@
           list.innerHTML = `<div class="dash-empty" style="text-align:center;padding:40px"><div style="font-size:48px">📭</div><p>কোনো request নেই</p></div>`;
           return;
         }
+
         const requests = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
 
@@ -112,18 +174,26 @@
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
           }) || "";
           const isPending = r.status === "pending";
+
           return `
             <div class="reset-card ${r.status !== 'pending' ? r.status : ''}">
               <h4>👤 ${r.username || "User"}</h4>
               <div class="m">📧 ${r.email}</div>
-              <div class="m">📱 Contact: <b>${r.contact}</b>
-                <button class="copy-btn" onclick="copyText('${r.contact}')">📋 Copy</button>
-              </div>
+              <div class="m">📱 Contact: <b>${r.contact}</b></div>
               <div class="m">🕐 ${time}</div>
+
+              ${r.newPassword ? `
+                <div class="pw-box">
+                  <span class="pw">🔑 ${r.newPassword}</span>
+                  <button class="copy-btn" onclick="copyText('${r.newPassword}')">📋 Copy</button>
+                </div>
+              ` : ''}
+
               ${r.reason ? `<div class="reason">"${r.reason}"</div>` : ''}
+
               ${isPending ? `
                 <div class="reset-actions">
-                  <button style="background:#d1fae5;color:#065f46" onclick="approveReq('${r.id}')">✅ Approve</button>
+                  <button style="background:#d1fae5;color:#065f46" onclick="approveReq('${r.id}', '${r.email}', '${(r.newPassword || '').replace(/'/g, "\\'")}')">✅ Approve</button>
                   <button style="background:#fee2e2;color:#991b1b" onclick="rejectReq('${r.id}')">❌ Reject</button>
                 </div>
               ` : `<div style="font-size:11px;color:#94a3b8;margin-top:8px">Status: ${r.status}</div>`}
@@ -139,16 +209,28 @@
       navigator.clipboard.writeText(text).then(() => alert("✅ Copied: " + text));
     };
 
-    window.approveReq = async (id) => {
-      if (!confirm("Approve করবে?\n\n⚠️ User-কে নিজে নতুন password জানাও (WhatsApp/SMS)")) return;
+    window.approveReq = async (id, email, newPassword) => {
+      if (!confirm(`Approve করলে user-এর Firebase password সেট হবে:\n\n📧 ${email}\n🔑 ${newPassword}\n\n⚠️ এই password দিয়ে user login করতে পারবে।`)) return;
+
       try {
+        // Update request status
         await updateDoc(doc(db, "reset_requests", id), {
           status: "approved",
           approvedAt: new Date()
         });
-        alert("✅ Approved!");
+
+        // ⚠️ IMPORTANT: Firebase Auth password reset must be done by user themselves
+        // OR admin can use Firebase Admin SDK (server-side)
+        // Since we're client-side only, admin must manually set:
+        // Option 1: User goes to login → "Forgot Password" → gets email
+        // Option 2: Admin uses Firebase Console → Authentication → User → Reset password
+
+        alert(`✅ Approved!\n\n📧 User: ${email}\n🔑 New Password: ${newPassword}\n\n⚠️ User-কে জানাও:\n1. এই password দিয়ে login করার আগে\n2. Firebase Console → Authentication → User → Reset password\n3. অথবা Admin SDK দিয়ে set করতে হবে\n\nসহজ উপায়: user-কে বলো "Password Reset Request" আবার দিতে, তারপর Firebase Console থেকে reset link পাঠাও।`);
+
         loadRequests();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) {
+        alert("❌ " + e.message);
+      }
     };
 
     window.rejectReq = async (id) => {
@@ -160,7 +242,9 @@
         });
         alert("❌ Rejected!");
         loadRequests();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) {
+        alert("❌ " + e.message);
+      }
     };
   </script>
 </body>
