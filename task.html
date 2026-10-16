@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>সাবমিট — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=19">
   <style>
     .task-info-header {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
@@ -20,15 +20,12 @@
       border-radius: 50%;
     }
     .task-info-header .platform-tag {
-      display: inline-block;
-      background: rgba(255,255,255,0.2);
+      display: inline-block; background: rgba(255,255,255,0.2);
       padding: 4px 12px; border-radius: 20px;
       font-size: 12px; font-weight: 600; margin-bottom: 10px;
       position: relative;
     }
-    .task-info-header h2 {
-      font-size: 20px; margin-bottom: 8px; position: relative;
-    }
+    .task-info-header h2 { font-size: 20px; margin-bottom: 8px; position: relative; }
     .task-info-header .price-big {
       font-size: 26px; font-weight: 800;
       font-family: 'Inter'; position: relative;
@@ -52,7 +49,6 @@
       padding: 18px 16px; border-radius: 16px;
       text-align: center; font-weight: 700;
       margin-bottom: 14px; font-size: 15px;
-      transition: all 0.3s var(--ease);
     }
     .time-status.open {
       background: linear-gradient(135deg, #d1fae5, #a7f3d0);
@@ -99,6 +95,7 @@
       background: linear-gradient(135deg, #eef2ff, #e0e7ff);
       border-radius: 10px; margin: 10px 0;
       font-weight: 700; color: #4f46e5; font-size: 14px;
+      gap: 10px;
     }
     .bulk-count-live .num {
       background: white; padding: 3px 12px;
@@ -106,7 +103,7 @@
     }
     .bulk-preview {
       background: #f8fafc; border-radius: 10px;
-      padding: 12px; max-height: 200px;
+      padding: 12px; max-height: 240px;
       overflow-y: auto;
       font-family: 'Courier New', monospace;
       font-size: 11px; line-height: 1.6;
@@ -115,24 +112,20 @@
     }
     .bulk-preview.show { display: block; }
     .bulk-preview .row {
-      padding: 3px 0; border-bottom: 1px dashed #e2e8f0;
+      padding: 4px 8px; border-radius: 6px;
+      margin-bottom: 3px;
     }
-    .bulk-preview .row:last-child { border-bottom: none; }
+    .bulk-preview .row.ok { background: #f0fdf4; color: #065f46; }
+    .bulk-preview .row.duplicate { background: #fee2e2; color: #991b1b; text-decoration: line-through; opacity: 0.7; }
     .closed-overlay {
       background: linear-gradient(135deg, #fee2e2, #fecaca);
       border-radius: 16px; padding: 30px 20px;
       text-align: center; margin-bottom: 16px;
       border: 2px dashed #ef4444;
     }
-    .closed-overlay .icon {
-      font-size: 56px; margin-bottom: 12px; display: block;
-    }
-    .closed-overlay h3 {
-      color: #991b1b; font-size: 20px; margin-bottom: 8px;
-    }
+    .closed-overlay .icon { font-size: 56px; margin-bottom: 12px; display: block; }
+    .closed-overlay h3 { color: #991b1b; font-size: 20px; margin-bottom: 8px; }
     .closed-overlay p { color: #7f1d1d; font-size: 14px; }
-
-    /* SUBMIT PROGRESS */
     .submit-progress {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white; padding: 16px;
@@ -142,28 +135,35 @@
     .submit-progress.show { display: block; }
     .sp-bar {
       height: 8px; background: rgba(255,255,255,0.2);
-      border-radius: 4px; margin-top: 10px;
-      overflow: hidden;
+      border-radius: 4px; margin-top: 10px; overflow: hidden;
     }
     .sp-fill {
       height: 100%; background: white;
-      border-radius: 4px;
-      width: 0%;
+      border-radius: 4px; width: 0%;
       transition: width 0.2s;
     }
+    .dup-warning {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border-left: 4px solid #ef4444;
+      padding: 12px 14px; border-radius: 10px;
+      color: #991b1b; font-size: 13px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .dup-warning.show { display: block; animation: fadeInUp 0.3s; }
   </style>
 </head>
 <body>
 
   <div class="navbar">
-    <button class="nav-back" onclick="history.back()" title="Back">
+    <button class="nav-back" onclick="history.back()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="logo">
       <div class="mark">A</div>
       <span>ADQ Income Zone</span>
     </div>
-    <button class="nav-logout" id="logoutBtn" title="Logout">
+    <button class="nav-logout" id="logoutBtn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
@@ -176,6 +176,10 @@
       <div class="admin-form-card">
         <h3>📝 Single Submit</h3>
         <div id="dynamicFields"></div>
+        <div class="dup-warning" id="singleDupWarning">
+          <b>⚠️ Duplicate Detect হয়েছে!</b>
+          <div id="singleDupMsg" style="margin-top:6px"></div>
+        </div>
         <button class="btn btn-success btn-full" id="singleSubmitBtn">✅ Submit</button>
       </div>
     </div>
@@ -184,13 +188,13 @@
       <h3>📋 Bulk Submit</h3>
       <div class="bulk-hint">
         <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
-        Tab / Comma / Pipe / Space — সব format কাজ করবে
+        Tab / Comma / Pipe / Space — সব কাজ করবে
       </div>
       <textarea id="bulkInput" class="bulk-textarea" placeholder="Loading..." style="min-height:150px"></textarea>
 
       <div class="bulk-count-live">
-        <span>📊 Detected</span>
-        <span class="num" id="bulkCountNum">0</span>
+        <span>📊 Unique / Total</span>
+        <span class="num" id="bulkCountNum">0 / 0</span>
       </div>
 
       <div class="bulk-preview" id="bulkPreview"></div>
@@ -216,13 +220,14 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, writeBatch, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, where, getDocs, writeBatch, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const params = new URLSearchParams(location.search);
     const taskId = params.get("id");
     let task = null, currentUser = null, isOpen = false;
     let countdownInterval = null;
     let taskStartTime = null, taskEndTime = null;
+    let existingHashes = new Set();
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -242,6 +247,8 @@
 
       taskStartTime = task.startTime?.toDate?.() || null;
       taskEndTime = task.endTime?.toDate?.() || null;
+
+      await loadExistingHashes();
 
       const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
       const pIcon = icons[task.platform] || "🔗";
@@ -265,8 +272,13 @@
       ];
 
       document.getElementById("dynamicFields").innerHTML = fields.map(f => `
-        <input type="text" id="dyn_${f.key}" class="admin-input" placeholder="${f.label}">
+        <input type="text" id="dyn_${f.key}" class="admin-input" placeholder="${f.label}" autocomplete="off">
       `).join("");
+
+      fields.forEach(f => {
+        const el = document.getElementById("dyn_" + f.key);
+        if (el) el.addEventListener("blur", checkSingleDup);
+      });
 
       document.getElementById("bulkFormatHint").textContent = fields.map(f => f.label).join(" | ");
       document.getElementById("bulkInput").placeholder = fields.map(f => f.label).join("\t");
@@ -274,6 +286,62 @@
 
       startCountdown();
     });
+
+    // ============ HASH FUNCTION — TASK-SPECIFIC ============
+    function makeRowHash(item, fields) {
+      const taskKey = taskId || "unknown";
+      const fieldKeyList = fields.map(f => f.key).join(",");
+      const valueList = fields.map(f => {
+        const v = (item[f.key] || "").toString().trim().toLowerCase();
+        return v.replace(/\s+/g, " ");
+      }).join("§");
+      return `${taskKey}||${fieldKeyList}||${valueList}`;
+    }
+
+    async function loadExistingHashes() {
+      try {
+        const fields = task.fields || [
+          { key: "uid" }, { key: "password" }, { key: "twoFA" }
+        ];
+        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const snap = await getDocs(q);
+        existingHashes.clear();
+        snap.forEach(d => {
+          const s = d.data();
+          const h = makeRowHash(s, fields);
+          if (h.replace(/[|§]/g, "")) existingHashes.add(h);
+        });
+        console.log("Hashes loaded for task:", existingHashes.size);
+      } catch (e) {
+        console.error("Hash load error:", e);
+      }
+    }
+
+    function checkSingleDup() {
+      const fields = task.fields || [
+        { key: "uid" }, { key: "password" }, { key: "twoFA" }
+      ];
+      const item = {};
+      let allFilled = true;
+      fields.forEach(f => {
+        const v = (document.getElementById("dyn_" + f.key)?.value || "").trim();
+        if (!v) allFilled = false;
+        item[f.key] = v;
+      });
+
+      const warn = document.getElementById("singleDupWarning");
+      const msg = document.getElementById("singleDupMsg");
+
+      if (!allFilled) { warn.classList.remove("show"); return; }
+
+      const hash = makeRowHash(item, fields);
+      if (existingHashes.has(hash)) {
+        warn.classList.add("show");
+        msg.textContent = "এই account-এর সব তথ্য আগেই submit করা হয়েছে!";
+      } else {
+        warn.classList.remove("show");
+      }
+    }
 
     function startCountdown() {
       updateCountdown();
@@ -290,24 +358,21 @@
       if (!taskStartTime || !taskEndTime) {
         isOpen = true;
         box.innerHTML = `<div class="time-status open"><div class="status-label">🟢 Submit Open</div></div>`;
-        singleSec.style.display = "block";
-        bulkSec.style.display = "block";
+        singleSec.style.display = "block"; bulkSec.style.display = "block";
         return;
       }
 
       if (now < taskStartTime) {
         isOpen = false;
         box.innerHTML = `<div class="time-status upcoming"><div class="status-label">⏳ Upcoming</div>${renderCountdown(taskStartTime - now)}</div>`;
-        singleSec.style.display = "none";
-        bulkSec.style.display = "none";
+        singleSec.style.display = "none"; bulkSec.style.display = "none";
         return;
       }
 
       if (now > taskEndTime) {
         isOpen = false;
         box.innerHTML = `<div class="time-status closed"><div class="status-label">🔴 Time Expired</div></div>`;
-        singleSec.style.display = "none";
-        bulkSec.style.display = "none";
+        singleSec.style.display = "none"; bulkSec.style.display = "none";
         if (!document.getElementById("closedOverlay")) {
           const o = document.createElement("div");
           o.id = "closedOverlay";
@@ -327,8 +392,7 @@
           ${renderCountdown(diff)}
         </div>
       `;
-      singleSec.style.display = "block";
-      bulkSec.style.display = "block";
+      singleSec.style.display = "block"; bulkSec.style.display = "block";
       const o = document.getElementById("closedOverlay");
       if (o) o.remove();
     }
@@ -362,9 +426,7 @@
 
     function parseBulk(text) {
       if (!task) return [];
-      const fields = task.fields || [
-        { key: "uid" }, { key: "password" }, { key: "twoFA" }
-      ];
+      const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
       const fc = fields.length;
       let norm = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
       let lines = norm.split("\n").map(l => l.trim()).filter(Boolean);
@@ -390,13 +452,25 @@
     function updateBulkCount() {
       const text = document.getElementById("bulkInput").value;
       const items = parseBulk(text);
-      document.getElementById("bulkCountNum").textContent = items.length;
+      const fields = task?.fields || [{ key: "uid" }];
+
+      const seen = new Set();
+      const dupIndexes = new Set();
+      items.forEach((item, idx) => {
+        const hash = makeRowHash(item, fields);
+        if (existingHashes.has(hash) || seen.has(hash)) dupIndexes.add(idx);
+        else seen.add(hash);
+      });
+
+      const uniqueCount = items.length - dupIndexes.size;
+      document.getElementById("bulkCountNum").textContent = `${uniqueCount} / ${items.length}`;
+
       const preview = document.getElementById("bulkPreview");
-      if (items.length > 0 && items.length <= 20) {
-        const fields = task?.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
+      if (items.length > 0 && items.length <= 30) {
         preview.innerHTML = items.map((item, idx) => {
-          const rowStr = fields.map(f => item[f.key]).join(" | ");
-          return `<div class="row">${idx + 1}. ${rowStr}</div>`;
+          const isDup = dupIndexes.has(idx);
+          const label = fields.map(f => item[f.key]).join(" | ");
+          return `<div class="row ${isDup ? 'duplicate' : 'ok'}">${idx + 1}. ${label}${isDup ? ' ❌ DUP' : ' ✓'}</div>`;
         }).join("");
         preview.classList.add("show");
       } else {
@@ -404,7 +478,6 @@
       }
     }
 
-    // ========== SINGLE SUBMIT — INSTANT ==========
     document.getElementById("singleSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -415,10 +488,29 @@
         if (!val) return alert(`${f.label || f.key} দাও!`);
         submission[f.key] = val;
       }
+
+      const hash = makeRowHash(submission, fields);
+      if (existingHashes.has(hash)) {
+        return alert("❌ এই account-এর সব তথ্য আগেই submit করা হয়েছে!\n(Duplicate)");
+      }
+
       const btn = document.getElementById("singleSubmitBtn");
-      btn.disabled = true; btn.textContent = "Submitting...";
+      btn.disabled = true; btn.textContent = "Checking...";
+
       try {
-        // Use batch for instant write
+        const freshQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const freshSnap = await getDocs(freshQ);
+        const freshHashes = new Set();
+        freshSnap.forEach(d => freshHashes.add(makeRowHash(d.data(), fields)));
+
+        if (freshHashes.has(hash)) {
+          existingHashes = freshHashes;
+          alert("❌ এই account এইমাত্র কেউ submit করেছে! (Duplicate)");
+          btn.disabled = false; btn.textContent = "✅ Submit";
+          return;
+        }
+
+        btn.textContent = "Submitting...";
         const batch = writeBatch(db);
         const subRef = doc(collection(db, "submissions"));
         batch.set(subRef, {
@@ -430,42 +522,70 @@
         const userRef = doc(db, "users", currentUser.uid);
         batch.update(userRef, { totalPending: increment(1) });
         await batch.commit();
+
+        existingHashes.add(hash);
         alert("✅ Submit সফল! Status: ⏳ Pending");
         fields.forEach(f => { document.getElementById(`dyn_${f.key}`).value = ""; });
+        document.getElementById("singleDupWarning").classList.remove("show");
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "✅ Submit";
     };
 
-    // ========== BULK SUBMIT — BATCH + FAST ==========
     document.getElementById("bulkSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
       const text = document.getElementById("bulkInput").value;
-      const items = parseBulk(text);
+      let items = parseBulk(text);
       const btn = document.getElementById("bulkSubmitBtn");
 
-      if (items.length === 0) return alert("কোনো account detect হয়নি!");
-      if (items.length > 500) return alert("সর্বোচ্চ ৫০০ account!");
-      if (!confirm(`${items.length} টা account submit করবে?`)) return;
+      if (items.length === 0) return alert("❌ কোনো account detect হয়নি!");
 
-      btn.disabled = true; btn.textContent = "Submitting...";
+      const fields = task.fields || [{ key: "uid" }];
+
+      const seen = new Set();
+      const uniqueItems = [];
+      const skipped = [];
+
+      items.forEach(item => {
+        const hash = makeRowHash(item, fields);
+        if (existingHashes.has(hash) || seen.has(hash)) skipped.push(item);
+        else { seen.add(hash); uniqueItems.push(item); }
+      });
+
+      if (uniqueItems.length === 0) return alert(`❌ সব account duplicate! (${skipped.length} টা বাদ)`);
+
+      const skipMsg = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ যাবে।` : "";
+      if (!confirm(`${uniqueItems.length} টা account submit করবে?${skipMsg}`)) return;
+
+      btn.disabled = true;
       const progress = document.getElementById("submitProgress");
       const spText = document.getElementById("spText");
       const spFill = document.getElementById("spFill");
       progress.classList.add("show");
-      spText.textContent = `Preparing ${items.length} submissions...`;
-      spFill.style.width = "5%";
+      spText.textContent = `Processing ${uniqueItems.length} submissions...`;
+      spFill.style.width = "10%";
 
       try {
-        // Firestore batch limit = 500 per batch. Split if more.
-        const BATCH_SIZE = 450; // Leave room for user update
+        const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const checkSnap = await getDocs(checkQ);
+        checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
+
+        const finalItems = uniqueItems.filter(item => !existingHashes.has(makeRowHash(item, fields)));
+
+        if (finalItems.length === 0) {
+          alert("❌ সব account এইমাত্র কেউ submit করেছে!");
+          progress.classList.remove("show");
+          btn.disabled = false; btn.textContent = "🚀 Submit All";
+          return;
+        }
+
+        const BATCH_SIZE = 450;
         let success = 0;
-        const total = items.length;
+        const total = finalItems.length;
 
-        for (let i = 0; i < items.length; i += BATCH_SIZE) {
-          const chunk = items.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < finalItems.length; i += BATCH_SIZE) {
+          const chunk = finalItems.slice(i, i + BATCH_SIZE);
           const batch = writeBatch(db);
-
           for (const item of chunk) {
             const subRef = doc(collection(db, "submissions"));
             batch.set(subRef, {
@@ -475,7 +595,6 @@
               submittedAt: new Date(), checkedAt: null
             });
           }
-
           await batch.commit();
           success += chunk.length;
           const pct = Math.floor((success / total) * 90) + 5;
@@ -483,16 +602,18 @@
           spText.textContent = `Submitted ${success}/${total}...`;
         }
 
-        // Update user pending count in separate write
         await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
         spFill.style.width = "100%";
         spText.textContent = `✅ Done! ${success} submitted`;
 
+        finalItems.forEach(item => existingHashes.add(makeRowHash(item, fields)));
+
         setTimeout(() => {
-          alert(`✅ ${success} টা submit সফল!\n💵 Expected: ৳${success * task.pricePerAccount}`);
+          const skipMsg2 = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ গেছে।` : '';
+          alert(`✅ ${success} টা submit সফল!${skipMsg2}\n💵 Expected: ৳${success * task.pricePerAccount}`);
           progress.classList.remove("show");
           document.getElementById("bulkInput").value = "";
-          document.getElementById("bulkCountNum").textContent = "0";
+          document.getElementById("bulkCountNum").textContent = "0 / 0";
           document.getElementById("bulkPreview").classList.remove("show");
           btn.disabled = false; btn.textContent = "🚀 Submit All";
         }, 500);
@@ -505,7 +626,7 @@
 
     document.getElementById("clearBulkBtn").onclick = () => {
       document.getElementById("bulkInput").value = "";
-      document.getElementById("bulkCountNum").textContent = "0";
+      document.getElementById("bulkCountNum").textContent = "0 / 0";
       document.getElementById("bulkPreview").classList.remove("show");
     };
 
