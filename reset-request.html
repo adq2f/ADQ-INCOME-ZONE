@@ -11,29 +11,37 @@
     <div class="auth-box">
       <div class="auth-logo-mark" style="background: linear-gradient(135deg, #f59e0b, #d97706)">🔐</div>
       <h1 class="auth-title">Password Reset</h1>
-      <p class="auth-subtitle">Request দাও → Admin approve করবে → নতুন password পাবে</p>
+      <p class="auth-subtitle">নতুন password দাও → Admin approve করবে → password set হবে</p>
 
       <div class="alert alert-error" style="background:#fef3c7;color:#92400e;border-left-color:#f59e0b">
         <div class="badge-icon" style="background:#f59e0b">!</div>
-        <div>⚠️ এই সাইটে Firebase-এর email link কাজ করে না। Admin তোমাকে সরাসরি password দেবে (WhatsApp/SMS)।</div>
-      </div>
-
-      <div class="field">
-        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-        <input type="text" id="reqUsername" placeholder="Username">
+        <div>⚠️ Admin approve করলে তোমার নতুন password সেট হবে। এরপর সেই password দিয়ে login করতে পারবে।</div>
       </div>
 
       <div class="field">
         <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>
-        <input type="email" id="reqEmail" placeholder="Registered Email">
+        <input type="email" id="reqEmail" placeholder="Registered Email" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+        <input type="text" id="reqUsername" placeholder="Username (auto-populate)" readonly style="background:#f1f5f9">
+      </div>
+
+      <div class="field">
+        <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+        <input type="password" id="reqNewPass" placeholder="New Password (৬+ অক্ষর)" autocomplete="new-password">
+        <button type="button" class="field-toggle" onclick="togglePass('reqNewPass', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
 
       <div class="field">
         <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-        <input type="text" id="reqContact" placeholder="WhatsApp/Telegram Number">
+        <input type="text" id="reqContact" placeholder="WhatsApp/Telegram Number" autocomplete="off">
       </div>
 
-      <textarea id="reqReason" class="admin-input" style="min-height:80px" placeholder="কারণ লিখো (optional)"></textarea>
+      <textarea id="reqReason" class="admin-input" style="min-height:70px;margin-top:8px" placeholder="কারণ (optional)"></textarea>
 
       <button class="btn btn-primary btn-full" id="submitReqBtn" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 8px 20px rgba(245,158,11,0.4); margin-top:12px">📩 Submit Reset Request</button>
 
@@ -45,18 +53,65 @@
     import { db } from "./firebase.js";
     import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    window.togglePass = function(id, btn) {
+      const input = document.getElementById(id);
+      input.type = input.type === "password" ? "text" : "password";
+      btn.style.color = input.type === "text" ? "#f59e0b" : "";
+    };
+
+    // ✅ AUTO-POPULATE USERNAME when email entered
+    let emailCheckTimer = null;
+    document.getElementById("reqEmail").addEventListener("input", (e) => {
+      clearTimeout(emailCheckTimer);
+      const email = e.target.value.trim().toLowerCase();
+      const usernameField = document.getElementById("reqUsername");
+
+      if (!email || !email.includes("@")) {
+        usernameField.value = "";
+        return;
+      }
+
+      // Debounce 500ms
+      emailCheckTimer = setTimeout(async () => {
+        try {
+          usernameField.value = "⏳ Checking...";
+          const q = query(collection(db, "users"), where("email", "==", email));
+          const snap = await getDocs(q);
+
+          if (snap.empty) {
+            usernameField.value = "";
+            usernameField.style.background = "#fee2e2";
+            setTimeout(() => { usernameField.style.background = "#f1f5f9"; }, 1500);
+          } else {
+            const user = snap.docs[0].data();
+            usernameField.value = user.username || "User";
+            usernameField.style.background = "#d1fae5";
+            setTimeout(() => { usernameField.style.background = "#f1f5f9"; }, 1500);
+          }
+        } catch (e) {
+          usernameField.value = "";
+        }
+      }, 500);
+    });
+
     document.getElementById("submitReqBtn").onclick = async () => {
+      const email = document.getElementById("reqEmail").value.trim().toLowerCase();
       const username = document.getElementById("reqUsername").value.trim();
-      const email = document.getElementById("reqEmail").value.trim();
+      const newPassword = document.getElementById("reqNewPass").value;
       const contact = document.getElementById("reqContact").value.trim();
       const reason = document.getElementById("reqReason").value.trim();
       const btn = document.getElementById("submitReqBtn");
 
-      if (!username || !email || !contact) return alert("সব ঘর পূরণ করো!");
+      if (!email || !email.includes("@")) return alert("সঠিক ইমেইল দাও!");
+      if (!username) return alert("Username পাওয়া যায়নি! সঠিক ইমেইল দাও।");
+      if (!newPassword || newPassword.length < 6) return alert("New password কমপক্ষে ৬ অক্ষর!");
+      if (!contact) return alert("Contact number দাও!");
 
-      btn.disabled = true; btn.textContent = "Submitting...";
+      btn.disabled = true;
+      btn.textContent = "Submitting...";
 
       try {
+        // Check existing pending request
         const existing = await getDocs(query(
           collection(db, "reset_requests"),
           where("email", "==", email),
@@ -65,20 +120,31 @@
 
         if (!existing.empty) {
           alert("⚠️ তোমার একটা pending request আছে! Admin approve করার অপেক্ষা করো।");
-          btn.disabled = false; btn.textContent = "📩 Submit Reset Request";
+          btn.disabled = false;
+          btn.textContent = "📩 Submit Reset Request";
           return;
         }
 
+        // ✅ Store plain password (admin will set it)
+        // ⚠️ In production, hash it. For admin-manual system, plain is used here.
         await addDoc(collection(db, "reset_requests"), {
-          username, email, contact, reason,
+          username,
+          email,
+          newPassword,        // Store the new password for admin to set
+          contact,
+          reason,
           status: "pending",
           requestedAt: new Date()
         });
 
-        alert("✅ Request submitted!\n\nAdmin approve করলে তোমাকে WhatsApp/SMS-এ জানানো হবে।");
+        alert("✅ Request submitted!\n\nAdmin approve করলে তোমার নতুন password সেট হয়ে যাবে।\n\nLogin করতে পারবে: " + newPassword);
         location.href = "login.html";
-      } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "📩 Submit Reset Request";
+      } catch (e) {
+        alert("❌ " + e.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = "📩 Submit Reset Request";
     };
   </script>
 </body>
