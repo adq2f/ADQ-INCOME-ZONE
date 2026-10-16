@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Withdraw — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
   <style>
     .withdraw-balance {
       background: linear-gradient(135deg, #E2136E, #8b5cf6);
@@ -40,7 +40,6 @@
       margin-top: 4px;
     }
 
-    /* PAYMENT METHOD CARD */
     .pay-method {
       background: white;
       border-radius: 16px;
@@ -59,69 +58,34 @@
     .pay-method:nth-child(2) { animation-delay: 0.1s; }
     .pay-method:nth-child(3) { animation-delay: 0.15s; }
     .pay-method:nth-child(4) { animation-delay: 0.2s; }
-
-    .pay-method:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
-    }
+    .pay-method:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,23,42,0.1); }
     .pay-method.active {
       border-color: #6366f1;
       box-shadow: 0 8px 24px rgba(99,102,241,0.25);
       background: linear-gradient(135deg, #eef2ff 0%, #ffffff 60%);
     }
 
-    /* REAL LOGO */
     .pay-logo {
-      width: 52px;
-      height: 52px;
+      width: 52px; height: 52px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
       overflow: hidden;
-      background: white;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       padding: 4px;
     }
-    .pay-logo svg {
-      width: 100%;
-      height: 100%;
-    }
-    .pay-logo.bkash {
-      background: linear-gradient(135deg, #E2136E, #B0105A);
-      padding: 6px;
-    }
-    .pay-logo.nagad {
-      background: linear-gradient(135deg, #F15A24, #D94315);
-      padding: 6px;
-    }
-    .pay-logo.rocket {
-      background: linear-gradient(135deg, #8B1F8B, #6A156A);
-      padding: 6px;
-    }
-    .pay-logo.binance {
-      background: linear-gradient(135deg, #F3BA2F, #D9A420);
-      padding: 4px;
-    }
-    .pay-logo.bkash svg,
-    .pay-logo.nagad svg,
-    .pay-logo.rocket svg { fill: white; }
-    .pay-logo.binance svg { fill: #1a1a1a; }
+    .pay-logo svg { width: 100%; height: 100%; }
+    .pay-logo.bkash { background: linear-gradient(135deg, #E2136E, #B0105A); padding: 6px; }
+    .pay-logo.nagad { background: linear-gradient(135deg, #F15A24, #D94315); padding: 6px; }
+    .pay-logo.rocket { background: linear-gradient(135deg, #8B1F8B, #6A156A); padding: 6px; }
+    .pay-logo.binance { background: linear-gradient(135deg, #F3BA2F, #D9A420); padding: 4px; }
 
     .pay-info { flex: 1; min-width: 0; }
-    .pay-info h4 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 2px;
-    }
-    .pay-info p {
-      font-size: 12px;
-      color: #64748b;
-    }
+    .pay-info h4 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .pay-info p { font-size: 12px; color: #64748b; }
 
-    /* FORM */
     .wd-form-card {
       background: white;
       border-radius: 20px;
@@ -130,10 +94,7 @@
       box-shadow: 0 8px 24px rgba(15,23,42,0.08);
       display: none;
     }
-    .wd-form-card.show {
-      display: block;
-      animation: fadeInUp 0.4s both;
-    }
+    .wd-form-card.show { display: block; animation: fadeInUp 0.4s both; }
 
     .info-warning {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
@@ -146,7 +107,6 @@
       border-left: 4px solid #f59e0b;
     }
 
-    /* EMPTY */
     .empty-methods {
       background: white;
       padding: 40px 20px;
@@ -159,18 +119,9 @@
       margin-bottom: 12px;
       display: block;
     }
-    .empty-methods h3 {
-      font-size: 16px;
-      color: #0f172a;
-      margin-bottom: 6px;
-    }
-    .empty-methods p {
-      font-size: 13px;
-      color: #64748b;
-      line-height: 1.5;
-    }
+    .empty-methods h3 { font-size: 16px; color: #0f172a; margin-bottom: 6px; }
+    .empty-methods p { font-size: 13px; color: #64748b; line-height: 1.5; }
 
-    /* Withdraw History */
     .wd-history-item {
       background: white;
       border-radius: 14px;
@@ -227,17 +178,16 @@
     </div>
     <div id="methodsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
 
-    <!-- WITHDRAW FORM -->
     <div class="wd-form-card" id="withdrawForm">
       <h3 id="formTitle" style="margin-bottom:16px;font-size:17px;font-weight:700">💸 Withdraw Request</h3>
 
       <label class="label-text">Amount (৳)</label>
-      <input type="number" id="amount" class="admin-input" placeholder="কত টাকা তুলবে?" min="100">
+      <input type="number" id="amount" class="admin-input" placeholder="কত টাকা তুলবে?" min="0">
 
       <label class="label-text" id="accountLabel">Account Number</label>
       <input type="text" id="accountNum" class="admin-input" placeholder="01XXXXXXXXX">
 
-      <div class="info-warning">
+      <div class="info-warning" id="withdrawWarning">
         ⚠️ <b>Minimum ৳100</b><br>
         Withdraw request করলে সাথে সাথে তোমার balance থেকে কাটা হবে। Admin approve করলে টাকা পাবে, reject করলে ফেরত আসবে।<br>
         <b>🔐 তোমার account password দিতে হবে verify করতে।</b>
@@ -249,7 +199,6 @@
       <button class="btn btn-success btn-full" id="submitWdBtn" style="margin-top:14px">🚀 Submit Withdraw</button>
     </div>
 
-    <!-- Withdraw History -->
     <div class="dash-section-head" style="margin-top:24px">
       <h3>📜 Withdraw History</h3>
     </div>
@@ -270,7 +219,6 @@
     import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, addDoc, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Smart back
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
         history.back();
@@ -285,53 +233,26 @@
       location.href = "index.html";
     };
 
-    // Payment method configuration with REAL SVG logos
     const PAY_METHODS = {
       bkash: {
-        name: "bKash",
-        logoClass: "bkash",
-        accountLabel: "bKash Number",
-        placeholder: "01XXXXXXXXX",
-        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="40" rx="6" fill="#E2136E"/>
-          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">bKash</text>
-        </svg>`
+        name: "bKash", logoClass: "bkash",
+        accountLabel: "bKash Number", placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg"><text x="50" y="28" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-1">bKash</text></svg>`
       },
       nagad: {
-        name: "Nagad",
-        logoClass: "nagad",
-        accountLabel: "Nagad Number",
-        placeholder: "01XXXXXXXXX",
-        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="40" rx="6" fill="#F15A24"/>
-          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">Nagad</text>
-        </svg>`
+        name: "Nagad", logoClass: "nagad",
+        accountLabel: "Nagad Number", placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg"><text x="50" y="28" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-1">Nagad</text></svg>`
       },
       rocket: {
-        name: "Rocket",
-        logoClass: "rocket",
-        accountLabel: "Rocket Number",
-        placeholder: "01XXXXXXXXX",
-        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
-          <rect width="100" height="40" rx="6" fill="#8B1F8B"/>
-          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">Rocket</text>
-        </svg>`
+        name: "Rocket", logoClass: "rocket",
+        accountLabel: "Rocket Number", placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg"><text x="50" y="28" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-1">Rocket</text></svg>`
       },
       binance: {
-        name: "Binance",
-        logoClass: "binance",
-        accountLabel: "Binance Wallet / ID",
-        placeholder: "Binance ID or Wallet Address",
-        svg: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-          <rect width="40" height="40" rx="8" fill="#F3BA2F"/>
-          <g fill="#1a1a1a">
-            <path d="M12 20l4-4 4 4-4 4-4-4z"/>
-            <path d="M20 12l4-4 4 4-4 4-4-4z"/>
-            <path d="M28 20l4-4 4 4-4 4-4-4z"/>
-            <path d="M20 28l4-4 4 4-4 4-4-4z"/>
-            <path d="M16 16l4-4 4 4-4 4-4-4z" opacity="0"/>
-          </g>
-        </svg>`
+        name: "Binance", logoClass: "binance",
+        accountLabel: "Binance Wallet / ID", placeholder: "Binance ID or Wallet Address",
+        svg: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"><g fill="#1a1a1a"><path d="M12 20l4-4 4 4-4 4-4-4z"/><path d="M20 12l4-4 4 4-4 4-4-4z"/><path d="M28 20l4-4 4 4-4 4-4-4z"/><path d="M20 28l4-4 4 4-4 4-4-4z"/></g></svg>`
       }
     };
 
@@ -340,6 +261,8 @@
     let userBalance = 0;
     let selectedMethod = null;
     let enabledMethods = {};
+    let minWithdraw = 100;
+    let withdrawEnabled = true;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
@@ -352,7 +275,23 @@
         document.getElementById("balance").textContent = "৳" + userBalance;
       }
 
-      // Load enabled methods from admin settings
+      // Load settings
+      try {
+        const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
+        if (wSnap.exists()) {
+          const w = wSnap.data();
+          minWithdraw = w.minWithdraw || 100;
+          withdrawEnabled = w.withdrawEnabled !== false;
+        }
+      } catch (e) {}
+
+      // Update warning text
+      document.getElementById("withdrawWarning").innerHTML = `
+        ⚠️ <b>Minimum ৳${minWithdraw}</b><br>
+        Withdraw request করলে সাথে সাথে তোমার balance থেকে কাটা হবে। Admin approve করলে টাকা পাবে, reject করলে ফেরত আসবে।<br>
+        <b>🔐 তোমার account password দিতে হবে verify করতে।</b>
+      `;
+
       await loadEnabledMethods();
       renderMethods();
       loadWithdrawHistory();
@@ -364,7 +303,6 @@
         if (snap.exists()) {
           enabledMethods = snap.data();
         } else {
-          // Default: all enabled
           enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
         }
       } catch (e) {
@@ -375,7 +313,19 @@
     function renderMethods() {
       const list = document.getElementById("methodsList");
 
-      // Filter: only enabled methods
+      // If withdraw globally disabled
+      if (!withdrawEnabled) {
+        list.innerHTML = `
+          <div class="empty-methods">
+            <span class="icon">🚫</span>
+            <h3>Withdraw বন্ধ আছে</h3>
+            <p>Admin এখন withdraw system বন্ধ রেখেছে।<br>কিছুক্ষণ পরে আবার চেষ্টা করো।</p>
+          </div>
+        `;
+        return;
+      }
+
+      // Filter enabled methods
       const availableMethods = Object.keys(PAY_METHODS).filter(k => enabledMethods[k] !== false);
 
       if (availableMethods.length === 0) {
@@ -383,7 +333,7 @@
           <div class="empty-methods">
             <span class="icon">🚫</span>
             <h3>Withdraw বন্ধ আছে</h3>
-            <p>Admin এখনো কোনো payment method চালু করেনি।<br>কিছুক্ষণ পরে আবার চেষ্টা করো।</p>
+            <p>Admin এখনো কোনো payment method চালু করেনি।</p>
           </div>
         `;
         return;
@@ -402,7 +352,6 @@
         `;
       }).join("");
 
-      // Attach click handlers
       list.querySelectorAll(".pay-method").forEach(el => {
         el.onclick = () => {
           list.querySelectorAll(".pay-method").forEach(e => e.classList.remove("active"));
@@ -413,7 +362,6 @@
           document.getElementById("accountLabel").textContent = m.accountLabel;
           document.getElementById("accountNum").placeholder = m.placeholder;
 
-          // Auto-fill from wallet info if exists
           if (userData?.walletInfo && userData.walletInfo.method === selectedMethod) {
             document.getElementById("accountNum").value = userData.walletInfo.number || "";
           } else {
@@ -426,14 +374,13 @@
       });
     }
 
-    // ===== SUBMIT WITHDRAW =====
     document.getElementById("submitWdBtn").onclick = async () => {
       if (!selectedMethod) return alert("Payment method select করো!");
       const amount = parseFloat(document.getElementById("amount").value);
       const accountNum = document.getElementById("accountNum").value.trim();
       const confirmPass = document.getElementById("confirmPass").value;
 
-      if (!amount || amount < 100) return alert("Minimum ৳100!");
+      if (!amount || amount < minWithdraw) return alert(`Minimum ৳${minWithdraw}!`);
       if (amount > userBalance) return alert(`তোমার balance ৳${userBalance}!`);
       if (!accountNum) return alert("Account number দাও!");
       if (!confirmPass) return alert("Account password দাও!");
@@ -442,7 +389,7 @@
       btn.disabled = true;
       btn.textContent = "Verifying...";
 
-      // ===== PASSWORD VERIFY =====
+      // Password verify
       try {
         await signInWithEmailAndPassword(auth, currentUser.email, confirmPass);
       } catch (e) {
@@ -455,7 +402,6 @@
       btn.textContent = "Submitting...";
 
       try {
-        // Create withdraw request
         await addDoc(collection(db, "withdrawals"), {
           userId: currentUser.uid,
           username: userData.username,
@@ -468,7 +414,6 @@
           requestedAt: new Date()
         });
 
-        // Deduct balance immediately
         await updateDoc(doc(db, "users", currentUser.uid), {
           balance: increment(-amount)
         });
@@ -482,7 +427,6 @@
       }
     };
 
-    // ===== LOAD WITHDRAW HISTORY =====
     async function loadWithdrawHistory() {
       const list = document.getElementById("withdrawHistory");
       try {
