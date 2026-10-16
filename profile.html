@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>প্রোফাইল — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=32">
   <style>
     .refer-card {
       background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
@@ -214,6 +214,73 @@
       border-color: #6366f1;
       box-shadow: 0 4px 12px rgba(99,102,241,0.3);
     }
+    .badge-display {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: white;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .leaderboard-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+      padding: 14px 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(245,158,11,0.35);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .leaderboard-btn::before {
+      content: '';
+      position: absolute;
+      top: -30px; right: -20px;
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+      border-radius: 50%;
+    }
+    .leaderboard-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(245,158,11,0.5);
+    }
+    .leaderboard-btn .icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .leaderboard-btn .text {
+      flex: 1;
+      position: relative;
+    }
+    .leaderboard-btn .title {
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .leaderboard-btn .sub {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .leaderboard-btn .arrow {
+      font-size: 22px;
+      opacity: 0.8;
+      position: relative;
+    }
   </style>
 </head>
 <body>
@@ -235,6 +302,9 @@
     <div class="profile-avatar" id="avatar">U</div>
     <h1 id="username">Loading...</h1>
     <p id="email">...</p>
+    <div id="userBadgeDisplay" style="display:none;margin-top:12px;position:relative;z-index:1">
+      <span class="badge-display" id="userBadgeText">BADGE</span>
+    </div>
   </div>
 
   <div class="profile-stats">
@@ -253,6 +323,16 @@
   </div>
 
   <div class="container" style="padding-top:0">
+
+    <!-- LEADERBOARD BUTTON -->
+    <a href="leaderboard.html" class="leaderboard-btn">
+      <div class="icon">🏆</div>
+      <div class="text">
+        <div class="title">Leaderboard</div>
+        <div class="sub">দেখো কে টপে আছে</div>
+      </div>
+      <div class="arrow">›</div>
+    </a>
 
     <!-- REFER CARD -->
     <div class="refer-card">
@@ -361,8 +441,8 @@
   <nav class="bottom-nav">
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
     <a href="profile.html" data-page="profile" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
@@ -404,6 +484,13 @@
       document.getElementById("avatar").textContent = (userData.username || "U").charAt(0).toUpperCase();
       document.getElementById("statBalance").textContent = "৳" + (userData.balance || 0);
       document.getElementById("statGood").textContent = userData.totalGood || 0;
+
+      // ✅ Custom Badge
+      if (userData.customBadge) {
+        document.getElementById("userBadgeDisplay").style.display = "block";
+        document.getElementById("userBadgeText").textContent = "🎖️ " + userData.customBadge;
+        document.getElementById("userBadgeText").style.background = userData.customBadgeColor || "#6366f1";
+      }
 
       document.getElementById("myReferCode").textContent = userData.myReferCode || "------";
       document.getElementById("referCount").textContent = userData.referCount || 0;
