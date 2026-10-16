@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Password Reset Request — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=25">
+  <link rel="stylesheet" href="style.css?v=26">
 </head>
 <body>
   <div class="auth-wrapper">
@@ -57,7 +57,6 @@
       btn.disabled = true; btn.textContent = "Submitting...";
 
       try {
-        // Check existing pending request
         const existing = await getDocs(query(
           collection(db, "reset_requests"),
           where("email", "==", email),
