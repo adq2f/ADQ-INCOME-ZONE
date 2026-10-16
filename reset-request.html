@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Password Reset Request — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body>
   <div class="auth-wrapper">
@@ -15,7 +15,7 @@
 
       <div class="alert alert-error" style="background:#fef3c7;color:#92400e;border-left-color:#f59e0b">
         <div class="badge-icon" style="background:#f59e0b">!</div>
-        <div>⚠️ এই সাইটে Firebase-এর email link কাজ করে না। Admin তোমাকে সরাসরি password দেবে।</div>
+        <div>⚠️ এই সাইটে Firebase-এর email link কাজ করে না। Admin তোমাকে সরাসরি password দেবে (WhatsApp/SMS)।</div>
       </div>
 
       <div class="field">
@@ -30,7 +30,7 @@
 
       <div class="field">
         <span class="field-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-        <input type="text" id="reqContact" placeholder="তোমার WhatsApp/Telegram Number">
+        <input type="text" id="reqContact" placeholder="WhatsApp/Telegram Number">
       </div>
 
       <textarea id="reqReason" class="admin-input" style="min-height:80px" placeholder="কারণ লিখো (optional)"></textarea>
@@ -57,7 +57,7 @@
       btn.disabled = true; btn.textContent = "Submitting...";
 
       try {
-        // Check if already requested
+        // Check existing pending request
         const existing = await getDocs(query(
           collection(db, "reset_requests"),
           where("email", "==", email),
@@ -76,7 +76,7 @@
           requestedAt: new Date()
         });
 
-        alert("✅ Request submitted! Admin approve করলে তোমাকে জানানো হবে।");
+        alert("✅ Request submitted!\n\nAdmin approve করলে তোমাকে WhatsApp/SMS-এ জানানো হবে।");
         location.href = "login.html";
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "📩 Submit Reset Request";
