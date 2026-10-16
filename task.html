@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>সাবমিট — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=14">
+  <link rel="stylesheet" href="style.css?v=15">
   <style>
     .task-info-header {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
@@ -48,22 +48,77 @@
       color: #78350f; line-height: 1.6;
     }
     .rules-box b { color: #92400e; }
+
+    /* LIVE COUNTDOWN STATUS */
     .time-status {
-      padding: 16px; border-radius: 14px;
+      padding: 18px 16px; border-radius: 16px;
       text-align: center; font-weight: 700;
-      margin-bottom: 14px; font-size: 14px;
+      margin-bottom: 14px; font-size: 15px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s var(--ease);
     }
     .time-status.open {
       background: linear-gradient(135deg, #d1fae5, #a7f3d0);
       color: #065f46; border: 2px solid #10b981;
+      box-shadow: 0 8px 24px rgba(16,185,129,0.25);
     }
     .time-status.upcoming {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
       color: #92400e; border: 2px solid #f59e0b;
+      box-shadow: 0 8px 24px rgba(245,158,11,0.25);
     }
     .time-status.closed {
       background: linear-gradient(135deg, #fee2e2, #fecaca);
       color: #991b1b; border: 2px solid #ef4444;
+      box-shadow: 0 8px 24px rgba(239,68,68,0.25);
+    }
+
+    /* Countdown digits */
+    .countdown-wrap {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 12px 0 6px;
+    }
+    .cd-box {
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(10px);
+      padding: 10px 12px;
+      border-radius: 12px;
+      min-width: 60px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .cd-box .cd-num {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: 'Inter', sans-serif;
+      line-height: 1;
+      display: block;
+    }
+    .cd-box .cd-lbl {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.7;
+      margin-top: 4px;
+      display: block;
+    }
+    .cd-box.danger .cd-num { color: #dc2626; animation: pulse 1s infinite; }
+
+    .status-label {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.05); }
     }
 
     /* Bulk count live */
@@ -86,7 +141,6 @@
       font-family: 'Inter';
     }
 
-    /* Preview */
     .bulk-preview {
       background: #f8fafc;
       border-radius: 10px;
@@ -106,6 +160,30 @@
       border-bottom: 1px dashed #e2e8f0;
     }
     .bulk-preview .row:last-child { border-bottom: none; }
+
+    /* Disabled state */
+    .closed-overlay {
+      background: linear-gradient(135deg, #fee2e2, #fecaca);
+      border-radius: 16px;
+      padding: 30px 20px;
+      text-align: center;
+      margin-bottom: 16px;
+      border: 2px dashed #ef4444;
+    }
+    .closed-overlay .icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .closed-overlay h3 {
+      color: #991b1b;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .closed-overlay p {
+      color: #7f1d1d;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -136,9 +214,7 @@
       <h3>📋 Bulk Submit</h3>
       <div class="bulk-hint">
         <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
-        যেকোনো format-এ paste করতে পারো:<br>
-        • Tab (Google Sheet copy)<br>
-        • Comma (,) • Pipe (|) • Multiple space • Single space
+        Tab / Comma / Pipe / Space — সব format কাজ করবে
       </div>
       <textarea id="bulkInput" class="bulk-textarea" placeholder="Loading..." style="min-height:150px"></textarea>
 
@@ -170,9 +246,12 @@
     const params = new URLSearchParams(location.search);
     const taskId = params.get("id");
     let task = null, currentUser = null, isOpen = false;
+    let countdownInterval = null;
+    let taskStartTime = null, taskEndTime = null;
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
+      if (countdownInterval) clearInterval(countdownInterval);
       await signOut(auth);
       location.href = "index.html";
     };
@@ -191,59 +270,24 @@
       }
       task = snap.data();
 
+      taskStartTime = task.startTime?.toDate?.() || null;
+      taskEndTime = task.endTime?.toDate?.() || null;
+
       const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
       const pIcon = icons[task.platform] || "🔗";
 
-      const now = new Date();
-      const start = task.startTime?.toDate?.();
-      const end = task.endTime?.toDate?.();
-
-      let timeStatus = "open";
-      let statusMsg = "";
-      if (start && end) {
-        if (now < start) {
-          timeStatus = "upcoming";
-          statusMsg = `⏳ শুরু হবে: ${start.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
-          isOpen = false;
-        } else if (now > end) {
-          timeStatus = "closed";
-          statusMsg = `🔴 সময় শেষ: ${end.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
-          isOpen = false;
-        } else {
-          timeStatus = "open";
-          const timeLeft = Math.floor((end - now) / 1000);
-          const hrs = Math.floor(timeLeft / 3600);
-          const mins = Math.floor((timeLeft % 3600) / 60);
-          statusMsg = `🟢 Submit Open! বাকি: ${hrs}ঘ ${mins}মি`;
-          isOpen = true;
-        }
-      } else {
-        isOpen = true;
-        statusMsg = "🟢 Submit Open";
-      }
-
-      const startStr = start ? start.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-      const endStr = end ? end.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+      const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+      const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
 
       document.getElementById("taskInfo").innerHTML = `
         <div class="task-info-header">
           <div class="platform-tag">${pIcon} ${task.platform || "Task"}</div>
           <h2>${task.title}</h2>
           <div class="price-big">৳${task.pricePerAccount} <span style="font-size:13px;font-weight:500">/ account</span></div>
-          ${start && end ? `<div class="time-info">⏰ ${startStr} → ${endStr}</div>` : ''}
+          ${taskStartTime && taskEndTime ? `<div class="time-info">⏰ ${startStr} → ${endStr}</div>` : ''}
         </div>
         ${task.rules ? `<div class="rules-box"><b>📋 Rules:</b><br>${task.rules}</div>` : ''}
       `;
-
-      document.getElementById("timeStatusBox").innerHTML = `
-        <div class="time-status ${timeStatus}">${statusMsg}</div>
-      `;
-
-      if (!isOpen) {
-        document.getElementById("singleSection").style.display = "none";
-        document.getElementById("bulkSection").style.display = "none";
-        return;
-      }
 
       const fields = task.fields || [
         { key: "uid", label: "UID" },
@@ -255,14 +299,171 @@
         <input type="text" id="dyn_${f.key}" class="admin-input" placeholder="${f.label}">
       `).join("");
 
-      document.getElementById("singleSection").style.display = "block";
-
       document.getElementById("bulkFormatHint").textContent = fields.map(f => f.label).join(" | ");
       document.getElementById("bulkInput").placeholder = fields.map(f => f.label).join("\t");
-
-      // Attach bulk input listener
       document.getElementById("bulkInput").addEventListener("input", updateBulkCount);
+
+      // ===== START LIVE COUNTDOWN =====
+      startCountdown();
     });
+
+    // ==================== LIVE COUNTDOWN ====================
+    function startCountdown() {
+      // Initial update
+      updateCountdown();
+
+      // Update every 1 second
+      if (countdownInterval) clearInterval(countdownInterval);
+      countdownInterval = setInterval(() => {
+        updateCountdown();
+      }, 1000);
+    }
+
+    function updateCountdown() {
+      const now = new Date();
+      const box = document.getElementById("timeStatusBox");
+      const singleSec = document.getElementById("singleSection");
+      const bulkSec = document.getElementById("bulkSection");
+
+      // No time range set → always open
+      if (!taskStartTime || !taskEndTime) {
+        isOpen = true;
+        box.innerHTML = `
+          <div class="time-status open">
+            <div class="status-label">🟢 Submit Open</div>
+            <div style="font-size:12px;opacity:0.8">কোনো time limit নেই</div>
+          </div>
+        `;
+        singleSec.style.display = "block";
+        bulkSec.style.display = "block";
+        setButtonsState(true);
+        return;
+      }
+
+      // UPCOMING
+      if (now < taskStartTime) {
+        isOpen = false;
+        const diff = taskStartTime - now;
+        box.innerHTML = `
+          <div class="time-status upcoming">
+            <div class="status-label">⏳ Upcoming Task</div>
+            <p style="font-size:13px;margin:6px 0 0">শুরু হবে:</p>
+            ${renderCountdown(diff)}
+          </div>
+        `;
+        singleSec.style.display = "none";
+        bulkSec.style.display = "none";
+        setButtonsState(false);
+        return;
+      }
+
+      // CLOSED
+      if (now > taskEndTime) {
+        isOpen = false;
+        box.innerHTML = `
+          <div class="time-status closed">
+            <div class="status-label">🔴 Time Expired</div>
+            <p style="font-size:13px;margin:6px 0 0">Submission সময় শেষ হয়ে গেছে</p>
+            <div style="font-size:11px;opacity:0.7;margin-top:6px">
+              শেষ সময় ছিল: ${taskEndTime.toLocaleString("bn-BD")}
+            </div>
+          </div>
+        `;
+        singleSec.style.display = "none";
+        bulkSec.style.display = "block";
+        // Show bulk but disabled, with overlay
+        const bulkForm = bulkSec.querySelector(".bulk-hint");
+        document.getElementById("bulkInput").disabled = true;
+        document.getElementById("bulkSubmitBtn").disabled = true;
+        document.getElementById("clearBulkBtn").style.display = "none";
+
+        // Add closed overlay if not exists
+        if (!document.getElementById("closedOverlay")) {
+          const overlay = document.createElement("div");
+          overlay.id = "closedOverlay";
+          overlay.className = "closed-overlay";
+          overlay.innerHTML = `
+            <span class="icon">🔒</span>
+            <h3>Submission Closed</h3>
+            <p>এই Task-এর সময় শেষ হয়ে গেছে।</p>
+            <p style="margin-top:8px;font-size:12px">Admin পরবর্তী Task চালু করলে আবার submit করতে পারবে।</p>
+          `;
+          bulkSec.insertBefore(overlay, bulkSec.children[1]);
+        }
+        setButtonsState(false);
+        return;
+      }
+
+      // OPEN
+      isOpen = true;
+      const diff = taskEndTime - now;
+      const isDanger = diff < 5 * 60 * 1000; // 5 min or less
+      box.innerHTML = `
+        <div class="time-status ${isDanger ? 'closed' : 'open'}" style="${isDanger ? 'background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; border-color: #f59e0b;' : ''}">
+          <div class="status-label">${isDanger ? '⚠️ সময় প্রায় শেষ!' : '🟢 Submit Open'}</div>
+          ${renderCountdown(diff, isDanger)}
+        </div>
+      `;
+      singleSec.style.display = "block";
+      bulkSec.style.display = "block";
+      document.getElementById("bulkInput").disabled = false;
+      document.getElementById("bulkSubmitBtn").disabled = false;
+      document.getElementById("clearBulkBtn").style.display = "block";
+      const overlay = document.getElementById("closedOverlay");
+      if (overlay) overlay.remove();
+      setButtonsState(true);
+    }
+
+    function renderCountdown(ms, danger = false) {
+      const totalSec = Math.floor(ms / 1000);
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const mins = Math.floor((totalSec % 3600) / 60);
+      const secs = totalSec % 60;
+
+      const cls = danger ? "danger" : "";
+
+      if (days > 0) {
+        return `
+          <div class="countdown-wrap">
+            <div class="cd-box ${cls}"><span class="cd-num">${days}</span><span class="cd-lbl">দিন</span></div>
+            <div class="cd-box ${cls}"><span class="cd-num">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">ঘণ্টা</span></div>
+            <div class="cd-box ${cls}"><span class="cd-num">${String(mins).padStart(2,'0')}</span><span class="cd-lbl">মিনিট</span></div>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="countdown-wrap">
+          <div class="cd-box ${cls}"><span class="cd-num">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">ঘণ্টা</span></div>
+          <div class="cd-box ${cls}"><span class="cd-num">${String(mins).padStart(2,'0')}</span><span class="cd-lbl">মিনিট</span></div>
+          <div class="cd-box ${cls}"><span class="cd-num">${String(secs).padStart(2,'0')}</span><span class="cd-lbl">সেকেন্ড</span></div>
+        </div>
+      `;
+    }
+
+    function setButtonsState(enabled) {
+      const btns = ["singleSubmitBtn", "bulkSubmitBtn"];
+      btns.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !enabled;
+      });
+    }
+
+    // ==================== FINAL CHECK BEFORE SUBMIT ====================
+    function verifyTime() {
+      const now = new Date();
+      if (taskStartTime && now < taskStartTime) {
+        alert("⏳ এখনো Task শুরু হয়নি!");
+        return false;
+      }
+      if (taskEndTime && now > taskEndTime) {
+        alert("🔴 সময় শেষ হয়ে গেছে! Submit করা যাবে না।");
+        updateCountdown();
+        return false;
+      }
+      return true;
+    }
 
     // ==================== SMART BULK PARSER ====================
     function parseBulk(text) {
@@ -274,16 +475,11 @@
       ];
       const fieldCount = fields.length;
 
-      // Step 1: Normalize line endings
       let normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-
-      // Step 2: Split by newlines
       let lines = normalized.split("\n").map(l => l.trim()).filter(Boolean);
 
-      // Step 3: Handle single-line multi-data case
       if (lines.length === 1 && lines[0].length > 30) {
         const singleLine = lines[0];
-        // Check for multiple UID-like tokens
         const tokens = singleLine.split(/\s+/).filter(Boolean);
         if (tokens.length > fieldCount && tokens.length % fieldCount === 0) {
           const result = [];
@@ -296,55 +492,36 @@
         }
       }
 
-      // Step 4: Normal line-by-line parse
       const result = [];
       for (const line of lines) {
         if (!line) continue;
-
         let parts = [];
+        if (line.includes("\t")) parts = line.split("\t");
+        else if (line.includes("|")) parts = line.split("|");
+        else if (line.includes(",")) parts = line.split(",");
+        else if (/\s{2,}/.test(line)) parts = line.split(/\s{2,}/);
+        else parts = line.split(/\s+/);
 
-        // Priority: Tab > Pipe > Comma > 2+ spaces > single space
-        if (line.includes("\t")) {
-          parts = line.split("\t");
-        } else if (line.includes("|")) {
-          parts = line.split("|");
-        } else if (line.includes(",")) {
-          parts = line.split(",");
-        } else if (/\s{2,}/.test(line)) {
-          parts = line.split(/\s{2,}/);
-        } else {
-          // Single space
-          parts = line.split(/\s+/);
-        }
-
-        // Clean each part
         parts = parts.map(p => p.trim()).filter(p => p.length > 0);
 
-        // Accept if enough parts
         if (parts.length >= fieldCount) {
           const item = {};
           fields.forEach((f, i) => { item[f.key] = parts[i] || ""; });
-          // First field must be non-empty
-          if (item[fields[0].key]) {
-            result.push(item);
-          }
+          if (item[fields[0].key]) result.push(item);
         }
       }
-
       return result;
     }
 
-    // ==================== LIVE COUNT ====================
     function updateBulkCount() {
       const text = document.getElementById("bulkInput").value;
       const items = parseBulk(text);
 
       document.getElementById("bulkCountNum").textContent = items.length;
 
-      // Show preview
       const preview = document.getElementById("bulkPreview");
       if (items.length > 0 && items.length <= 20) {
-        const fields = task?.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
+        const fields = task?.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
         preview.innerHTML = items.map((item, idx) => {
           const rowStr = fields.map(f => item[f.key]).join(" | ");
           return `<div class="row">${idx + 1}. ${rowStr}</div>`;
@@ -365,7 +542,9 @@
 
     // ==================== SINGLE SUBMIT ====================
     document.getElementById("singleSubmitBtn").onclick = async () => {
-      if (!task || !isOpen) return alert("সময় শেষ!");
+      if (!verifyTime()) return;
+      if (!task) return alert("Task load হয়নি!");
+
       const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
       const submission = {};
       for (const f of fields) {
@@ -392,13 +571,15 @@
 
     // ==================== BULK SUBMIT ====================
     document.getElementById("bulkSubmitBtn").onclick = async () => {
-      if (!task || !isOpen) return alert("সময় শেষ!");
+      if (!verifyTime()) return;
+      if (!task) return alert("Task load হয়নি!");
+
       const text = document.getElementById("bulkInput").value;
       const items = parseBulk(text);
       const btn = document.getElementById("bulkSubmitBtn");
 
       if (items.length === 0) {
-        return alert("❌ কোনো account detect হয়নি!\n\nFormat চেক করো:\nUID Password 2FA\n100001 pass123 KEY1");
+        return alert("❌ কোনো account detect হয়নি!\n\nFormat:\nUID Password 2FA\n100001 pass123 KEY1");
       }
       if (items.length > 500) return alert("সর্বোচ্চ ৫০০ account একবারে!");
       if (!confirm(`${items.length} টা account submit করবে?`)) return;
@@ -409,6 +590,12 @@
 
       try {
         for (let i = 0; i < items.length; i++) {
+          // Double-check time before each save
+          if (taskEndTime && new Date() > taskEndTime) {
+            alert(`⏰ সময় শেষ হয়ে গেছে! ${success}/${total} submit হয়েছে।`);
+            break;
+          }
+
           const item = items[i];
           btn.textContent = `Submitting ${i + 1}/${total}...`;
           await addDoc(collection(db, "submissions"), {
@@ -419,13 +606,15 @@
           });
           success++;
         }
-        await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
-        alert(`✅ ${success} টা submit সফল!\n💵 Expected: ৳${success * task.pricePerAccount}`);
+        if (success > 0) {
+          await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
+          alert(`✅ ${success} টা submit সফল!\n💵 Expected: ৳${success * task.pricePerAccount}`);
+        }
         document.getElementById("bulkInput").value = "";
         document.getElementById("bulkCountNum").textContent = "0";
         document.getElementById("bulkPreview").classList.remove("show");
       } catch (e) {
-        alert(`❌ Error: ${e.message}\n${success}/${total} submit হয়েছে।`);
+        alert(`❌ ${e.message}\n${success}/${total} submit হয়েছে।`);
       }
       btn.disabled = false; btn.textContent = "🚀 Submit All";
     };
@@ -436,6 +625,11 @@
       document.getElementById("bulkCountNum").textContent = "0";
       document.getElementById("bulkPreview").classList.remove("show");
     };
+
+    // Cleanup on page unload
+    window.addEventListener("beforeunload", () => {
+      if (countdownInterval) clearInterval(countdownInterval);
+    });
   </script>
 </body>
 </html>
