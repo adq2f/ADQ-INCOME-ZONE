@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=32">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
@@ -75,7 +75,6 @@
     .dash-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .qi-orange { background: #fef3c7; }
     .qi-purple { background: #eef2ff; }
-    .qi-green { background: #d1fae5; }
     .dash-quick-label { font-size: 11px; font-weight: 700; color: #475569; }
     .result-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 4px solid #10b981; padding: 20px; border-radius: 14px; margin-top: 16px; }
     .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; }
@@ -85,6 +84,7 @@
     .dash-empty .em { font-size: 48px; margin-bottom: 12px; display: block; }
     .badge-color-btn { width: 36px; height: 36px; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
     .badge-color-btn:hover { transform: scale(1.1); }
+    .badge-user-row:hover { background: #f8fafc !important; }
   </style>
 </head>
 <body>
@@ -262,12 +262,17 @@
     <div id="badgesTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>🎖️ Quick Badge Assign</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">দ্রুত badge assign করো — user edit page-এও badge দেওয়া যাবে।</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">User search করো → badge দাও।</p>
 
-        <label class="label-text">User Select</label>
-        <select id="badgeUserSelect" class="admin-input">
-          <option value="">-- Select User --</option>
-        </select>
+        <label class="label-text">Search User</label>
+        <input type="text" id="badgeUserSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল...">
+        <div id="badgeUserResults" style="max-height:280px;overflow-y:auto;margin-bottom:12px"></div>
+
+        <div id="selectedBadgeUser" style="display:none;background:#eef2ff;padding:12px;border-radius:10px;margin-bottom:14px;border-left:4px solid #6366f1">
+          <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:4px">Selected User</div>
+          <div id="selectedBadgeUserName" style="font-size:14px;font-weight:700;color:#0f172a"></div>
+          <div id="selectedBadgeUserEmail" style="font-size:12px;color:#64748b"></div>
+        </div>
 
         <label class="label-text">Badge Name</label>
         <input type="text" id="badgeName" class="admin-input" placeholder="যেমন: CHAMPION, VIP, PRO" maxlength="20">
@@ -286,7 +291,7 @@
         <input type="text" id="badgeCustomColor" class="admin-input" placeholder="Custom color" value="#6366f1">
 
         <button class="btn btn-primary btn-full" id="saveBadgeBtn" style="margin-top:14px">🎖️ Assign Badge</button>
-        <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:8px">🗑️ Remove Badge</button>
+        <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:8px">🗑️ Remove Badge from Selected</button>
       </div>
       <div id="badgeOutput"></div>
 
@@ -337,8 +342,8 @@
   <nav class="bottom-nav">
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
@@ -792,25 +797,19 @@
             const u = uSnap.data();
             const referrerId = u.referredBy;
             if (!referrerId) continue;
-
-            // ✅ Check custom refer commission on referrer
             const refRef = doc(db, "users", referrerId);
             const refSnap = await getDoc(refRef);
             if (!refSnap.exists()) continue;
             const refData = refSnap.data();
-
             let effectiveCommission = referCommission;
             if (refData.customReferCommission !== null && refData.customReferCommission !== undefined && !isNaN(refData.customReferCommission)) {
               effectiveCommission = refData.customReferCommission;
             }
-
             const earned = goodAccounts * effectiveCommission;
-
             await updateDoc(refRef, {
               balance: (refData.balance || 0) + earned,
               totalReferEarning: (refData.totalReferEarning || 0) + earned
             });
-
             await addDoc(collection(db, "refer_earnings"), {
               referrerId: referrerId,
               referredUserId: userId,
@@ -822,7 +821,6 @@
               totalEarned: earned,
               createdAt: new Date()
             });
-
             totalReferCommission += earned;
             referrerCount++;
           }
@@ -1156,6 +1154,8 @@
     }
 
     // BADGES TAB
+    let allBadgeUsers = [];
+    let selectedBadgeUserId = null;
     let badgeColor = "#6366f1";
 
     document.querySelectorAll(".badge-color-btn").forEach(btn => {
@@ -1173,16 +1173,57 @@
     };
 
     async function loadBadgeUsers() {
-      const sel = document.getElementById("badgeUserSelect");
       try {
         const snap = await getDocs(collection(db, "users"));
-        const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        allBadgeUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .filter(u => u.role !== "admin")
           .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
-        sel.innerHTML = '<option value="">-- Select User --</option>' +
-          users.map(u => `<option value="${u.id}">${u.username || "User"} — ${u.totalGood || 0} good</option>`).join("");
+        renderBadgeUserResults("");
       } catch (e) {}
     }
+
+    function renderBadgeUserResults(search) {
+      const container = document.getElementById("badgeUserResults");
+      const s = search.toLowerCase().trim();
+      let filtered = allBadgeUsers;
+      if (s) {
+        filtered = allBadgeUsers.filter(u =>
+          (u.username || "").toLowerCase().includes(s) ||
+          (u.email || "").toLowerCase().includes(s)
+        );
+      }
+      filtered = filtered.slice(0, 50);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">কোনো user পাওয়া যায়নি</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(u => `
+        <div class="badge-user-row" data-uid="${u.id}" data-name="${u.username || 'User'}" data-email="${u.email || ''}" 
+          style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:2px solid ${selectedBadgeUserId === u.id ? '#6366f1' : '#e2e8f0'};border-radius:10px;margin-bottom:6px;cursor:pointer;transition:0.2s">
+          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0">${(u.username || "U").charAt(0).toUpperCase()}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#0f172a">${u.username || "User"} ${u.customBadge ? `<span style="background:${u.customBadgeColor || '#6366f1'};color:white;padding:1px 6px;border-radius:8px;font-size:9px;margin-left:4px">${u.customBadge}</span>` : ''}</div>
+            <div style="font-size:11px;color:#94a3b8">${u.email || ""} • ✅ ${u.totalGood || 0}</div>
+          </div>
+        </div>
+      `).join("");
+
+      container.querySelectorAll(".badge-user-row").forEach(row => {
+        row.onclick = () => {
+          selectedBadgeUserId = row.dataset.uid;
+          document.getElementById("selectedBadgeUser").style.display = "block";
+          document.getElementById("selectedBadgeUserName").textContent = row.dataset.name;
+          document.getElementById("selectedBadgeUserEmail").textContent = row.dataset.email;
+          renderBadgeUserResults(document.getElementById("badgeUserSearch").value);
+        };
+      });
+    }
+
+    document.getElementById("badgeUserSearch").addEventListener("input", (e) => {
+      renderBadgeUserResults(e.target.value);
+    });
 
     async function loadBadgedUsers() {
       const list = document.getElementById("badgedUsersList");
@@ -1213,12 +1254,13 @@
       try {
         await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
         loadBadgedUsers();
+        loadBadgeUsers();
         alert("✅ Badge removed!");
       } catch (e) { alert("❌ " + e.message); }
     };
 
     document.getElementById("saveBadgeBtn").onclick = async () => {
-      const userId = document.getElementById("badgeUserSelect").value;
+      const userId = selectedBadgeUserId;
       const badgeName = document.getElementById("badgeName").value.trim().toUpperCase();
       const color = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
       if (!userId) return alert("User select করো!");
@@ -1231,17 +1273,18 @@
         document.getElementById("badgeOutput").innerHTML = `
           <div class="result-box" style="margin-top:12px">
             <h3>✅ Badge Assigned!</h3>
-            <p>User: ${document.getElementById("badgeUserSelect").selectedOptions[0].text}</p>
+            <p>User: ${document.getElementById("selectedBadgeUserName").textContent}</p>
             <p>Badge: <span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800">${badgeName}</span></p>
           </div>
         `;
         document.getElementById("badgeName").value = "";
         loadBadgedUsers();
+        loadBadgeUsers();
       } catch (e) { alert("❌ " + e.message); }
     };
 
     document.getElementById("removeBadgeBtn").onclick = async () => {
-      const userId = document.getElementById("badgeUserSelect").value;
+      const userId = selectedBadgeUserId;
       if (!userId) return alert("User select করো!");
       if (!confirm("Badge remove করবে?")) return;
       try {
@@ -1251,6 +1294,7 @@
         });
         alert("✅ Badge removed!");
         loadBadgedUsers();
+        loadBadgeUsers();
       } catch (e) { alert("❌ " + e.message); }
     };
 
