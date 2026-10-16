@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Edit — Admin</title>
+  <link rel="stylesheet" href="style.css?v=13">
+  <style>
+    body { background: #f1f5f9; }
+    .navbar { background: linear-gradient(135deg, #1e1b4b, #312e81); }
+    .navbar .logo span { color: white; }
+    .navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .big-avatar {
+      width: 90px; height: 90px; border-radius: 50%;
+      margin: 0 auto 14px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 36px;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 12px 32px rgba(99,102,241,0.35);
+    }
+    .big-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 12px 32px rgba(239,68,68,0.4); }
+    .big-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .info-label {
+      font-size: 11px; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 6px; display: block;
+    }
+    .info-value {
+      font-size: 15px; color: #0f172a;
+      font-weight: 600; margin-bottom: 14px;
+      padding: 12px 14px; background: #f8fafc;
+      border-radius: 10px; border: 1px solid #e2e8f0;
+    }
+    .danger-card {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      border: 2px dashed #fca5a5;
+      border-radius: 16px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+    .danger-card h3 { color: #991b1b; margin-bottom: 8px; font-size: 16px; }
+    .danger-card p { color: #7f1d1d; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div class="logo">
+      <div class="mark">⚡</div>
+      <span>User Edit</span>
+    </div>
+    <button class="nav-logout" onclick="history.back()">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+  </div>
+
+  <div class="container">
+    <div id="content" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, updateDoc, collection, query, where, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const params = new URLSearchParams(location.search);
+    const userId = params.get("id");
+    let currentAdmin = null;
+    let targetUser = null;
+
+    // Admin check
+    const sessionTime = sessionStorage.getItem("admin_verified");
+    if (!sessionTime || (Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
+      location.href = "admin-login.html";
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      currentAdmin = user;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists() || snap.data().role !== "admin") {
+        alert("❌ Admin না!");
+        location.href = "dashboard.html";
+        return;
+      }
+      if (!userId) {
+        document.getElementById("content").innerHTML = "<p>❌ User ID নেই</p>";
+        return;
+      }
+      loadUser();
+    });
+
+    async function loadUser() {
+      const snap = await getDoc(doc(db, "users", userId));
+      if (!snap.exists()) {
+        document.getElementById("content").innerHTML = "<p>❌ User পাওয়া যায়নি</p>";
+        return;
+      }
+      targetUser = { id: userId, ...snap.data() };
+
+      document.getElementById("content").innerHTML = `
+        <div class="card" style="text-align:center">
+          <div class="big-avatar ${targetUser.role === 'admin' ? 'admin' : 'user'}">${(targetUser.username || "U").charAt(0).toUpperCase()}</div>
+          <h2 style="font-size:20px;color:#0f172a;margin-bottom:4px">${targetUser.username || "User"}</h2>
+          <p style="font-size:13px;color:#64748b">${targetUser.email || ""}</p>
+          <div style="display:inline-block;background:${targetUser.role === 'admin' ? '#fee2e2' : '#eef2ff'};color:${targetUser.role === 'admin' ? '#991b1b' : '#4f46e5'};padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:8px">${targetUser.role || 'user'}</div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:16px">📝 Basic Info</h3>
+          <label class="info-label">Username</label>
+          <input type="text" id="editUsername" class="admin-input" value="${targetUser.username || ''}">
+
+          <label class="info-label" style="margin-top:14px">Email (change করলে Firebase Auth হবে না)</label>
+          <input type="text" id="editEmail" class="admin-input" value="${targetUser.email || ''}" disabled style="opacity:0.6">
+
+          <label class="info-label" style="margin-top:14px">Role</label>
+          <select id="editRole" class="admin-input">
+            <option value="user" ${targetUser.role !== 'admin' ? 'selected' : ''}>User</option>
+            <option value="admin" ${targetUser.role === 'admin' ? 'selected' : ''}>Admin</option>
+          </select>
+
+          <button class="btn btn-primary btn-full" id="saveBasicBtn" style="margin-top:14px">💾 Save Basic Info</button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:16px">💰 Balance & Stats Edit</h3>
+          <label class="info-label">Balance (৳)</label>
+          <input type="number" id="editBalance" class="admin-input" value="${targetUser.balance || 0}">
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px">
+            <div>
+              <label class="info-label">✅ Good</label>
+              <input type="number" id="editGood" class="admin-input" value="${targetUser.totalGood || 0}">
+            </div>
+            <div>
+              <label class="info-label">❌ Bad</label>
+              <input type="number" id="editBad" class="admin-input" value="${targetUser.totalBad || 0}">
+            </div>
+            <div>
+              <label class="info-label">⏳ Pending</label>
+              <input type="number" id="editPending" class="admin-input" value="${targetUser.totalPending || 0}">
+            </div>
+          </div>
+
+          <button class="btn btn-success btn-full" id="saveBalanceBtn" style="margin-top:14px">💾 Save Balance</button>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:16px">📊 User Stats</h3>
+          <label class="info-label">Total Submissions</label>
+          <div class="info-value" id="subCount">Loading...</div>
+        </div>
+
+        <div class="danger-card">
+          <h3>⚠️ Danger Zone</h3>
+          <p>এই user-এর সব data delete হবে — undo হবে না!</p>
+          <button class="btn btn-danger btn-full" id="deleteHistoryBtn" style="margin-bottom:8px">🗑️ Delete All History (Submissions)</button>
+          <button class="btn btn-danger btn-full" id="deleteUserBtn">☠️ Delete User Completely</button>
+        </div>
+      `;
+
+      // Load submission count
+      const q = query(collection(db, "submissions"), where("userId", "==", userId));
+      const subsSnap = await getDocs(q);
+      document.getElementById("subCount").textContent = subsSnap.size + " টা";
+
+      // Save Basic
+      document.getElementById("saveBasicBtn").onclick = async () => {
+        const username = document.getElementById("editUsername").value.trim();
+        const role = document.getElementById("editRole").value;
+        if (!username) return alert("Username দাও!");
+        if (userId === currentAdmin.uid && role !== "admin") {
+          return alert("নিজের role user করা যাবে না!");
+        }
+        try {
+          await updateDoc(doc(db, "users", userId), { username, role });
+          alert("✅ Basic info saved!");
+        } catch (e) { alert("❌ " + e.message); }
+      };
+
+      // Save Balance
+      document.getElementById("saveBalanceBtn").onclick = async () => {
+        const balance = parseFloat(document.getElementById("editBalance").value) || 0;
+        const totalGood = parseInt(document.getElementById("editGood").value) || 0;
+        const totalBad = parseInt(document.getElementById("editBad").value) || 0;
+        const totalPending = parseInt(document.getElementById("editPending").value) || 0;
+        try {
+          await updateDoc(doc(db, "users", userId), { balance, totalGood, totalBad, totalPending });
+          alert("✅ Balance saved!");
+        } catch (e) { alert("❌ " + e.message); }
+      };
+
+      // Delete History
+      document.getElementById("deleteHistoryBtn").onclick = async () => {
+        if (!confirm("এই user-এর সব submission delete করবে?")) return;
+        if (!confirm("💀 সত্যিই?")) return;
+        try {
+          const subsSnap2 = await getDocs(q);
+          let count = 0;
+          for (const d of subsSnap2.docs) {
+            await deleteDoc(doc(db, "submissions", d.id));
+            count++;
+          }
+          alert(`✅ ${count} টা delete হয়েছে!`);
+          location.reload();
+        } catch (e) { alert("❌ " + e.message); }
+      };
+
+      // Delete User
+      document.getElementById("deleteUserBtn").onclick = async () => {
+        if (userId === currentAdmin.uid) return alert("নিজেকে delete করা যাবে না!");
+        if (!confirm("সম্পূর্ণ user delete করবে? (Submissions সহ)")) return;
+        if (!confirm("💀 সত্যিই নিশ্চিত?")) return;
+        if (!confirm("⚠️ এই কাজটি undo হবে না!")) return;
+        try {
+          const subsSnap3 = await getDocs(q);
+          for (const d of subsSnap3.docs) await deleteDoc(doc(db, "submissions", d.id));
+          await deleteDoc(doc(db, "users", userId));
+          alert("✅ User deleted!");
+          location.href = "admin.html";
+        } catch (e) { alert("❌ " + e.message); }
+      };
+    }
+  </script>
+</body>
+</html>
