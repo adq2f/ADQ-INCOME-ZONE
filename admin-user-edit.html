@@ -80,14 +80,27 @@
     const userId = params.get("id");
     let currentAdmin = null;
 
-    // ✅ Session 4 hours
-    const SESSION_DURATION = 4 * 60 * 60 * 1000;
+    // ✅ Session 12 hours
+    const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       currentAdmin = user;
 
-      // ✅ Silent session check
+      // ✅ Verify admin role first
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists() || snap.data().role !== "admin") {
+          alert("❌ Admin না!");
+          location.href = "dashboard.html";
+          return;
+        }
+      } catch (e) {
+        location.href = "dashboard.html";
+        return;
+      }
+
+      // ✅ Session check
       const sessionTime = sessionStorage.getItem("admin_verified");
       if (!sessionTime) {
         sessionStorage.setItem("admin_return", location.pathname + location.search);
@@ -98,19 +111,6 @@
         sessionStorage.setItem("admin_return", location.pathname + location.search);
         sessionStorage.removeItem("admin_verified");
         location.href = "admin-login.html";
-        return;
-      }
-
-      // ✅ Verify admin role
-      try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (!snap.exists() || snap.data().role !== "admin") {
-          alert("❌ Admin না!");
-          location.href = "dashboard.html";
-          return;
-        }
-      } catch (e) {
-        location.href = "dashboard.html";
         return;
       }
 
