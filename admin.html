@@ -506,8 +506,8 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ Session 4 hours
-    const SESSION_DURATION = 4 * 60 * 60 * 1000;
+    // ✅ Session 12 hours
+    const SESSION_DURATION = 12 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime) {
       location.href = "admin-login.html";
