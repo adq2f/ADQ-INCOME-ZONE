@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=21">
+  <link rel="stylesheet" href="style.css?v=24">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
@@ -73,11 +73,6 @@
       padding: 8px 10px; background: white;
       border-radius: 10px; margin-bottom: 6px;
       border: 1px solid #e2e8f0;
-      animation: fieldSlide 0.3s;
-    }
-    @keyframes fieldSlide {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
     }
     .field-row input[type="text"] {
       flex: 1; padding: 6px 10px;
@@ -126,9 +121,10 @@
       font-family: 'Inter';
     }
     .time-group-date {
-      font-size: 13px;
+      font-size: 12px;
       color: #64748b;
-      margin-top: 4px;
+      margin-top: 6px;
+      line-height: 1.5;
     }
     .time-group-stats {
       display: grid;
@@ -150,6 +146,7 @@
     .tg-stat.good .v { color: #10b981; }
     .tg-stat.bad .v { color: #ef4444; }
     .tg-stat.pending .v { color: #f59e0b; }
+    .tg-stat.pending.zero .v { color: #cbd5e1; }
     .tg-stat .l {
       font-size: 10px;
       color: #64748b;
@@ -191,7 +188,6 @@
       max-width: 60px;
       flex: 0 0 auto;
     }
-    .time-group-actions button:hover { transform: translateY(-1px); }
 
     .bulk-delete-card {
       background: linear-gradient(135deg, #fef2f2, #fee2e2);
@@ -428,7 +424,7 @@
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📥 Result Process</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select → hour-wise file → download XLSX → process</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select → সময় অনুযায়ী আলাদা file → process</p>
         <select id="resultTask" class="admin-input"></select>
         <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:8px">🔍 Load Submissions</button>
       </div>
@@ -540,7 +536,7 @@
       };
     });
 
-    // ============ STABLE FIELD KEY ============
+    // STABLE FIELD KEY
     function makeFieldKey(label) {
       const k = label
         .toString()
@@ -731,7 +727,7 @@
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // ============ RESULT PROCESS ============
+    // ===== RESULT WITH TIME GAP GROUPING =====
     let loadedTask = null;
     let loadedGroups = {};
 
@@ -756,21 +752,41 @@
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
 
+        // Sort oldest first
+        subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
+
+        // Group by time gap (1 minute)
         loadedGroups = {};
+        const GAP_MINUTES = 1;
+
+        let currentKey = null;
+        let currentEnd = null;
+
         subs.forEach(s => {
           const t = s.submittedAt?.toDate?.();
           if (!t) return;
-          const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:00`;
-          if (!loadedGroups[key]) loadedGroups[key] = [];
-          loadedGroups[key].push(s);
+          const ts = t.getTime();
+          let newGroup = false;
+          if (currentEnd === null) newGroup = true;
+          else if ((ts - currentEnd) / 60000 >= GAP_MINUTES) newGroup = true;
+          if (newGroup) {
+            currentKey = formatGroupKey(t);
+            loadedGroups[currentKey] = [];
+          }
+          loadedGroups[currentKey].push(s);
+          currentEnd = ts;
         });
 
         renderGroups();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🔍 Load Submissions";
     };
+
+    function formatGroupKey(date) {
+      const pad = n => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
 
     function renderGroups() {
       const gDiv = document.getElementById("taskGroups");
@@ -781,7 +797,7 @@
         return;
       }
 
-      gDiv.innerHTML = keys.map(key => {
+      gDiv.innerHTML = keys.map((key, idx) => {
         const items = loadedGroups[key];
         const good = items.filter(i => i.status === "good").length;
         const bad = items.filter(i => i.status === "bad").length;
@@ -790,18 +806,50 @@
 
         const [datePart, timePart] = key.split(" ");
         const [y, mo, d] = datePart.split("-");
-        const startHour = parseInt(timePart.split(":")[0]);
-        const endHour = (startHour + 1) % 24;
+        const [hh, mm, ss] = timePart.split(":");
+
+        const lastItem = items[items.length - 1];
+        const lastT = lastItem.submittedAt?.toDate?.();
+        const lastTimeStr = lastT ? `${String(lastT.getHours()).padStart(2,'0')}:${String(lastT.getMinutes()).padStart(2,'0')}:${String(lastT.getSeconds()).padStart(2,'0')}` : "";
+
         const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         const niceDate = `${parseInt(d)} ${monthNames[parseInt(mo)-1]} ${y}`;
-        const niceTime = `${String(startHour).padStart(2,'0')}:00 - ${String(endHour).padStart(2,'0')}:00`;
+        const niceTimeRange = `${hh}:${mm}:${ss} → ${lastTimeStr}`;
 
+        // PROCESSED
+        if (isProcessed) {
+          return `
+            <div class="time-group-card processed">
+              <div class="time-group-head">
+                <div>
+                  <div class="time-group-time" style="background: linear-gradient(135deg, #10b981, #059669)">✅ PROCESSED</div>
+                  <div class="time-group-date">📅 ${niceDate}<br>🕐 ${niceTimeRange}</div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:22px;font-weight:800;color:#0f172a;font-family:'Inter'">${items.length}</div>
+                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Submissions</div>
+                </div>
+              </div>
+              <div class="time-group-stats">
+                <div class="tg-stat good"><div class="v">${good}</div><div class="l">Good</div></div>
+                <div class="tg-stat bad"><div class="v">${bad}</div><div class="l">Bad</div></div>
+                <div class="tg-stat pending zero"><div class="v">0</div><div class="l">Pending</div></div>
+              </div>
+              <div class="time-group-actions">
+                <button class="tga-download" onclick="downloadGroupXLSX('${key}')">📊 Download XLSX</button>
+                <button class="tga-delete" onclick="deleteGroup('${key}')" title="Delete">🗑️</button>
+              </div>
+            </div>
+          `;
+        }
+
+        // PENDING
         return `
-          <div class="time-group-card ${isProcessed ? 'processed' : ''}">
+          <div class="time-group-card">
             <div class="time-group-head">
               <div>
-                <div class="time-group-time">⏰ ${niceTime}</div>
-                <div class="time-group-date">📅 ${niceDate}</div>
+                <div class="time-group-time">⏰ File ${keys.length - idx}</div>
+                <div class="time-group-date">📅 ${niceDate}<br>🕐 ${niceTimeRange}</div>
               </div>
               <div style="text-align:right">
                 <div style="font-size:22px;font-weight:800;color:#0f172a;font-family:'Inter'">${items.length}</div>
@@ -823,37 +871,24 @@
       }).join("");
     }
 
-    // ============ XLSX DOWNLOAD ============
+    // XLSX Download
     window.downloadGroupXLSX = function(key) {
       const items = loadedGroups[key] || [];
       if (items.length === 0) return alert("No data");
       if (!loadedTask) return alert("Task load হয়নি!");
-
-      if (typeof XLSX === "undefined") {
-        return alert("❌ XLSX library load হয়নি! ইন্টারনেট connection check করো।");
-      }
+      if (typeof XLSX === "undefined") return alert("❌ XLSX library load হয়নি!");
 
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
 
-      // Debug log
-      console.log("Fields:", fields);
-      console.log("First item keys:", Object.keys(items[0] || {}));
-      console.log("First item:", items[0]);
-
-      // Build sheet data with dynamic keys
       const sheetData = items.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
           let v = s[f.key];
-          // Fallback: some old data may have direct field names
           if ((v === undefined || v === null || v === "") && f.label) {
             const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
-            // Try original key without prefix
-            const keys = Object.keys(s);
-            for (const k of keys) {
+            for (const k of Object.keys(s)) {
               if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) {
-                v = s[k];
-                break;
+                v = s[k]; break;
               }
             }
           }
@@ -861,86 +896,34 @@
         });
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
           day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit"
+          hour: "2-digit", minute: "2-digit", second: "2-digit"
         }) || "";
         row["Status"] = s.status || "pending";
         return row;
       });
 
-      // Create workbook
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Submissions");
 
-      // Auto column width
       const colWidths = [{ wch: 5 }];
       fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
-      colWidths.push({ wch: 20 });
+      colWidths.push({ wch: 22 });
       colWidths.push({ wch: 12 });
       ws["!cols"] = colWidths;
 
-      // Filename
       const dateStr = key.replace(/[: ]/g, "-");
-      const fname = `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`;
-
-      // Write
-      XLSX.writeFile(wb, fname);
+      XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`);
     };
 
-    // ============ CSV FALLBACK ============
-    window.downloadGroupCSV = function(key) {
-      const items = loadedGroups[key] || [];
-      if (items.length === 0) return alert("No data");
-      if (!loadedTask) return alert("Task load হয়নি!");
-
-      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-      const headers = [...fields.map(f => f.label), "Submitted At", "Status"];
-      const rows = items.map(s => {
-        const rowData = fields.map(f => {
-          const v = s[f.key];
-          return (v === undefined || v === null) ? "" : String(v);
-        });
-        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit"
-        }) || "";
-        return [...rowData, timeStr, s.status || "pending"];
-      });
-
-      const escape = (v) => {
-        const str = String(v);
-        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      };
-
-      const csv = [
-        headers.map(escape).join(","),
-        ...rows.map(r => r.map(escape).join(","))
-      ].join("\r\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${loadedTask.title.replace(/\s+/g,"_")}_${key.replace(/[: ]/g,"-")}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    // ============ PROCESS ============
     window.openProcessFor = function(key) {
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
 
-      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending submission-এর জন্য Bad UID list paste করো:\n(একটা line-এ একটা, খালি রাখলে সব Good)`);
-
+      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending-এর জন্য Bad UID list paste করো:\n(একটা line-এ একটা, খালি রাখলে সব Good)`);
       if (badText === null) return;
-
-      if (!confirm(`${pending.length} টা process করবে?\n\nBad UID: ${badText.split("\n").filter(x=>x.trim()).length} টা`)) return;
-
+      if (!confirm(`${pending.length} টা process করবে?`)) return;
       processGroup(key, badText.trim());
     };
 
@@ -969,7 +952,6 @@
             earned: isBad ? 0 : price,
             checkedAt: new Date()
           });
-
           if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
           if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
           else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
@@ -998,7 +980,6 @@
             <p style="color:#f59e0b">💰 Added: <span class="big">৳${goodCount * price}</span></p>
           </div>
         `;
-
         setTimeout(() => document.getElementById("loadBtn").click(), 800);
         loadStats();
       } catch (e) {
@@ -1009,9 +990,8 @@
     window.deleteGroup = async function(key) {
       const items = loadedGroups[key] || [];
       if (items.length === 0) return;
-      if (!confirm(`📁 ${key}\n\n${items.length} টা delete করবে?`)) return;
+      if (!confirm(`📁 ${key}\n\n${items.length} টা delete?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
-
       try {
         let batch = writeBatch(db);
         let c = 0;
@@ -1027,7 +1007,7 @@
       } catch (e) { alert("❌ " + e.message); }
     };
 
-    // ============ NOTICE ============
+    // ===== NOTICE =====
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
@@ -1059,7 +1039,7 @@
       loadNotices();
     };
 
-    // ============ USERS ============
+    // ===== USERS =====
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -1148,7 +1128,6 @@
       if (selectedUsers.size === 0) return;
       if (!confirm(`${selectedUsers.size} টা user-এর সব data delete?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
-
       try {
         let count = 0;
         for (const uid of selectedUsers) {
@@ -1189,7 +1168,7 @@
 
     document.getElementById("userSearch").oninput = renderUsers;
 
-    // ============ BULK DELETE ============
+    // ===== BULK DELETE =====
     async function bulkDeleteSubmissions(filter) {
       const q = query(collection(db, "submissions"));
       const snap = await getDocs(q);
@@ -1257,7 +1236,7 @@
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
-    // ============ STATS ============
+    // ===== STATS =====
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
