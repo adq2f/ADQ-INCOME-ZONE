@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=21">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
     .admin-navbar { background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95); }
@@ -93,7 +94,6 @@
       font-size: 14px; font-weight: 700;
     }
 
-    /* TIME GROUP CARD */
     .time-group-card {
       background: white;
       border-radius: 16px;
@@ -176,14 +176,14 @@
       transition: 0.2s;
     }
     .tga-download {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-    }
-    .tga-process {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    .tga-process {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
     }
     .tga-delete {
       background: #fee2e2;
@@ -317,7 +317,6 @@
       font-size: 11px; font-weight: 700; color: #475569;
     }
 
-    /* RESULT OUTPUT */
     .result-box {
       background: linear-gradient(135deg, #f0fdf4, #dcfce7);
       border-left: 4px solid #10b981;
@@ -329,7 +328,6 @@
     .result-box p { color: #065f46; font-size: 14px; margin-bottom: 6px; }
     .result-box .big { font-size: 24px; font-weight: 800; font-family: 'Inter'; }
 
-    /* EMPTY */
     .dash-empty {
       text-align: center;
       padding: 40px 20px;
@@ -374,7 +372,7 @@
         <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Submissions</div></div>
         <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
       </div>
-      <h3 style="margin: 16px 0 12px">⚡ Quick Admin Actions</h3>
+      <h3 style="margin: 16px 0 12px">⚡ Quick Actions</h3>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
         <a href="withdraw-admin.html" class="dash-quick-item">
           <div class="dash-quick-icon qi-orange">💸</div>
@@ -430,7 +428,7 @@
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📥 Result Process</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select করলে সময় অনুযায়ী আলাদা file-এ দেখাবে। প্রতিটি file আলাদা process করতে পারবে।</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select → hour-wise file → download XLSX → process</p>
         <select id="resultTask" class="admin-input"></select>
         <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:8px">🔍 Load Submissions</button>
       </div>
@@ -474,7 +472,7 @@
         <button class="btn btn-danger btn-full" id="delAllPendingBtn" style="margin-top:8px">🗑️ Delete All Pending</button>
       </div>
       <div class="admin-form-card">
-        <h3>🗑️ Status Filter Delete</h3>
+        <h3>🗑️ Status Filter</h3>
         <select id="statusSelect" class="admin-input">
           <option value="all">All</option>
           <option value="pending">Only Pending</option>
@@ -542,6 +540,18 @@
       };
     });
 
+    // ============ STABLE FIELD KEY ============
+    function makeFieldKey(label) {
+      const k = label
+        .toString()
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .substring(0, 20);
+      return k || ("f_" + Math.random().toString(36).substring(2, 8));
+    }
+
     let fieldCounter = 0;
     function createFieldRow(label = "", placeholder = "", checked = true) {
       fieldCounter++;
@@ -571,12 +581,20 @@
 
     function collectFields() {
       const fields = [];
+      const usedKeys = new Set();
       document.querySelectorAll("#fieldList .field-row").forEach(row => {
         const id = row.dataset.fieldId;
         const checked = document.getElementById(id + "_check").checked;
         const label = document.getElementById(id + "_label").value.trim();
         if (checked && label) {
-          const key = "f" + Math.random().toString(36).substring(2, 8);
+          let key = makeFieldKey(label);
+          let counter = 1;
+          const originalKey = key;
+          while (usedKeys.has(key)) {
+            key = originalKey + "_" + counter;
+            counter++;
+          }
+          usedKeys.add(key);
           fields.push({ key, label });
         }
       });
@@ -713,9 +731,9 @@
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // ==================== RESULT PROCESS WITH TIME GROUPS ====================
+    // ============ RESULT PROCESS ============
     let loadedTask = null;
-    let loadedGroups = {}; // { "2025-10-22 10:00": [subs], ... }
+    let loadedGroups = {};
 
     async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
@@ -740,7 +758,6 @@
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
 
-        // Group by hour buckets
         loadedGroups = {};
         subs.forEach(s => {
           const t = s.submittedAt?.toDate?.();
@@ -771,7 +788,6 @@
         const pending = items.filter(i => i.status === "pending").length;
         const isProcessed = pending === 0 && items.length > 0;
 
-        // Format key: "2025-10-22 10:00" → "22 Oct 2025 (10:00 - 11:00)"
         const [datePart, timePart] = key.split(" ");
         const [y, mo, d] = datePart.split("-");
         const startHour = parseInt(timePart.split(":")[0]);
@@ -798,34 +814,112 @@
               <div class="tg-stat pending"><div class="v">${pending}</div><div class="l">Pending</div></div>
             </div>
             <div class="time-group-actions">
-              <button class="tga-download" onclick="downloadRange('${key}')">📥 Download CSV</button>
+              <button class="tga-download" onclick="downloadGroupXLSX('${key}')">📊 Download XLSX</button>
               <button class="tga-process" onclick="openProcessFor('${key}')">✅ Process</button>
-              <button class="tga-delete" onclick="deleteGroup('${key}')" title="Delete this file">🗑️</button>
+              <button class="tga-delete" onclick="deleteGroup('${key}')" title="Delete">🗑️</button>
             </div>
           </div>
         `;
       }).join("");
     }
 
-    window.downloadRange = function(key) {
+    // ============ XLSX DOWNLOAD ============
+    window.downloadGroupXLSX = function(key) {
       const items = loadedGroups[key] || [];
       if (items.length === 0) return alert("No data");
       if (!loadedTask) return alert("Task load হয়নি!");
+
+      if (typeof XLSX === "undefined") {
+        return alert("❌ XLSX library load হয়নি! ইন্টারনেট connection check করো।");
+      }
+
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-      const headers = [...fields.map(f => f.label), "Submitted At"];
+
+      // Debug log
+      console.log("Fields:", fields);
+      console.log("First item keys:", Object.keys(items[0] || {}));
+      console.log("First item:", items[0]);
+
+      // Build sheet data with dynamic keys
+      const sheetData = items.map((s, idx) => {
+        const row = { "#": idx + 1 };
+        fields.forEach(f => {
+          let v = s[f.key];
+          // Fallback: some old data may have direct field names
+          if ((v === undefined || v === null || v === "") && f.label) {
+            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
+            // Try original key without prefix
+            const keys = Object.keys(s);
+            for (const k of keys) {
+              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) {
+                v = s[k];
+                break;
+              }
+            }
+          }
+          row[f.label] = (v === undefined || v === null) ? "" : String(v);
+        });
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }) || "";
+        row["Status"] = s.status || "pending";
+        return row;
+      });
+
+      // Create workbook
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Submissions");
+
+      // Auto column width
+      const colWidths = [{ wch: 5 }];
+      fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
+      colWidths.push({ wch: 20 });
+      colWidths.push({ wch: 12 });
+      ws["!cols"] = colWidths;
+
+      // Filename
+      const dateStr = key.replace(/[: ]/g, "-");
+      const fname = `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`;
+
+      // Write
+      XLSX.writeFile(wb, fname);
+    };
+
+    // ============ CSV FALLBACK ============
+    window.downloadGroupCSV = function(key) {
+      const items = loadedGroups[key] || [];
+      if (items.length === 0) return alert("No data");
+      if (!loadedTask) return alert("Task load হয়নি!");
+
+      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
+      const headers = [...fields.map(f => f.label), "Submitted At", "Status"];
       const rows = items.map(s => {
+        const rowData = fields.map(f => {
+          const v = s[f.key];
+          return (v === undefined || v === null) ? "" : String(v);
+        });
         const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
           day: "2-digit", month: "2-digit", year: "numeric",
           hour: "2-digit", minute: "2-digit"
         }) || "";
-        return [...fields.map(f => s[f.key] || ""), timeStr];
+        return [...rowData, timeStr, s.status || "pending"];
       });
+
       const escape = (v) => {
         const str = String(v);
-        if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
         return str;
       };
-      const csv = [headers.map(escape).join(","), ...rows.map(r => r.map(escape).join(","))].join("\r\n");
+
+      const csv = [
+        headers.map(escape).join(","),
+        ...rows.map(r => r.map(escape).join(","))
+      ].join("\r\n");
+
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -835,14 +929,15 @@
       URL.revokeObjectURL(url);
     };
 
+    // ============ PROCESS ============
     window.openProcessFor = function(key) {
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
 
-      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending submission-এর জন্য Bad UID list paste করো (একটা line-এ একটা):\n\nখালি রাখলে সব Good হয়ে যাবে:`);
+      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending submission-এর জন্য Bad UID list paste করো:\n(একটা line-এ একটা, খালি রাখলে সব Good)`);
 
-      if (badText === null) return; // Cancel
+      if (badText === null) return;
 
       if (!confirm(`${pending.length} টা process করবে?\n\nBad UID: ${badText.split("\n").filter(x=>x.trim()).length} টা`)) return;
 
@@ -854,9 +949,12 @@
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("Pending নেই!");
 
+      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
+      const firstFieldKey = fields[0].key;
+
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const output = document.getElementById("resultOutput");
-      output.innerHTML = `<div class="card" style="background:#eef2ff;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Processing ${pending.length} submissions...</div></div>`;
+      output.innerHTML = `<div class="card" style="background:#eef2ff;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Processing ${pending.length}...</div></div>`;
 
       try {
         const price = loadedTask.pricePerAccount;
@@ -864,7 +962,8 @@
         const userUpdates = {};
 
         for (const sub of pending) {
-          const isBad = badSet.has(sub.uid);
+          const matchVal = String(sub[firstFieldKey] || "").trim();
+          const isBad = badSet.has(matchVal);
           await updateDoc(doc(db, "submissions", sub.id), {
             status: isBad ? "bad" : "good",
             earned: isBad ? 0 : price,
@@ -900,7 +999,6 @@
           </div>
         `;
 
-        // Reload groups
         setTimeout(() => document.getElementById("loadBtn").click(), 800);
         loadStats();
       } catch (e) {
@@ -911,7 +1009,7 @@
     window.deleteGroup = async function(key) {
       const items = loadedGroups[key] || [];
       if (items.length === 0) return;
-      if (!confirm(`📁 ${key}\n\n${items.length} টা submission delete করবে?`)) return;
+      if (!confirm(`📁 ${key}\n\n${items.length} টা delete করবে?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
 
       try {
@@ -929,7 +1027,7 @@
       } catch (e) { alert("❌ " + e.message); }
     };
 
-    // ==================== NOTICE ====================
+    // ============ NOTICE ============
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
@@ -961,7 +1059,7 @@
       loadNotices();
     };
 
-    // ==================== USERS ====================
+    // ============ USERS ============
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -1048,7 +1146,7 @@
 
     document.getElementById("deleteSelectedBtn").onclick = async () => {
       if (selectedUsers.size === 0) return;
-      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete করবে?`)) return;
+      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
 
       try {
@@ -1079,7 +1177,7 @@
           await deleteDoc(doc(db, "users", uid));
           count++;
         }
-        alert(`✅ ${count} user সম্পূর্ণ delete!`);
+        alert(`✅ ${count} user delete!`);
         selectedUsers.clear();
         loadUsers(); updateActionBar(); loadStats();
       } catch (e) { alert("❌ " + e.message); }
@@ -1091,7 +1189,7 @@
 
     document.getElementById("userSearch").oninput = renderUsers;
 
-    // ==================== BULK DELETE ====================
+    // ============ BULK DELETE ============
     async function bulkDeleteSubmissions(filter) {
       const q = query(collection(db, "submissions"));
       const snap = await getDocs(q);
@@ -1112,7 +1210,7 @@
     }
 
     document.getElementById("delAllPendingBtn").onclick = async () => {
-      if (!confirm("সব Pending delete করবে?")) return;
+      if (!confirm("সব Pending delete?")) return;
       if (!confirm("💀 সত্যিই?")) return;
       const btn = document.getElementById("delAllPendingBtn");
       btn.disabled = true; btn.textContent = "Deleting...";
@@ -1142,7 +1240,7 @@
       const start = document.getElementById("bulkStart").value;
       const end = document.getElementById("bulkEnd").value;
       if (!start || !end) return alert("Time range দাও!");
-      if (!confirm("এই time range delete করবে?")) return;
+      if (!confirm("এই time range delete?")) return;
       if (!confirm("💀 সত্যিই?")) return;
       const btn = document.getElementById("delByRangeBtn");
       btn.disabled = true; btn.textContent = "Deleting...";
@@ -1159,7 +1257,7 @@
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
-    // ==================== STATS ====================
+    // ============ STATS ============
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
