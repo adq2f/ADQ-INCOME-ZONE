@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Edit — Admin</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=31">
   <style>
     body { background: #f1f5f9; }
     .navbar { background: linear-gradient(135deg, #1e1b4b, #312e81); }
@@ -80,14 +80,12 @@
     const userId = params.get("id");
     let currentAdmin = null;
 
-    // ✅ Session 12 hours
     const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       currentAdmin = user;
 
-      // ✅ Verify admin role first
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists() || snap.data().role !== "admin") {
@@ -100,7 +98,6 @@
         return;
       }
 
-      // ✅ Session check
       const sessionTime = sessionStorage.getItem("admin_verified");
       if (!sessionTime) {
         sessionStorage.setItem("admin_return", location.pathname + location.search);
@@ -136,6 +133,7 @@
             <h2 style="font-size:20px;color:#0f172a;margin-bottom:4px">${targetUser.username || "User"}</h2>
             <p style="font-size:13px;color:#64748b">${targetUser.email || ""}</p>
             <div style="display:inline-block;background:${targetUser.role === 'admin' ? '#fee2e2' : '#eef2ff'};color:${targetUser.role === 'admin' ? '#991b1b' : '#4f46e5'};padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;margin-top:8px">${targetUser.role || 'user'}</div>
+            ${targetUser.customBadge ? `<div style="margin-top:10px"><span style="display:inline-block;background:${targetUser.customBadgeColor || '#6366f1'};color:white;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px">🎖️ ${targetUser.customBadge}</span></div>` : ''}
           </div>
 
           <div class="card">
@@ -170,11 +168,48 @@
           </div>
 
           <div class="card">
+            <h3 style="margin-bottom:16px">🎖️ Custom Badge</h3>
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.5">এই user-কে বিশেষ badge দাও (যেমন: CHAMPION, VIP, PRO)</p>
+
+            <label class="info-label">Badge Name</label>
+            <input type="text" id="editBadgeName" class="admin-input" placeholder="যেমন: CHAMPION" value="${targetUser.customBadge || ''}" maxlength="20">
+
+            <label class="info-label" style="margin-top:12px">Badge Color</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+              <button type="button" class="badge-color-opt" data-color="#fbbf24" style="width:36px;height:36px;border-radius:10px;background:#fbbf24;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#ef4444" style="width:36px;height:36px;border-radius:10px;background:#ef4444;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#10b981" style="width:36px;height:36px;border-radius:10px;background:#10b981;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#6366f1" style="width:36px;height:36px;border-radius:10px;background:#6366f1;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#8b5cf6" style="width:36px;height:36px;border-radius:10px;background:#8b5cf6;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#ec4899" style="width:36px;height:36px;border-radius:10px;background:#ec4899;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#06b6d4" style="width:36px;height:36px;border-radius:10px;background:#06b6d4;border:3px solid transparent;cursor:pointer"></button>
+              <button type="button" class="badge-color-opt" data-color="#64748b" style="width:36px;height:36px;border-radius:10px;background:#64748b;border:3px solid transparent;cursor:pointer"></button>
+            </div>
+            <input type="text" id="editBadgeColor" class="admin-input" placeholder="#6366f1" value="${targetUser.customBadgeColor || '#6366f1'}">
+
+            <button class="btn btn-primary btn-full" id="saveBadgeBtn" style="margin-top:14px">🎖️ Save Badge</button>
+            <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:8px">🗑️ Remove Badge</button>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom:16px">🎁 Custom Refer Commission</h3>
+            <p style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.5">এই user-এর জন্য আলাদা refer commission set করো। খালি রাখলে task-এর default প্রযোজ্য হবে।</p>
+            <label class="info-label">Override Refer Commission (৳ per good account)</label>
+            <input type="number" id="editCustomReferCommission" class="admin-input" placeholder="খালি = default use করবে" step="0.01" min="0" value="${targetUser.customReferCommission !== null && targetUser.customReferCommission !== undefined ? targetUser.customReferCommission : ''}">
+            <button class="btn btn-primary btn-full" id="saveCustomReferBtn" style="margin-top:14px">💾 Save Custom Commission</button>
+            <button class="btn btn-outline btn-full" id="removeCustomReferBtn" style="margin-top:8px">✕ Remove Override</button>
+          </div>
+
+          <div class="card">
             <h3 style="margin-bottom:16px">📊 Stats</h3>
             <label class="info-label">Total Submissions</label>
             <div class="info-value" id="subCount">Loading...</div>
             <label class="info-label">Total Withdrawals</label>
             <div class="info-value" id="wdCount">Loading...</div>
+            <label class="info-label">Total Referrals</label>
+            <div class="info-value" id="refCount">${targetUser.referCount || 0}</div>
+            <label class="info-label">Total Refer Earning</label>
+            <div class="info-value" id="refEarning">৳${(targetUser.totalReferEarning || 0).toFixed(2)}</div>
           </div>
 
           <div class="danger-card">
@@ -197,6 +232,7 @@
           document.getElementById("wdCount").textContent = s2.size + " টা";
         } catch (e) {}
 
+        // Save Basic Info
         document.getElementById("saveBasicBtn").onclick = async () => {
           const username = document.getElementById("editUsername").value.trim();
           const role = document.getElementById("editRole").value;
@@ -208,6 +244,7 @@
           } catch (e) { alert("❌ " + e.message); }
         };
 
+        // Save Balance
         document.getElementById("saveBalanceBtn").onclick = async () => {
           const balance = parseFloat(document.getElementById("editBalance").value) || 0;
           const totalGood = parseInt(document.getElementById("editGood").value) || 0;
@@ -219,6 +256,68 @@
           } catch (e) { alert("❌ " + e.message); }
         };
 
+        // Badge color picker
+        let selectedBadgeColor = targetUser.customBadgeColor || "#6366f1";
+        document.querySelectorAll(".badge-color-opt").forEach(btn => {
+          if (btn.dataset.color === selectedBadgeColor) btn.style.borderColor = "#0f172a";
+          btn.onclick = () => {
+            selectedBadgeColor = btn.dataset.color;
+            document.getElementById("editBadgeColor").value = selectedBadgeColor;
+            document.querySelectorAll(".badge-color-opt").forEach(b => b.style.borderColor = "transparent");
+            btn.style.borderColor = "#0f172a";
+          };
+        });
+
+        document.getElementById("editBadgeColor").oninput = (e) => {
+          selectedBadgeColor = e.target.value;
+          document.querySelectorAll(".badge-color-opt").forEach(b => b.style.borderColor = "transparent");
+        };
+
+        document.getElementById("saveBadgeBtn").onclick = async () => {
+          const badgeName = document.getElementById("editBadgeName").value.trim().toUpperCase();
+          const badgeColor = document.getElementById("editBadgeColor").value.trim() || "#6366f1";
+          if (!badgeName) return alert("Badge name দাও!");
+          try {
+            await updateDoc(doc(db, "users", userId), {
+              customBadge: badgeName,
+              customBadgeColor: badgeColor
+            });
+            alert("✅ Badge saved!");
+          } catch (e) { alert("❌ " + e.message); }
+        };
+
+        document.getElementById("removeBadgeBtn").onclick = async () => {
+          if (!confirm("Badge remove করবে?")) return;
+          try {
+            await updateDoc(doc(db, "users", userId), {
+              customBadge: null,
+              customBadgeColor: null
+            });
+            alert("✅ Badge removed!");
+            location.reload();
+          } catch (e) { alert("❌ " + e.message); }
+        };
+
+        // Custom Refer Commission
+        document.getElementById("saveCustomReferBtn").onclick = async () => {
+          const val = document.getElementById("editCustomReferCommission").value.trim();
+          const customRef = val === "" ? null : parseFloat(val);
+          if (customRef !== null && (isNaN(customRef) || customRef < 0)) return alert("সঠিক value দাও!");
+          try {
+            await updateDoc(doc(db, "users", userId), { customReferCommission: customRef });
+            alert("✅ Custom refer commission saved!");
+          } catch (e) { alert("❌ " + e.message); }
+        };
+
+        document.getElementById("removeCustomReferBtn").onclick = async () => {
+          try {
+            await updateDoc(doc(db, "users", userId), { customReferCommission: null });
+            document.getElementById("editCustomReferCommission").value = "";
+            alert("✅ Override removed! এখন task-এর default প্রযোজ্য।");
+          } catch (e) { alert("❌ " + e.message); }
+        };
+
+        // Delete History
         document.getElementById("deleteHistoryBtn").onclick = async () => {
           if (!confirm("সব submission delete?")) return;
           if (!confirm("💀 সত্যিই?")) return;
@@ -238,6 +337,7 @@
           } catch (e) { alert("❌ " + e.message); }
         };
 
+        // Delete User
         document.getElementById("deleteUserBtn").onclick = async () => {
           if (userId === currentAdmin.uid) return alert("নিজেকে delete করা যাবে না!");
           if (!confirm("সম্পূর্ণ user delete?")) return;
