@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=17">
+  <link rel="stylesheet" href="style.css?v=20">
   <style>
     body { background: #f1f5f9; }
     .admin-navbar { background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95); }
@@ -72,7 +72,7 @@
       padding: 8px 10px; background: white;
       border-radius: 10px; margin-bottom: 6px;
       border: 1px solid #e2e8f0;
-      animation: fieldSlide 0.3s var(--ease);
+      animation: fieldSlide 0.3s;
     }
     @keyframes fieldSlide {
       from { opacity: 0; transform: translateX(-10px); }
@@ -81,7 +81,7 @@
     .field-row input[type="text"] {
       flex: 1; padding: 6px 10px;
       border: 1px solid #e2e8f0; border-radius: 8px;
-      font-size: 12px; margin: 0; background: white;
+      font-size: 12px; margin: 0;
       font-family: inherit;
     }
     .field-remove {
@@ -93,20 +93,114 @@
       font-size: 14px; font-weight: 700;
     }
 
+    /* TIME GROUP CARD */
+    .time-group-card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(15,23,42,0.08);
+      border-left: 4px solid #6366f1;
+      animation: fadeInUp 0.4s both;
+    }
+    .time-group-card.processed {
+      border-left-color: #10b981;
+      background: linear-gradient(90deg, #f0fdf4 0%, white 25%);
+    }
+    .time-group-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .time-group-time {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      display: inline-block;
+      font-family: 'Inter';
+    }
+    .time-group-date {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+    .time-group-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .tg-stat {
+      background: #f8fafc;
+      padding: 10px 6px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .tg-stat .v {
+      font-size: 18px;
+      font-weight: 800;
+      font-family: 'Inter';
+    }
+    .tg-stat.good .v { color: #10b981; }
+    .tg-stat.bad .v { color: #ef4444; }
+    .tg-stat.pending .v { color: #f59e0b; }
+    .tg-stat .l {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .time-group-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .time-group-actions button {
+      flex: 1;
+      min-width: 100px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .tga-download {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+    .tga-process {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    .tga-delete {
+      background: #fee2e2;
+      color: #dc2626;
+      max-width: 60px;
+      flex: 0 0 auto;
+    }
+    .time-group-actions button:hover { transform: translateY(-1px); }
+
     .bulk-delete-card {
       background: linear-gradient(135deg, #fef2f2, #fee2e2);
       border: 2px dashed #fca5a5;
       border-radius: 16px;
       padding: 20px; margin-bottom: 16px;
     }
-    .bulk-delete-card h3 {
-      color: #991b1b; font-size: 16px;
-      margin-bottom: 10px;
-    }
-    .bulk-delete-card p {
-      color: #7f1d1d; font-size: 13px;
-      margin-bottom: 12px; line-height: 1.5;
-    }
+    .bulk-delete-card h3 { color: #991b1b; font-size: 16px; margin-bottom: 10px; }
+    .bulk-delete-card p { color: #7f1d1d; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
 
     .time-row {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -136,14 +230,14 @@
       display: flex; align-items: center;
       justify-content: center; color: white;
       font-weight: 800; font-size: 18px;
-      flex-shrink: 0; font-family: 'Inter', sans-serif;
+      flex-shrink: 0;
     }
     .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
     .user-info { flex: 1; min-width: 0; }
     .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
     .user-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
-    .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; }
+    .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; flex-wrap: wrap; }
 
     .user-checkbox {
       width: 22px; height: 22px;
@@ -210,10 +304,7 @@
       display: flex; flex-direction: column;
       align-items: center; gap: 6px;
     }
-    .dash-quick-item:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(79,70,229,0.2);
-    }
+    .dash-quick-item:hover { transform: translateY(-3px); }
     .dash-quick-icon {
       width: 44px; height: 44px;
       border-radius: 12px;
@@ -226,23 +317,27 @@
       font-size: 11px; font-weight: 700; color: #475569;
     }
 
-    .preview-row {
-      display: flex; align-items: center;
-      gap: 10px; padding: 10px;
-      background: white; border-radius: 10px;
-      margin-bottom: 6px; font-size: 12px;
-      border-left: 3px solid #6366f1;
+    /* RESULT OUTPUT */
+    .result-box {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      border-left: 4px solid #10b981;
+      padding: 20px;
+      border-radius: 14px;
+      margin-top: 16px;
     }
-    .preview-user {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white; display: flex;
-      align-items: center; justify-content: center;
-      font-weight: 700; flex-shrink: 0; font-size: 12px;
+    .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; }
+    .result-box p { color: #065f46; font-size: 14px; margin-bottom: 6px; }
+    .result-box .big { font-size: 24px; font-weight: 800; font-family: 'Inter'; }
+
+    /* EMPTY */
+    .dash-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #64748b;
     }
-    .preview-info { flex: 1; min-width: 0; }
-    .preview-info .u { font-weight: 700; color: #0f172a; font-size: 12px; word-break: break-all; }
-    .preview-info .m { color: #94a3b8; font-size: 10px; margin-top: 2px; }
+    .dash-empty .em {
+      font-size: 48px; margin-bottom: 12px; display: block;
+    }
   </style>
 </head>
 <body>
@@ -295,7 +390,7 @@
     <!-- TASK -->
     <div id="taskTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
-        <h3 id="taskFormTitle">➕ নতুন Task যোগ করুন</h3>
+        <h3 id="taskFormTitle">➕ নতুন Task</h3>
         <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title">
         <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description"></textarea>
         <label class="label-text">Platform</label>
@@ -335,16 +430,11 @@
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📥 Result Process</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task অনুযায়ী hour-wise group করে দেখাবে।</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select করলে সময় অনুযায়ী আলাদা file-এ দেখাবে। প্রতিটি file আলাদা process করতে পারবে।</p>
         <select id="resultTask" class="admin-input"></select>
         <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:8px">🔍 Load Submissions</button>
       </div>
       <div id="taskGroups"></div>
-      <div class="admin-form-card" id="processCard" style="display:none">
-        <h3>✅ Bad UID paste & Process</h3>
-        <textarea id="badUids" class="admin-input admin-textarea" style="min-height:140px" placeholder="100005&#10;100012"></textarea>
-        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process All</button>
-      </div>
       <div id="resultOutput"></div>
     </div>
 
@@ -376,33 +466,31 @@
     <!-- BULK -->
     <div id="bulkTab" class="admin-section" style="display:none">
       <div class="bulk-delete-card">
-        <h3>⚠️ Bulk Delete Operations</h3>
+        <h3>⚠️ Bulk Delete</h3>
         <p>সাবধানে — Delete হলে ফেরত আসবে না!</p>
       </div>
       <div class="admin-form-card">
-        <h3>🗑️ 1. সব Pending Delete</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">সব pending submission delete</p>
-        <button class="btn btn-danger btn-full" id="delAllPendingBtn">🗑️ Delete All Pending</button>
+        <h3>🗑️ সব Pending Delete</h3>
+        <button class="btn btn-danger btn-full" id="delAllPendingBtn" style="margin-top:8px">🗑️ Delete All Pending</button>
       </div>
       <div class="admin-form-card">
-        <h3>🗑️ 2. Status Filter Delete</h3>
+        <h3>🗑️ Status Filter Delete</h3>
         <select id="statusSelect" class="admin-input">
           <option value="all">All</option>
           <option value="pending">Only Pending</option>
           <option value="good">Only Good</option>
           <option value="bad">Only Bad</option>
         </select>
-        <button class="btn btn-danger btn-full" id="delByStatusBtn" style="margin-top:8px">🗑️ Delete by Status</button>
+        <button class="btn btn-danger btn-full" id="delByStatusBtn" style="margin-top:8px">🗑️ Delete</button>
       </div>
       <div class="admin-form-card">
-        <h3>🗑️ 3. Time Range Delete</h3>
+        <h3>🗑️ Time Range Delete</h3>
         <div class="time-row">
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="bulkStart" class="admin-input"></div>
           <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="bulkEnd" class="admin-input"></div>
         </div>
         <button class="btn btn-danger btn-full" id="delByRangeBtn">🗑️ Delete Range</button>
       </div>
-      <div id="bulkOutput"></div>
     </div>
   </div>
 
@@ -498,7 +586,7 @@
     let editTaskId = null;
     document.getElementById("cancelEditBtn").onclick = () => {
       editTaskId = null;
-      document.getElementById("taskFormTitle").textContent = "➕ নতুন Task যোগ করুন";
+      document.getElementById("taskFormTitle").textContent = "➕ নতুন Task";
       document.getElementById("addTaskBtn").textContent = "Add Task";
       document.getElementById("cancelEditBtn").style.display = "none";
       ["taskTitle","taskDesc","taskPrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
@@ -542,18 +630,8 @@
         loadTasks(); loadDropdowns(); loadStats();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false;
-      btn.textContent = editTaskId ? "💾 Update Task" : "Add Task";
+      btn.textContent = editTaskId ? "💾 Update" : "Add Task";
     };
-
-    function getTaskStatus(t) {
-      const now = new Date();
-      const start = t.startTime?.toDate?.();
-      const end = t.endTime?.toDate?.();
-      if (!start || !end) return { label: "No Time", cls: "waiting" };
-      if (now < start) return { label: "⏳ Upcoming", cls: "waiting" };
-      if (now > end) return { label: "🔴 Closed", cls: "closed" };
-      return { label: "🟢 Open", cls: "open" };
-    }
 
     async function loadTasks() {
       const list = document.getElementById("taskList");
@@ -566,18 +644,25 @@
       list.innerHTML = tasks.map(t => {
         const ic = icons[t.platform] || "🔗";
         const fieldCount = (t.fields || []).length;
-        const status = getTaskStatus(t);
-        const bg = status.cls === 'open' ? '#d1fae5' : status.cls === 'closed' ? '#fee2e2' : '#fef3c7';
-        const fg = status.cls === 'open' ? '#065f46' : status.cls === 'closed' ? '#991b1b' : '#92400e';
-        const startStr = t.startTime?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-        const endStr = t.endTime?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
+        const now = new Date();
+        const start = t.startTime?.toDate?.();
+        const end = t.endTime?.toDate?.();
+        let label, cls;
+        if (!start || !end) { label = "No Time"; cls = "waiting"; }
+        else if (now < start) { label = "⏳ Upcoming"; cls = "waiting"; }
+        else if (now > end) { label = "🔴 Closed"; cls = "closed"; }
+        else { label = "🟢 Open"; cls = "open"; }
+        const bg = cls === 'open' ? '#d1fae5' : cls === 'closed' ? '#fee2e2' : '#fef3c7';
+        const fg = cls === 'open' ? '#065f46' : cls === 'closed' ? '#991b1b' : '#92400e';
+        const startStr = start ? start.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+        const endStr = end ? end.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
         return `
           <div class="task-card">
             <div class="task-card-logo default">${ic}</div>
             <div class="task-card-body">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
                 <h3 style="margin:0">${t.title}</h3>
-                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${bg};color:${fg}">${status.label}</span>
+                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${bg};color:${fg}">${label}</span>
               </div>
               <span class="price">৳${t.pricePerAccount}/account</span>
               <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6">
@@ -628,6 +713,223 @@
       loadTasks(); loadDropdowns(); loadStats();
     };
 
+    // ==================== RESULT PROCESS WITH TIME GROUPS ====================
+    let loadedTask = null;
+    let loadedGroups = {}; // { "2025-10-22 10:00": [subs], ... }
+
+    async function loadDropdowns() {
+      const q = query(collection(db, "tasks"), where("active", "==", true));
+      const snap = await getDocs(q);
+      document.getElementById("resultTask").innerHTML =
+        '<option value="">-- Task Select --</option>' +
+        snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
+    }
+
+    document.getElementById("loadBtn").onclick = async () => {
+      const taskId = document.getElementById("resultTask").value;
+      if (!taskId) return alert("Task select করো!");
+      const btn = document.getElementById("loadBtn");
+      btn.disabled = true; btn.textContent = "Loading...";
+
+      try {
+        const taskSnap = await getDoc(doc(db, "tasks", taskId));
+        loadedTask = { id: taskId, ...taskSnap.data() };
+
+        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const snap = await getDocs(q);
+        let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+        // Group by hour buckets
+        loadedGroups = {};
+        subs.forEach(s => {
+          const t = s.submittedAt?.toDate?.();
+          if (!t) return;
+          const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:00`;
+          if (!loadedGroups[key]) loadedGroups[key] = [];
+          loadedGroups[key].push(s);
+        });
+
+        renderGroups();
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "🔍 Load Submissions";
+    };
+
+    function renderGroups() {
+      const gDiv = document.getElementById("taskGroups");
+      const keys = Object.keys(loadedGroups).sort().reverse();
+
+      if (keys.length === 0) {
+        gDiv.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো submission নেই</p></div>`;
+        return;
+      }
+
+      gDiv.innerHTML = keys.map(key => {
+        const items = loadedGroups[key];
+        const good = items.filter(i => i.status === "good").length;
+        const bad = items.filter(i => i.status === "bad").length;
+        const pending = items.filter(i => i.status === "pending").length;
+        const isProcessed = pending === 0 && items.length > 0;
+
+        // Format key: "2025-10-22 10:00" → "22 Oct 2025 (10:00 - 11:00)"
+        const [datePart, timePart] = key.split(" ");
+        const [y, mo, d] = datePart.split("-");
+        const startHour = parseInt(timePart.split(":")[0]);
+        const endHour = (startHour + 1) % 24;
+        const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const niceDate = `${parseInt(d)} ${monthNames[parseInt(mo)-1]} ${y}`;
+        const niceTime = `${String(startHour).padStart(2,'0')}:00 - ${String(endHour).padStart(2,'0')}:00`;
+
+        return `
+          <div class="time-group-card ${isProcessed ? 'processed' : ''}">
+            <div class="time-group-head">
+              <div>
+                <div class="time-group-time">⏰ ${niceTime}</div>
+                <div class="time-group-date">📅 ${niceDate}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:22px;font-weight:800;color:#0f172a;font-family:'Inter'">${items.length}</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Submissions</div>
+              </div>
+            </div>
+            <div class="time-group-stats">
+              <div class="tg-stat good"><div class="v">${good}</div><div class="l">Good</div></div>
+              <div class="tg-stat bad"><div class="v">${bad}</div><div class="l">Bad</div></div>
+              <div class="tg-stat pending"><div class="v">${pending}</div><div class="l">Pending</div></div>
+            </div>
+            <div class="time-group-actions">
+              <button class="tga-download" onclick="downloadRange('${key}')">📥 Download CSV</button>
+              <button class="tga-process" onclick="openProcessFor('${key}')">✅ Process</button>
+              <button class="tga-delete" onclick="deleteGroup('${key}')" title="Delete this file">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    window.downloadRange = function(key) {
+      const items = loadedGroups[key] || [];
+      if (items.length === 0) return alert("No data");
+      if (!loadedTask) return alert("Task load হয়নি!");
+      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
+      const headers = [...fields.map(f => f.label), "Submitted At"];
+      const rows = items.map(s => {
+        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit"
+        }) || "";
+        return [...fields.map(f => s[f.key] || ""), timeStr];
+      });
+      const escape = (v) => {
+        const str = String(v);
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
+        return str;
+      };
+      const csv = [headers.map(escape).join(","), ...rows.map(r => r.map(escape).join(","))].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${loadedTask.title.replace(/\s+/g,"_")}_${key.replace(/[: ]/g,"-")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    window.openProcessFor = function(key) {
+      const items = loadedGroups[key] || [];
+      const pending = items.filter(s => s.status === "pending");
+      if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
+
+      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending submission-এর জন্য Bad UID list paste করো (একটা line-এ একটা):\n\nখালি রাখলে সব Good হয়ে যাবে:`);
+
+      if (badText === null) return; // Cancel
+
+      if (!confirm(`${pending.length} টা process করবে?\n\nBad UID: ${badText.split("\n").filter(x=>x.trim()).length} টা`)) return;
+
+      processGroup(key, badText.trim());
+    };
+
+    async function processGroup(key, badText) {
+      const items = loadedGroups[key] || [];
+      const pending = items.filter(s => s.status === "pending");
+      if (pending.length === 0) return alert("Pending নেই!");
+
+      const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
+      const output = document.getElementById("resultOutput");
+      output.innerHTML = `<div class="card" style="background:#eef2ff;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Processing ${pending.length} submissions...</div></div>`;
+
+      try {
+        const price = loadedTask.pricePerAccount;
+        let goodCount = 0, badCount = 0;
+        const userUpdates = {};
+
+        for (const sub of pending) {
+          const isBad = badSet.has(sub.uid);
+          await updateDoc(doc(db, "submissions", sub.id), {
+            status: isBad ? "bad" : "good",
+            earned: isBad ? 0 : price,
+            checkedAt: new Date()
+          });
+
+          if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
+          if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
+          else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
+        }
+
+        for (const [userId, data] of Object.entries(userUpdates)) {
+          const uRef = doc(db, "users", userId);
+          const uSnap = await getDoc(uRef);
+          if (!uSnap.exists()) continue;
+          const u = uSnap.data();
+          await updateDoc(uRef, {
+            balance: (u.balance || 0) + data.earned,
+            totalGood: (u.totalGood || 0) + data.good,
+            totalBad: (u.totalBad || 0) + data.bad,
+            totalPending: Math.max(0, (u.totalPending || 0) - (data.good + data.bad))
+          });
+        }
+
+        output.innerHTML = `
+          <div class="result-box">
+            <h3>✅ File Processed!</h3>
+            <p><b>📁 ${key}</b></p>
+            <p>Total: <b>${pending.length}</b></p>
+            <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
+            <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
+            <p style="color:#f59e0b">💰 Added: <span class="big">৳${goodCount * price}</span></p>
+          </div>
+        `;
+
+        // Reload groups
+        setTimeout(() => document.getElementById("loadBtn").click(), 800);
+        loadStats();
+      } catch (e) {
+        output.innerHTML = `<div class="card" style="color:red">❌ ${e.message}</div>`;
+      }
+    }
+
+    window.deleteGroup = async function(key) {
+      const items = loadedGroups[key] || [];
+      if (items.length === 0) return;
+      if (!confirm(`📁 ${key}\n\n${items.length} টা submission delete করবে?`)) return;
+      if (!confirm("💀 সত্যিই?")) return;
+
+      try {
+        let batch = writeBatch(db);
+        let c = 0;
+        for (const s of items) {
+          batch.delete(doc(db, "submissions", s.id));
+          c++;
+          if (c >= 400) { await batch.commit(); batch = writeBatch(db); c = 0; }
+        }
+        if (c > 0) await batch.commit();
+        alert(`✅ ${items.length} টা delete!`);
+        document.getElementById("loadBtn").click();
+        loadStats();
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    // ==================== NOTICE ====================
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
@@ -659,6 +961,7 @@
       loadNotices();
     };
 
+    // ==================== USERS ====================
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -751,23 +1054,17 @@
       try {
         let count = 0;
         for (const uid of selectedUsers) {
-          // Delete all user submissions (batch)
           const subQ = query(collection(db, "submissions"), where("userId", "==", uid));
           const subSnap = await getDocs(subQ);
           let batch = writeBatch(db);
-          let batchCount = 0;
+          let bc = 0;
           for (const d of subSnap.docs) {
             batch.delete(d.ref);
-            batchCount++;
-            if (batchCount >= 400) {
-              await batch.commit();
-              batch = writeBatch(db);
-              batchCount = 0;
-            }
+            bc++;
+            if (bc >= 400) { await batch.commit(); batch = writeBatch(db); bc = 0; }
           }
-          if (batchCount > 0) await batch.commit();
+          if (bc > 0) await batch.commit();
 
-          // Delete user submissions of withdrawals
           const wdQ = query(collection(db, "withdrawals"), where("userId", "==", uid));
           const wdSnap = await getDocs(wdQ);
           let batch2 = writeBatch(db);
@@ -779,7 +1076,6 @@
           }
           if (c2 > 0) await batch2.commit();
 
-          // Delete user
           await deleteDoc(doc(db, "users", uid));
           count++;
         }
@@ -795,7 +1091,7 @@
 
     document.getElementById("userSearch").oninput = renderUsers;
 
-    // ===== BULK DELETE =====
+    // ==================== BULK DELETE ====================
     async function bulkDeleteSubmissions(filter) {
       const q = query(collection(db, "submissions"));
       const snap = await getDocs(q);
@@ -863,157 +1159,7 @@
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
-    // ===== RESULT =====
-    let loadedSubmissions = [];
-    let loadedTask = null;
-
-    async function loadDropdowns() {
-      const q = query(collection(db, "tasks"), where("active", "==", true));
-      const snap = await getDocs(q);
-      document.getElementById("resultTask").innerHTML =
-        '<option value="">-- Task Select --</option>' +
-        snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
-    }
-
-    document.getElementById("loadBtn").onclick = async () => {
-      const taskId = document.getElementById("resultTask").value;
-      if (!taskId) return alert("Task select করো!");
-      const btn = document.getElementById("loadBtn");
-      btn.disabled = true; btn.textContent = "Loading...";
-
-      try {
-        const taskSnap = await getDoc(doc(db, "tasks", taskId));
-        loadedTask = { id: taskId, ...taskSnap.data() };
-
-        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
-        const snap = await getDocs(q);
-        let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
-        loadedSubmissions = subs;
-
-        const groups = {};
-        subs.forEach(s => {
-          const t = s.submittedAt?.toDate?.();
-          if (!t) return;
-          const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:00`;
-          if (!groups[key]) groups[key] = [];
-          groups[key].push(s);
-        });
-
-        const gDiv = document.getElementById("taskGroups");
-        if (Object.keys(groups).length === 0) {
-          gDiv.innerHTML = `<div class="dash-empty"><p>কোনো submission নেই</p></div>`;
-        } else {
-          gDiv.innerHTML = Object.entries(groups).map(([key, items]) => {
-            const good = items.filter(i => i.status === "good").length;
-            const bad = items.filter(i => i.status === "bad").length;
-            const pending = items.filter(i => i.status === "pending").length;
-            return `
-              <div class="card" style="margin-bottom:12px">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-                  <div>
-                    <h4 style="font-size:14px;color:#0f172a;margin-bottom:2px">📅 ${key}</h4>
-                    <p style="font-size:12px;color:#64748b">${items.length} submissions</p>
-                  </div>
-                  <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin:0" onclick="downloadRange('${key.replace(/'/g, "\\'")}')">📥 Download</button>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-                  <div class="stat-box good"><div class="num">${good}</div><div class="label">Good</div></div>
-                  <div class="stat-box"><div class="num" style="color:#ef4444">${bad}</div><div class="label">Bad</div></div>
-                  <div class="stat-box pending"><div class="num">${pending}</div><div class="label">Pending</div></div>
-                </div>
-              </div>
-            `;
-          }).join("");
-        }
-
-        document.getElementById("processCard").style.display = "block";
-        window.__groups = groups;
-      } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "🔍 Load Submissions";
-    };
-
-    window.downloadRange = function(key) {
-      const items = window.__groups[key] || [];
-      if (items.length === 0) return alert("No data");
-      if (!loadedTask) return alert("Task load হয়নি!");
-      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-      const headers = [...fields.map(f => f.label), "Submitted At"];
-      const rows = items.map(s => {
-        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
-        return [...fields.map(f => s[f.key] || ""), timeStr];
-      });
-      const escape = (v) => {
-        const str = String(v);
-        if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
-        return str;
-      };
-      const csv = [headers.map(escape).join(","), ...rows.map(r => r.map(escape).join(","))].join("\r\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${loadedTask.title.replace(/\s+/g,"_")}_${key.replace(/[: ]/g,"-")}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-
-    document.getElementById("processBtn").onclick = async () => {
-      if (loadedSubmissions.length === 0) return alert("Load করো!");
-      if (!loadedTask) return alert("Task load হয়নি!");
-      const badText = document.getElementById("badUids").value.trim();
-      if (!badText) return alert("Bad UID list paste করো!");
-      const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
-      const btn = document.getElementById("processBtn");
-      const output = document.getElementById("resultOutput");
-      const pendingSubs = loadedSubmissions.filter(s => s.status === "pending");
-      if (pendingSubs.length === 0) return alert("কোনো pending নেই!");
-      if (!confirm(`${pendingSubs.length} টা process করবে?`)) return;
-      btn.disabled = true; btn.textContent = "Processing...";
-      try {
-        const price = loadedTask.pricePerAccount;
-        let goodCount = 0, badCount = 0;
-        const userUpdates = {};
-        for (const sub of pendingSubs) {
-          const isBad = badSet.has(sub.uid);
-          await updateDoc(doc(db, "submissions", sub.id), {
-            status: isBad ? "bad" : "good",
-            earned: isBad ? 0 : price,
-            checkedAt: new Date()
-          });
-          if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
-          if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
-          else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
-        }
-        for (const [userId, data] of Object.entries(userUpdates)) {
-          const uRef = doc(db, "users", userId);
-          const uSnap = await getDoc(uRef);
-          if (!uSnap.exists()) continue;
-          const u = uSnap.data();
-          await updateDoc(uRef, {
-            balance: (u.balance || 0) + data.earned,
-            totalGood: (u.totalGood || 0) + data.good,
-            totalBad: (u.totalBad || 0) + data.bad,
-            totalPending: Math.max(0, (u.totalPending || 0) - (data.good + data.bad))
-          });
-        }
-        output.innerHTML = `
-          <div class="result-box">
-            <h3>✅ Result Processed!</h3>
-            <p>Task: <b>${loadedTask.title}</b></p>
-            <p>Total: <b>${pendingSubs.length}</b></p>
-            <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
-            <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
-            <p style="color:#f59e0b">💰 Added: <span class="big">৳${goodCount * price}</span></p>
-          </div>
-        `;
-        document.getElementById("badUids").value = "";
-        setTimeout(() => document.getElementById("loadBtn").click(), 500);
-        loadStats();
-      } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "🚀 Process All";
-    };
-
+    // ==================== STATS ====================
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
