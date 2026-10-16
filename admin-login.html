@@ -57,7 +57,7 @@
         <span class="field-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </span>
-        <input type="password" id="adminPass" placeholder="Admin Password">
+        <input type="password" id="adminPass" placeholder="Admin Password" autocomplete="off">
         <button type="button" class="field-toggle" onclick="togglePass('adminPass', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
@@ -84,16 +84,26 @@
       btn.style.color = input.type === "text" ? "#f59e0b" : "";
     };
 
+    // Check if user is logged in and is admin
     onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "login.html"; return; }
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ আপনি admin না!");
+      if (!user) {
+        location.href = "login.html";
+        return;
+      }
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (!snap.exists() || snap.data().role !== "admin") {
+          alert("❌ আপনি admin না!");
+          location.href = "dashboard.html";
+          return;
+        }
+      } catch (e) {
         location.href = "dashboard.html";
         return;
       }
     });
 
+    // ✅ Verify admin password
     document.getElementById("verifyBtn").onclick = async () => {
       const pass = document.getElementById("adminPass").value;
       const btn = document.getElementById("verifyBtn");
@@ -109,7 +119,7 @@
         const snap = await getDoc(doc(db, "settings", "admin_pass"));
         if (!snap.exists()) {
           errorBox.style.display = "flex";
-          document.getElementById("errorMsg").textContent = "Admin password set করা হয়নি। Firestore → settings → admin_pass document তৈরি করো (field: password = 'তোমার_password')";
+          document.getElementById("errorMsg").textContent = "Admin password set করা হয়নি। Firestore → settings → admin_pass document তৈরি করো।";
           btn.disabled = false;
           btn.textContent = "🔓 Verify & Enter Admin Panel";
           return;
@@ -128,7 +138,7 @@
         // ✅ Success — 4 hour session
         sessionStorage.setItem("admin_verified", Date.now().toString());
 
-        // Check return path
+        // ✅ Return path support
         const returnPath = sessionStorage.getItem("admin_return");
         if (returnPath) {
           sessionStorage.removeItem("admin_return");
