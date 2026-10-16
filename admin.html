@@ -4,18 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=13">
+  <link rel="stylesheet" href="style.css?v=17">
   <style>
     body { background: #f1f5f9; }
-
-    .admin-navbar {
-      background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95);
-    }
+    .admin-navbar { background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95); }
     .admin-navbar .logo span { color: white; }
-    .admin-navbar .mark {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: white;
-    }
+    .admin-navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
 
     .admin-tab-bar {
       display: flex; gap: 6px; overflow-x: auto;
@@ -29,7 +23,6 @@
       font-size: 12px; font-weight: 700;
       cursor: pointer; white-space: nowrap;
       font-family: inherit; transition: 0.25s;
-      display: flex; align-items: center; gap: 5px;
     }
     .admin-tab.active {
       background: linear-gradient(135deg, #4f46e5, #7c3aed);
@@ -53,7 +46,6 @@
       border-color: #6366f1;
       background: linear-gradient(135deg, #eef2ff, #e0e7ff);
       color: #4f46e5;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.2);
     }
 
     .field-builder {
@@ -74,7 +66,6 @@
       border-radius: 8px; font-size: 11px;
       font-weight: 700; cursor: pointer;
       font-family: inherit;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
     }
     .field-row {
       display: flex; align-items: center; gap: 8px;
@@ -110,8 +101,7 @@
     }
     .bulk-delete-card h3 {
       color: #991b1b; font-size: 16px;
-      margin-bottom: 10px; display: flex;
-      align-items: center; gap: 8px;
+      margin-bottom: 10px;
     }
     .bulk-delete-card p {
       color: #7f1d1d; font-size: 13px;
@@ -140,11 +130,6 @@
       align-items: center; gap: 12px;
       box-shadow: 0 2px 12px rgba(15,23,42,0.05);
       border: 1px solid rgba(15,23,42,0.04);
-      transition: 0.25s;
-    }
-    .user-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
     }
     .user-avatar {
       width: 44px; height: 44px; border-radius: 50%;
@@ -156,18 +141,10 @@
     .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
     .user-info { flex: 1; min-width: 0; }
-    .user-info h4 {
-      font-size: 14px; font-weight: 700;
-      color: #0f172a; margin-bottom: 2px;
-    }
-    .user-info p {
-      font-size: 11px; color: #94a3b8;
-      margin-bottom: 4px;
-    }
-    .user-info .badges {
-      display: flex; gap: 6px;
-      font-size: 10px; color: #64748b;
-    }
+    .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .user-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+    .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; }
+
     .user-checkbox {
       width: 22px; height: 22px;
       border-radius: 6px;
@@ -196,9 +173,7 @@
       z-index: 900;
     }
     .admin-action-bar.show { display: flex; }
-    .admin-action-bar .count {
-      font-weight: 700; font-size: 14px;
-    }
+    .admin-action-bar .count { font-weight: 700; font-size: 14px; }
     .admin-action-bar button {
       background: white; color: #dc2626;
       border: none; padding: 8px 14px;
@@ -223,10 +198,7 @@
       font-weight: 700; text-transform: uppercase;
       letter-spacing: 0.4px; margin-top: 4px;
     }
-    .stats-grid {
-      display: grid; gap: 10px;
-      margin-bottom: 14px;
-    }
+    .stats-grid { display: grid; gap: 10px; margin-bottom: 14px; }
 
     .dash-quick-item {
       background: white; padding: 16px 8px;
@@ -262,21 +234,15 @@
       border-left: 3px solid #6366f1;
     }
     .preview-user {
-      width: 28px; height: 28px;
-      border-radius: 50%;
+      width: 28px; height: 28px; border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white; display: flex;
       align-items: center; justify-content: center;
       font-weight: 700; flex-shrink: 0; font-size: 12px;
     }
     .preview-info { flex: 1; min-width: 0; }
-    .preview-info .u {
-      font-weight: 700; color: #0f172a;
-      font-size: 12px; word-break: break-all;
-    }
-    .preview-info .m {
-      color: #94a3b8; font-size: 10px; margin-top: 2px;
-    }
+    .preview-info .u { font-weight: 700; color: #0f172a; font-size: 12px; word-break: break-all; }
+    .preview-info .m { color: #94a3b8; font-size: 10px; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -286,7 +252,7 @@
       <div class="mark">⚡</div>
       <span>Admin Panel</span>
     </div>
-    <button class="nav-logout" id="logoutBtn" title="Logout">
+    <button class="nav-logout" id="logoutBtn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
@@ -334,14 +300,14 @@
         <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description"></textarea>
         <label class="label-text">Platform</label>
         <div class="platform-picker" id="platformPicker">
-          <div class="platform-opt active" data-platform="Facebook"><span class="ic">📘</span> Facebook</div>
-          <div class="platform-opt" data-platform="Twitter"><span class="ic">🐦</span> Twitter</div>
-          <div class="platform-opt" data-platform="Instagram"><span class="ic">📷</span> Instagram</div>
-          <div class="platform-opt" data-platform="LinkedIn"><span class="ic">💼</span> LinkedIn</div>
-          <div class="platform-opt" data-platform="TikTok"><span class="ic">🎵</span> TikTok</div>
-          <div class="platform-opt" data-platform="Gmail"><span class="ic">📧</span> Gmail</div>
-          <div class="platform-opt" data-platform="WhatsApp"><span class="ic">💬</span> WhatsApp</div>
-          <div class="platform-opt" data-platform="Other"><span class="ic">🔗</span> Other</div>
+          <div class="platform-opt active" data-platform="Facebook">📘 Facebook</div>
+          <div class="platform-opt" data-platform="Twitter">🐦 Twitter</div>
+          <div class="platform-opt" data-platform="Instagram">📷 Instagram</div>
+          <div class="platform-opt" data-platform="LinkedIn">💼 LinkedIn</div>
+          <div class="platform-opt" data-platform="TikTok">🎵 TikTok</div>
+          <div class="platform-opt" data-platform="Gmail">📧 Gmail</div>
+          <div class="platform-opt" data-platform="WhatsApp">💬 WhatsApp</div>
+          <div class="platform-opt" data-platform="Other">🔗 Other</div>
         </div>
         <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
         <label class="label-text">Time Range</label>
@@ -349,7 +315,7 @@
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="taskStartTime" class="admin-input"></div>
           <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="taskEndTime" class="admin-input"></div>
         </div>
-        <label class="label-text">Rules (optional)</label>
+        <label class="label-text">Rules</label>
         <textarea id="taskRules" class="admin-input admin-textarea" placeholder="Rules"></textarea>
         <div class="field-builder">
           <div class="field-builder-title">
@@ -368,29 +334,16 @@
     <!-- RESULT -->
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
-        <h3>📥 Step 1: Time Range Select</h3>
+        <h3>📥 Result Process</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task অনুযায়ী hour-wise group করে দেখাবে।</p>
         <select id="resultTask" class="admin-input"></select>
-        <div class="time-row">
-          <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="filterStart" class="admin-input"></div>
-          <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="filterEnd" class="admin-input"></div>
-        </div>
-        <button class="btn btn-primary btn-full" id="loadBtn">🔍 Load Submissions</button>
+        <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:8px">🔍 Load Submissions</button>
       </div>
-      <div class="admin-form-card" id="previewCard" style="display:none">
-        <h3>👀 Step 2: Preview</h3>
-        <div style="background:#f8fafc;border-radius:12px;padding:14px;max-height:400px;overflow-y:auto">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #e2e8f0">
-            <h4 style="font-size:14px;color:#0f172a">Total Submissions</h4>
-            <span id="rangeCount" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">0</span>
-          </div>
-          <div id="previewList"></div>
-        </div>
-        <button class="btn btn-primary btn-full" style="margin-top:12px" id="downloadBtn">📥 Download CSV</button>
-      </div>
+      <div id="taskGroups"></div>
       <div class="admin-form-card" id="processCard" style="display:none">
-        <h3>✅ Step 3: Bad UID paste & Process</h3>
+        <h3>✅ Bad UID paste & Process</h3>
         <textarea id="badUids" class="admin-input admin-textarea" style="min-height:140px" placeholder="100005&#10;100012"></textarea>
-        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
+        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process All</button>
       </div>
       <div id="resultOutput"></div>
     </div>
@@ -411,7 +364,7 @@
     <div id="usersTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>👥 সব Members</h3>
-        <input type="text" id="userSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল দিয়ে খোঁজো...">
+        <input type="text" id="userSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল...">
         <div style="display:flex;gap:8px;margin-top:8px">
           <button class="btn btn-primary" style="flex:1;margin:0;font-size:13px;padding:10px" id="selectAllUsersBtn">☑️ সব Select</button>
           <button class="btn btn-outline" style="margin:0;font-size:13px;padding:10px" id="clearSelectionBtn">✕ Clear</button>
@@ -424,37 +377,31 @@
     <div id="bulkTab" class="admin-section" style="display:none">
       <div class="bulk-delete-card">
         <h3>⚠️ Bulk Delete Operations</h3>
-        <p>সাবধানে ব্যবহার করো — Delete হলে আর ফেরত আসবে না!</p>
+        <p>সাবধানে — Delete হলে ফেরত আসবে না!</p>
       </div>
-
       <div class="admin-form-card">
         <h3>🗑️ 1. সব Pending Delete</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">সব user-এর সব pending submission delete</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">সব pending submission delete</p>
         <button class="btn btn-danger btn-full" id="delAllPendingBtn">🗑️ Delete All Pending</button>
       </div>
-
       <div class="admin-form-card">
         <h3>🗑️ 2. Status Filter Delete</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Select করো কোন status-এর submission delete হবে</p>
         <select id="statusSelect" class="admin-input">
-          <option value="all">All (সব status)</option>
+          <option value="all">All</option>
           <option value="pending">Only Pending</option>
           <option value="good">Only Good</option>
           <option value="bad">Only Bad</option>
         </select>
-        <button class="btn btn-danger btn-full" id="delByStatusBtn">🗑️ Delete by Status</button>
+        <button class="btn btn-danger btn-full" id="delByStatusBtn" style="margin-top:8px">🗑️ Delete by Status</button>
       </div>
-
       <div class="admin-form-card">
         <h3>🗑️ 3. Time Range Delete</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">নির্দিষ্ট সময়ের সব submission delete</p>
         <div class="time-row">
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="bulkStart" class="admin-input"></div>
           <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="bulkEnd" class="admin-input"></div>
         </div>
         <button class="btn btn-danger btn-full" id="delByRangeBtn">🗑️ Delete Range</button>
       </div>
-
       <div id="bulkOutput"></div>
     </div>
   </div>
@@ -465,10 +412,10 @@
   </div>
 
   <nav class="bottom-nav">
-    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
@@ -477,10 +424,8 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ===== ADMIN SESSION CHECK =====
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime || (Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
-      // 30 min session expiry
       location.href = "admin-login.html";
     }
 
@@ -491,7 +436,6 @@
       location.href = "index.html";
     };
 
-    // ===== TAB SWITCHING =====
     document.querySelectorAll(".admin-tab").forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
@@ -501,7 +445,6 @@
       };
     });
 
-    // ===== PLATFORM =====
     let selectedPlatform = "Facebook";
     document.querySelectorAll(".platform-opt").forEach(opt => {
       opt.onclick = () => {
@@ -511,7 +454,6 @@
       };
     });
 
-    // ===== FIELD BUILDER =====
     let fieldCounter = 0;
     function createFieldRow(label = "", placeholder = "", checked = true) {
       fieldCounter++;
@@ -553,7 +495,6 @@
       return fields;
     }
 
-    // ===== EDIT MODE =====
     let editTaskId = null;
     document.getElementById("cancelEditBtn").onclick = () => {
       editTaskId = null;
@@ -564,7 +505,6 @@
       resetFields();
     };
 
-    // ===== ADD/UPDATE TASK =====
     document.getElementById("addTaskBtn").onclick = async () => {
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
@@ -619,29 +559,25 @@
       const list = document.getElementById("taskList");
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
-      if (snap.empty) {
-        list.innerHTML = `<div class="dash-empty"><p>কোনো task নেই</p></div>`;
-        return;
-      }
+      if (snap.empty) { list.innerHTML = `<div class="dash-empty"><p>কোনো task নেই</p></div>`; return; }
       const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-
       const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
-
       list.innerHTML = tasks.map(t => {
         const ic = icons[t.platform] || "🔗";
         const fieldCount = (t.fields || []).length;
         const status = getTaskStatus(t);
+        const bg = status.cls === 'open' ? '#d1fae5' : status.cls === 'closed' ? '#fee2e2' : '#fef3c7';
+        const fg = status.cls === 'open' ? '#065f46' : status.cls === 'closed' ? '#991b1b' : '#92400e';
         const startStr = t.startTime?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
         const endStr = t.endTime?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-
         return `
           <div class="task-card">
             <div class="task-card-logo default">${ic}</div>
             <div class="task-card-body">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
                 <h3 style="margin:0">${t.title}</h3>
-                <span class="task-status ${status.cls}" style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${status.cls === 'open' ? '#d1fae5' : status.cls === 'closed' ? '#fee2e2' : '#fef3c7'};color:${status.cls === 'open' ? '#065f46' : status.cls === 'closed' ? '#991b1b' : '#92400e'}">${status.label}</span>
+                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${bg};color:${fg}">${status.label}</span>
               </div>
               <span class="price">৳${t.pricePerAccount}/account</span>
               <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6">
@@ -659,12 +595,12 @@
     }
 
     window.editTask = async (id) => {
-      const taskSnap = await getDoc(doc(db, "tasks", id));
-      if (!taskSnap.exists()) return;
-      const t = taskSnap.data();
+      const snap = await getDoc(doc(db, "tasks", id));
+      if (!snap.exists()) return;
+      const t = snap.data();
       editTaskId = id;
-      document.getElementById("taskFormTitle").textContent = "✏️ Task Edit করুন";
-      document.getElementById("addTaskBtn").textContent = "💾 Update Task";
+      document.getElementById("taskFormTitle").textContent = "✏️ Task Edit";
+      document.getElementById("addTaskBtn").textContent = "💾 Update";
       document.getElementById("cancelEditBtn").style.display = "block";
       document.getElementById("taskTitle").value = t.title || "";
       document.getElementById("taskDesc").value = t.description || "";
@@ -687,22 +623,21 @@
     }
 
     window.deleteTask = async (id) => {
-      if (!confirm("Delete করবে?")) return;
+      if (!confirm("Delete?")) return;
       await updateDoc(doc(db, "tasks", id), { active: false });
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // ===== NOTICE =====
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
-      if (!title || !message) return alert("সব ঘর পূরণ করো!");
+      if (!title || !message) return alert("সব ঘর!");
       try {
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
         const oldSnap = await getDocs(oldQ);
         for (const d of oldSnap.docs) await updateDoc(doc(db, "notices", d.id), { active: false });
         await addDoc(collection(db, "notices"), { title, message, active: true, createdAt: new Date() });
-        alert("✅ Notice published!");
+        alert("✅ Published!");
         document.getElementById("noticeTitle").value = "";
         document.getElementById("noticeMsg").value = "";
         loadNotices();
@@ -716,13 +651,7 @@
       if (snap.empty) { list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`; return; }
       list.innerHTML = snap.docs.map(d => {
         const n = d.data();
-        return `
-          <div class="notice">
-            <h3>📢 ${n.title}</h3>
-            <p>${n.message}</p>
-            <button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button>
-          </div>
-        `;
+        return `<div class="notice"><h3>📢 ${n.title}</h3><p>${n.message}</p><button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button></div>`;
       }).join("");
     }
     window.deleteNotice = async (id) => {
@@ -730,7 +659,6 @@
       loadNotices();
     };
 
-    // ===== USERS =====
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -817,21 +745,45 @@
 
     document.getElementById("deleteSelectedBtn").onclick = async () => {
       if (selectedUsers.size === 0) return;
-      if (!confirm(`${selectedUsers.size} টা user delete করবে? তার সব submission-ও delete হবে!`)) return;
+      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete করবে?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
 
       try {
         let count = 0;
         for (const uid of selectedUsers) {
-          // Delete user's submissions
+          // Delete all user submissions (batch)
           const subQ = query(collection(db, "submissions"), where("userId", "==", uid));
           const subSnap = await getDocs(subQ);
-          for (const d of subSnap.docs) await deleteDoc(doc(db, "submissions", d.id));
+          let batch = writeBatch(db);
+          let batchCount = 0;
+          for (const d of subSnap.docs) {
+            batch.delete(d.ref);
+            batchCount++;
+            if (batchCount >= 400) {
+              await batch.commit();
+              batch = writeBatch(db);
+              batchCount = 0;
+            }
+          }
+          if (batchCount > 0) await batch.commit();
+
+          // Delete user submissions of withdrawals
+          const wdQ = query(collection(db, "withdrawals"), where("userId", "==", uid));
+          const wdSnap = await getDocs(wdQ);
+          let batch2 = writeBatch(db);
+          let c2 = 0;
+          for (const d of wdSnap.docs) {
+            batch2.delete(d.ref);
+            c2++;
+            if (c2 >= 400) { await batch2.commit(); batch2 = writeBatch(db); c2 = 0; }
+          }
+          if (c2 > 0) await batch2.commit();
+
           // Delete user
           await deleteDoc(doc(db, "users", uid));
           count++;
         }
-        alert(`✅ ${count} user delete হয়েছে!`);
+        alert(`✅ ${count} user সম্পূর্ণ delete!`);
         selectedUsers.clear();
         loadUsers(); updateActionBar(); loadStats();
       } catch (e) { alert("❌ " + e.message); }
@@ -849,16 +801,14 @@
       const snap = await getDocs(q);
       const toDelete = [];
       for (const d of snap.docs) {
-        const s = d.data();
-        if (filter(s)) toDelete.push(d.id);
+        if (filter(d.data())) toDelete.push(d.ref);
       }
       if (toDelete.length === 0) return 0;
-      // Batch delete (max 500 per batch)
       let deleted = 0;
-      for (let i = 0; i < toDelete.length; i += 500) {
+      for (let i = 0; i < toDelete.length; i += 400) {
         const batch = writeBatch(db);
-        const chunk = toDelete.slice(i, i + 500);
-        chunk.forEach(id => batch.delete(doc(db, "submissions", id)));
+        const chunk = toDelete.slice(i, i + 400);
+        chunk.forEach(ref => batch.delete(ref));
         await batch.commit();
         deleted += chunk.length;
       }
@@ -866,13 +816,13 @@
     }
 
     document.getElementById("delAllPendingBtn").onclick = async () => {
-      if (!confirm("সব Pending submission delete করবে?")) return;
-      if (!confirm("💀 সত্যিই সব pending মুছে ফেলবে?")) return;
+      if (!confirm("সব Pending delete করবে?")) return;
+      if (!confirm("💀 সত্যিই?")) return;
       const btn = document.getElementById("delAllPendingBtn");
       btn.disabled = true; btn.textContent = "Deleting...";
       try {
         const count = await bulkDeleteSubmissions(s => s.status === "pending");
-        alert(`✅ ${count} টা pending delete হয়েছে!`);
+        alert(`✅ ${count} টা delete!`);
         loadStats();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🗑️ Delete All Pending";
@@ -880,14 +830,13 @@
 
     document.getElementById("delByStatusBtn").onclick = async () => {
       const status = document.getElementById("statusSelect").value;
-      const label = status === "all" ? "সব" : status;
-      if (!confirm(`${label} submission delete করবে?`)) return;
+      if (!confirm(`Delete ${status}?`)) return;
       if (!confirm("💀 সত্যিই?")) return;
       const btn = document.getElementById("delByStatusBtn");
       btn.disabled = true; btn.textContent = "Deleting...";
       try {
         const count = await bulkDeleteSubmissions(s => status === "all" || s.status === status);
-        alert(`✅ ${count} টা delete হয়েছে!`);
+        alert(`✅ ${count} টা delete!`);
         loadStats();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🗑️ Delete by Status";
@@ -897,7 +846,7 @@
       const start = document.getElementById("bulkStart").value;
       const end = document.getElementById("bulkEnd").value;
       if (!start || !end) return alert("Time range দাও!");
-      if (!confirm("এই time range-এর সব submission delete করবে?")) return;
+      if (!confirm("এই time range delete করবে?")) return;
       if (!confirm("💀 সত্যিই?")) return;
       const btn = document.getElementById("delByRangeBtn");
       btn.disabled = true; btn.textContent = "Deleting...";
@@ -908,7 +857,7 @@
           const t = s.submittedAt?.toMillis?.() || 0;
           return t >= startTs && t <= endTs;
         });
-        alert(`✅ ${count} টা delete হয়েছে!`);
+        alert(`✅ ${count} টা delete!`);
         loadStats();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
@@ -928,83 +877,89 @@
 
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
-      const startVal = document.getElementById("filterStart").value;
-      const endVal = document.getElementById("filterEnd").value;
       if (!taskId) return alert("Task select করো!");
       const btn = document.getElementById("loadBtn");
       btn.disabled = true; btn.textContent = "Loading...";
+
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
         loadedTask = { id: taskId, ...taskSnap.data() };
+
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (startVal) {
-          const startTs = new Date(startVal).getTime();
-          subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) >= startTs);
-        }
-        if (endVal) {
-          const endTs = new Date(endVal).getTime();
-          subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) <= endTs);
-        }
         subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
         loadedSubmissions = subs;
-        document.getElementById("previewCard").style.display = "block";
-        document.getElementById("processCard").style.display = "block";
-        document.getElementById("rangeCount").textContent = subs.length;
-        if (subs.length === 0) {
-          document.getElementById("previewList").innerHTML = `<div style="text-align:center;padding:30px;color:#94a3b8"><div style="font-size:36px;margin-bottom:8px">📭</div>কোনো submission নেই</div>`;
-          return;
-        }
-        document.getElementById("previewList").innerHTML = subs.slice(0, 100).map(s => {
-          const initial = (s.uid || s.email || "?").charAt(0).toUpperCase();
-          const fields = loadedTask.fields || [];
-          const fieldStr = fields.map(f => `${f.label}: ${s[f.key] || "-"}`).join(" • ");
-          const timeStr = s.submittedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-          const statusBadge = s.status === "pending" ? "⏳" : s.status === "good" ? "✅" : "❌";
-          return `
-            <div class="preview-row">
-              <div class="preview-user">${initial}</div>
-              <div class="preview-info">
-                <div class="u">${statusBadge} ${s.uid || s.email || "N/A"}</div>
-                <div class="m">${fieldStr.substring(0, 100)} • 🕐 ${timeStr}</div>
+
+        const groups = {};
+        subs.forEach(s => {
+          const t = s.submittedAt?.toDate?.();
+          if (!t) return;
+          const key = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')} ${String(t.getHours()).padStart(2,'0')}:00`;
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(s);
+        });
+
+        const gDiv = document.getElementById("taskGroups");
+        if (Object.keys(groups).length === 0) {
+          gDiv.innerHTML = `<div class="dash-empty"><p>কোনো submission নেই</p></div>`;
+        } else {
+          gDiv.innerHTML = Object.entries(groups).map(([key, items]) => {
+            const good = items.filter(i => i.status === "good").length;
+            const bad = items.filter(i => i.status === "bad").length;
+            const pending = items.filter(i => i.status === "pending").length;
+            return `
+              <div class="card" style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+                  <div>
+                    <h4 style="font-size:14px;color:#0f172a;margin-bottom:2px">📅 ${key}</h4>
+                    <p style="font-size:12px;color:#64748b">${items.length} submissions</p>
+                  </div>
+                  <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin:0" onclick="downloadRange('${key.replace(/'/g, "\\'")}')">📥 Download</button>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                  <div class="stat-box good"><div class="num">${good}</div><div class="label">Good</div></div>
+                  <div class="stat-box"><div class="num" style="color:#ef4444">${bad}</div><div class="label">Bad</div></div>
+                  <div class="stat-box pending"><div class="num">${pending}</div><div class="label">Pending</div></div>
+                </div>
               </div>
-            </div>
-          `;
-        }).join("") + (subs.length > 100 ? `<div style="text-align:center;padding:10px;color:#94a3b8;font-size:12px">... এবং আরো ${subs.length - 100} টা</div>` : "");
+            `;
+          }).join("");
+        }
+
+        document.getElementById("processCard").style.display = "block";
+        window.__groups = groups;
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🔍 Load Submissions";
     };
 
-    document.getElementById("downloadBtn").onclick = () => {
-      if (loadedSubmissions.length === 0) return alert("কোনো submission নেই!");
+    window.downloadRange = function(key) {
+      const items = window.__groups[key] || [];
+      if (items.length === 0) return alert("No data");
       if (!loadedTask) return alert("Task load হয়নি!");
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const headers = [...fields.map(f => f.label), "Submitted At"];
-      const rows = loadedSubmissions.map(s => {
-        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
-          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
-        }) || "";
+      const rows = items.map(s => {
+        const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return [...fields.map(f => s[f.key] || ""), timeStr];
       });
-      const escapeCSV = (v) => {
+      const escape = (v) => {
         const str = String(v);
         if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
         return str;
       };
-      const csvContent = [headers.map(escapeCSV).join(","), ...rows.map(r => r.map(escapeCSV).join(","))].join("\r\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const csv = [headers.map(escape).join(","), ...rows.map(r => r.map(escape).join(","))].join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${loadedTask.title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `${loadedTask.title.replace(/\s+/g,"_")}_${key.replace(/[: ]/g,"-")}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      alert(`✅ ${rows.length} টা download!`);
     };
 
     document.getElementById("processBtn").onclick = async () => {
-      if (loadedSubmissions.length === 0) return alert("Load করো আগে!");
+      if (loadedSubmissions.length === 0) return alert("Load করো!");
       if (!loadedTask) return alert("Task load হয়নি!");
       const badText = document.getElementById("badUids").value.trim();
       if (!badText) return alert("Bad UID list paste করো!");
@@ -1013,7 +968,7 @@
       const output = document.getElementById("resultOutput");
       const pendingSubs = loadedSubmissions.filter(s => s.status === "pending");
       if (pendingSubs.length === 0) return alert("কোনো pending নেই!");
-      if (!confirm(`${pendingSubs.length} টা pending process করবে?`)) return;
+      if (!confirm(`${pendingSubs.length} টা process করবে?`)) return;
       btn.disabled = true; btn.textContent = "Processing...";
       try {
         const price = loadedTask.pricePerAccount;
@@ -1056,42 +1011,33 @@
         setTimeout(() => document.getElementById("loadBtn").click(), 500);
         loadStats();
       } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "🚀 Process Result";
+      btn.disabled = false; btn.textContent = "🚀 Process All";
     };
 
-    // ===== STATS =====
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
         const taskSnap = await getDocs(taskQ);
         document.getElementById("statTasks").textContent = taskSnap.size;
-
         const userSnap = await getDocs(collection(db, "users"));
         document.getElementById("statUsers").textContent = userSnap.size;
-
         const subSnap = await getDocs(collection(db, "submissions"));
         document.getElementById("statSubs").textContent = subSnap.size;
-
         const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
         const wdSnap = await getDocs(wdQ);
         document.getElementById("statWithdrawals").textContent = wdSnap.size;
       } catch (e) {}
     }
 
-    // ===== INIT =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       const snap = await getDoc(doc(db, "users", user.uid));
       if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ আপনি admin না!");
+        alert("❌ Admin না!");
         location.href = "dashboard.html";
         return;
       }
-      loadTasks();
-      loadNotices();
-      loadDropdowns();
-      loadUsers();
-      loadStats();
+      loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats();
     });
   </script>
 </body>
