@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=24">
+  <link rel="stylesheet" href="style.css?v=27">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
@@ -506,8 +506,13 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // ✅ Session 4 hours
+    const SESSION_DURATION = 4 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
-    if (!sessionTime || (Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
+    if (!sessionTime) {
+      location.href = "admin-login.html";
+    } else if ((Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
+      sessionStorage.removeItem("admin_verified");
       location.href = "admin-login.html";
     }
 
@@ -536,15 +541,9 @@
       };
     });
 
-    // STABLE FIELD KEY
     function makeFieldKey(label) {
-      const k = label
-        .toString()
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "")
-        .substring(0, 20);
+      const k = label.toString().trim().toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").substring(0, 20);
       return k || ("f_" + Math.random().toString(36).substring(2, 8));
     }
 
@@ -586,10 +585,7 @@
           let key = makeFieldKey(label);
           let counter = 1;
           const originalKey = key;
-          while (usedKeys.has(key)) {
-            key = originalKey + "_" + counter;
-            counter++;
-          }
+          while (usedKeys.has(key)) { key = originalKey + "_" + counter; counter++; }
           usedKeys.add(key);
           fields.push({ key, label });
         }
@@ -727,7 +723,7 @@
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // ===== RESULT WITH TIME GAP GROUPING =====
+    // ===== RESULT — TIME GAP GROUPING =====
     let loadedTask = null;
     let loadedGroups = {};
 
@@ -753,10 +749,8 @@
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Sort oldest first
         subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
 
-        // Group by time gap (1 minute)
         loadedGroups = {};
         const GAP_MINUTES = 1;
 
@@ -816,7 +810,6 @@
         const niceDate = `${parseInt(d)} ${monthNames[parseInt(mo)-1]} ${y}`;
         const niceTimeRange = `${hh}:${mm}:${ss} → ${lastTimeStr}`;
 
-        // PROCESSED
         if (isProcessed) {
           return `
             <div class="time-group-card processed">
@@ -843,7 +836,6 @@
           `;
         }
 
-        // PENDING
         return `
           <div class="time-group-card">
             <div class="time-group-head">
@@ -871,7 +863,6 @@
       }).join("");
     }
 
-    // XLSX Download
     window.downloadGroupXLSX = function(key) {
       const items = loadedGroups[key] || [];
       if (items.length === 0) return alert("No data");
@@ -887,9 +878,7 @@
           if ((v === undefined || v === null || v === "") && f.label) {
             const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
             for (const k of Object.keys(s)) {
-              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) {
-                v = s[k]; break;
-              }
+              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
             }
           }
           row[f.label] = (v === undefined || v === null) ? "" : String(v);
@@ -920,7 +909,6 @@
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
-
       const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending-এর জন্য Bad UID list paste করো:\n(একটা line-এ একটা, খালি রাখলে সব Good)`);
       if (badText === null) return;
       if (!confirm(`${pending.length} টা process করবে?`)) return;
