@@ -3,89 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ওয়ালেট — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=7">
+  <title>Wallet — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=16">
   <style>
-    /* Wallet-specific styles */
     .wallet-balance {
       background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
-      color: white;
-      padding: 28px 24px;
-      border-radius: 24px;
-      margin-bottom: 16px;
-      box-shadow: 0 20px 50px rgba(16,185,129,0.4),
-                  inset 0 1px 0 rgba(255,255,255,0.2);
-      position: relative;
-      overflow: hidden;
-      animation: fadeInUp 0.5s var(--ease) both;
+      color: white; padding: 28px 24px;
+      border-radius: 24px; margin-bottom: 16px;
+      box-shadow: 0 20px 50px rgba(16,185,129,0.4);
+      position: relative; overflow: hidden;
     }
     .wallet-balance::before {
-      content: '';
-      position: absolute;
-      top: -80px; right: -60px;
-      width: 240px; height: 240px;
+      content: ''; position: absolute;
+      top: -80px; right: -60px; width: 240px; height: 240px;
       background: radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%);
       border-radius: 50%;
-      animation: bounce 6s ease-in-out infinite;
     }
     .wallet-balance-label {
-      font-size: 11px;
-      opacity: 0.9;
+      font-size: 11px; opacity: 0.9;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      font-weight: 600;
-      margin-bottom: 6px;
-      position: relative;
-      z-index: 1;
+      font-weight: 600; margin-bottom: 6px;
+      position: relative; z-index: 1;
     }
     .wallet-balance-amount {
-      font-size: 46px;
-      font-weight: 800;
-      letter-spacing: -2px;
-      margin-bottom: 20px;
-      position: relative;
-      z-index: 1;
-      line-height: 1;
-      font-family: 'Inter', sans-serif;
+      font-size: 46px; font-weight: 800;
+      letter-spacing: -2px; margin-bottom: 20px;
+      position: relative; z-index: 1;
+      line-height: 1; font-family: 'Inter', sans-serif;
     }
     .wallet-balance-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      position: relative;
-      z-index: 1;
+      gap: 10px; position: relative; z-index: 1;
     }
     .wallet-balance-actions a,
     .wallet-balance-actions button {
       padding: 12px;
       background: rgba(255,255,255,0.2);
       border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 12px;
-      color: white;
-      font-size: 13px;
-      font-weight: 600;
-      text-align: center;
-      text-decoration: none;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.3s var(--ease);
-      margin: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
+      border-radius: 12px; color: white;
+      font-size: 13px; font-weight: 600;
+      text-align: center; text-decoration: none;
+      cursor: pointer; font-family: inherit;
+      transition: 0.3s; margin: 0; width: 100%;
+      display: flex; align-items: center;
+      justify-content: center; gap: 6px;
       backdrop-filter: blur(10px);
     }
     .wallet-balance-actions a svg,
     .wallet-balance-actions button svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      fill: none;
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
       stroke-width: 2.5;
-      stroke-linecap: round;
-      stroke-linejoin: round;
     }
     .wallet-balance-actions a:hover,
     .wallet-balance-actions button:hover {
@@ -93,188 +63,124 @@
       transform: translateY(-2px);
     }
 
-    /* Stats Grid */
-    .wallet-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .w-stat {
+    /* Wallet Info Card */
+    .wallet-info-card {
       background: white;
-      padding: 16px 10px;
-      border-radius: 14px;
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      border: 2px dashed #cbd5e1;
+      transition: 0.3s;
+    }
+    .wallet-info-card.setup {
+      border-style: solid;
+      border-color: #10b981;
+      background: linear-gradient(135deg, #f0fdf4 0%, white 40%);
+    }
+    .wallet-info-card h3 {
+      font-size: 15px; margin-bottom: 10px;
+      color: #0f172a;
+      display: flex; align-items: center;
+      gap: 8px; justify-content: space-between;
+    }
+    .wallet-info-card .edit-btn {
+      padding: 5px 10px;
+      background: #eef2ff;
+      color: #4f46e5;
+      border: none; border-radius: 8px;
+      font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .wallet-info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .wallet-info-item .k {
+      color: #64748b;
+      font-weight: 600;
+    }
+    .wallet-info-item .v {
+      color: #0f172a;
+      font-weight: 700;
+      font-family: 'Courier New', monospace;
+    }
+    .wallet-info-empty {
       text-align: center;
+      padding: 20px;
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .w-stat {
+      background: white; padding: 16px 10px;
+      border-radius: 14px; text-align: center;
       box-shadow: 0 2px 8px rgba(15,23,42,0.06);
       border: 1px solid rgba(15,23,42,0.04);
-      position: relative;
-      overflow: hidden;
-      animation: fadeInUp 0.5s var(--ease) both;
-      transition: all 0.3s var(--ease);
+      position: relative; overflow: hidden;
     }
-    .w-stat:nth-child(1) { animation-delay: 0.1s; }
-    .w-stat:nth-child(2) { animation-delay: 0.15s; }
-    .w-stat:nth-child(3) { animation-delay: 0.2s; }
     .w-stat::before {
-      content: '';
-      position: absolute;
+      content: ''; position: absolute;
       top: 0; left: 0; right: 0;
-      height: 3px;
-      opacity: 0.7;
+      height: 3px; opacity: 0.7;
     }
     .w-stat.g::before { background: linear-gradient(90deg, transparent, #10b981, transparent); }
     .w-stat.b::before { background: linear-gradient(90deg, transparent, #ef4444, transparent); }
     .w-stat.p::before { background: linear-gradient(90deg, transparent, #f59e0b, transparent); }
-    .w-stat:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 28px rgba(15,23,42,0.12);
-    }
-    .w-icon {
-      font-size: 22px;
-      margin-bottom: 4px;
-      display: block;
-      transition: transform 0.3s var(--ease-bounce);
-    }
-    .w-stat:hover .w-icon { transform: scale(1.15) rotate(-5deg); }
-    .w-num {
-      font-size: 22px;
-      font-weight: 800;
+    .w-stat .w-icon { font-size: 22px; margin-bottom: 4px; display: block; }
+    .w-stat .w-num {
+      font-size: 22px; font-weight: 800;
       font-family: 'Inter', sans-serif;
-      letter-spacing: -0.5px;
     }
     .w-stat.g .w-num { color: #10b981; }
     .w-stat.b .w-num { color: #ef4444; }
     .w-stat.p .w-num { color: #f59e0b; }
-    .w-label {
-      font-size: 10px;
-      color: #64748b;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 2px;
+    .w-stat .w-label {
+      font-size: 10px; color: #64748b;
+      font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-top: 2px;
+    }
+    .wallet-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 20px;
     }
 
-    /* Filter tabs */
-    .wallet-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-      overflow-x: auto;
-      padding-bottom: 4px;
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.7);
+      backdrop-filter: blur(6px);
+      display: none; align-items: center;
+      justify-content: center; padding: 20px;
+      z-index: 1000;
     }
-    .wallet-tabs::-webkit-scrollbar { display: none; }
-    .w-tab {
-      flex: 1;
-      min-width: 80px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: white;
-      color: #64748b;
-      border: 2px solid #e2e8f0;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: center;
-      transition: 0.25s;
-      white-space: nowrap;
-      font-family: inherit;
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white; border-radius: 22px;
+      padding: 24px; width: 100%;
+      max-width: 420px;
+      animation: scaleIn 0.3s var(--ease-bounce);
     }
-    .w-tab.active {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      border-color: #6366f1;
-      box-shadow: 0 6px 16px rgba(99,102,241,0.35);
-    }
-
-    /* History item */
-    .hist-item {
-      background: white;
-      padding: 14px 16px;
-      border-radius: 14px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
-      border-left: 4px solid #94a3b8;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      animation: fadeInUp 0.4s var(--ease) both;
-      transition: all 0.25s var(--ease);
-    }
-    .hist-item:hover {
-      transform: translateX(4px);
-      box-shadow: 0 8px 20px rgba(15,23,42,0.1);
-    }
-    .hist-item.good { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
-    .hist-item.bad { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
-    .hist-item.pending { border-left-color: #f59e0b; background: linear-gradient(90deg, #fffbeb 0%, white 30%); }
-
-    .hist-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex: 1;
-      min-width: 0;
-    }
-    .hist-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .hist-item.good .hist-icon { background: #d1fae5; }
-    .hist-item.bad .hist-icon { background: #fee2e2; }
-    .hist-item.pending .hist-icon { background: #fef3c7; }
-
-    .hist-info { min-width: 0; flex: 1; }
-    .hist-info .u {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-      word-break: break-all;
-      margin-bottom: 2px;
-    }
-    .hist-info .m {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-    .hist-amount {
-      font-size: 14px;
-      font-weight: 800;
-      font-family: 'Inter', sans-serif;
-      white-space: nowrap;
-      flex-shrink: 0;
-      padding: 5px 10px;
-      border-radius: 8px;
-    }
-    .hist-item.good .hist-amount { color: #10b981; background: #f0fdf4; }
-    .hist-item.bad .hist-amount { color: #94a3b8; background: #f1f5f9; }
-    .hist-item.pending .hist-amount { color: #f59e0b; background: #fffbeb; font-size: 12px; }
-
-    /* Count badge */
-    .count-badge {
-      display: inline-block;
-      background: #eef2ff;
-      color: #6366f1;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      margin-left: 8px;
-    }
+    .modal-box h3 { font-size: 18px; margin-bottom: 6px; color: #0f172a; }
+    .modal-box .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
   </style>
 </head>
 <body>
 
-  <!-- Navbar -->
   <div class="navbar">
+    <button class="nav-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
     <div class="logo">
       <div class="mark">A</div>
-      <span>ADQ Income Zone</span>
+      <span>Wallet</span>
     </div>
     <button class="nav-logout" id="logoutBtn" title="Logout">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -283,190 +189,205 @@
 
   <div class="container">
 
-    <!-- Balance Box -->
+    <!-- BALANCE -->
     <div class="wallet-balance">
-      <div class="wallet-balance-label">💰 মোট ব্যালেন্স</div>
+      <div class="wallet-balance-label">💰 Available Balance</div>
       <div class="wallet-balance-amount" id="balance">৳0</div>
       <div class="wallet-balance-actions">
-        <button onclick="alert('শীঘ্রই আসছে! 🚀')">
+        <a href="withdraw.html">
           <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           Withdraw
-        </button>
-        <button onclick="alert('শীঘ্রই আসছে! 🚀')">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Money
-        </button>
+        </a>
+        <a href="task-history.html">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          History
+        </a>
       </div>
     </div>
 
-    <!-- Stats Grid (এখানে থাকবে) -->
+    <!-- WALLET SETUP -->
+    <div class="wallet-info-card" id="walletSetupCard">
+      <h3>
+        💳 My Payment Info
+        <button class="edit-btn" id="editWalletBtn">✏️ Edit</button>
+      </h3>
+      <div id="walletInfoContent"></div>
+    </div>
+
+    <!-- STATS -->
     <div class="wallet-stats">
-      <div class="w-stat g">
-        <span class="w-icon">✅</span>
-        <div class="w-num" id="statGood">0</div>
-        <div class="w-label">Good</div>
-      </div>
-      <div class="w-stat b">
-        <span class="w-icon">❌</span>
-        <div class="w-num" id="statBad">0</div>
-        <div class="w-label">Bad</div>
-      </div>
-      <div class="w-stat p">
-        <span class="w-icon">⏳</span>
-        <div class="w-num" id="statPending">0</div>
-        <div class="w-label">Pending</div>
-      </div>
+      <div class="w-stat g"><span class="w-icon">✅</span><div class="w-num" id="statGood">0</div><div class="w-label">Good</div></div>
+      <div class="w-stat b"><span class="w-icon">❌</span><div class="w-num" id="statBad">0</div><div class="w-label">Bad</div></div>
+      <div class="w-stat p"><span class="w-icon">⏳</span><div class="w-num" id="statPending">0</div><div class="w-label">Pending</div></div>
     </div>
 
-    <!-- Section Header -->
+    <!-- WITHDRAW HISTORY -->
     <div class="dash-section-head">
-      <h3>📜 Transaction History <span class="count-badge" id="totalCount">0</span></h3>
+      <h3>📜 Withdraw History</h3>
     </div>
-
-    <!-- Filter Tabs -->
-    <div class="wallet-tabs">
-      <button class="w-tab active" data-filter="all">সব</button>
-      <button class="w-tab" data-filter="pending">⏳ Pending</button>
-      <button class="w-tab" data-filter="good">✅ Good</button>
-      <button class="w-tab" data-filter="bad">❌ Bad</button>
-    </div>
-
-    <!-- History List -->
-    <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
-
+    <div id="withdrawHistory" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
 
-  <!-- Bottom Nav -->
   <nav class="bottom-nav">
-    <a href="index.html" data-page="home">
-      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-      <span class="nav-label">Home</span>
-    </a>
-    <a href="dashboard.html" data-page="dashboard">
-      <span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span>
-      <span class="nav-label">Dashboard</span>
-    </a>
-    <a href="index.html#tasks" data-page="submit">
-      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
-      <span class="nav-label">Submit</span>
-    </a>
-    <a href="wallet.html" data-page="wallet">
-      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span>
-      <span class="nav-label">Wallet</span>
-    </a>
-    <a href="profile.html" data-page="profile">
-      <span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-      <span class="nav-label">Profile</span>
-    </a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
+
+  <!-- WALLET EDIT MODAL -->
+  <div class="modal-overlay" id="walletModal">
+    <div class="modal-box">
+      <h3>💳 Wallet Info Setup</h3>
+      <p class="sub">তোমার payment info save করো — withdraw-এর সময় auto-fill হবে</p>
+
+      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Payment Method</label>
+      <select id="wm-method" class="admin-input">
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+        <option value="rocket">Rocket</option>
+        <option value="binance">Binance</option>
+      </select>
+
+      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 6px">Account Number / Wallet ID</label>
+      <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX / Wallet ID">
+
+      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 6px">Account Name (optional)</label>
+      <input type="text" id="wm-name" class="admin-input" placeholder="নাম">
+
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" style="flex:1;margin:0" id="saveWalletBtn">💾 Save</button>
+        <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="closeWalletBtn">✕</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "@firebase/auth";
+    import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Auto-highlight bottom nav
-    (function() {
-      const f = (window.location.pathname.split('/').pop() || 'index.html').toLowerCase();
-      let p = 'home';
-      if (f === 'dashboard.html') p = 'dashboard';
-      else if (f === 'wallet.html') p = 'wallet';
-      else if (f === 'profile.html') p = 'profile';
-      else if (f === 'task.html') p = 'submit';
-      document.querySelectorAll('.bottom-nav a').forEach(a => {
-        if (a.dataset.page === p) a.classList.add('active');
-      });
-    })();
+    let currentUser = null;
+    let userData = null;
 
     document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট করতে চান?")) return;
+      if (!confirm("লগআউট?")) return;
       await signOut(auth);
       location.href = "index.html";
     };
 
-    let allHistory = [];
-    let currentFilter = "all";
-
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
+      currentUser = user;
 
-      // Load balance + stats from user doc
-      const userSnap = await getDoc(doc(db, "users", user.uid));
-      if (userSnap.exists()) {
-        const u = userSnap.data();
-        document.getElementById("balance").textContent = "৳" + (u.balance || 0);
-        document.getElementById("statGood").textContent = u.totalGood || 0;
-        document.getElementById("statBad").textContent = u.totalBad || 0;
-        document.getElementById("statPending").textContent = u.totalPending || 0;
-      }
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists()) return;
+      userData = snap.data();
 
-      // Load history
-      await loadHistory(user.uid);
+      document.getElementById("balance").textContent = "৳" + (userData.balance || 0);
+      document.getElementById("statGood").textContent = userData.totalGood || 0;
+      document.getElementById("statBad").textContent = userData.totalBad || 0;
+      document.getElementById("statPending").textContent = userData.totalPending || 0;
+
+      renderWalletInfo();
+      loadWithdrawHistory();
     });
 
-    async function loadHistory(uid) {
-      const list = document.getElementById("historyList");
+    function renderWalletInfo() {
+      const card = document.getElementById("walletSetupCard");
+      const content = document.getElementById("walletInfoContent");
+      const info = userData?.walletInfo;
+
+      if (info && info.number) {
+        card.classList.add("setup");
+        const methodNames = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
+        content.innerHTML = `
+          <div class="wallet-info-item">
+            <span class="k">Method</span>
+            <span class="v">${methodNames[info.method] || info.method}</span>
+          </div>
+          <div class="wallet-info-item">
+            <span class="k">Number</span>
+            <span class="v" onclick="copyText('${info.number}')" style="cursor:pointer;color:#4f46e5">${info.number} 📋</span>
+          </div>
+          ${info.name ? `<div class="wallet-info-item"><span class="k">Name</span><span class="v">${info.name}</span></div>` : ''}
+        `;
+      } else {
+        card.classList.remove("setup");
+        content.innerHTML = `<div class="wallet-info-empty">⚠️ Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
+      }
+    }
+
+    window.copyText = (text) => {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Copied: " + text);
+      });
+    };
+
+    // Modal
+    const modal = document.getElementById("walletModal");
+    document.getElementById("editWalletBtn").onclick = () => {
+      const info = userData?.walletInfo || {};
+      document.getElementById("wm-method").value = info.method || "bkash";
+      document.getElementById("wm-number").value = info.number || "";
+      document.getElementById("wm-name").value = info.name || "";
+      modal.classList.add("show");
+    };
+    document.getElementById("closeWalletBtn").onclick = () => modal.classList.remove("show");
+
+    document.getElementById("saveWalletBtn").onclick = async () => {
+      const method = document.getElementById("wm-method").value;
+      const number = document.getElementById("wm-number").value.trim();
+      const name = document.getElementById("wm-name").value.trim();
+      if (!number) return alert("Account number দাও!");
+
       try {
-        const q = query(collection(db, "submissions"), where("userId", "==", uid));
+        await updateDoc(doc(db, "users", currentUser.uid), {
+          walletInfo: { method, number, name }
+        });
+        userData.walletInfo = { method, number, name };
+        renderWalletInfo();
+        modal.classList.remove("show");
+        alert("✅ Wallet info saved!");
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    async function loadWithdrawHistory() {
+      const list = document.getElementById("withdrawHistory");
+      try {
+        const q = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
-        allHistory = snap.docs.map(d => d.data())
-          .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+        if (snap.empty) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো withdraw নেই</p></div>`;
+          return;
+        }
+        const items = snap.docs.map(d => d.data())
+          .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
 
-        document.getElementById("totalCount").textContent = allHistory.length;
-        renderHistory();
-      } catch (e) {
-        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">${e.message}</p></div>`;
-      }
-    }
-
-    function renderHistory() {
-      const list = document.getElementById("historyList");
-      const filtered = currentFilter === "all"
-        ? allHistory
-        : allHistory.filter(h => h.status === currentFilter);
-
-      if (filtered.length === 0) {
-        list.innerHTML = `
-          <div class="dash-empty">
-            <div class="em">📭</div>
-            <p>${currentFilter === "all" ? "এখনো কোনো transaction নেই" : "এই filter-এ কিছু নেই"}</p>
-          </div>
-        `;
-        return;
-      }
-
-      list.innerHTML = filtered.map((h, i) => {
-        const ic = h.status === "good" ? "✅" : h.status === "bad" ? "❌" : "⏳";
-        const amount = h.status === "good" ? `+৳${h.price || 0}`
-                       : h.status === "bad" ? "৳0" : "Pending";
-        const time = h.submittedAt?.toDate?.().toLocaleString("bn-BD", {
-          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-        }) || "";
-
-        return `
-          <div class="hist-item ${h.status}" style="animation-delay:${i * 0.03}s">
-            <div class="hist-left">
-              <div class="hist-icon">${ic}</div>
-              <div class="hist-info">
-                <div class="u">UID ${h.uid}</div>
-                <div class="m">🎯 ${h.taskTitle || "Task"} • 🕐 ${time}</div>
+        list.innerHTML = items.map(h => {
+          const statusColor = h.status === "pending" ? "badge-pending"
+                            : h.status === "approved" ? "badge-good" : "badge-bad";
+          const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+          return `
+            <div class="hist-item" style="border-left-color: ${h.status === 'approved' ? '#10b981' : h.status === 'rejected' ? '#ef4444' : '#f59e0b'}">
+              <div class="hist-left">
+                <div class="hist-icon" style="background:#eef2ff;color:#4f46e5;font-weight:800">${(h.method||"?").charAt(0).toUpperCase()}</div>
+                <div class="hist-info">
+                  <div class="u">${h.methodName || h.method} • ৳${h.amount}</div>
+                  <div class="m">${h.accountNum} • 🕐 ${time}</div>
+                </div>
               </div>
+              <span class="badge ${statusColor}">${h.status}</span>
             </div>
-            <div class="hist-amount">${amount}</div>
-          </div>
-        `;
-      }).join("");
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
     }
-
-    // Filter tabs
-    document.querySelectorAll(".w-tab").forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll(".w-tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentFilter = tab.dataset.filter;
-        renderHistory();
-      };
-    });
   </script>
 </body>
 </html>
