@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task History — ADQ Income Zone</title>
+  <link rel="stylesheet" href="style.css?v=16">
+</head>
+<body>
+
+  <div class="navbar">
+    <button class="nav-back" onclick="history.back()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="logo">
+      <div class="mark">A</div>
+      <span>Task History</span>
+    </div>
+    <button class="nav-logout" id="logoutBtn">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+
+  <div class="container">
+    <div class="card" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white">
+      <h2 style="color: white; font-size: 18px; margin-bottom: 4px">📊 Task History</h2>
+      <p style="opacity: 0.9; font-size: 13px; margin: 0">শুধু তোমার submitted Task-এর status</p>
+    </div>
+
+    <div class="tabs">
+      <button class="active" data-filter="all">সব</button>
+      <button data-filter="pending">⏳ Pending</button>
+      <button data-filter="good">✅ Good</button>
+      <button data-filter="bad">❌ Bad</button>
+    </div>
+
+    <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
+    <a href="task-history.html" data-page="history" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
+    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  </nav>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let allSubs = [];
+    let currentFilter = "all";
+
+    document.getElementById("logoutBtn").onclick = async () => {
+      if (!confirm("লগআউট?")) return;
+      await signOut(auth);
+      location.href = "index.html";
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      try {
+        const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
+        const snap = await getDocs(q);
+        allSubs = snap.docs.map(d => d.data())
+          .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
+
+        // Group by task
+        renderHistory();
+      } catch (e) {
+        document.getElementById("historyList").innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    });
+
+    function renderHistory() {
+      const list = document.getElementById("historyList");
+      const filtered = currentFilter === "all" ? allSubs : allSubs.filter(s => s.status === currentFilter);
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো submission নেই</p></div>`;
+        return;
+      }
+
+      // Group by task
+      const groups = {};
+      filtered.forEach(s => {
+        const key = s.taskId;
+        if (!groups[key]) groups[key] = { title: s.taskTitle, taskId: key, items: [] };
+        groups[key].items.push(s);
+      });
+
+      list.innerHTML = Object.values(groups).map(g => {
+        const good = g.items.filter(i => i.status === "good").length;
+        const bad = g.items.filter(i => i.status === "bad").length;
+        const pending = g.items.filter(i => i.status === "pending").length;
+        return `
+          <div class="card" style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+              <h3 style="font-size:15px;color:#0f172a;margin:0">🎯 ${g.title || "Task"}</h3>
+              <span style="font-size:12px;color:#64748b">${g.items.length} subs</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <div class="w-stat g"><div class="w-num">${good}</div><div class="w-label">Good</div></div>
+              <div class="w-stat b"><div class="w-num">${bad}</div><div class="w-label">Bad</div></div>
+              <div class="w-stat p"><div class="w-num">${pending}</div><div class="w-label">Pending</div></div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    document.querySelectorAll(".tabs button").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".tabs button").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        currentFilter = tab.dataset.filter;
+        renderHistory();
+      };
+    });
+  </script>
+</body>
+</html>
