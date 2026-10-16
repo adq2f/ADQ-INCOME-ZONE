@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="style.css?v=11">
   <style>
     .platform-picker {
       display: flex; gap: 8px; overflow-x: auto;
@@ -33,24 +33,58 @@
       font-size: 12px; font-weight: 700; color: #475569;
       text-transform: uppercase; letter-spacing: 0.5px;
       margin-bottom: 10px;
+      display: flex; justify-content: space-between;
+      align-items: center;
     }
+    .add-field-btn {
+      padding: 5px 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white; border: none;
+      border-radius: 8px; font-size: 11px;
+      font-weight: 700; cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+      transition: 0.2s;
+    }
+    .add-field-btn:hover { transform: translateY(-1px); }
     .field-row {
-      display: flex; align-items: center; gap: 10px;
+      display: flex; align-items: center; gap: 8px;
       padding: 8px 10px; background: white;
       border-radius: 10px; margin-bottom: 6px;
       border: 1px solid #e2e8f0;
+      animation: fieldSlide 0.3s var(--ease);
     }
-    .field-row input[type="checkbox"] {
-      width: 18px; height: 18px; margin: 0; accent-color: #6366f1;
-    }
-    .field-row label {
-      font-size: 13px; font-weight: 600; color: #334155;
-      min-width: 70px; margin: 0;
+    @keyframes fieldSlide {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
     }
     .field-row input[type="text"] {
       flex: 1; padding: 6px 10px;
       border: 1px solid #e2e8f0; border-radius: 8px;
       font-size: 12px; margin: 0; background: white;
+      font-family: inherit;
+    }
+    .field-row input[type="text"]:focus {
+      border-color: #6366f1; outline: none;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+    }
+    .field-remove {
+      width: 26px; height: 26px;
+      border-radius: 8px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      cursor: pointer;
+      display: flex; align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      transition: 0.2s;
+      flex-shrink: 0;
+    }
+    .field-remove:hover {
+      background: #fecaca;
+      transform: scale(1.1);
     }
     .time-row {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -76,7 +110,41 @@
     .task-status.closed { background: #fee2e2; color: #991b1b; }
     .task-status.waiting { background: #fef3c7; color: #92400e; }
 
-    /* Range Preview Table */
+    /* Edit Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.7);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1000;
+      animation: fadeIn 0.3s;
+      overflow-y: auto;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+      animation: slideUp 0.4s var(--ease-bounce);
+      margin: 20px 0;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-box h3 {
+      font-size: 20px; font-weight: 700;
+      margin-bottom: 6px; color: #0f172a;
+    }
+    .modal-box .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
+
+    /* Range preview */
     .range-preview {
       background: #f8fafc;
       border-radius: 12px;
@@ -86,53 +154,57 @@
       overflow-y: auto;
     }
     .range-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid #e2e8f0;
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px;
+      padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;
     }
-    .range-header h4 {
-      font-size: 14px;
-      color: #0f172a;
-      font-weight: 700;
-    }
+    .range-header h4 { font-size: 14px; color: #0f172a; font-weight: 700; }
     .range-header .count {
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
+      color: white; padding: 3px 10px;
+      border-radius: 20px; font-size: 12px; font-weight: 700;
     }
     .preview-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px;
-      background: white;
-      border-radius: 10px;
-      margin-bottom: 6px;
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px; background: white;
+      border-radius: 10px; margin-bottom: 6px;
       font-size: 12px;
       border-left: 3px solid #6366f1;
+      position: relative;
     }
-    .preview-user {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
+    .preview-row .del-sub {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
       flex-shrink: 0;
+    }
+    .preview-row .del-sub:hover { background: #fecaca; }
+    .preview-user {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      display: flex; align-items: center;
+      justify-content: center;
+      font-weight: 700; flex-shrink: 0;
       font-size: 12px;
     }
     .preview-info { flex: 1; min-width: 0; }
-    .preview-info .u { font-weight: 700; color: #0f172a; font-size: 12px; }
-    .preview-info .m { color: #94a3b8; font-size: 10px; margin-top: 2px; }
+    .preview-info .u {
+      font-weight: 700; color: #0f172a; font-size: 12px;
+      word-break: break-all;
+    }
+    .preview-info .m {
+      color: #94a3b8; font-size: 10px; margin-top: 2px;
+    }
 
     .csv-tip {
       background: linear-gradient(135deg, #eef2ff, #e0e7ff);
@@ -163,12 +235,13 @@
       <button id="tabTask" class="active">📋 Tasks</button>
       <button id="tabNotice">📢 Notice</button>
       <button id="tabResult">✅ Result</button>
+      <button id="tabUsers">👥 Users</button>
     </div>
 
     <!-- ============ TASK SECTION ============ -->
     <div id="taskSection">
       <div class="admin-form-card">
-        <h3>➕ নতুন Task যোগ করুন</h3>
+        <h3 id="taskFormTitle">➕ নতুন Task যোগ করুন</h3>
 
         <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title">
         <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description (optional)"></textarea>
@@ -203,41 +276,17 @@
         <textarea id="taskRules" class="admin-input admin-textarea" placeholder="Task এর নিয়ম লিখো..."></textarea>
 
         <div class="field-builder">
-          <div class="field-builder-title">⚙️ Required Fields</div>
-
-          <div class="field-row">
-            <input type="checkbox" id="fUid" checked>
-            <label for="fUid">UID</label>
-            <input type="text" id="fUidLabel" placeholder="Label" value="UID">
+          <div class="field-builder-title">
+            <span>⚙️ Required Fields</span>
+            <button type="button" class="add-field-btn" id="addFieldBtn">+ Add Field</button>
           </div>
-          <div class="field-row">
-            <input type="checkbox" id="fPass" checked>
-            <label for="fPass">Password</label>
-            <input type="text" id="fPassLabel" placeholder="Label" value="Password">
-          </div>
-          <div class="field-row">
-            <input type="checkbox" id="f2fa" checked>
-            <label for="f2fa">2FA Key</label>
-            <input type="text" id="f2faLabel" placeholder="Label" value="2FA Key">
-          </div>
-          <div class="field-row">
-            <input type="checkbox" id="fEmail">
-            <label for="fEmail">Email</label>
-            <input type="text" id="fEmailLabel" placeholder="Label" value="Email">
-          </div>
-          <div class="field-row">
-            <input type="checkbox" id="fOtp">
-            <label for="fOtp">OTP</label>
-            <input type="text" id="fOtpLabel" placeholder="Label" value="OTP Code">
-          </div>
-          <div class="field-row">
-            <input type="checkbox" id="fCustom">
-            <label for="fCustom">Custom</label>
-            <input type="text" id="fCustomLabel" placeholder="Custom field name">
+          <div id="fieldList">
+            <!-- Fields dynamically added here -->
           </div>
         </div>
 
         <button class="btn btn-success btn-full" id="addTaskBtn">Add Task</button>
+        <button class="btn btn-outline btn-full" id="cancelEditBtn" style="display:none;margin-top:8px">✕ Cancel Edit</button>
       </div>
 
       <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
@@ -258,18 +307,13 @@
 
     <!-- ============ RESULT SECTION ============ -->
     <div id="resultSection" style="display:none">
-
-      <!-- STEP 1: Time Range select -->
       <div class="admin-form-card">
         <h3>📥 Step 1: Time Range Select</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">
-          কোন Task-এর, কোন সময়ের submission-এর result publish করবে সেটা select করো।
-        </p>
 
         <label class="label-text">Task Select</label>
         <select id="resultTask" class="admin-input"></select>
 
-        <label class="label-text">Time Range</label>
+        <label class="label-text">Time Range (optional)</label>
         <div class="time-row">
           <div>
             <span class="time-input-label">শুরু</span>
@@ -281,17 +325,12 @@
           </div>
         </div>
 
-        <div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="display:flex;gap:8px">
           <button class="btn btn-primary" style="flex:1;margin:0" id="loadBtn">🔍 Load Submissions</button>
           <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="clearRangeBtn">✕</button>
         </div>
-
-        <div class="csv-tip">
-          💡 <b>Tip:</b> Time range না দিলে সব submission load হবে। নির্দিষ্ট range দিলে শুধু সেই সময়ের submission দেখাবে।
-        </div>
       </div>
 
-      <!-- STEP 2: Preview -->
       <div class="admin-form-card" id="previewCard" style="display:none">
         <h3>👀 Step 2: Preview Submissions</h3>
         <div class="range-preview">
@@ -301,25 +340,31 @@
           </div>
           <div id="previewList"></div>
         </div>
-
         <button class="btn btn-primary btn-full" style="margin-top:12px" id="downloadBtn">📥 Download CSV</button>
       </div>
 
-      <!-- STEP 3: Process -->
       <div class="admin-form-card" id="processCard" style="display:none">
         <h3>✅ Step 3: Bad UID paste & Process</h3>
         <div class="bulk-hint">
-          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)।
+          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)।<br>
           Match হলে ❌ Bad, না হলে ✅ Good হবে এবং balance auto add হবে।
         </div>
         <textarea id="badUids" class="admin-input admin-textarea bulk-textarea" placeholder="100005
 100012
 100045"></textarea>
-
         <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
       </div>
 
       <div id="resultOutput"></div>
+    </div>
+
+    <!-- ============ USERS SECTION ============ -->
+    <div id="usersSection" style="display:none">
+      <div class="admin-form-card">
+        <h3>👥 সব Members</h3>
+        <input type="text" id="userSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল দিয়ে খোঁজো...">
+      </div>
+      <div id="userList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
   </div>
 
@@ -331,10 +376,35 @@
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
+  <!-- ============ EDIT MODAL ============ -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <h3>✏️ Task Edit</h3>
+      <p class="sub">Task-এর সময় বাড়াও বা তথ্য পরিবর্তন করো</p>
+
+      <input type="text" id="editTitle" class="admin-input" placeholder="Task Title">
+      <input type="number" id="editPrice" class="admin-input" placeholder="Price (৳)">
+
+      <label class="label-text">End Time (বাড়াও)</label>
+      <input type="datetime-local" id="editEndTime" class="admin-input">
+
+      <label class="label-text">Start Time</label>
+      <input type="datetime-local" id="editStartTime" class="admin-input">
+
+      <label class="label-text">Rules</label>
+      <textarea id="editRules" class="admin-input admin-textarea" placeholder="Rules"></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" style="flex:1;margin:0" id="saveEditBtn">💾 Save</button>
+        <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="closeEditBtn">✕</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, addDoc, updateDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -342,7 +412,7 @@
       location.href = "index.html";
     };
 
-    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabResult: "resultSection" };
+    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabResult: "resultSection", tabUsers: "usersSection" };
     Object.keys(tabs).forEach(tabId => {
       document.getElementById(tabId).onclick = () => {
         Object.keys(tabs).forEach(t => {
@@ -363,25 +433,75 @@
       };
     });
 
-    let currentUser = null;
-    let loadedSubmissions = [];
-    let loadedTask = null;
+    // ===== DYNAMIC FIELD BUILDER =====
+    let fieldCounter = 0;
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "login.html"; return; }
-      currentUser = user;
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ আপনি admin না!");
-        location.href = "dashboard.html";
-        return;
-      }
-      loadTasks();
-      loadNotices();
-      loadDropdowns();
-    });
+    function createFieldRow(label = "", placeholder = "", checked = true) {
+      fieldCounter++;
+      const id = "fld_" + fieldCounter;
+      const row = document.createElement("div");
+      row.className = "field-row";
+      row.dataset.fieldId = id;
+      row.innerHTML = `
+        <input type="checkbox" ${checked ? "checked" : ""} id="${id}_check" style="width:18px;height:18px;margin:0;accent-color:#6366f1">
+        <input type="text" id="${id}_label" placeholder="${placeholder || "Field name"}" value="${label}">
+        <button type="button" class="field-remove" title="Remove">✕</button>
+      `;
+      row.querySelector(".field-remove").onclick = () => {
+        row.style.animation = "fadeIn 0.3s reverse";
+        setTimeout(() => row.remove(), 250);
+      };
+      return row;
+    }
 
-    // ===== ADD TASK =====
+    // Default fields
+    function resetFields() {
+      const list = document.getElementById("fieldList");
+      list.innerHTML = "";
+      fieldCounter = 0;
+      list.appendChild(createFieldRow("UID", "UID"));
+      list.appendChild(createFieldRow("Password", "Password"));
+      list.appendChild(createFieldRow("2FA Key", "2FA Key"));
+    }
+
+    document.getElementById("addFieldBtn").onclick = () => {
+      document.getElementById("fieldList").appendChild(createFieldRow("", "Custom field name"));
+    };
+
+    resetFields();
+
+    function collectFields() {
+      const fields = [];
+      document.querySelectorAll("#fieldList .field-row").forEach(row => {
+        const id = row.dataset.fieldId;
+        const checked = document.getElementById(id + "_check").checked;
+        const label = document.getElementById(id + "_label").value.trim();
+        if (checked && label) {
+          const key = "f" + Math.random().toString(36).substring(2, 8);
+          fields.push({ key, label });
+        }
+      });
+      return fields;
+    }
+
+    // ===== EDIT MODE =====
+    let editTaskId = null;
+
+    document.getElementById("cancelEditBtn").onclick = () => {
+      editTaskId = null;
+      document.getElementById("taskFormTitle").textContent = "➕ নতুন Task যোগ করুন";
+      document.getElementById("addTaskBtn").textContent = "Add Task";
+      document.getElementById("cancelEditBtn").style.display = "none";
+      document.getElementById("taskTitle").value = "";
+      document.getElementById("taskDesc").value = "";
+      document.getElementById("taskPrice").value = "";
+      document.getElementById("taskStartTime").value = "";
+      document.getElementById("taskEndTime").value = "";
+      document.getElementById("taskRules").value = "";
+      resetFields();
+    };
+
+    // ===== ADD/UPDATE TASK =====
     document.getElementById("addTaskBtn").onclick = async () => {
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
@@ -395,44 +515,42 @@
       if (!startVal || !endVal) return alert("Start & End Time দাও!");
       if (new Date(startVal) >= new Date(endVal)) return alert("End time অবশ্যই Start time-এর পরে হতে হবে!");
 
-      const fields = [];
-      const fieldConfig = [
-        { check: "fUid", label: "fUidLabel", key: "uid" },
-        { check: "fPass", label: "fPassLabel", key: "password" },
-        { check: "f2fa", label: "f2faLabel", key: "twoFA" },
-        { check: "fEmail", label: "fEmailLabel", key: "email" },
-        { check: "fOtp", label: "fOtpLabel", key: "otp" },
-        { check: "fCustom", label: "fCustomLabel", key: "custom" }
-      ];
-
-      for (const f of fieldConfig) {
-        if (document.getElementById(f.check).checked) {
-          const label = document.getElementById(f.label).value.trim() || f.key;
-          fields.push({ key: f.key, label });
-        }
-      }
-
-      if (fields.length === 0) return alert("কমপক্ষে একটা field select করো!");
+      const fields = collectFields();
+      if (fields.length === 0) return alert("কমপক্ষে একটা field add করো!");
 
       btn.disabled = true; btn.textContent = "Adding...";
 
       try {
-        await addDoc(collection(db, "tasks"), {
-          title, description, pricePerAccount,
-          platform: selectedPlatform,
-          fields, rules,
-          startTime: new Date(startVal),
-          endTime: new Date(endVal),
-          active: true,
-          createdAt: new Date()
-        });
-        alert("✅ Task added!");
-        document.getElementById("taskTitle").value = "";
-        document.getElementById("taskDesc").value = "";
-        document.getElementById("taskPrice").value = "";
-        document.getElementById("taskStartTime").value = "";
-        document.getElementById("taskEndTime").value = "";
-        document.getElementById("taskRules").value = "";
+        if (editTaskId) {
+          await updateDoc(doc(db, "tasks", editTaskId), {
+            title, description, pricePerAccount,
+            platform: selectedPlatform,
+            fields, rules,
+            startTime: new Date(startVal),
+            endTime: new Date(endVal),
+            updatedAt: new Date()
+          });
+          alert("✅ Task updated!");
+          document.getElementById("cancelEditBtn").click();
+        } else {
+          await addDoc(collection(db, "tasks"), {
+            title, description, pricePerAccount,
+            platform: selectedPlatform,
+            fields, rules,
+            startTime: new Date(startVal),
+            endTime: new Date(endVal),
+            active: true,
+            createdAt: new Date()
+          });
+          alert("✅ Task added!");
+          document.getElementById("taskTitle").value = "";
+          document.getElementById("taskDesc").value = "";
+          document.getElementById("taskPrice").value = "";
+          document.getElementById("taskStartTime").value = "";
+          document.getElementById("taskEndTime").value = "";
+          document.getElementById("taskRules").value = "";
+          resetFields();
+        }
         loadTasks();
         loadDropdowns();
       } catch (e) { alert("❌ " + e.message); }
@@ -474,7 +592,7 @@
           <div class="task-card">
             <div class="task-card-logo default">${ic}</div>
             <div class="task-card-body">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
                 <h3 style="margin:0">${t.title}</h3>
                 <span class="task-status ${status.cls}">${status.label}</span>
               </div>
@@ -484,6 +602,7 @@
                 ⏰ ${startStr} → ${endStr}
               </p>
               <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin:0" onclick="editTask('${t.id}')">✏️ Edit</button>
                 <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;margin:0" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
               </div>
             </div>
@@ -492,8 +611,56 @@
       }).join("");
     }
 
+    window.editTask = async (id) => {
+      const taskSnap = await getDoc(doc(db, "tasks", id));
+      if (!taskSnap.exists()) return;
+      const t = taskSnap.data();
+
+      editTaskId = id;
+      document.getElementById("taskFormTitle").textContent = "✏️ Task Edit করুন";
+      document.getElementById("addTaskBtn").textContent = "💾 Update Task";
+      document.getElementById("cancelEditBtn").style.display = "block";
+
+      document.getElementById("taskTitle").value = t.title || "";
+      document.getElementById("taskDesc").value = t.description || "";
+      document.getElementById("taskPrice").value = t.pricePerAccount || "";
+      document.getElementById("taskRules").value = t.rules || "";
+
+      // Platform
+      selectedPlatform = t.platform || "Facebook";
+      document.querySelectorAll(".platform-opt").forEach(o => {
+        o.classList.toggle("active", o.dataset.platform === selectedPlatform);
+      });
+
+      // Times
+      if (t.startTime?.toDate) {
+        const d = t.startTime.toDate();
+        document.getElementById("taskStartTime").value = toLocalISO(d);
+      }
+      if (t.endTime?.toDate) {
+        const d = t.endTime.toDate();
+        document.getElementById("taskEndTime").value = toLocalISO(d);
+      }
+
+      // Fields
+      const list = document.getElementById("fieldList");
+      list.innerHTML = "";
+      fieldCounter = 0;
+      (t.fields || []).forEach(f => {
+        list.appendChild(createFieldRow(f.label, f.label));
+      });
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    function toLocalISO(date) {
+      const d = new Date(date);
+      const pad = n => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
     window.deleteTask = async (id) => {
-      if (!confirm("Delete করবে?")) return;
+      if (!confirm("Delete করবে? (History delete হবেও না)")) return;
       await updateDoc(doc(db, "tasks", id), { active: false });
       loadTasks();
       loadDropdowns();
@@ -546,7 +713,77 @@
       loadNotices();
     };
 
-    // ===== DROPDOWN =====
+    // ===== USERS SECTION =====
+    let allUsers = [];
+
+    async function loadUsers() {
+      const list = document.getElementById("userList");
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderUsers();
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
+
+    function renderUsers() {
+      const list = document.getElementById("userList");
+      const search = document.getElementById("userSearch").value.trim().toLowerCase();
+      let filtered = allUsers;
+      if (search) {
+        filtered = allUsers.filter(u =>
+          (u.username || "").toLowerCase().includes(search) ||
+          (u.email || "").toLowerCase().includes(search)
+        );
+      }
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="dash-empty"><p>কোনো user নেই</p></div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(u => `
+        <div class="task-card" style="margin-bottom:10px">
+          <div class="task-card-logo default" style="background: linear-gradient(135deg, ${u.role === 'admin' ? '#ef4444, #dc2626' : '#6366f1, #8b5cf6'})">
+            ${(u.username || "U").charAt(0).toUpperCase()}
+          </div>
+          <div class="task-card-body">
+            <h3 style="font-size:15px">${u.username || "User"} ${u.role === "admin" ? "🛡️" : ""}</h3>
+            <p style="font-size:12px;color:#64748b;margin:4px 0">${u.email}</p>
+            <p style="font-size:12px;color:#64748b">
+              💰 ৳${u.balance || 0} • ✅ ${u.totalGood || 0} • ❌ ${u.totalBad || 0} • ⏳ ${u.totalPending || 0}
+            </p>
+            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+              <button class="btn btn-danger" style="padding:6px 12px;font-size:11px;margin:0" onclick="deleteUserHistory('${u.id}', '${u.username || ''}')">🗑️ History Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("userSearch").oninput = renderUsers;
+
+    window.deleteUserHistory = async (userId, username) => {
+      if (!confirm(`${username}-এর সব submission history delete করবে? এটা undo হবে না!`)) return;
+      if (!confirm("সত্যিই delete করতে চাও? 💀")) return;
+
+      try {
+        const q = query(collection(db, "submissions"), where("userId", "==", userId));
+        const snap = await getDocs(q);
+        let count = 0;
+        for (const d of snap.docs) {
+          await deleteDoc(doc(db, "submissions", d.id));
+          count++;
+        }
+        alert(`✅ ${count} টা submission delete হয়েছে!`);
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    // ===== RESULT =====
+    let loadedSubmissions = [];
+    let loadedTask = null;
+
     async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
@@ -555,7 +792,6 @@
         snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
     }
 
-    // ===== CLEAR RANGE =====
     document.getElementById("clearRangeBtn").onclick = () => {
       document.getElementById("filterStart").value = "";
       document.getElementById("filterEnd").value = "";
@@ -565,7 +801,6 @@
       loadedSubmissions = [];
     };
 
-    // ===== LOAD SUBMISSIONS =====
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       const startVal = document.getElementById("filterStart").value;
@@ -584,7 +819,6 @@
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-        // Filter by time range if provided
         if (startVal) {
           const startTs = new Date(startVal).getTime();
           subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) >= startTs);
@@ -594,12 +828,9 @@
           subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) <= endTs);
         }
 
-        // Filter only pending? No — show all but mark
         subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
-
         loadedSubmissions = subs;
 
-        // Show preview
         document.getElementById("previewCard").style.display = "block";
         document.getElementById("processCard").style.display = "block";
         document.getElementById("rangeCount").textContent = subs.length;
@@ -614,7 +845,6 @@
           return;
         }
 
-        // Preview list
         document.getElementById("previewList").innerHTML = subs.slice(0, 100).map(s => {
           const initial = (s.uid || s.email || "?").charAt(0).toUpperCase();
           const fields = loadedTask.fields || [];
@@ -622,8 +852,7 @@
           const timeStr = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
           }) || "";
-          const statusBadge = s.status === "pending" ? "⏳"
-                            : s.status === "good" ? "✅" : "❌";
+          const statusBadge = s.status === "pending" ? "⏳" : s.status === "good" ? "✅" : "❌";
           return `
             <div class="preview-row">
               <div class="preview-user">${initial}</div>
@@ -631,6 +860,7 @@
                 <div class="u">${statusBadge} ${s.uid || s.email || "N/A"}</div>
                 <div class="m">${fieldStr.substring(0, 100)} • 🕐 ${timeStr}</div>
               </div>
+              <button class="del-sub" onclick="deleteSubmission('${s.id}')" title="Delete">✕</button>
             </div>
           `;
         }).join("") + (subs.length > 100 ? `<div style="text-align:center;padding:10px;color:#94a3b8;font-size:12px">... এবং আরো ${subs.length - 100} টা</div>` : "");
@@ -639,32 +869,32 @@
       btn.disabled = false; btn.textContent = "🔍 Load Submissions";
     };
 
-    // ===== DOWNLOAD CSV =====
+    window.deleteSubmission = async (id) => {
+      if (!confirm("এই submission delete করবে?")) return;
+      try {
+        await deleteDoc(doc(db, "submissions", id));
+        loadedSubmissions = loadedSubmissions.filter(s => s.id !== id);
+        document.getElementById("rangeCount").textContent = loadedSubmissions.length;
+        alert("✅ Deleted!");
+        document.getElementById("loadBtn").click();
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
     document.getElementById("downloadBtn").onclick = () => {
       if (loadedSubmissions.length === 0) return alert("কোনো submission নেই!");
       if (!loadedTask) return alert("Task load হয়নি!");
 
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
+      const headers = [...fields.map(f => f.label), "Submitted At"];
 
-      // Headers: শুধু admin-set field + Submission Time
-      const headers = [
-        ...fields.map(f => f.label),
-        "Submitted At"
-      ];
-
-      // Rows
       const rows = loadedSubmissions.map(s => {
         const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
           day: "2-digit", month: "2-digit", year: "numeric",
           hour: "2-digit", minute: "2-digit"
         }) || "";
-        return [
-          ...fields.map(f => s[f.key] || ""),
-          timeStr
-        ];
+        return [...fields.map(f => s[f.key] || ""), timeStr];
       });
 
-      // Escape CSV values
       const escapeCSV = (v) => {
         const str = String(v);
         if (str.includes(",") || str.includes('"') || str.includes("\n")) {
@@ -673,13 +903,11 @@
         return str;
       };
 
-      // Create CSV (NO BOM)
       const csvContent = [
         headers.map(escapeCSV).join(","),
         ...rows.map(r => r.map(escapeCSV).join(","))
       ].join("\r\n");
 
-      // Download
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -692,7 +920,6 @@
       alert(`✅ ${rows.length} টা submission download হয়েছে!`);
     };
 
-    // ===== PROCESS RESULT =====
     document.getElementById("processBtn").onclick = async () => {
       if (loadedSubmissions.length === 0) return alert("আগে Load Submissions করো!");
       if (!loadedTask) return alert("Task load হয়নি!");
@@ -704,11 +931,8 @@
       const btn = document.getElementById("processBtn");
       const output = document.getElementById("resultOutput");
 
-      // Confirm
       const pendingSubs = loadedSubmissions.filter(s => s.status === "pending");
-      if (pendingSubs.length === 0) {
-        return alert("এই range-এ কোনো pending submission নেই!");
-      }
+      if (pendingSubs.length === 0) return alert("এই range-এ কোনো pending নেই!");
       if (!confirm(`${pendingSubs.length} টা pending submission process করবে?`)) return;
 
       btn.disabled = true; btn.textContent = "Processing...";
@@ -720,7 +944,6 @@
 
         for (const sub of pendingSubs) {
           const isBad = badSet.has(sub.uid);
-
           await updateDoc(doc(db, "submissions", sub.id), {
             status: isBad ? "bad" : "good",
             earned: isBad ? 0 : price,
@@ -749,18 +972,35 @@
           <div class="result-box">
             <h3>✅ Result Processed!</h3>
             <p>Task: <b>${loadedTask.title}</b></p>
-            <p>Total Processed: <b>${pendingSubs.length}</b></p>
+            <p>Total: <b>${pendingSubs.length}</b></p>
             <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
             <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
             <p style="color:#f59e0b">💰 Total Added: <span class="big">৳${goodCount * price}</span></p>
           </div>
         `;
         document.getElementById("badUids").value = "";
-        // Reload to show updated status
         setTimeout(() => document.getElementById("loadBtn").click(), 500);
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🚀 Process Result";
     };
+
+    // ===== INIT =====
+    let currentUser = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      currentUser = user;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (!snap.exists() || snap.data().role !== "admin") {
+        alert("❌ আপনি admin না!");
+        location.href = "dashboard.html";
+        return;
+      }
+      loadTasks();
+      loadNotices();
+      loadDropdowns();
+      loadUsers();
+    });
   </script>
 </body>
 </html>
