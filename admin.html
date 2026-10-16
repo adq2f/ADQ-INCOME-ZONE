@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=30">
+  <link rel="stylesheet" href="style.css?v=31">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
@@ -55,7 +55,7 @@
     .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
     .user-info { flex: 1; min-width: 0; }
-    .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+    .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .user-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
     .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; flex-wrap: wrap; }
     .user-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -75,6 +75,7 @@
     .dash-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .qi-orange { background: #fef3c7; }
     .qi-purple { background: #eef2ff; }
+    .qi-green { background: #d1fae5; }
     .dash-quick-label { font-size: 11px; font-weight: 700; color: #475569; }
     .result-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 4px solid #10b981; padding: 20px; border-radius: 14px; margin-top: 16px; }
     .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; }
@@ -82,6 +83,8 @@
     .result-box .big { font-size: 24px; font-weight: 800; font-family: 'Inter'; }
     .dash-empty { text-align: center; padding: 40px 20px; color: #64748b; }
     .dash-empty .em { font-size: 48px; margin-bottom: 12px; display: block; }
+    .badge-color-btn { width: 36px; height: 36px; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
+    .badge-color-btn:hover { transform: scale(1.1); }
   </style>
 </head>
 <body>
@@ -105,6 +108,7 @@
       <button class="admin-tab" data-tab="usersTab">👥 Users</button>
       <button class="admin-tab" data-tab="bulkTab">🗑️ Bulk</button>
       <button class="admin-tab" data-tab="referralsTab">🎁 Referrals</button>
+      <button class="admin-tab" data-tab="badgesTab">🎖️ Badges</button>
       <button class="admin-tab" data-tab="settingsTab">⚙️ Settings</button>
     </div>
 
@@ -250,9 +254,44 @@
           <div class="stat-box good"><div class="num" id="totalRefEarnings">৳0</div><div class="label">Total Commission</div></div>
         </div>
       </div>
-
       <h3 style="margin:16px 0 12px">👥 All Referrals</h3>
       <div id="referralsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    </div>
+
+    <!-- BADGES -->
+    <div id="badgesTab" class="admin-section" style="display:none">
+      <div class="admin-form-card">
+        <h3>🎖️ Quick Badge Assign</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">দ্রুত badge assign করো — user edit page-এও badge দেওয়া যাবে।</p>
+
+        <label class="label-text">User Select</label>
+        <select id="badgeUserSelect" class="admin-input">
+          <option value="">-- Select User --</option>
+        </select>
+
+        <label class="label-text">Badge Name</label>
+        <input type="text" id="badgeName" class="admin-input" placeholder="যেমন: CHAMPION, VIP, PRO" maxlength="20">
+
+        <label class="label-text">Badge Color</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button type="button" class="badge-color-btn" data-color="#fbbf24" style="background:#fbbf24"></button>
+          <button type="button" class="badge-color-btn" data-color="#ef4444" style="background:#ef4444"></button>
+          <button type="button" class="badge-color-btn" data-color="#10b981" style="background:#10b981"></button>
+          <button type="button" class="badge-color-btn" data-color="#6366f1" style="background:#6366f1"></button>
+          <button type="button" class="badge-color-btn" data-color="#8b5cf6" style="background:#8b5cf6"></button>
+          <button type="button" class="badge-color-btn" data-color="#ec4899" style="background:#ec4899"></button>
+          <button type="button" class="badge-color-btn" data-color="#06b6d4" style="background:#06b6d4"></button>
+          <button type="button" class="badge-color-btn" data-color="#64748b" style="background:#64748b"></button>
+        </div>
+        <input type="text" id="badgeCustomColor" class="admin-input" placeholder="Custom color" value="#6366f1">
+
+        <button class="btn btn-primary btn-full" id="saveBadgeBtn" style="margin-top:14px">🎖️ Assign Badge</button>
+        <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:8px">🗑️ Remove Badge</button>
+      </div>
+      <div id="badgeOutput"></div>
+
+      <h3 style="margin:20px 0 12px">📋 All Users with Badges</h3>
+      <div id="badgedUsersList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
     <!-- SETTINGS -->
@@ -331,6 +370,7 @@
         tab.classList.add("active");
         document.getElementById(tab.dataset.tab).style.display = "block";
         if (tab.dataset.tab === "referralsTab") loadReferrals();
+        if (tab.dataset.tab === "badgesTab") { loadBadgeUsers(); loadBadgedUsers(); }
       };
     });
 
@@ -752,15 +792,25 @@
             const u = uSnap.data();
             const referrerId = u.referredBy;
             if (!referrerId) continue;
-            const earned = goodAccounts * referCommission;
+
+            // ✅ Check custom refer commission on referrer
             const refRef = doc(db, "users", referrerId);
             const refSnap = await getDoc(refRef);
             if (!refSnap.exists()) continue;
             const refData = refSnap.data();
+
+            let effectiveCommission = referCommission;
+            if (refData.customReferCommission !== null && refData.customReferCommission !== undefined && !isNaN(refData.customReferCommission)) {
+              effectiveCommission = refData.customReferCommission;
+            }
+
+            const earned = goodAccounts * effectiveCommission;
+
             await updateDoc(refRef, {
               balance: (refData.balance || 0) + earned,
               totalReferEarning: (refData.totalReferEarning || 0) + earned
             });
+
             await addDoc(collection(db, "refer_earnings"), {
               referrerId: referrerId,
               referredUserId: userId,
@@ -768,10 +818,11 @@
               taskId: loadedTask.id,
               taskTitle: loadedTask.title,
               goodAccounts: goodAccounts,
-              commissionPerAccount: referCommission,
+              commissionPerAccount: effectiveCommission,
               totalEarned: earned,
               createdAt: new Date()
             });
+
             totalReferCommission += earned;
             referrerCount++;
           }
@@ -875,12 +926,13 @@
       }
       list.innerHTML = filtered.map(u => {
         const isChecked = selectedUsers.has(u.id);
+        const badgeHtml = u.customBadge ? `<span style="display:inline-block;background:${u.customBadgeColor || '#6366f1'};color:white;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase">🎖️ ${u.customBadge}</span>` : '';
         return `
           <div class="user-card">
             <div class="user-checkbox ${isChecked ? "checked" : ""}" data-uid="${u.id}"></div>
             <div class="user-avatar ${u.role === 'admin' ? 'admin' : 'user'}">${(u.username || "U").charAt(0).toUpperCase()}</div>
             <div class="user-info" onclick="editUser('${u.id}')" style="cursor:pointer">
-              <h4>${u.username || "User"} ${u.role === "admin" ? "🛡️" : ""}</h4>
+              <h4>${u.username || "User"} ${u.role === "admin" ? "🛡️" : ""} ${badgeHtml}</h4>
               <p>${u.email || ""}</p>
               <div class="badges">💰 ৳${u.balance || 0} • ✅ ${u.totalGood || 0} • ❌ ${u.totalBad || 0} • ⏳ ${u.totalPending || 0}</div>
             </div>
@@ -1047,7 +1099,6 @@
         const allUsersList = allUsersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         const referredUsers = allUsersList.filter(u => u.referredBy);
         document.getElementById("totalRefUsers").textContent = referredUsers.length;
-
         const earningsSnap = await getDocs(collection(db, "refer_earnings"));
         let totalEarnings = 0;
         const earningsByReferrer = {};
@@ -1058,18 +1109,15 @@
           earningsByReferrer[e.referrerId] += e.totalEarned || 0;
         });
         document.getElementById("totalRefEarnings").textContent = "৳" + totalEarnings.toFixed(2);
-
         const groupedByReferrer = {};
         referredUsers.forEach(u => {
           if (!groupedByReferrer[u.referredBy]) groupedByReferrer[u.referredBy] = [];
           groupedByReferrer[u.referredBy].push(u);
         });
-
         if (Object.keys(groupedByReferrer).length === 0) {
           list.innerHTML = `<div class="dash-empty"><p>এখনো কেউ refer করেনি</p></div>`;
           return;
         }
-
         let html = "";
         for (const [referrerId, refs] of Object.entries(groupedByReferrer)) {
           const referrer = allUsersList.find(u => u.id === referrerId);
@@ -1107,6 +1155,105 @@
       }
     }
 
+    // BADGES TAB
+    let badgeColor = "#6366f1";
+
+    document.querySelectorAll(".badge-color-btn").forEach(btn => {
+      btn.onclick = () => {
+        badgeColor = btn.dataset.color;
+        document.getElementById("badgeCustomColor").value = badgeColor;
+        document.querySelectorAll(".badge-color-btn").forEach(b => b.style.borderColor = "transparent");
+        btn.style.borderColor = "#0f172a";
+      };
+    });
+
+    document.getElementById("badgeCustomColor").oninput = (e) => {
+      badgeColor = e.target.value;
+      document.querySelectorAll(".badge-color-btn").forEach(b => b.style.borderColor = "transparent");
+    };
+
+    async function loadBadgeUsers() {
+      const sel = document.getElementById("badgeUserSelect");
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .filter(u => u.role !== "admin")
+          .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
+        sel.innerHTML = '<option value="">-- Select User --</option>' +
+          users.map(u => `<option value="${u.id}">${u.username || "User"} — ${u.totalGood || 0} good</option>`).join("");
+      } catch (e) {}
+    }
+
+    async function loadBadgedUsers() {
+      const list = document.getElementById("badgedUsersList");
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        const badgedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .filter(u => u.customBadge);
+        if (badgedUsers.length === 0) {
+          list.innerHTML = `<div class="dash-empty"><p>কোনো badge assign করা হয়নি</p></div>`;
+          return;
+        }
+        list.innerHTML = badgedUsers.map(u => `
+          <div class="user-card" style="margin-bottom:8px">
+            <div class="user-avatar user">${(u.username || "U").charAt(0).toUpperCase()}</div>
+            <div class="user-info">
+              <h4>${u.username || "User"} <span style="display:inline-block;background:${u.customBadgeColor || '#6366f1'};color:white;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase">${u.customBadge}</span></h4>
+              <p>${u.email || ""}</p>
+              <div class="badges">✅ ${u.totalGood || 0} good</div>
+            </div>
+            <button class="btn btn-danger" style="padding:6px 10px;font-size:11px;margin:0" onclick="removeUserBadge('${u.id}')">Remove</button>
+          </div>
+        `).join("");
+      } catch (e) {}
+    }
+
+    window.removeUserBadge = async (uid) => {
+      if (!confirm("Badge remove করবে?")) return;
+      try {
+        await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
+        loadBadgedUsers();
+        alert("✅ Badge removed!");
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    document.getElementById("saveBadgeBtn").onclick = async () => {
+      const userId = document.getElementById("badgeUserSelect").value;
+      const badgeName = document.getElementById("badgeName").value.trim().toUpperCase();
+      const color = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
+      if (!userId) return alert("User select করো!");
+      if (!badgeName) return alert("Badge name দাও!");
+      try {
+        await updateDoc(doc(db, "users", userId), {
+          customBadge: badgeName,
+          customBadgeColor: color
+        });
+        document.getElementById("badgeOutput").innerHTML = `
+          <div class="result-box" style="margin-top:12px">
+            <h3>✅ Badge Assigned!</h3>
+            <p>User: ${document.getElementById("badgeUserSelect").selectedOptions[0].text}</p>
+            <p>Badge: <span style="background:${color};color:white;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800">${badgeName}</span></p>
+          </div>
+        `;
+        document.getElementById("badgeName").value = "";
+        loadBadgedUsers();
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    document.getElementById("removeBadgeBtn").onclick = async () => {
+      const userId = document.getElementById("badgeUserSelect").value;
+      if (!userId) return alert("User select করো!");
+      if (!confirm("Badge remove করবে?")) return;
+      try {
+        await updateDoc(doc(db, "users", userId), {
+          customBadge: null,
+          customBadgeColor: null
+        });
+        alert("✅ Badge removed!");
+        loadBadgedUsers();
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
     async function loadSettings() {
       try {
         const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
@@ -1131,9 +1278,7 @@
           document.getElementById("referEnabled").value = "true";
           document.getElementById("defaultReferCommission").value = 0;
         }
-      } catch (e) {
-        console.error("Settings load error:", e);
-      }
+      } catch (e) {}
     }
 
     document.getElementById("saveWithdrawSettings").onclick = async () => {
@@ -1196,6 +1341,8 @@
       }
       loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
       loadReferrals();
+      loadBadgeUsers();
+      loadBadgedUsers();
     });
   </script>
 </body>
