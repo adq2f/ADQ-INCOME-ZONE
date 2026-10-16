@@ -4,8 +4,39 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="stylesheet" href="style.css?v=13">
   <style>
+    body { background: #f1f5f9; }
+
+    .admin-navbar {
+      background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95);
+    }
+    .admin-navbar .logo span { color: white; }
+    .admin-navbar .mark {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: white;
+    }
+
+    .admin-tab-bar {
+      display: flex; gap: 6px; overflow-x: auto;
+      padding: 8px 0 14px; margin-bottom: 4px;
+    }
+    .admin-tab-bar::-webkit-scrollbar { display: none; }
+    .admin-tab {
+      padding: 9px 16px; border-radius: 10px;
+      background: white; color: #64748b;
+      border: 2px solid #e2e8f0;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+      font-family: inherit; transition: 0.25s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .admin-tab.active {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white; border-color: #4f46e5;
+      box-shadow: 0 6px 16px rgba(79,70,229,0.35);
+    }
+
     .platform-picker {
       display: flex; gap: 8px; overflow-x: auto;
       padding-bottom: 6px; margin-bottom: 12px;
@@ -14,9 +45,9 @@
     .platform-opt {
       padding: 10px 16px; border-radius: 12px;
       background: white; border: 2px solid #e2e8f0;
-      cursor: pointer; display: flex; align-items: center; gap: 6px;
-      font-size: 13px; font-weight: 600; white-space: nowrap;
-      transition: 0.25s;
+      cursor: pointer; display: flex; align-items: center;
+      gap: 6px; font-size: 13px; font-weight: 600;
+      white-space: nowrap; transition: 0.25s;
     }
     .platform-opt.active {
       border-color: #6366f1;
@@ -24,6 +55,7 @@
       color: #4f46e5;
       box-shadow: 0 4px 12px rgba(99,102,241,0.2);
     }
+
     .field-builder {
       background: #f8fafc; border-radius: 12px;
       padding: 14px; margin-bottom: 12px;
@@ -32,9 +64,8 @@
     .field-builder-title {
       font-size: 12px; font-weight: 700; color: #475569;
       text-transform: uppercase; letter-spacing: 0.5px;
-      margin-bottom: 10px;
-      display: flex; justify-content: space-between;
-      align-items: center;
+      margin-bottom: 10px; display: flex;
+      justify-content: space-between; align-items: center;
     }
     .add-field-btn {
       padding: 5px 12px;
@@ -44,9 +75,7 @@
       font-weight: 700; cursor: pointer;
       font-family: inherit;
       box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-      transition: 0.2s;
     }
-    .add-field-btn:hover { transform: translateY(-1px); }
     .field-row {
       display: flex; align-items: center; gap: 8px;
       padding: 8px 10px; background: white;
@@ -64,28 +93,31 @@
       font-size: 12px; margin: 0; background: white;
       font-family: inherit;
     }
-    .field-row input[type="text"]:focus {
-      border-color: #6366f1; outline: none;
-      box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-    }
     .field-remove {
       width: 26px; height: 26px;
-      border-radius: 8px;
-      background: #fee2e2;
-      color: #dc2626;
-      border: none;
-      cursor: pointer;
+      border-radius: 8px; background: #fee2e2;
+      color: #dc2626; border: none; cursor: pointer;
       display: flex; align-items: center;
       justify-content: center;
-      font-size: 14px;
-      font-weight: 700;
-      transition: 0.2s;
-      flex-shrink: 0;
+      font-size: 14px; font-weight: 700;
     }
-    .field-remove:hover {
-      background: #fecaca;
-      transform: scale(1.1);
+
+    .bulk-delete-card {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+      border: 2px dashed #fca5a5;
+      border-radius: 16px;
+      padding: 20px; margin-bottom: 16px;
     }
+    .bulk-delete-card h3 {
+      color: #991b1b; font-size: 16px;
+      margin-bottom: 10px; display: flex;
+      align-items: center; gap: 8px;
+    }
+    .bulk-delete-card p {
+      color: #7f1d1d; font-size: 13px;
+      margin-bottom: 12px; line-height: 1.5;
+    }
+
     .time-row {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 10px; margin-bottom: 12px;
@@ -100,129 +132,158 @@
       text-transform: uppercase; letter-spacing: 0.5px;
       display: block; margin: 14px 0 8px;
     }
-    .task-status {
-      display: inline-block;
-      padding: 3px 10px; border-radius: 20px;
-      font-size: 10px; font-weight: 700;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    .task-status.open { background: #d1fae5; color: #065f46; }
-    .task-status.closed { background: #fee2e2; color: #991b1b; }
-    .task-status.waiting { background: #fef3c7; color: #92400e; }
 
-    /* Edit Modal */
-    .modal-overlay {
-      position: fixed; inset: 0;
-      background: rgba(15,23,42,0.7);
-      backdrop-filter: blur(6px);
-      display: none;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 20px;
-      z-index: 1000;
-      animation: fadeIn 0.3s;
-      overflow-y: auto;
+    .user-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .user-card {
+      background: white; border-radius: 14px;
+      padding: 14px; display: flex;
+      align-items: center; gap: 12px;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+      transition: 0.25s;
     }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.3);
-      animation: slideUp 0.4s var(--ease-bounce);
-      margin: 20px 0;
+    .user-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
     }
-    @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    .user-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center;
+      justify-content: center; color: white;
+      font-weight: 800; font-size: 18px;
+      flex-shrink: 0; font-family: 'Inter', sans-serif;
     }
-    .modal-box h3 {
-      font-size: 20px; font-weight: 700;
-      margin-bottom: 6px; color: #0f172a;
+    .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+    .user-info { flex: 1; min-width: 0; }
+    .user-info h4 {
+      font-size: 14px; font-weight: 700;
+      color: #0f172a; margin-bottom: 2px;
     }
-    .modal-box .sub { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-
-    /* Range preview */
-    .range-preview {
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 14px;
-      margin-top: 14px;
-      max-height: 400px;
-      overflow-y: auto;
+    .user-info p {
+      font-size: 11px; color: #94a3b8;
+      margin-bottom: 4px;
     }
-    .range-header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 10px;
-      padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;
+    .user-info .badges {
+      display: flex; gap: 6px;
+      font-size: 10px; color: #64748b;
     }
-    .range-header h4 { font-size: 14px; color: #0f172a; font-weight: 700; }
-    .range-header .count {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white; padding: 3px 10px;
-      border-radius: 20px; font-size: 12px; font-weight: 700;
-    }
-    .preview-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px; background: white;
-      border-radius: 10px; margin-bottom: 6px;
-      font-size: 12px;
-      border-left: 3px solid #6366f1;
-      position: relative;
-    }
-    .preview-row .del-sub {
-      width: 24px; height: 24px;
+    .user-checkbox {
+      width: 22px; height: 22px;
       border-radius: 6px;
-      background: #fee2e2;
-      color: #dc2626;
-      border: none;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
+      border: 2px solid #cbd5e1;
+      background: white; cursor: pointer;
+      display: flex; align-items: center;
       justify-content: center;
-      flex-shrink: 0;
+      flex-shrink: 0; transition: 0.2s;
     }
-    .preview-row .del-sub:hover { background: #fecaca; }
+    .user-checkbox.checked {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      border-color: #ef4444; color: white;
+    }
+    .user-checkbox.checked::after {
+      content: '✓'; font-size: 14px; font-weight: 700;
+    }
+
+    .admin-action-bar {
+      position: fixed; bottom: 90px;
+      left: 12px; right: 12px;
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white; padding: 12px 16px;
+      border-radius: 14px; display: none;
+      align-items: center; justify-content: space-between;
+      box-shadow: 0 12px 32px rgba(220,38,38,0.5);
+      z-index: 900;
+    }
+    .admin-action-bar.show { display: flex; }
+    .admin-action-bar .count {
+      font-weight: 700; font-size: 14px;
+    }
+    .admin-action-bar button {
+      background: white; color: #dc2626;
+      border: none; padding: 8px 14px;
+      border-radius: 8px; font-size: 12px;
+      font-weight: 700; cursor: pointer;
+      font-family: inherit;
+    }
+
+    .stat-box {
+      background: white; padding: 16px 10px;
+      border-radius: 14px; text-align: center;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+    }
+    .stat-box .num {
+      font-size: 24px; font-weight: 800;
+      color: #4f46e5; font-family: 'Inter';
+    }
+    .stat-box.good .num { color: #10b981; }
+    .stat-box.pending .num { color: #f59e0b; }
+    .stat-box .label {
+      font-size: 11px; color: #64748b;
+      font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; margin-top: 4px;
+    }
+    .stats-grid {
+      display: grid; gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dash-quick-item {
+      background: white; padding: 16px 8px;
+      border-radius: 14px; text-align: center;
+      text-decoration: none; color: #0f172a;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
+      border: 1px solid rgba(15,23,42,0.04);
+      transition: 0.25s;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+    }
+    .dash-quick-item:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(79,70,229,0.2);
+    }
+    .dash-quick-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center;
+      justify-content: center; font-size: 22px;
+    }
+    .qi-orange { background: #fef3c7; }
+    .qi-purple { background: #eef2ff; }
+    .dash-quick-label {
+      font-size: 11px; font-weight: 700; color: #475569;
+    }
+
+    .preview-row {
+      display: flex; align-items: center;
+      gap: 10px; padding: 10px;
+      background: white; border-radius: 10px;
+      margin-bottom: 6px; font-size: 12px;
+      border-left: 3px solid #6366f1;
+    }
     .preview-user {
       width: 28px; height: 28px;
       border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      display: flex; align-items: center;
-      justify-content: center;
-      font-weight: 700; flex-shrink: 0;
-      font-size: 12px;
+      color: white; display: flex;
+      align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0; font-size: 12px;
     }
     .preview-info { flex: 1; min-width: 0; }
     .preview-info .u {
-      font-weight: 700; color: #0f172a; font-size: 12px;
-      word-break: break-all;
+      font-weight: 700; color: #0f172a;
+      font-size: 12px; word-break: break-all;
     }
     .preview-info .m {
       color: #94a3b8; font-size: 10px; margin-top: 2px;
     }
-
-    .csv-tip {
-      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-size: 12px;
-      color: #4f46e5;
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-    .csv-tip b { color: #4338ca; }
   </style>
 </head>
 <body>
 
-  <div class="navbar">
+  <div class="navbar admin-navbar">
     <div class="logo">
-      <div class="mark">A</div>
+      <div class="mark">⚡</div>
       <span>Admin Panel</span>
     </div>
     <button class="nav-logout" id="logoutBtn" title="Logout">
@@ -231,21 +292,46 @@
   </div>
 
   <div class="container">
-    <div class="tabs">
-      <button id="tabTask" class="active">📋 Tasks</button>
-      <button id="tabNotice">📢 Notice</button>
-      <button id="tabResult">✅ Result</button>
-      <button id="tabUsers">👥 Users</button>
+    <div class="admin-tab-bar">
+      <button class="admin-tab active" data-tab="dashboardTab">🏠 Dashboard</button>
+      <button class="admin-tab" data-tab="taskTab">📋 Tasks</button>
+      <button class="admin-tab" data-tab="resultTab">✅ Result</button>
+      <button class="admin-tab" data-tab="noticeTab">📢 Notice</button>
+      <button class="admin-tab" data-tab="usersTab">👥 Users</button>
+      <button class="admin-tab" data-tab="bulkTab">🗑️ Bulk</button>
     </div>
 
-    <!-- ============ TASK SECTION ============ -->
-    <div id="taskSection">
+    <!-- DASHBOARD -->
+    <div id="dashboardTab" class="admin-section">
+      <div class="card" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-align: center">
+        <h2 style="color: white; font-size: 18px; margin-bottom: 4px">👋 স্বাগতম, Admin</h2>
+        <p style="opacity: 0.9; font-size: 13px">সব activity এক জায়গায়</p>
+      </div>
+      <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr)">
+        <div class="stat-box"><div class="num" id="statTasks">0</div><div class="label">Active Tasks</div></div>
+        <div class="stat-box"><div class="num" id="statUsers">0</div><div class="label">Total Users</div></div>
+        <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Submissions</div></div>
+        <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
+      </div>
+      <h3 style="margin: 16px 0 12px">⚡ Quick Admin Actions</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+        <a href="withdraw-admin.html" class="dash-quick-item">
+          <div class="dash-quick-icon qi-orange">💸</div>
+          <div class="dash-quick-label">Withdraw</div>
+        </a>
+        <a href="admin-reset-requests.html" class="dash-quick-item">
+          <div class="dash-quick-icon qi-purple">🔐</div>
+          <div class="dash-quick-label">Reset Req</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- TASK -->
+    <div id="taskTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3 id="taskFormTitle">➕ নতুন Task যোগ করুন</h3>
-
         <input type="text" id="taskTitle" class="admin-input" placeholder="Task Title">
-        <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description (optional)"></textarea>
-
+        <textarea id="taskDesc" class="admin-input admin-textarea" placeholder="Description"></textarea>
         <label class="label-text">Platform</label>
         <div class="platform-picker" id="platformPicker">
           <div class="platform-opt active" data-platform="Facebook"><span class="ic">📘</span> Facebook</div>
@@ -257,44 +343,60 @@
           <div class="platform-opt" data-platform="WhatsApp"><span class="ic">💬</span> WhatsApp</div>
           <div class="platform-opt" data-platform="Other"><span class="ic">🔗</span> Other</div>
         </div>
-
         <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
-
-        <label class="label-text">⏰ Submission Time Range</label>
+        <label class="label-text">Time Range</label>
         <div class="time-row">
-          <div>
-            <span class="time-input-label">শুরু</span>
-            <input type="datetime-local" id="taskStartTime" class="admin-input">
-          </div>
-          <div>
-            <span class="time-input-label">শেষ</span>
-            <input type="datetime-local" id="taskEndTime" class="admin-input">
-          </div>
+          <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="taskStartTime" class="admin-input"></div>
+          <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="taskEndTime" class="admin-input"></div>
         </div>
-
-        <label class="label-text">Task Rules (optional)</label>
-        <textarea id="taskRules" class="admin-input admin-textarea" placeholder="Task এর নিয়ম লিখো..."></textarea>
-
+        <label class="label-text">Rules (optional)</label>
+        <textarea id="taskRules" class="admin-input admin-textarea" placeholder="Rules"></textarea>
         <div class="field-builder">
           <div class="field-builder-title">
             <span>⚙️ Required Fields</span>
             <button type="button" class="add-field-btn" id="addFieldBtn">+ Add Field</button>
           </div>
-          <div id="fieldList">
-            <!-- Fields dynamically added here -->
-          </div>
+          <div id="fieldList"></div>
         </div>
-
         <button class="btn btn-success btn-full" id="addTaskBtn">Add Task</button>
         <button class="btn btn-outline btn-full" id="cancelEditBtn" style="display:none;margin-top:8px">✕ Cancel Edit</button>
       </div>
-
       <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
       <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
-    <!-- ============ NOTICE SECTION ============ -->
-    <div id="noticeSection" style="display:none">
+    <!-- RESULT -->
+    <div id="resultTab" class="admin-section" style="display:none">
+      <div class="admin-form-card">
+        <h3>📥 Step 1: Time Range Select</h3>
+        <select id="resultTask" class="admin-input"></select>
+        <div class="time-row">
+          <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="filterStart" class="admin-input"></div>
+          <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="filterEnd" class="admin-input"></div>
+        </div>
+        <button class="btn btn-primary btn-full" id="loadBtn">🔍 Load Submissions</button>
+      </div>
+      <div class="admin-form-card" id="previewCard" style="display:none">
+        <h3>👀 Step 2: Preview</h3>
+        <div style="background:#f8fafc;border-radius:12px;padding:14px;max-height:400px;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #e2e8f0">
+            <h4 style="font-size:14px;color:#0f172a">Total Submissions</h4>
+            <span id="rangeCount" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700">0</span>
+          </div>
+          <div id="previewList"></div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:12px" id="downloadBtn">📥 Download CSV</button>
+      </div>
+      <div class="admin-form-card" id="processCard" style="display:none">
+        <h3>✅ Step 3: Bad UID paste & Process</h3>
+        <textarea id="badUids" class="admin-input admin-textarea" style="min-height:140px" placeholder="100005&#10;100012"></textarea>
+        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
+      </div>
+      <div id="resultOutput"></div>
+    </div>
+
+    <!-- NOTICE -->
+    <div id="noticeTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📢 Global Notice</h3>
         <input type="text" id="noticeTitle" class="admin-input" placeholder="Notice Title">
@@ -305,125 +407,101 @@
       <div id="noticeList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
-    <!-- ============ RESULT SECTION ============ -->
-    <div id="resultSection" style="display:none">
-      <div class="admin-form-card">
-        <h3>📥 Step 1: Time Range Select</h3>
-
-        <label class="label-text">Task Select</label>
-        <select id="resultTask" class="admin-input"></select>
-
-        <label class="label-text">Time Range (optional)</label>
-        <div class="time-row">
-          <div>
-            <span class="time-input-label">শুরু</span>
-            <input type="datetime-local" id="filterStart" class="admin-input">
-          </div>
-          <div>
-            <span class="time-input-label">শেষ</span>
-            <input type="datetime-local" id="filterEnd" class="admin-input">
-          </div>
-        </div>
-
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" style="flex:1;margin:0" id="loadBtn">🔍 Load Submissions</button>
-          <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="clearRangeBtn">✕</button>
-        </div>
-      </div>
-
-      <div class="admin-form-card" id="previewCard" style="display:none">
-        <h3>👀 Step 2: Preview Submissions</h3>
-        <div class="range-preview">
-          <div class="range-header">
-            <h4>Total Submissions</h4>
-            <span class="count" id="rangeCount">0</span>
-          </div>
-          <div id="previewList"></div>
-        </div>
-        <button class="btn btn-primary btn-full" style="margin-top:12px" id="downloadBtn">📥 Download CSV</button>
-      </div>
-
-      <div class="admin-form-card" id="processCard" style="display:none">
-        <h3>✅ Step 3: Bad UID paste & Process</h3>
-        <div class="bulk-hint">
-          <b>Bad UID list</b> paste করো (প্রতি লাইনে একটা)।<br>
-          Match হলে ❌ Bad, না হলে ✅ Good হবে এবং balance auto add হবে।
-        </div>
-        <textarea id="badUids" class="admin-input admin-textarea bulk-textarea" placeholder="100005
-100012
-100045"></textarea>
-        <button class="btn btn-orange btn-full" id="processBtn">🚀 Process Result</button>
-      </div>
-
-      <div id="resultOutput"></div>
-    </div>
-
-    <!-- ============ USERS SECTION ============ -->
-    <div id="usersSection" style="display:none">
+    <!-- USERS -->
+    <div id="usersTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>👥 সব Members</h3>
         <input type="text" id="userSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল দিয়ে খোঁজো...">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" style="flex:1;margin:0;font-size:13px;padding:10px" id="selectAllUsersBtn">☑️ সব Select</button>
+          <button class="btn btn-outline" style="margin:0;font-size:13px;padding:10px" id="clearSelectionBtn">✕ Clear</button>
+        </div>
       </div>
-      <div id="userList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+      <div id="userList" class="user-grid"><div class="loading"><div class="spinner"></div>লোড হচ্ছে...</div></div>
     </div>
+
+    <!-- BULK -->
+    <div id="bulkTab" class="admin-section" style="display:none">
+      <div class="bulk-delete-card">
+        <h3>⚠️ Bulk Delete Operations</h3>
+        <p>সাবধানে ব্যবহার করো — Delete হলে আর ফেরত আসবে না!</p>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>🗑️ 1. সব Pending Delete</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">সব user-এর সব pending submission delete</p>
+        <button class="btn btn-danger btn-full" id="delAllPendingBtn">🗑️ Delete All Pending</button>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>🗑️ 2. Status Filter Delete</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Select করো কোন status-এর submission delete হবে</p>
+        <select id="statusSelect" class="admin-input">
+          <option value="all">All (সব status)</option>
+          <option value="pending">Only Pending</option>
+          <option value="good">Only Good</option>
+          <option value="bad">Only Bad</option>
+        </select>
+        <button class="btn btn-danger btn-full" id="delByStatusBtn">🗑️ Delete by Status</button>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>🗑️ 3. Time Range Delete</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">নির্দিষ্ট সময়ের সব submission delete</p>
+        <div class="time-row">
+          <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="bulkStart" class="admin-input"></div>
+          <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="bulkEnd" class="admin-input"></div>
+        </div>
+        <button class="btn btn-danger btn-full" id="delByRangeBtn">🗑️ Delete Range</button>
+      </div>
+
+      <div id="bulkOutput"></div>
+    </div>
+  </div>
+
+  <div class="admin-action-bar" id="actionBar">
+    <span class="count" id="selectedCount">0 selected</span>
+    <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
   </div>
 
   <nav class="bottom-nav">
     <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="dashboard.html" data-page="dashboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
-  <!-- ============ EDIT MODAL ============ -->
-  <div class="modal-overlay" id="editModal">
-    <div class="modal-box">
-      <h3>✏️ Task Edit</h3>
-      <p class="sub">Task-এর সময় বাড়াও বা তথ্য পরিবর্তন করো</p>
-
-      <input type="text" id="editTitle" class="admin-input" placeholder="Task Title">
-      <input type="number" id="editPrice" class="admin-input" placeholder="Price (৳)">
-
-      <label class="label-text">End Time (বাড়াও)</label>
-      <input type="datetime-local" id="editEndTime" class="admin-input">
-
-      <label class="label-text">Start Time</label>
-      <input type="datetime-local" id="editStartTime" class="admin-input">
-
-      <label class="label-text">Rules</label>
-      <textarea id="editRules" class="admin-input admin-textarea" placeholder="Rules"></textarea>
-
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button class="btn btn-primary" style="flex:1;margin:0" id="saveEditBtn">💾 Save</button>
-        <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="closeEditBtn">✕</button>
-      </div>
-    </div>
-  </div>
-
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ===== ADMIN SESSION CHECK =====
+    const sessionTime = sessionStorage.getItem("admin_verified");
+    if (!sessionTime || (Date.now() - parseInt(sessionTime)) > 30 * 60 * 1000) {
+      // 30 min session expiry
+      location.href = "admin-login.html";
+    }
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
+      sessionStorage.removeItem("admin_verified");
       await signOut(auth);
       location.href = "index.html";
     };
 
-    const tabs = { tabTask: "taskSection", tabNotice: "noticeSection", tabResult: "resultSection", tabUsers: "usersSection" };
-    Object.keys(tabs).forEach(tabId => {
-      document.getElementById(tabId).onclick = () => {
-        Object.keys(tabs).forEach(t => {
-          document.getElementById(t).classList.remove("active");
-          document.getElementById(tabs[t]).style.display = "none";
-        });
-        document.getElementById(tabId).classList.add("active");
-        document.getElementById(tabs[tabId]).style.display = "block";
+    // ===== TAB SWITCHING =====
+    document.querySelectorAll(".admin-tab").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
+        tab.classList.add("active");
+        document.getElementById(tab.dataset.tab).style.display = "block";
       };
     });
 
+    // ===== PLATFORM =====
     let selectedPlatform = "Facebook";
     document.querySelectorAll(".platform-opt").forEach(opt => {
       opt.onclick = () => {
@@ -433,9 +511,8 @@
       };
     });
 
-    // ===== DYNAMIC FIELD BUILDER =====
+    // ===== FIELD BUILDER =====
     let fieldCounter = 0;
-
     function createFieldRow(label = "", placeholder = "", checked = true) {
       fieldCounter++;
       const id = "fld_" + fieldCounter;
@@ -445,29 +522,21 @@
       row.innerHTML = `
         <input type="checkbox" ${checked ? "checked" : ""} id="${id}_check" style="width:18px;height:18px;margin:0;accent-color:#6366f1">
         <input type="text" id="${id}_label" placeholder="${placeholder || "Field name"}" value="${label}">
-        <button type="button" class="field-remove" title="Remove">✕</button>
+        <button type="button" class="field-remove">✕</button>
       `;
-      row.querySelector(".field-remove").onclick = () => {
-        row.style.animation = "fadeIn 0.3s reverse";
-        setTimeout(() => row.remove(), 250);
-      };
+      row.querySelector(".field-remove").onclick = () => row.remove();
       return row;
     }
-
-    // Default fields
     function resetFields() {
       const list = document.getElementById("fieldList");
-      list.innerHTML = "";
-      fieldCounter = 0;
+      list.innerHTML = ""; fieldCounter = 0;
       list.appendChild(createFieldRow("UID", "UID"));
       list.appendChild(createFieldRow("Password", "Password"));
       list.appendChild(createFieldRow("2FA Key", "2FA Key"));
     }
-
     document.getElementById("addFieldBtn").onclick = () => {
-      document.getElementById("fieldList").appendChild(createFieldRow("", "Custom field name"));
+      document.getElementById("fieldList").appendChild(createFieldRow("", "Custom field"));
     };
-
     resetFields();
 
     function collectFields() {
@@ -486,18 +555,12 @@
 
     // ===== EDIT MODE =====
     let editTaskId = null;
-
     document.getElementById("cancelEditBtn").onclick = () => {
       editTaskId = null;
       document.getElementById("taskFormTitle").textContent = "➕ নতুন Task যোগ করুন";
       document.getElementById("addTaskBtn").textContent = "Add Task";
       document.getElementById("cancelEditBtn").style.display = "none";
-      document.getElementById("taskTitle").value = "";
-      document.getElementById("taskDesc").value = "";
-      document.getElementById("taskPrice").value = "";
-      document.getElementById("taskStartTime").value = "";
-      document.getElementById("taskEndTime").value = "";
-      document.getElementById("taskRules").value = "";
+      ["taskTitle","taskDesc","taskPrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
       resetFields();
     };
 
@@ -513,48 +576,33 @@
 
       if (!title || !pricePerAccount) return alert("Title & Price দাও!");
       if (!startVal || !endVal) return alert("Start & End Time দাও!");
-      if (new Date(startVal) >= new Date(endVal)) return alert("End time অবশ্যই Start time-এর পরে হতে হবে!");
-
+      if (new Date(startVal) >= new Date(endVal)) return alert("End time পরে হতে হবে!");
       const fields = collectFields();
-      if (fields.length === 0) return alert("কমপক্ষে একটা field add করো!");
+      if (fields.length === 0) return alert("কমপক্ষে একটা field!");
 
-      btn.disabled = true; btn.textContent = "Adding...";
-
+      btn.disabled = true; btn.textContent = "Saving...";
       try {
         if (editTaskId) {
           await updateDoc(doc(db, "tasks", editTaskId), {
-            title, description, pricePerAccount,
-            platform: selectedPlatform,
-            fields, rules,
-            startTime: new Date(startVal),
-            endTime: new Date(endVal),
-            updatedAt: new Date()
+            title, description, pricePerAccount, platform: selectedPlatform, fields, rules,
+            startTime: new Date(startVal), endTime: new Date(endVal), updatedAt: new Date()
           });
-          alert("✅ Task updated!");
+          alert("✅ Updated!");
           document.getElementById("cancelEditBtn").click();
         } else {
           await addDoc(collection(db, "tasks"), {
-            title, description, pricePerAccount,
-            platform: selectedPlatform,
-            fields, rules,
-            startTime: new Date(startVal),
-            endTime: new Date(endVal),
-            active: true,
-            createdAt: new Date()
+            title, description, pricePerAccount, platform: selectedPlatform, fields, rules,
+            startTime: new Date(startVal), endTime: new Date(endVal),
+            active: true, createdAt: new Date()
           });
-          alert("✅ Task added!");
-          document.getElementById("taskTitle").value = "";
-          document.getElementById("taskDesc").value = "";
-          document.getElementById("taskPrice").value = "";
-          document.getElementById("taskStartTime").value = "";
-          document.getElementById("taskEndTime").value = "";
-          document.getElementById("taskRules").value = "";
+          alert("✅ Added!");
+          ["taskTitle","taskDesc","taskPrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
           resetFields();
         }
-        loadTasks();
-        loadDropdowns();
+        loadTasks(); loadDropdowns(); loadStats();
       } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "Add Task";
+      btn.disabled = false;
+      btn.textContent = editTaskId ? "💾 Update Task" : "Add Task";
     };
 
     function getTaskStatus(t) {
@@ -571,7 +619,6 @@
       const list = document.getElementById("taskList");
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
-
       if (snap.empty) {
         list.innerHTML = `<div class="dash-empty"><p>কোনো task নেই</p></div>`;
         return;
@@ -594,7 +641,7 @@
             <div class="task-card-body">
               <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
                 <h3 style="margin:0">${t.title}</h3>
-                <span class="task-status ${status.cls}">${status.label}</span>
+                <span class="task-status ${status.cls}" style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${status.cls === 'open' ? '#d1fae5' : status.cls === 'closed' ? '#fee2e2' : '#fef3c7'};color:${status.cls === 'open' ? '#065f46' : status.cls === 'closed' ? '#991b1b' : '#92400e'}">${status.label}</span>
               </div>
               <span class="price">৳${t.pricePerAccount}/account</span>
               <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6">
@@ -615,41 +662,21 @@
       const taskSnap = await getDoc(doc(db, "tasks", id));
       if (!taskSnap.exists()) return;
       const t = taskSnap.data();
-
       editTaskId = id;
       document.getElementById("taskFormTitle").textContent = "✏️ Task Edit করুন";
       document.getElementById("addTaskBtn").textContent = "💾 Update Task";
       document.getElementById("cancelEditBtn").style.display = "block";
-
       document.getElementById("taskTitle").value = t.title || "";
       document.getElementById("taskDesc").value = t.description || "";
       document.getElementById("taskPrice").value = t.pricePerAccount || "";
       document.getElementById("taskRules").value = t.rules || "";
-
-      // Platform
       selectedPlatform = t.platform || "Facebook";
-      document.querySelectorAll(".platform-opt").forEach(o => {
-        o.classList.toggle("active", o.dataset.platform === selectedPlatform);
-      });
-
-      // Times
-      if (t.startTime?.toDate) {
-        const d = t.startTime.toDate();
-        document.getElementById("taskStartTime").value = toLocalISO(d);
-      }
-      if (t.endTime?.toDate) {
-        const d = t.endTime.toDate();
-        document.getElementById("taskEndTime").value = toLocalISO(d);
-      }
-
-      // Fields
+      document.querySelectorAll(".platform-opt").forEach(o => o.classList.toggle("active", o.dataset.platform === selectedPlatform));
+      if (t.startTime?.toDate) document.getElementById("taskStartTime").value = toLocalISO(t.startTime.toDate());
+      if (t.endTime?.toDate) document.getElementById("taskEndTime").value = toLocalISO(t.endTime.toDate());
       const list = document.getElementById("fieldList");
-      list.innerHTML = "";
-      fieldCounter = 0;
-      (t.fields || []).forEach(f => {
-        list.appendChild(createFieldRow(f.label, f.label));
-      });
-
+      list.innerHTML = ""; fieldCounter = 0;
+      (t.fields || []).forEach(f => list.appendChild(createFieldRow(f.label, f.label)));
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
@@ -660,10 +687,9 @@
     }
 
     window.deleteTask = async (id) => {
-      if (!confirm("Delete করবে? (History delete হবেও না)")) return;
+      if (!confirm("Delete করবে?")) return;
       await updateDoc(doc(db, "tasks", id), { active: false });
-      loadTasks();
-      loadDropdowns();
+      loadTasks(); loadDropdowns(); loadStats();
     };
 
     // ===== NOTICE =====
@@ -671,16 +697,11 @@
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
       if (!title || !message) return alert("সব ঘর পূরণ করো!");
-
       try {
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
         const oldSnap = await getDocs(oldQ);
-        for (const d of oldSnap.docs) {
-          await updateDoc(doc(db, "notices", d.id), { active: false });
-        }
-        await addDoc(collection(db, "notices"), {
-          title, message, active: true, createdAt: new Date()
-        });
+        for (const d of oldSnap.docs) await updateDoc(doc(db, "notices", d.id), { active: false });
+        await addDoc(collection(db, "notices"), { title, message, active: true, createdAt: new Date() });
         alert("✅ Notice published!");
         document.getElementById("noticeTitle").value = "";
         document.getElementById("noticeMsg").value = "";
@@ -692,10 +713,7 @@
       const list = document.getElementById("noticeList");
       const q = query(collection(db, "notices"), where("active", "==", true));
       const snap = await getDocs(q);
-      if (snap.empty) {
-        list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`;
-        return;
-      }
+      if (snap.empty) { list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`; return; }
       list.innerHTML = snap.docs.map(d => {
         const n = d.data();
         return `
@@ -707,14 +725,14 @@
         `;
       }).join("");
     }
-
     window.deleteNotice = async (id) => {
       await updateDoc(doc(db, "notices", id), { active: false });
       loadNotices();
     };
 
-    // ===== USERS SECTION =====
+    // ===== USERS =====
     let allUsers = [];
+    let selectedUsers = new Set();
 
     async function loadUsers() {
       const list = document.getElementById("userList");
@@ -729,7 +747,7 @@
 
     function renderUsers() {
       const list = document.getElementById("userList");
-      const search = document.getElementById("userSearch").value.trim().toLowerCase();
+      const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
       let filtered = allUsers;
       if (search) {
         filtered = allUsers.filter(u =>
@@ -737,47 +755,163 @@
           (u.email || "").toLowerCase().includes(search)
         );
       }
-
       if (filtered.length === 0) {
         list.innerHTML = `<div class="dash-empty"><p>কোনো user নেই</p></div>`;
         return;
       }
-
-      list.innerHTML = filtered.map(u => `
-        <div class="task-card" style="margin-bottom:10px">
-          <div class="task-card-logo default" style="background: linear-gradient(135deg, ${u.role === 'admin' ? '#ef4444, #dc2626' : '#6366f1, #8b5cf6'})">
-            ${(u.username || "U").charAt(0).toUpperCase()}
-          </div>
-          <div class="task-card-body">
-            <h3 style="font-size:15px">${u.username || "User"} ${u.role === "admin" ? "🛡️" : ""}</h3>
-            <p style="font-size:12px;color:#64748b;margin:4px 0">${u.email}</p>
-            <p style="font-size:12px;color:#64748b">
-              💰 ৳${u.balance || 0} • ✅ ${u.totalGood || 0} • ❌ ${u.totalBad || 0} • ⏳ ${u.totalPending || 0}
-            </p>
-            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-              <button class="btn btn-danger" style="padding:6px 12px;font-size:11px;margin:0" onclick="deleteUserHistory('${u.id}', '${u.username || ''}')">🗑️ History Delete</button>
+      list.innerHTML = filtered.map(u => {
+        const isChecked = selectedUsers.has(u.id);
+        return `
+          <div class="user-card">
+            <div class="user-checkbox ${isChecked ? "checked" : ""}" data-uid="${u.id}"></div>
+            <div class="user-avatar ${u.role === 'admin' ? 'admin' : 'user'}">${(u.username || "U").charAt(0).toUpperCase()}</div>
+            <div class="user-info" onclick="editUser('${u.id}')" style="cursor:pointer">
+              <h4>${u.username || "User"} ${u.role === "admin" ? "🛡️" : ""}</h4>
+              <p>${u.email || ""}</p>
+              <div class="badges">💰 ৳${u.balance || 0} • ✅ ${u.totalGood || 0} • ❌ ${u.totalBad || 0} • ⏳ ${u.totalPending || 0}</div>
             </div>
           </div>
-        </div>
-      `).join("");
+        `;
+      }).join("");
+
+      list.querySelectorAll(".user-checkbox").forEach(cb => {
+        cb.onclick = (e) => {
+          e.stopPropagation();
+          const uid = cb.dataset.uid;
+          if (selectedUsers.has(uid)) selectedUsers.delete(uid);
+          else selectedUsers.add(uid);
+          renderUsers();
+          updateActionBar();
+        };
+      });
     }
+
+    function updateActionBar() {
+      const bar = document.getElementById("actionBar");
+      const count = document.getElementById("selectedCount");
+      if (selectedUsers.size > 0) {
+        bar.classList.add("show");
+        count.textContent = `${selectedUsers.size} user selected`;
+      } else {
+        bar.classList.remove("show");
+      }
+    }
+
+    document.getElementById("selectAllUsersBtn").onclick = () => {
+      const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
+      let filtered = allUsers;
+      if (search) {
+        filtered = allUsers.filter(u =>
+          (u.username || "").toLowerCase().includes(search) ||
+          (u.email || "").toLowerCase().includes(search)
+        );
+      }
+      filtered.forEach(u => selectedUsers.add(u.id));
+      renderUsers(); updateActionBar();
+    };
+
+    document.getElementById("clearSelectionBtn").onclick = () => {
+      selectedUsers.clear();
+      renderUsers(); updateActionBar();
+    };
+
+    document.getElementById("deleteSelectedBtn").onclick = async () => {
+      if (selectedUsers.size === 0) return;
+      if (!confirm(`${selectedUsers.size} টা user delete করবে? তার সব submission-ও delete হবে!`)) return;
+      if (!confirm("💀 সত্যিই?")) return;
+
+      try {
+        let count = 0;
+        for (const uid of selectedUsers) {
+          // Delete user's submissions
+          const subQ = query(collection(db, "submissions"), where("userId", "==", uid));
+          const subSnap = await getDocs(subQ);
+          for (const d of subSnap.docs) await deleteDoc(doc(db, "submissions", d.id));
+          // Delete user
+          await deleteDoc(doc(db, "users", uid));
+          count++;
+        }
+        alert(`✅ ${count} user delete হয়েছে!`);
+        selectedUsers.clear();
+        loadUsers(); updateActionBar(); loadStats();
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    window.editUser = (uid) => {
+      location.href = "admin-user-edit.html?id=" + uid;
+    };
 
     document.getElementById("userSearch").oninput = renderUsers;
 
-    window.deleteUserHistory = async (userId, username) => {
-      if (!confirm(`${username}-এর সব submission history delete করবে? এটা undo হবে না!`)) return;
-      if (!confirm("সত্যিই delete করতে চাও? 💀")) return;
+    // ===== BULK DELETE =====
+    async function bulkDeleteSubmissions(filter) {
+      const q = query(collection(db, "submissions"));
+      const snap = await getDocs(q);
+      const toDelete = [];
+      for (const d of snap.docs) {
+        const s = d.data();
+        if (filter(s)) toDelete.push(d.id);
+      }
+      if (toDelete.length === 0) return 0;
+      // Batch delete (max 500 per batch)
+      let deleted = 0;
+      for (let i = 0; i < toDelete.length; i += 500) {
+        const batch = writeBatch(db);
+        const chunk = toDelete.slice(i, i + 500);
+        chunk.forEach(id => batch.delete(doc(db, "submissions", id)));
+        await batch.commit();
+        deleted += chunk.length;
+      }
+      return deleted;
+    }
 
+    document.getElementById("delAllPendingBtn").onclick = async () => {
+      if (!confirm("সব Pending submission delete করবে?")) return;
+      if (!confirm("💀 সত্যিই সব pending মুছে ফেলবে?")) return;
+      const btn = document.getElementById("delAllPendingBtn");
+      btn.disabled = true; btn.textContent = "Deleting...";
       try {
-        const q = query(collection(db, "submissions"), where("userId", "==", userId));
-        const snap = await getDocs(q);
-        let count = 0;
-        for (const d of snap.docs) {
-          await deleteDoc(doc(db, "submissions", d.id));
-          count++;
-        }
-        alert(`✅ ${count} টা submission delete হয়েছে!`);
+        const count = await bulkDeleteSubmissions(s => s.status === "pending");
+        alert(`✅ ${count} টা pending delete হয়েছে!`);
+        loadStats();
       } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "🗑️ Delete All Pending";
+    };
+
+    document.getElementById("delByStatusBtn").onclick = async () => {
+      const status = document.getElementById("statusSelect").value;
+      const label = status === "all" ? "সব" : status;
+      if (!confirm(`${label} submission delete করবে?`)) return;
+      if (!confirm("💀 সত্যিই?")) return;
+      const btn = document.getElementById("delByStatusBtn");
+      btn.disabled = true; btn.textContent = "Deleting...";
+      try {
+        const count = await bulkDeleteSubmissions(s => status === "all" || s.status === status);
+        alert(`✅ ${count} টা delete হয়েছে!`);
+        loadStats();
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "🗑️ Delete by Status";
+    };
+
+    document.getElementById("delByRangeBtn").onclick = async () => {
+      const start = document.getElementById("bulkStart").value;
+      const end = document.getElementById("bulkEnd").value;
+      if (!start || !end) return alert("Time range দাও!");
+      if (!confirm("এই time range-এর সব submission delete করবে?")) return;
+      if (!confirm("💀 সত্যিই?")) return;
+      const btn = document.getElementById("delByRangeBtn");
+      btn.disabled = true; btn.textContent = "Deleting...";
+      try {
+        const startTs = new Date(start).getTime();
+        const endTs = new Date(end).getTime();
+        const count = await bulkDeleteSubmissions(s => {
+          const t = s.submittedAt?.toMillis?.() || 0;
+          return t >= startTs && t <= endTs;
+        });
+        alert(`✅ ${count} টা delete হয়েছে!`);
+        loadStats();
+      } catch (e) { alert("❌ " + e.message); }
+      btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
     // ===== RESULT =====
@@ -792,33 +926,19 @@
         snap.docs.map(d => `<option value="${d.id}">${d.data().title}</option>`).join("");
     }
 
-    document.getElementById("clearRangeBtn").onclick = () => {
-      document.getElementById("filterStart").value = "";
-      document.getElementById("filterEnd").value = "";
-      document.getElementById("previewCard").style.display = "none";
-      document.getElementById("processCard").style.display = "none";
-      document.getElementById("resultOutput").innerHTML = "";
-      loadedSubmissions = [];
-    };
-
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       const startVal = document.getElementById("filterStart").value;
       const endVal = document.getElementById("filterEnd").value;
-
       if (!taskId) return alert("Task select করো!");
-
       const btn = document.getElementById("loadBtn");
       btn.disabled = true; btn.textContent = "Loading...";
-
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
         loadedTask = { id: taskId, ...taskSnap.data() };
-
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
         if (startVal) {
           const startTs = new Date(startVal).getTime();
           subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) >= startTs);
@@ -827,31 +947,20 @@
           const endTs = new Date(endVal).getTime();
           subs = subs.filter(s => (s.submittedAt?.toMillis?.() || 0) <= endTs);
         }
-
         subs.sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0));
         loadedSubmissions = subs;
-
         document.getElementById("previewCard").style.display = "block";
         document.getElementById("processCard").style.display = "block";
         document.getElementById("rangeCount").textContent = subs.length;
-
         if (subs.length === 0) {
-          document.getElementById("previewList").innerHTML = `
-            <div style="text-align:center;padding:30px;color:#94a3b8">
-              <div style="font-size:36px;margin-bottom:8px">📭</div>
-              এই range-এ কোনো submission নেই
-            </div>
-          `;
+          document.getElementById("previewList").innerHTML = `<div style="text-align:center;padding:30px;color:#94a3b8"><div style="font-size:36px;margin-bottom:8px">📭</div>কোনো submission নেই</div>`;
           return;
         }
-
         document.getElementById("previewList").innerHTML = subs.slice(0, 100).map(s => {
           const initial = (s.uid || s.email || "?").charAt(0).toUpperCase();
           const fields = loadedTask.fields || [];
           const fieldStr = fields.map(f => `${f.label}: ${s[f.key] || "-"}`).join(" • ");
-          const timeStr = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
-            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-          }) || "";
+          const timeStr = s.submittedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
           const statusBadge = s.status === "pending" ? "⏳" : s.status === "good" ? "✅" : "❌";
           return `
             <div class="preview-row">
@@ -860,88 +969,56 @@
                 <div class="u">${statusBadge} ${s.uid || s.email || "N/A"}</div>
                 <div class="m">${fieldStr.substring(0, 100)} • 🕐 ${timeStr}</div>
               </div>
-              <button class="del-sub" onclick="deleteSubmission('${s.id}')" title="Delete">✕</button>
             </div>
           `;
         }).join("") + (subs.length > 100 ? `<div style="text-align:center;padding:10px;color:#94a3b8;font-size:12px">... এবং আরো ${subs.length - 100} টা</div>` : "");
-
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🔍 Load Submissions";
-    };
-
-    window.deleteSubmission = async (id) => {
-      if (!confirm("এই submission delete করবে?")) return;
-      try {
-        await deleteDoc(doc(db, "submissions", id));
-        loadedSubmissions = loadedSubmissions.filter(s => s.id !== id);
-        document.getElementById("rangeCount").textContent = loadedSubmissions.length;
-        alert("✅ Deleted!");
-        document.getElementById("loadBtn").click();
-      } catch (e) { alert("❌ " + e.message); }
     };
 
     document.getElementById("downloadBtn").onclick = () => {
       if (loadedSubmissions.length === 0) return alert("কোনো submission নেই!");
       if (!loadedTask) return alert("Task load হয়নি!");
-
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const headers = [...fields.map(f => f.label), "Submitted At"];
-
       const rows = loadedSubmissions.map(s => {
         const timeStr = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit"
+          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
         }) || "";
         return [...fields.map(f => s[f.key] || ""), timeStr];
       });
-
       const escapeCSV = (v) => {
         const str = String(v);
-        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) return `"${str.replace(/"/g, '""')}"`;
         return str;
       };
-
-      const csvContent = [
-        headers.map(escapeCSV).join(","),
-        ...rows.map(r => r.map(escapeCSV).join(","))
-      ].join("\r\n");
-
+      const csvContent = [headers.map(escapeCSV).join(","), ...rows.map(r => r.map(escapeCSV).join(","))].join("\r\n");
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const dateStr = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
       a.href = url;
-      a.download = `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.csv`;
+      a.download = `${loadedTask.title.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-
-      alert(`✅ ${rows.length} টা submission download হয়েছে!`);
+      alert(`✅ ${rows.length} টা download!`);
     };
 
     document.getElementById("processBtn").onclick = async () => {
-      if (loadedSubmissions.length === 0) return alert("আগে Load Submissions করো!");
+      if (loadedSubmissions.length === 0) return alert("Load করো আগে!");
       if (!loadedTask) return alert("Task load হয়নি!");
-
       const badText = document.getElementById("badUids").value.trim();
       if (!badText) return alert("Bad UID list paste করো!");
-
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const btn = document.getElementById("processBtn");
       const output = document.getElementById("resultOutput");
-
       const pendingSubs = loadedSubmissions.filter(s => s.status === "pending");
-      if (pendingSubs.length === 0) return alert("এই range-এ কোনো pending নেই!");
-      if (!confirm(`${pendingSubs.length} টা pending submission process করবে?`)) return;
-
+      if (pendingSubs.length === 0) return alert("কোনো pending নেই!");
+      if (!confirm(`${pendingSubs.length} টা pending process করবে?`)) return;
       btn.disabled = true; btn.textContent = "Processing...";
-
       try {
         const price = loadedTask.pricePerAccount;
         let goodCount = 0, badCount = 0;
         const userUpdates = {};
-
         for (const sub of pendingSubs) {
           const isBad = badSet.has(sub.uid);
           await updateDoc(doc(db, "submissions", sub.id), {
@@ -949,12 +1026,10 @@
             earned: isBad ? 0 : price,
             checkedAt: new Date()
           });
-
           if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
           if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
           else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
         }
-
         for (const [userId, data] of Object.entries(userUpdates)) {
           const uRef = doc(db, "users", userId);
           const uSnap = await getDoc(uRef);
@@ -967,7 +1042,6 @@
             totalPending: Math.max(0, (u.totalPending || 0) - (data.good + data.bad))
           });
         }
-
         output.innerHTML = `
           <div class="result-box">
             <h3>✅ Result Processed!</h3>
@@ -975,21 +1049,38 @@
             <p>Total: <b>${pendingSubs.length}</b></p>
             <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
             <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
-            <p style="color:#f59e0b">💰 Total Added: <span class="big">৳${goodCount * price}</span></p>
+            <p style="color:#f59e0b">💰 Added: <span class="big">৳${goodCount * price}</span></p>
           </div>
         `;
         document.getElementById("badUids").value = "";
         setTimeout(() => document.getElementById("loadBtn").click(), 500);
+        loadStats();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🚀 Process Result";
     };
 
-    // ===== INIT =====
-    let currentUser = null;
+    // ===== STATS =====
+    async function loadStats() {
+      try {
+        const taskQ = query(collection(db, "tasks"), where("active", "==", true));
+        const taskSnap = await getDocs(taskQ);
+        document.getElementById("statTasks").textContent = taskSnap.size;
 
+        const userSnap = await getDocs(collection(db, "users"));
+        document.getElementById("statUsers").textContent = userSnap.size;
+
+        const subSnap = await getDocs(collection(db, "submissions"));
+        document.getElementById("statSubs").textContent = subSnap.size;
+
+        const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
+        const wdSnap = await getDocs(wdQ);
+        document.getElementById("statWithdrawals").textContent = wdSnap.size;
+      } catch (e) {}
+    }
+
+    // ===== INIT =====
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
-      currentUser = user;
       const snap = await getDoc(doc(db, "users", user.uid));
       if (!snap.exists() || snap.data().role !== "admin") {
         alert("❌ আপনি admin না!");
@@ -1000,6 +1091,7 @@
       loadNotices();
       loadDropdowns();
       loadUsers();
+      loadStats();
     });
   </script>
 </body>
