@@ -113,20 +113,19 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, getDocs, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.goBack = function() {
       location.href = "admin.html";
     };
 
-    // ✅ Session check — silent, no redirect loop
-    const SESSION_DURATION = 4 * 60 * 60 * 1000;
-    let sessionChecked = false;
+    // ✅ Session 12 hours
+    const SESSION_DURATION = 12 * 60 * 60 * 1000;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
 
-      // Verify admin role
+      // ✅ Verify admin role first
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
         if (!snap.exists() || snap.data().role !== "admin") {
@@ -139,7 +138,7 @@
         return;
       }
 
-      // ✅ Check session — redirect to admin-login if expired
+      // ✅ Session check
       const sessionTime = sessionStorage.getItem("admin_verified");
       if (!sessionTime) {
         sessionStorage.setItem("admin_return", location.pathname);
@@ -153,7 +152,6 @@
         return;
       }
 
-      sessionChecked = true;
       loadRequests();
     });
 
@@ -210,22 +208,15 @@
     };
 
     window.approveReq = async (id, email, newPassword) => {
-      if (!confirm(`Approve করলে user-এর Firebase password সেট হবে:\n\n📧 ${email}\n🔑 ${newPassword}\n\n⚠️ এই password দিয়ে user login করতে পারবে।`)) return;
+      if (!confirm(`Approve করলে user-এর Firebase password manually সেট করতে হবে:\n\n📧 ${email}\n🔑 ${newPassword}\n\n⚠️ Firebase Console → Authentication → User → Reset password`)) return;
 
       try {
-        // Update request status
         await updateDoc(doc(db, "reset_requests", id), {
           status: "approved",
           approvedAt: new Date()
         });
 
-        // ⚠️ IMPORTANT: Firebase Auth password reset must be done by user themselves
-        // OR admin can use Firebase Admin SDK (server-side)
-        // Since we're client-side only, admin must manually set:
-        // Option 1: User goes to login → "Forgot Password" → gets email
-        // Option 2: Admin uses Firebase Console → Authentication → User → Reset password
-
-        alert(`✅ Approved!\n\n📧 User: ${email}\n🔑 New Password: ${newPassword}\n\n⚠️ User-কে জানাও:\n1. এই password দিয়ে login করার আগে\n2. Firebase Console → Authentication → User → Reset password\n3. অথবা Admin SDK দিয়ে set করতে হবে\n\nসহজ উপায়: user-কে বলো "Password Reset Request" আবার দিতে, তারপর Firebase Console থেকে reset link পাঠাও।`);
+        alert(`✅ Approved!\n\n📧 User: ${email}\n🔑 New Password: ${newPassword}\n\n⚠️ এখন Firebase Console থেকে manually set করো:\n1. https://console.firebase.google.com/project/adq-income-zone/authentication/users\n2. Email খুঁজো: ${email}\n3. ⋮ → Reset password\n4. Password paste: ${newPassword}\n5. Save\n6. User-কে WhatsApp-এ জানাও`);
 
         loadRequests();
       } catch (e) {
