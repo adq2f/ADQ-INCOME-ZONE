@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
@@ -96,7 +96,6 @@
       margin-bottom: 14px;
       box-shadow: 0 4px 20px rgba(15,23,42,0.08);
       border-left: 4px solid #6366f1;
-      animation: fadeInUp 0.4s both;
     }
     .time-group-card.processed {
       border-left-color: #10b981;
@@ -170,24 +169,10 @@
       font-weight: 700;
       font-size: 12px;
       font-family: inherit;
-      transition: 0.2s;
     }
-    .tga-download {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      box-shadow: 0 4px 12px rgba(16,185,129,0.3);
-    }
-    .tga-process {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-    }
-    .tga-delete {
-      background: #fee2e2;
-      color: #dc2626;
-      max-width: 60px;
-      flex: 0 0 auto;
-    }
+    .tga-download { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .tga-process { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+    .tga-delete { background: #fee2e2; color: #dc2626; max-width: 60px; flex: 0 0 auto; }
 
     .bulk-delete-card {
       background: linear-gradient(135deg, #fef2f2, #fee2e2);
@@ -242,7 +227,7 @@
       background: white; cursor: pointer;
       display: flex; align-items: center;
       justify-content: center;
-      flex-shrink: 0; transition: 0.2s;
+      flex-shrink: 0;
     }
     .user-checkbox.checked {
       background: linear-gradient(135deg, #ef4444, #dc2626);
@@ -300,7 +285,6 @@
       display: flex; flex-direction: column;
       align-items: center; gap: 6px;
     }
-    .dash-quick-item:hover { transform: translateY(-3px); }
     .dash-quick-icon {
       width: 44px; height: 44px;
       border-radius: 12px;
@@ -309,6 +293,7 @@
     }
     .qi-orange { background: #fef3c7; }
     .qi-purple { background: #eef2ff; }
+    .qi-green { background: #d1fae5; }
     .dash-quick-label {
       font-size: 11px; font-weight: 700; color: #475569;
     }
@@ -354,6 +339,7 @@
       <button class="admin-tab" data-tab="noticeTab">📢 Notice</button>
       <button class="admin-tab" data-tab="usersTab">👥 Users</button>
       <button class="admin-tab" data-tab="bulkTab">🗑️ Bulk</button>
+      <button class="admin-tab" data-tab="settingsTab">⚙️ Settings</button>
     </div>
 
     <!-- DASHBOARD -->
@@ -399,6 +385,10 @@
           <div class="platform-opt" data-platform="Other">🔗 Other</div>
         </div>
         <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
+
+        <label class="label-text">🎁 Refer Commission (৳ per account)</label>
+        <input type="number" id="taskReferCommission" class="admin-input" placeholder="যেমন: 0.2 (টাকা)" step="0.01" min="0" value="0">
+
         <label class="label-text">Time Range</label>
         <div class="time-row">
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="taskStartTime" class="admin-input"></div>
@@ -486,6 +476,47 @@
         <button class="btn btn-danger btn-full" id="delByRangeBtn">🗑️ Delete Range</button>
       </div>
     </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsTab" class="admin-section" style="display:none">
+      <div class="admin-form-card">
+        <h3>💰 Withdraw Settings</h3>
+        <label class="label-text">Minimum Withdraw (৳)</label>
+        <input type="number" id="minWithdraw" class="admin-input" placeholder="100" min="0">
+
+        <label class="label-text">Maximum Withdraw (৳)</label>
+        <input type="number" id="maxWithdraw" class="admin-input" placeholder="50000" min="0">
+
+        <label class="label-text">Processing Time</label>
+        <input type="text" id="processingTime" class="admin-input" placeholder="24 hours">
+
+        <label class="label-text">Withdraw System</label>
+        <select id="withdrawEnabled" class="admin-input">
+          <option value="true">✅ Enabled</option>
+          <option value="false">❌ Disabled</option>
+        </select>
+
+        <button class="btn btn-primary btn-full" id="saveWithdrawSettings" style="margin-top:14px">💾 Save Withdraw Settings</button>
+      </div>
+
+      <div class="admin-form-card">
+        <h3>🎁 Refer System Settings</h3>
+        <label class="label-text">Refer System</label>
+        <select id="referEnabled" class="admin-input">
+          <option value="true">✅ Enabled</option>
+          <option value="false">❌ Disabled</option>
+        </select>
+
+        <label class="label-text">Default Refer Commission (৳ per account)</label>
+        <input type="number" id="defaultReferCommission" class="admin-input" placeholder="0.2" step="0.01" min="0" value="0">
+
+        <p style="font-size:12px;color:#64748b;margin:8px 0 14px;line-height:1.5">ℹ️ এটা default value। প্রতিটা task-এ আলাদাভাবে refer commission set করা যাবে।</p>
+
+        <button class="btn btn-primary btn-full" id="saveReferSettings">💾 Save Refer Settings</button>
+      </div>
+
+      <div id="settingsOutput"></div>
+    </div>
   </div>
 
   <div class="admin-action-bar" id="actionBar">
@@ -504,9 +535,9 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ Session 12 hours
+    // Session 12 hours
     const SESSION_DURATION = 12 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime) {
@@ -599,7 +630,8 @@
       document.getElementById("taskFormTitle").textContent = "➕ নতুন Task";
       document.getElementById("addTaskBtn").textContent = "Add Task";
       document.getElementById("cancelEditBtn").style.display = "none";
-      ["taskTitle","taskDesc","taskPrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
+      ["taskTitle","taskDesc","taskPrice","taskReferCommission","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("taskReferCommission").value = "0";
       resetFields();
     };
 
@@ -607,6 +639,7 @@
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
       const pricePerAccount = parseFloat(document.getElementById("taskPrice").value);
+      const referCommission = parseFloat(document.getElementById("taskReferCommission").value) || 0;
       const startVal = document.getElementById("taskStartTime").value;
       const endVal = document.getElementById("taskEndTime").value;
       const rules = document.getElementById("taskRules").value.trim();
@@ -622,19 +655,21 @@
       try {
         if (editTaskId) {
           await updateDoc(doc(db, "tasks", editTaskId), {
-            title, description, pricePerAccount, platform: selectedPlatform, fields, rules,
+            title, description, pricePerAccount, referCommission, platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal), updatedAt: new Date()
           });
           alert("✅ Updated!");
           document.getElementById("cancelEditBtn").click();
         } else {
           await addDoc(collection(db, "tasks"), {
-            title, description, pricePerAccount, platform: selectedPlatform, fields, rules,
+            title, description, pricePerAccount, referCommission,
+            platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal),
             active: true, createdAt: new Date()
           });
           alert("✅ Added!");
-          ["taskTitle","taskDesc","taskPrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
+          ["taskTitle","taskDesc","taskPrice","taskReferCommission","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
+          document.getElementById("taskReferCommission").value = "0";
           resetFields();
         }
         loadTasks(); loadDropdowns(); loadStats();
@@ -675,6 +710,7 @@
                 <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${bg};color:${fg}">${label}</span>
               </div>
               <span class="price">৳${t.pricePerAccount}/account</span>
+              ${t.referCommission > 0 ? `<span class="price" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;margin-left:6px">🎁 ৳${t.referCommission} refer</span>` : ''}
               <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6">
                 🌐 ${t.platform || "Other"} • 📝 ${fieldCount} fields<br>
                 ⏰ ${startStr} → ${endStr}
@@ -700,6 +736,7 @@
       document.getElementById("taskTitle").value = t.title || "";
       document.getElementById("taskDesc").value = t.description || "";
       document.getElementById("taskPrice").value = t.pricePerAccount || "";
+      document.getElementById("taskReferCommission").value = t.referCommission || 0;
       document.getElementById("taskRules").value = t.rules || "";
       selectedPlatform = t.platform || "Facebook";
       document.querySelectorAll(".platform-opt").forEach(o => o.classList.toggle("active", o.dataset.platform === selectedPlatform));
@@ -748,12 +785,10 @@
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
         subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
 
         loadedGroups = {};
         const GAP_MINUTES = 1;
-
         let currentKey = null;
         let currentEnd = null;
 
@@ -870,7 +905,6 @@
       if (typeof XLSX === "undefined") return alert("❌ XLSX library load হয়নি!");
 
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-
       const sheetData = items.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -922,15 +956,16 @@
 
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const firstFieldKey = fields[0].key;
-
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const output = document.getElementById("resultOutput");
       output.innerHTML = `<div class="card" style="background:#eef2ff;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Processing ${pending.length}...</div></div>`;
 
       try {
         const price = loadedTask.pricePerAccount;
+        const referCommission = loadedTask.referCommission || 0;
         let goodCount = 0, badCount = 0;
         const userUpdates = {};
+        const goodUidsByUser = {}; // For refer commission calculation
 
         for (const sub of pending) {
           const matchVal = String(sub[firstFieldKey] || "").trim();
@@ -942,7 +977,14 @@
           });
           if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
           if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
-          else { userUpdates[sub.userId].good++; userUpdates[sub.userId].earned += price; goodCount++; }
+          else {
+            userUpdates[sub.userId].good++;
+            userUpdates[sub.userId].earned += price;
+            goodCount++;
+            // Track good accounts for refer commission
+            if (!goodUidsByUser[sub.userId]) goodUidsByUser[sub.userId] = 0;
+            goodUidsByUser[sub.userId]++;
+          }
         }
 
         for (const [userId, data] of Object.entries(userUpdates)) {
@@ -958,6 +1000,49 @@
           });
         }
 
+        // ✅ Refer Commission (৳ per good account)
+        let totalReferCommission = 0;
+        let referrerCount = 0;
+
+        if (referCommission > 0) {
+          for (const [userId, goodAccounts] of Object.entries(goodUidsByUser)) {
+            const uSnap = await getDoc(doc(db, "users", userId));
+            if (!uSnap.exists()) continue;
+            const u = uSnap.data();
+            const referrerId = u.referredBy;
+            if (!referrerId) continue;
+
+            const earned = goodAccounts * referCommission;
+
+            const refRef = doc(db, "users", referrerId);
+            const refSnap = await getDoc(refRef);
+            if (!refSnap.exists()) continue;
+
+            const refData = refSnap.data();
+
+            await updateDoc(refRef, {
+              balance: (refData.balance || 0) + earned,
+              totalReferEarning: (refData.totalReferEarning || 0) + earned
+            });
+
+            // Refer earning history
+            await addDoc(collection(db, "refer_earnings"), {
+              referrerId: referrerId,
+              referredUserId: userId,
+              referredUsername: u.username || "User",
+              taskId: loadedTask.id,
+              taskTitle: loadedTask.title,
+              goodAccounts: goodAccounts,
+              commissionPerAccount: referCommission,
+              totalEarned: earned,
+              createdAt: new Date()
+            });
+
+            totalReferCommission += earned;
+            referrerCount++;
+          }
+        }
+
         output.innerHTML = `
           <div class="result-box">
             <h3>✅ File Processed!</h3>
@@ -965,7 +1050,11 @@
             <p>Total: <b>${pending.length}</b></p>
             <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
             <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
-            <p style="color:#f59e0b">💰 Added: <span class="big">৳${goodCount * price}</span></p>
+            <p style="color:#f59e0b">💰 User Added: <span class="big">৳${goodCount * price}</span></p>
+            ${referCommission > 0 ? `
+              <p style="color:#8b5cf6;margin-top:10px">🎁 Refer Commission: <span class="big">৳${totalReferCommission.toFixed(2)}</span></p>
+              <p style="color:#8b5cf6;font-size:13px">${referrerCount} referrer-এ split হয়েছে</p>
+            ` : ''}
           </div>
         `;
         setTimeout(() => document.getElementById("loadBtn").click(), 800);
@@ -1224,6 +1313,76 @@
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
+    // ===== SETTINGS =====
+    async function loadSettings() {
+      try {
+        const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
+        if (wSnap.exists()) {
+          const w = wSnap.data();
+          document.getElementById("minWithdraw").value = w.minWithdraw || 100;
+          document.getElementById("maxWithdraw").value = w.maxWithdraw || 50000;
+          document.getElementById("processingTime").value = w.processingTime || "24 hours";
+          document.getElementById("withdrawEnabled").value = String(w.withdrawEnabled !== false);
+        } else {
+          document.getElementById("minWithdraw").value = 100;
+          document.getElementById("maxWithdraw").value = 50000;
+          document.getElementById("processingTime").value = "24 hours";
+          document.getElementById("withdrawEnabled").value = "true";
+        }
+
+        const rSnap = await getDoc(doc(db, "settings", "referral_config"));
+        if (rSnap.exists()) {
+          const r = rSnap.data();
+          document.getElementById("referEnabled").value = String(r.enabled !== false);
+          document.getElementById("defaultReferCommission").value = r.defaultReferCommission || 0;
+        } else {
+          document.getElementById("referEnabled").value = "true";
+          document.getElementById("defaultReferCommission").value = 0;
+        }
+      } catch (e) {
+        console.error("Settings load error:", e);
+      }
+    }
+
+    document.getElementById("saveWithdrawSettings").onclick = async () => {
+      const minWithdraw = parseFloat(document.getElementById("minWithdraw").value) || 0;
+      const maxWithdraw = parseFloat(document.getElementById("maxWithdraw").value) || 50000;
+      const processingTime = document.getElementById("processingTime").value.trim() || "24 hours";
+      const withdrawEnabled = document.getElementById("withdrawEnabled").value === "true";
+
+      if (minWithdraw < 0) return alert("Minimum cannot be negative!");
+      if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
+
+      try {
+        await setDoc(doc(db, "settings", "withdraw_config"), {
+          minWithdraw, maxWithdraw, processingTime, withdrawEnabled,
+          updatedAt: new Date()
+        }, { merge: true });
+        showSettingsOutput("✅ Withdraw settings saved!");
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    document.getElementById("saveReferSettings").onclick = async () => {
+      const enabled = document.getElementById("referEnabled").value === "true";
+      const defaultReferCommission = parseFloat(document.getElementById("defaultReferCommission").value) || 0;
+
+      if (defaultReferCommission < 0) return alert("Commission cannot be negative!");
+
+      try {
+        await setDoc(doc(db, "settings", "referral_config"), {
+          enabled, defaultReferCommission,
+          updatedAt: new Date()
+        }, { merge: true });
+        showSettingsOutput("✅ Refer settings saved!");
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
+    function showSettingsOutput(msg) {
+      const out = document.getElementById("settingsOutput");
+      out.innerHTML = `<div class="result-box" style="margin-top:12px"><h3>${msg}</h3></div>`;
+      setTimeout(() => out.innerHTML = "", 3000);
+    }
+
     // ===== STATS =====
     async function loadStats() {
       try {
@@ -1248,7 +1407,7 @@
         location.href = "dashboard.html";
         return;
       }
-      loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats();
+      loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
     });
   </script>
 </body>
