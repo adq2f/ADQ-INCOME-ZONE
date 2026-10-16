@@ -4,100 +4,206 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Withdraw — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=16">
+  <link rel="stylesheet" href="style.css?v=23">
   <style>
     .withdraw-balance {
       background: linear-gradient(135deg, #E2136E, #8b5cf6);
-      color: white; padding: 22px;
+      color: white;
+      padding: 22px;
       border-radius: 20px;
       box-shadow: 0 12px 32px rgba(226,19,110,0.35);
       margin-bottom: 16px;
-      position: relative; overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
     .withdraw-balance::before {
-      content: ''; position: absolute;
+      content: '';
+      position: absolute;
       top: -60px; right: -50px;
       width: 180px; height: 180px;
       background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
       border-radius: 50%;
     }
     .withdraw-balance .label {
-      font-size: 11px; opacity: 0.85;
-      letter-spacing: 1px; text-transform: uppercase;
-      font-weight: 600; position: relative;
+      font-size: 11px;
+      opacity: 0.85;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      position: relative;
     }
     .withdraw-balance .amount {
-      font-size: 36px; font-weight: 800;
+      font-size: 36px;
+      font-weight: 800;
       font-family: 'Inter', sans-serif;
-      position: relative; margin-top: 4px;
+      position: relative;
+      margin-top: 4px;
     }
 
+    /* PAYMENT METHOD CARD */
     .pay-method {
-      background: white; border-radius: 16px;
-      padding: 14px; margin-bottom: 10px;
+      background: white;
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 10px;
       box-shadow: 0 4px 16px rgba(15,23,42,0.06);
       border: 2px solid transparent;
       cursor: pointer;
-      display: flex; align-items: center;
-      gap: 12px; transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       animation: fadeInUp 0.4s both;
     }
-    .pay-method:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15,23,42,0.1); }
+    .pay-method:nth-child(1) { animation-delay: 0.05s; }
+    .pay-method:nth-child(2) { animation-delay: 0.1s; }
+    .pay-method:nth-child(3) { animation-delay: 0.15s; }
+    .pay-method:nth-child(4) { animation-delay: 0.2s; }
+
+    .pay-method:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15,23,42,0.1);
+    }
     .pay-method.active {
       border-color: #6366f1;
       box-shadow: 0 8px 24px rgba(99,102,241,0.25);
       background: linear-gradient(135deg, #eef2ff 0%, #ffffff 60%);
     }
-    .pay-method.disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.6); }
-    .pay-method.disabled:hover { transform: none; }
 
+    /* REAL LOGO */
     .pay-logo {
-      width: 48px; height: 48px;
+      width: 52px;
+      height: 52px;
       border-radius: 12px;
-      display: flex; align-items: center;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      font-weight: 800; font-family: 'Inter';
-      color: white; font-size: 13px;
       flex-shrink: 0;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-      position: relative; overflow: hidden;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 4px;
     }
-    .pay-logo::after {
-      content: ''; position: absolute;
-      top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: shimmer 3s infinite;
+    .pay-logo svg {
+      width: 100%;
+      height: 100%;
     }
-    .pay-logo.bkash { background: linear-gradient(135deg, #E2136E, #B0105A); }
-    .pay-logo.nagad { background: linear-gradient(135deg, #F15A24, #D94315); }
-    .pay-logo.rocket { background: linear-gradient(135deg, #8B1F8B, #6A156A); }
-    .pay-logo.binance { background: linear-gradient(135deg, #F3BA2F, #D9A420); color: #1a1a1a; }
+    .pay-logo.bkash {
+      background: linear-gradient(135deg, #E2136E, #B0105A);
+      padding: 6px;
+    }
+    .pay-logo.nagad {
+      background: linear-gradient(135deg, #F15A24, #D94315);
+      padding: 6px;
+    }
+    .pay-logo.rocket {
+      background: linear-gradient(135deg, #8B1F8B, #6A156A);
+      padding: 6px;
+    }
+    .pay-logo.binance {
+      background: linear-gradient(135deg, #F3BA2F, #D9A420);
+      padding: 4px;
+    }
+    .pay-logo.bkash svg,
+    .pay-logo.nagad svg,
+    .pay-logo.rocket svg { fill: white; }
+    .pay-logo.binance svg { fill: #1a1a1a; }
 
     .pay-info { flex: 1; min-width: 0; }
-    .pay-info h4 { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
-    .pay-info p { font-size: 12px; color: #64748b; }
+    .pay-info h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .pay-info p {
+      font-size: 12px;
+      color: #64748b;
+    }
 
+    /* FORM */
     .wd-form-card {
-      background: white; border-radius: 20px;
-      padding: 22px; margin-top: 16px;
+      background: white;
+      border-radius: 20px;
+      padding: 22px;
+      margin-top: 16px;
       box-shadow: 0 8px 24px rgba(15,23,42,0.08);
       display: none;
     }
-    .wd-form-card.show { display: block; animation: fadeInUp 0.4s; }
+    .wd-form-card.show {
+      display: block;
+      animation: fadeInUp 0.4s both;
+    }
 
     .info-warning {
       background: linear-gradient(135deg, #fef3c7, #fde68a);
-      padding: 12px 14px; border-radius: 10px;
-      font-size: 12px; color: #92400e;
-      margin: 14px 0; line-height: 1.5;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #92400e;
+      margin: 14px 0;
+      line-height: 1.5;
       border-left: 4px solid #f59e0b;
+    }
+
+    /* EMPTY */
+    .empty-methods {
+      background: white;
+      padding: 40px 20px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+    }
+    .empty-methods .icon {
+      font-size: 56px;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .empty-methods h3 {
+      font-size: 16px;
+      color: #0f172a;
+      margin-bottom: 6px;
+    }
+    .empty-methods p {
+      font-size: 13px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    /* Withdraw History */
+    .wd-history-item {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.05);
+      border-left: 4px solid #f59e0b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .wd-history-item.approved { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
+    .wd-history-item.rejected { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
+    .wd-history-left { flex: 1; min-width: 0; }
+    .wd-history-left .amount {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      font-family: 'Inter';
+      margin-bottom: 4px;
+    }
+    .wd-history-left .meta {
+      font-size: 11px;
+      color: #94a3b8;
+      word-break: break-all;
     }
   </style>
 </head>
 <body>
 
   <div class="navbar">
-    <button class="nav-back" onclick="history.back()">
+    <button class="nav-back" onclick="goBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     </button>
     <div class="logo">
@@ -110,6 +216,7 @@
   </div>
 
   <div class="container">
+
     <div class="withdraw-balance">
       <div class="label">💰 Available Balance</div>
       <div class="amount" id="balance">৳0</div>
@@ -122,25 +229,32 @@
 
     <!-- WITHDRAW FORM -->
     <div class="wd-form-card" id="withdrawForm">
-      <h3 id="formTitle" style="margin-bottom:16px">💸 Withdraw Request</h3>
+      <h3 id="formTitle" style="margin-bottom:16px;font-size:17px;font-weight:700">💸 Withdraw Request</h3>
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Amount (৳)</label>
+      <label class="label-text">Amount (৳)</label>
       <input type="number" id="amount" class="admin-input" placeholder="কত টাকা তুলবে?" min="100">
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin:14px 0 6px" id="accountLabel">Account Number</label>
+      <label class="label-text" id="accountLabel">Account Number</label>
       <input type="text" id="accountNum" class="admin-input" placeholder="01XXXXXXXXX">
 
       <div class="info-warning">
         ⚠️ <b>Minimum ৳100</b><br>
         Withdraw request করলে সাথে সাথে তোমার balance থেকে কাটা হবে। Admin approve করলে টাকা পাবে, reject করলে ফেরত আসবে।<br>
-        <b>তোমার account password দিতে হবে verify করতে।</b>
+        <b>🔐 তোমার account password দিতে হবে verify করতে।</b>
       </div>
 
-      <label style="font-size:12px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">🔐 Account Password (Confirm)</label>
+      <label class="label-text">🔐 Account Password (Confirm)</label>
       <input type="password" id="confirmPass" class="admin-input" placeholder="তোমার account password">
 
       <button class="btn btn-success btn-full" id="submitWdBtn" style="margin-top:14px">🚀 Submit Withdraw</button>
     </div>
+
+    <!-- Withdraw History -->
+    <div class="dash-section-head" style="margin-top:24px">
+      <h3>📜 Withdraw History</h3>
+    </div>
+    <div id="withdrawHistory" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+
   </div>
 
   <nav class="bottom-nav">
@@ -154,7 +268,16 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, setDoc, collection, addDoc, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, addDoc, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Smart back
+    window.goBack = function() {
+      if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
+        history.back();
+      } else {
+        location.href = "wallet.html";
+      }
+    };
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -162,14 +285,58 @@
       location.href = "index.html";
     };
 
+    // Payment method configuration with REAL SVG logos
     const PAY_METHODS = {
-      bkash: { name: "bKash", logo: "bKash", logoClass: "bkash", accountLabel: "bKash Number", placeholder: "01XXXXXXXXX" },
-      nagad: { name: "Nagad", logo: "Nagad", logoClass: "nagad", accountLabel: "Nagad Number", placeholder: "01XXXXXXXXX" },
-      rocket: { name: "Rocket", logo: "Rocket", logoClass: "rocket", accountLabel: "Rocket Number", placeholder: "01XXXXXXXXX" },
-      binance: { name: "Binance", logo: "BNB", logoClass: "binance", accountLabel: "Binance Wallet/ID", placeholder: "Wallet Address / ID" }
+      bkash: {
+        name: "bKash",
+        logoClass: "bkash",
+        accountLabel: "bKash Number",
+        placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="40" rx="6" fill="#E2136E"/>
+          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">bKash</text>
+        </svg>`
+      },
+      nagad: {
+        name: "Nagad",
+        logoClass: "nagad",
+        accountLabel: "Nagad Number",
+        placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="40" rx="6" fill="#F15A24"/>
+          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">Nagad</text>
+        </svg>`
+      },
+      rocket: {
+        name: "Rocket",
+        logoClass: "rocket",
+        accountLabel: "Rocket Number",
+        placeholder: "01XXXXXXXXX",
+        svg: `<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg">
+          <rect width="100" height="40" rx="6" fill="#8B1F8B"/>
+          <text x="50" y="27" font-family="Arial, sans-serif" font-size="17" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-0.5">Rocket</text>
+        </svg>`
+      },
+      binance: {
+        name: "Binance",
+        logoClass: "binance",
+        accountLabel: "Binance Wallet / ID",
+        placeholder: "Binance ID or Wallet Address",
+        svg: `<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="8" fill="#F3BA2F"/>
+          <g fill="#1a1a1a">
+            <path d="M12 20l4-4 4 4-4 4-4-4z"/>
+            <path d="M20 12l4-4 4 4-4 4-4-4z"/>
+            <path d="M28 20l4-4 4 4-4 4-4-4z"/>
+            <path d="M20 28l4-4 4 4-4 4-4-4z"/>
+            <path d="M16 16l4-4 4 4-4 4-4-4z" opacity="0"/>
+          </g>
+        </svg>`
+      }
     };
 
-    let currentUser = null, userData = null;
+    let currentUser = null;
+    let userData = null;
     let userBalance = 0;
     let selectedMethod = null;
     let enabledMethods = {};
@@ -185,25 +352,48 @@
         document.getElementById("balance").textContent = "৳" + userBalance;
       }
 
-      // Load enabled methods
+      // Load enabled methods from admin settings
+      await loadEnabledMethods();
+      renderMethods();
+      loadWithdrawHistory();
+    });
+
+    async function loadEnabledMethods() {
       try {
         const snap = await getDoc(doc(db, "settings", "payment_methods"));
-        enabledMethods = snap.exists() ? snap.data() : { bkash: true, nagad: true, rocket: true, binance: true };
+        if (snap.exists()) {
+          enabledMethods = snap.data();
+        } else {
+          // Default: all enabled
+          enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+        }
       } catch (e) {
         enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
       }
-
-      renderMethods();
-    });
+    }
 
     function renderMethods() {
       const list = document.getElementById("methodsList");
-      list.innerHTML = Object.keys(PAY_METHODS).map(key => {
+
+      // Filter: only enabled methods
+      const availableMethods = Object.keys(PAY_METHODS).filter(k => enabledMethods[k] !== false);
+
+      if (availableMethods.length === 0) {
+        list.innerHTML = `
+          <div class="empty-methods">
+            <span class="icon">🚫</span>
+            <h3>Withdraw বন্ধ আছে</h3>
+            <p>Admin এখনো কোনো payment method চালু করেনি।<br>কিছুক্ষণ পরে আবার চেষ্টা করো।</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = availableMethods.map(key => {
         const m = PAY_METHODS[key];
-        const isOn = enabledMethods[key] !== false;
         return `
-          <div class="pay-method ${isOn ? '' : 'disabled'}" data-key="${key}" data-enabled="${isOn}">
-            <div class="pay-logo ${m.logoClass}">${m.logo}</div>
+          <div class="pay-method" data-key="${key}">
+            <div class="pay-logo ${m.logoClass}">${m.svg}</div>
             <div class="pay-info">
               <h4>${m.name}</h4>
               <p>${m.accountLabel}</p>
@@ -212,12 +402,9 @@
         `;
       }).join("");
 
+      // Attach click handlers
       list.querySelectorAll(".pay-method").forEach(el => {
         el.onclick = () => {
-          if (el.dataset.enabled !== "true") {
-            alert("⚠️ এই method admin কর্তৃক বন্ধ করা হয়েছে!");
-            return;
-          }
           list.querySelectorAll(".pay-method").forEach(e => e.classList.remove("active"));
           el.classList.add("active");
           selectedMethod = el.dataset.key;
@@ -234,11 +421,12 @@
           }
 
           document.getElementById("withdrawForm").classList.add("show");
-          document.getElementById("withdrawForm").scrollIntoView({ behavior: "smooth" });
+          document.getElementById("withdrawForm").scrollIntoView({ behavior: "smooth", block: "start" });
         };
       });
     }
 
+    // ===== SUBMIT WITHDRAW =====
     document.getElementById("submitWdBtn").onclick = async () => {
       if (!selectedMethod) return alert("Payment method select করো!");
       const amount = parseFloat(document.getElementById("amount").value);
@@ -251,41 +439,86 @@
       if (!confirmPass) return alert("Account password দাও!");
 
       const btn = document.getElementById("submitWdBtn");
-      btn.disabled = true; btn.textContent = "Verifying password...";
+      btn.disabled = true;
+      btn.textContent = "Verifying...";
 
+      // ===== PASSWORD VERIFY =====
       try {
-        // Verify password
         await signInWithEmailAndPassword(auth, currentUser.email, confirmPass);
       } catch (e) {
         alert("❌ Password ভুল!");
-        btn.disabled = false; btn.textContent = "🚀 Submit Withdraw";
+        btn.disabled = false;
+        btn.textContent = "🚀 Submit Withdraw";
         return;
       }
 
       btn.textContent = "Submitting...";
+
       try {
+        // Create withdraw request
         await addDoc(collection(db, "withdrawals"), {
           userId: currentUser.uid,
           username: userData.username,
           email: userData.email,
           method: selectedMethod,
           methodName: PAY_METHODS[selectedMethod].name,
-          amount,
-          accountNum,
+          amount: amount,
+          accountNum: accountNum,
           status: "pending",
           requestedAt: new Date()
         });
 
-        // Deduct balance
+        // Deduct balance immediately
         await updateDoc(doc(db, "users", currentUser.uid), {
           balance: increment(-amount)
         });
 
         alert("✅ Withdraw request submitted!\n\n💰 ৳" + amount + " deducted from balance.\n⏳ Admin approve করলে টাকা পাবে।");
         location.href = "wallet.html";
-      } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "🚀 Submit Withdraw";
+      } catch (e) {
+        alert("❌ " + e.message);
+        btn.disabled = false;
+        btn.textContent = "🚀 Submit Withdraw";
+      }
     };
+
+    // ===== LOAD WITHDRAW HISTORY =====
+    async function loadWithdrawHistory() {
+      const list = document.getElementById("withdrawHistory");
+      try {
+        const q = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো withdraw নেই</p></div>`;
+          return;
+        }
+        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
+
+        list.innerHTML = items.map(h => {
+          const statusBadge = h.status === "pending" ? "badge-pending"
+                            : h.status === "approved" ? "badge-good" : "badge-bad";
+          const statusText = h.status === "pending" ? "⏳ Pending"
+                           : h.status === "approved" ? "✅ Approved" : "❌ Rejected";
+          const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", {
+            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+          }) || "";
+
+          return `
+            <div class="wd-history-item ${h.status}">
+              <div class="wd-history-left">
+                <div class="amount">${h.methodName || h.method} • ৳${h.amount}</div>
+                <div class="meta">📱 ${h.accountNum}</div>
+                <div class="meta">🕐 ${time}</div>
+              </div>
+              <span class="badge ${statusBadge}">${statusText}</span>
+            </div>
+          `;
+        }).join("");
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
   </script>
 </body>
 </html>
