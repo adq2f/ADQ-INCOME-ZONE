@@ -4,319 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=30">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     body { background: #f1f5f9; }
     .admin-navbar { background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95); }
     .admin-navbar .logo span { color: white; }
     .admin-navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-
-    .admin-tab-bar {
-      display: flex; gap: 6px; overflow-x: auto;
-      padding: 8px 0 14px; margin-bottom: 4px;
-    }
+    .admin-tab-bar { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 14px; margin-bottom: 4px; }
     .admin-tab-bar::-webkit-scrollbar { display: none; }
-    .admin-tab {
-      padding: 9px 16px; border-radius: 10px;
-      background: white; color: #64748b;
-      border: 2px solid #e2e8f0;
-      font-size: 12px; font-weight: 700;
-      cursor: pointer; white-space: nowrap;
-      font-family: inherit; transition: 0.25s;
-    }
-    .admin-tab.active {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: white; border-color: #4f46e5;
-      box-shadow: 0 6px 16px rgba(79,70,229,0.35);
-    }
-
-    .platform-picker {
-      display: flex; gap: 8px; overflow-x: auto;
-      padding-bottom: 6px; margin-bottom: 12px;
-    }
+    .admin-tab { padding: 9px 16px; border-radius: 10px; background: white; color: #64748b; border: 2px solid #e2e8f0; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: inherit; transition: 0.25s; }
+    .admin-tab.active { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-color: #4f46e5; box-shadow: 0 6px 16px rgba(79,70,229,0.35); }
+    .platform-picker { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; }
     .platform-picker::-webkit-scrollbar { display: none; }
-    .platform-opt {
-      padding: 10px 16px; border-radius: 12px;
-      background: white; border: 2px solid #e2e8f0;
-      cursor: pointer; display: flex; align-items: center;
-      gap: 6px; font-size: 13px; font-weight: 600;
-      white-space: nowrap; transition: 0.25s;
-    }
-    .platform-opt.active {
-      border-color: #6366f1;
-      background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-      color: #4f46e5;
-    }
-
-    .field-builder {
-      background: #f8fafc; border-radius: 12px;
-      padding: 14px; margin-bottom: 12px;
-      border: 1px dashed #cbd5e1;
-    }
-    .field-builder-title {
-      font-size: 12px; font-weight: 700; color: #475569;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      margin-bottom: 10px; display: flex;
-      justify-content: space-between; align-items: center;
-    }
-    .add-field-btn {
-      padding: 5px 12px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white; border: none;
-      border-radius: 8px; font-size: 11px;
-      font-weight: 700; cursor: pointer;
-      font-family: inherit;
-    }
-    .field-row {
-      display: flex; align-items: center; gap: 8px;
-      padding: 8px 10px; background: white;
-      border-radius: 10px; margin-bottom: 6px;
-      border: 1px solid #e2e8f0;
-    }
-    .field-row input[type="text"] {
-      flex: 1; padding: 6px 10px;
-      border: 1px solid #e2e8f0; border-radius: 8px;
-      font-size: 12px; margin: 0;
-      font-family: inherit;
-    }
-    .field-remove {
-      width: 26px; height: 26px;
-      border-radius: 8px; background: #fee2e2;
-      color: #dc2626; border: none; cursor: pointer;
-      display: flex; align-items: center;
-      justify-content: center;
-      font-size: 14px; font-weight: 700;
-    }
-
-    .time-group-card {
-      background: white;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 20px rgba(15,23,42,0.08);
-      border-left: 4px solid #6366f1;
-    }
-    .time-group-card.processed {
-      border-left-color: #10b981;
-      background: linear-gradient(90deg, #f0fdf4 0%, white 25%);
-    }
-    .time-group-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
-    }
-    .time-group-time {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      display: inline-block;
-      font-family: 'Inter';
-    }
-    .time-group-date {
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 6px;
-      line-height: 1.5;
-    }
-    .time-group-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin: 10px 0;
-    }
-    .tg-stat {
-      background: #f8fafc;
-      padding: 10px 6px;
-      border-radius: 10px;
-      text-align: center;
-    }
-    .tg-stat .v {
-      font-size: 18px;
-      font-weight: 800;
-      font-family: 'Inter';
-    }
+    .platform-opt { padding: 10px 16px; border-radius: 12px; background: white; border: 2px solid #e2e8f0; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: 0.25s; }
+    .platform-opt.active { border-color: #6366f1; background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: #4f46e5; }
+    .field-builder { background: #f8fafc; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px dashed #cbd5e1; }
+    .field-builder-title { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .add-field-btn { padding: 5px 12px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .field-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border-radius: 10px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+    .field-row input[type="text"] { flex: 1; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; margin: 0; font-family: inherit; }
+    .field-remove { width: 26px; height: 26px; border-radius: 8px; background: #fee2e2; color: #dc2626; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+    .time-group-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(15,23,42,0.08); border-left: 4px solid #6366f1; }
+    .time-group-card.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 25%); }
+    .time-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+    .time-group-time { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; font-family: 'Inter'; }
+    .time-group-date { font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.5; }
+    .time-group-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+    .tg-stat { background: #f8fafc; padding: 10px 6px; border-radius: 10px; text-align: center; }
+    .tg-stat .v { font-size: 18px; font-weight: 800; font-family: 'Inter'; }
     .tg-stat.good .v { color: #10b981; }
     .tg-stat.bad .v { color: #ef4444; }
     .tg-stat.pending .v { color: #f59e0b; }
     .tg-stat.pending.zero .v { color: #cbd5e1; }
-    .tg-stat .l {
-      font-size: 10px;
-      color: #64748b;
-      font-weight: 700;
-      text-transform: uppercase;
-      margin-top: 2px;
-    }
-    .time-group-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-      flex-wrap: wrap;
-    }
-    .time-group-actions button {
-      flex: 1;
-      min-width: 100px;
-      padding: 10px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 12px;
-      font-family: inherit;
-    }
+    .tg-stat .l { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+    .time-group-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .time-group-actions button { flex: 1; min-width: 100px; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
     .tga-download { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
     .tga-process { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
     .tga-delete { background: #fee2e2; color: #dc2626; max-width: 60px; flex: 0 0 auto; }
-
-    .bulk-delete-card {
-      background: linear-gradient(135deg, #fef2f2, #fee2e2);
-      border: 2px dashed #fca5a5;
-      border-radius: 16px;
-      padding: 20px; margin-bottom: 16px;
-    }
+    .bulk-delete-card { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px dashed #fca5a5; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
     .bulk-delete-card h3 { color: #991b1b; font-size: 16px; margin-bottom: 10px; }
     .bulk-delete-card p { color: #7f1d1d; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
-
-    .time-row {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px; margin-bottom: 12px;
-    }
-    .time-input-label {
-      font-size: 11px; font-weight: 700; color: #475569;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      margin-bottom: 6px; display: block;
-    }
-    .label-text {
-      font-size: 12px; font-weight: 700; color: #475569;
-      text-transform: uppercase; letter-spacing: 0.5px;
-      display: block; margin: 14px 0 8px;
-    }
-
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .time-input-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .label-text { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin: 14px 0 8px; }
     .user-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .user-card {
-      background: white; border-radius: 14px;
-      padding: 14px; display: flex;
-      align-items: center; gap: 12px;
-      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
-      border: 1px solid rgba(15,23,42,0.04);
-    }
-    .user-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      display: flex; align-items: center;
-      justify-content: center; color: white;
-      font-weight: 800; font-size: 18px;
-      flex-shrink: 0;
-    }
+    .user-card { background: white; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 12px rgba(15,23,42,0.05); border: 1px solid rgba(15,23,42,0.04); }
+    .user-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; flex-shrink: 0; }
     .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
     .user-info { flex: 1; min-width: 0; }
     .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
     .user-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
     .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; flex-wrap: wrap; }
-
-    .user-checkbox {
-      width: 22px; height: 22px;
-      border-radius: 6px;
-      border: 2px solid #cbd5e1;
-      background: white; cursor: pointer;
-      display: flex; align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .user-checkbox.checked {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      border-color: #ef4444; color: white;
-    }
-    .user-checkbox.checked::after {
-      content: '✓'; font-size: 14px; font-weight: 700;
-    }
-
-    .admin-action-bar {
-      position: fixed; bottom: 90px;
-      left: 12px; right: 12px;
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      color: white; padding: 12px 16px;
-      border-radius: 14px; display: none;
-      align-items: center; justify-content: space-between;
-      box-shadow: 0 12px 32px rgba(220,38,38,0.5);
-      z-index: 900;
-    }
+    .user-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .user-checkbox.checked { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; color: white; }
+    .user-checkbox.checked::after { content: '✓'; font-size: 14px; font-weight: 700; }
+    .admin-action-bar { position: fixed; bottom: 90px; left: 12px; right: 12px; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 12px 16px; border-radius: 14px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 12px 32px rgba(220,38,38,0.5); z-index: 900; }
     .admin-action-bar.show { display: flex; }
     .admin-action-bar .count { font-weight: 700; font-size: 14px; }
-    .admin-action-bar button {
-      background: white; color: #dc2626;
-      border: none; padding: 8px 14px;
-      border-radius: 8px; font-size: 12px;
-      font-weight: 700; cursor: pointer;
-      font-family: inherit;
-    }
-
-    .stat-box {
-      background: white; padding: 16px 10px;
-      border-radius: 14px; text-align: center;
-      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
-    }
-    .stat-box .num {
-      font-size: 24px; font-weight: 800;
-      color: #4f46e5; font-family: 'Inter';
-    }
+    .admin-action-bar button { background: white; color: #dc2626; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .stat-box { background: white; padding: 16px 10px; border-radius: 14px; text-align: center; box-shadow: 0 2px 12px rgba(15,23,42,0.05); }
+    .stat-box .num { font-size: 24px; font-weight: 800; color: #4f46e5; font-family: 'Inter'; }
     .stat-box.good .num { color: #10b981; }
     .stat-box.pending .num { color: #f59e0b; }
-    .stat-box .label {
-      font-size: 11px; color: #64748b;
-      font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.4px; margin-top: 4px;
-    }
+    .stat-box .label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 4px; }
     .stats-grid { display: grid; gap: 10px; margin-bottom: 14px; }
-
-    .dash-quick-item {
-      background: white; padding: 16px 8px;
-      border-radius: 14px; text-align: center;
-      text-decoration: none; color: #0f172a;
-      box-shadow: 0 2px 12px rgba(15,23,42,0.05);
-      border: 1px solid rgba(15,23,42,0.04);
-      transition: 0.25s;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
-    }
-    .dash-quick-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex; align-items: center;
-      justify-content: center; font-size: 22px;
-    }
+    .dash-quick-item { background: white; padding: 16px 8px; border-radius: 14px; text-align: center; text-decoration: none; color: #0f172a; box-shadow: 0 2px 12px rgba(15,23,42,0.05); border: 1px solid rgba(15,23,42,0.04); transition: 0.25s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .dash-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
     .qi-orange { background: #fef3c7; }
     .qi-purple { background: #eef2ff; }
-    .qi-green { background: #d1fae5; }
-    .dash-quick-label {
-      font-size: 11px; font-weight: 700; color: #475569;
-    }
-
-    .result-box {
-      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-      border-left: 4px solid #10b981;
-      padding: 20px;
-      border-radius: 14px;
-      margin-top: 16px;
-    }
+    .dash-quick-label { font-size: 11px; font-weight: 700; color: #475569; }
+    .result-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 4px solid #10b981; padding: 20px; border-radius: 14px; margin-top: 16px; }
     .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; }
     .result-box p { color: #065f46; font-size: 14px; margin-bottom: 6px; }
     .result-box .big { font-size: 24px; font-weight: 800; font-family: 'Inter'; }
-
-    .dash-empty {
-      text-align: center;
-      padding: 40px 20px;
-      color: #64748b;
-    }
-    .dash-empty .em {
-      font-size: 48px; margin-bottom: 12px; display: block;
-    }
+    .dash-empty { text-align: center; padding: 40px 20px; color: #64748b; }
+    .dash-empty .em { font-size: 48px; margin-bottom: 12px; display: block; }
   </style>
 </head>
 <body>
@@ -339,6 +104,7 @@
       <button class="admin-tab" data-tab="noticeTab">📢 Notice</button>
       <button class="admin-tab" data-tab="usersTab">👥 Users</button>
       <button class="admin-tab" data-tab="bulkTab">🗑️ Bulk</button>
+      <button class="admin-tab" data-tab="referralsTab">🎁 Referrals</button>
       <button class="admin-tab" data-tab="settingsTab">⚙️ Settings</button>
     </div>
 
@@ -385,10 +151,8 @@
           <div class="platform-opt" data-platform="Other">🔗 Other</div>
         </div>
         <input type="number" id="taskPrice" class="admin-input" placeholder="Price per account (৳)" min="1">
-
         <label class="label-text">🎁 Refer Commission (৳ per account)</label>
-        <input type="number" id="taskReferCommission" class="admin-input" placeholder="যেমন: 0.2 (টাকা)" step="0.01" min="0" value="0">
-
+        <input type="number" id="taskReferCommission" class="admin-input" placeholder="যেমন: 0.2" step="0.01" min="0" value="0">
         <label class="label-text">Time Range</label>
         <div class="time-row">
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="taskStartTime" class="admin-input"></div>
@@ -477,25 +241,35 @@
       </div>
     </div>
 
+    <!-- REFERRALS -->
+    <div id="referralsTab" class="admin-section" style="display:none">
+      <div class="admin-form-card">
+        <h3>🎁 Refer System Overview</h3>
+        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top:12px">
+          <div class="stat-box"><div class="num" id="totalRefUsers">0</div><div class="label">Total Referrals</div></div>
+          <div class="stat-box good"><div class="num" id="totalRefEarnings">৳0</div><div class="label">Total Commission</div></div>
+        </div>
+      </div>
+
+      <h3 style="margin:16px 0 12px">👥 All Referrals</h3>
+      <div id="referralsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    </div>
+
     <!-- SETTINGS -->
     <div id="settingsTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>💰 Withdraw Settings</h3>
         <label class="label-text">Minimum Withdraw (৳)</label>
         <input type="number" id="minWithdraw" class="admin-input" placeholder="100" min="0">
-
         <label class="label-text">Maximum Withdraw (৳)</label>
         <input type="number" id="maxWithdraw" class="admin-input" placeholder="50000" min="0">
-
         <label class="label-text">Processing Time</label>
         <input type="text" id="processingTime" class="admin-input" placeholder="24 hours">
-
         <label class="label-text">Withdraw System</label>
         <select id="withdrawEnabled" class="admin-input">
           <option value="true">✅ Enabled</option>
           <option value="false">❌ Disabled</option>
         </select>
-
         <button class="btn btn-primary btn-full" id="saveWithdrawSettings" style="margin-top:14px">💾 Save Withdraw Settings</button>
       </div>
 
@@ -506,12 +280,9 @@
           <option value="true">✅ Enabled</option>
           <option value="false">❌ Disabled</option>
         </select>
-
         <label class="label-text">Default Refer Commission (৳ per account)</label>
         <input type="number" id="defaultReferCommission" class="admin-input" placeholder="0.2" step="0.01" min="0" value="0">
-
         <p style="font-size:12px;color:#64748b;margin:8px 0 14px;line-height:1.5">ℹ️ এটা default value। প্রতিটা task-এ আলাদাভাবে refer commission set করা যাবে।</p>
-
         <button class="btn btn-primary btn-full" id="saveReferSettings">💾 Save Refer Settings</button>
       </div>
 
@@ -537,7 +308,6 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // Session 12 hours
     const SESSION_DURATION = 12 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime) {
@@ -560,6 +330,7 @@
         document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
         tab.classList.add("active");
         document.getElementById(tab.dataset.tab).style.display = "block";
+        if (tab.dataset.tab === "referralsTab") loadReferrals();
       };
     });
 
@@ -573,8 +344,7 @@
     });
 
     function makeFieldKey(label) {
-      const k = label.toString().trim().toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").substring(0, 20);
+      const k = label.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").substring(0, 20);
       return k || ("f_" + Math.random().toString(36).substring(2, 8));
     }
 
@@ -662,8 +432,7 @@
           document.getElementById("cancelEditBtn").click();
         } else {
           await addDoc(collection(db, "tasks"), {
-            title, description, pricePerAccount, referCommission,
-            platform: selectedPlatform, fields, rules,
+            title, description, pricePerAccount, referCommission, platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal),
             active: true, createdAt: new Date()
           });
@@ -760,7 +529,6 @@
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // ===== RESULT — TIME GAP GROUPING =====
     let loadedTask = null;
     let loadedGroups = {};
 
@@ -777,21 +545,17 @@
       if (!taskId) return alert("Task select করো!");
       const btn = document.getElementById("loadBtn");
       btn.disabled = true; btn.textContent = "Loading...";
-
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
         loadedTask = { id: taskId, ...taskSnap.data() };
-
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
-
         loadedGroups = {};
         const GAP_MINUTES = 1;
         let currentKey = null;
         let currentEnd = null;
-
         subs.forEach(s => {
           const t = s.submittedAt?.toDate?.();
           if (!t) return;
@@ -806,7 +570,6 @@
           loadedGroups[currentKey].push(s);
           currentEnd = ts;
         });
-
         renderGroups();
       } catch (e) { alert("❌ " + e.message); }
       btn.disabled = false; btn.textContent = "🔍 Load Submissions";
@@ -820,31 +583,25 @@
     function renderGroups() {
       const gDiv = document.getElementById("taskGroups");
       const keys = Object.keys(loadedGroups).sort().reverse();
-
       if (keys.length === 0) {
         gDiv.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো submission নেই</p></div>`;
         return;
       }
-
       gDiv.innerHTML = keys.map((key, idx) => {
         const items = loadedGroups[key];
         const good = items.filter(i => i.status === "good").length;
         const bad = items.filter(i => i.status === "bad").length;
         const pending = items.filter(i => i.status === "pending").length;
         const isProcessed = pending === 0 && items.length > 0;
-
         const [datePart, timePart] = key.split(" ");
         const [y, mo, d] = datePart.split("-");
         const [hh, mm, ss] = timePart.split(":");
-
         const lastItem = items[items.length - 1];
         const lastT = lastItem.submittedAt?.toDate?.();
         const lastTimeStr = lastT ? `${String(lastT.getHours()).padStart(2,'0')}:${String(lastT.getMinutes()).padStart(2,'0')}:${String(lastT.getSeconds()).padStart(2,'0')}` : "";
-
         const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
         const niceDate = `${parseInt(d)} ${monthNames[parseInt(mo)-1]} ${y}`;
         const niceTimeRange = `${hh}:${mm}:${ss} → ${lastTimeStr}`;
-
         if (isProcessed) {
           return `
             <div class="time-group-card processed">
@@ -870,7 +627,6 @@
             </div>
           `;
         }
-
         return `
           <div class="time-group-card">
             <div class="time-group-head">
@@ -903,7 +659,6 @@
       if (items.length === 0) return alert("No data");
       if (!loadedTask) return alert("Task load হয়নি!");
       if (typeof XLSX === "undefined") return alert("❌ XLSX library load হয়নি!");
-
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const sheetData = items.map((s, idx) => {
         const row = { "#": idx + 1 };
@@ -917,24 +672,18 @@
           }
           row[f.label] = (v === undefined || v === null) ? "" : String(v);
         });
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit", second: "2-digit"
-        }) || "";
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) || "";
         row["Status"] = s.status || "pending";
         return row;
       });
-
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Submissions");
-
       const colWidths = [{ wch: 5 }];
       fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
       colWidths.push({ wch: 22 });
       colWidths.push({ wch: 12 });
       ws["!cols"] = colWidths;
-
       const dateStr = key.replace(/[: ]/g, "-");
       XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`);
     };
@@ -953,20 +702,17 @@
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("Pending নেই!");
-
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const firstFieldKey = fields[0].key;
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const output = document.getElementById("resultOutput");
       output.innerHTML = `<div class="card" style="background:#eef2ff;text-align:center"><div class="spinner"></div><div style="margin-top:8px">Processing ${pending.length}...</div></div>`;
-
       try {
         const price = loadedTask.pricePerAccount;
         const referCommission = loadedTask.referCommission || 0;
         let goodCount = 0, badCount = 0;
         const userUpdates = {};
-        const goodUidsByUser = {}; // For refer commission calculation
-
+        const goodUidsByUser = {};
         for (const sub of pending) {
           const matchVal = String(sub[firstFieldKey] || "").trim();
           const isBad = badSet.has(matchVal);
@@ -981,12 +727,10 @@
             userUpdates[sub.userId].good++;
             userUpdates[sub.userId].earned += price;
             goodCount++;
-            // Track good accounts for refer commission
             if (!goodUidsByUser[sub.userId]) goodUidsByUser[sub.userId] = 0;
             goodUidsByUser[sub.userId]++;
           }
         }
-
         for (const [userId, data] of Object.entries(userUpdates)) {
           const uRef = doc(db, "users", userId);
           const uSnap = await getDoc(uRef);
@@ -999,11 +743,8 @@
             totalPending: Math.max(0, (u.totalPending || 0) - (data.good + data.bad))
           });
         }
-
-        // ✅ Refer Commission (৳ per good account)
         let totalReferCommission = 0;
         let referrerCount = 0;
-
         if (referCommission > 0) {
           for (const [userId, goodAccounts] of Object.entries(goodUidsByUser)) {
             const uSnap = await getDoc(doc(db, "users", userId));
@@ -1011,21 +752,15 @@
             const u = uSnap.data();
             const referrerId = u.referredBy;
             if (!referrerId) continue;
-
             const earned = goodAccounts * referCommission;
-
             const refRef = doc(db, "users", referrerId);
             const refSnap = await getDoc(refRef);
             if (!refSnap.exists()) continue;
-
             const refData = refSnap.data();
-
             await updateDoc(refRef, {
               balance: (refData.balance || 0) + earned,
               totalReferEarning: (refData.totalReferEarning || 0) + earned
             });
-
-            // Refer earning history
             await addDoc(collection(db, "refer_earnings"), {
               referrerId: referrerId,
               referredUserId: userId,
@@ -1037,12 +772,10 @@
               totalEarned: earned,
               createdAt: new Date()
             });
-
             totalReferCommission += earned;
             referrerCount++;
           }
         }
-
         output.innerHTML = `
           <div class="result-box">
             <h3>✅ File Processed!</h3>
@@ -1051,10 +784,7 @@
             <p style="color:#10b981">✅ Good: <span class="big">${goodCount}</span></p>
             <p style="color:#ef4444">❌ Bad: <span class="big">${badCount}</span></p>
             <p style="color:#f59e0b">💰 User Added: <span class="big">৳${goodCount * price}</span></p>
-            ${referCommission > 0 ? `
-              <p style="color:#8b5cf6;margin-top:10px">🎁 Refer Commission: <span class="big">৳${totalReferCommission.toFixed(2)}</span></p>
-              <p style="color:#8b5cf6;font-size:13px">${referrerCount} referrer-এ split হয়েছে</p>
-            ` : ''}
+            ${referCommission > 0 ? `<p style="color:#8b5cf6;margin-top:10px">🎁 Refer Commission: <span class="big">৳${totalReferCommission.toFixed(2)}</span></p><p style="color:#8b5cf6;font-size:13px">${referrerCount} referrer-এ split হয়েছে</p>` : ''}
           </div>
         `;
         setTimeout(() => document.getElementById("loadBtn").click(), 800);
@@ -1084,7 +814,6 @@
       } catch (e) { alert("❌ " + e.message); }
     };
 
-    // ===== NOTICE =====
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
@@ -1116,7 +845,6 @@
       loadNotices();
     };
 
-    // ===== USERS =====
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -1245,7 +973,6 @@
 
     document.getElementById("userSearch").oninput = renderUsers;
 
-    // ===== BULK DELETE =====
     async function bulkDeleteSubmissions(filter) {
       const q = query(collection(db, "submissions"));
       const snap = await getDocs(q);
@@ -1313,7 +1040,73 @@
       btn.disabled = false; btn.textContent = "🗑️ Delete Range";
     };
 
-    // ===== SETTINGS =====
+    async function loadReferrals() {
+      const list = document.getElementById("referralsList");
+      try {
+        const allUsersSnap = await getDocs(collection(db, "users"));
+        const allUsersList = allUsersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const referredUsers = allUsersList.filter(u => u.referredBy);
+        document.getElementById("totalRefUsers").textContent = referredUsers.length;
+
+        const earningsSnap = await getDocs(collection(db, "refer_earnings"));
+        let totalEarnings = 0;
+        const earningsByReferrer = {};
+        earningsSnap.forEach(d => {
+          const e = d.data();
+          totalEarnings += e.totalEarned || 0;
+          if (!earningsByReferrer[e.referrerId]) earningsByReferrer[e.referrerId] = 0;
+          earningsByReferrer[e.referrerId] += e.totalEarned || 0;
+        });
+        document.getElementById("totalRefEarnings").textContent = "৳" + totalEarnings.toFixed(2);
+
+        const groupedByReferrer = {};
+        referredUsers.forEach(u => {
+          if (!groupedByReferrer[u.referredBy]) groupedByReferrer[u.referredBy] = [];
+          groupedByReferrer[u.referredBy].push(u);
+        });
+
+        if (Object.keys(groupedByReferrer).length === 0) {
+          list.innerHTML = `<div class="dash-empty"><p>এখনো কেউ refer করেনি</p></div>`;
+          return;
+        }
+
+        let html = "";
+        for (const [referrerId, refs] of Object.entries(groupedByReferrer)) {
+          const referrer = allUsersList.find(u => u.id === referrerId);
+          if (!referrer) continue;
+          const refEarned = earningsByReferrer[referrerId] || 0;
+          html += `
+            <div class="card" style="margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div class="user-avatar user">${(referrer.username || "U").charAt(0).toUpperCase()}</div>
+                  <div>
+                    <div style="font-size:14px;font-weight:700;color:#0f172a">${referrer.username || "User"}</div>
+                    <div style="font-size:11px;color:#94a3b8">${referrer.email || ""}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px">Code: <b>${referrer.myReferCode || "—"}</b></div>
+                  </div>
+                </div>
+                <div style="text-align:right">
+                  <div style="font-size:18px;font-weight:800;color:#10b981;font-family:'Inter'">৳${refEarned.toFixed(2)}</div>
+                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700">Earned</div>
+                </div>
+              </div>
+              <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px">👥 Referred Users (${refs.length}):</div>
+              ${refs.map(r => `
+                <div style="background:#f8fafc;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;gap:8px">
+                  <span style="color:#0f172a;font-weight:600">👤 ${r.username || "User"}</span>
+                  <span style="color:#94a3b8">${r.email || ""}</span>
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+        list.innerHTML = html;
+      } catch (e) {
+        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      }
+    }
+
     async function loadSettings() {
       try {
         const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
@@ -1329,7 +1122,6 @@
           document.getElementById("processingTime").value = "24 hours";
           document.getElementById("withdrawEnabled").value = "true";
         }
-
         const rSnap = await getDoc(doc(db, "settings", "referral_config"));
         if (rSnap.exists()) {
           const r = rSnap.data();
@@ -1349,10 +1141,8 @@
       const maxWithdraw = parseFloat(document.getElementById("maxWithdraw").value) || 50000;
       const processingTime = document.getElementById("processingTime").value.trim() || "24 hours";
       const withdrawEnabled = document.getElementById("withdrawEnabled").value === "true";
-
       if (minWithdraw < 0) return alert("Minimum cannot be negative!");
       if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
-
       try {
         await setDoc(doc(db, "settings", "withdraw_config"), {
           minWithdraw, maxWithdraw, processingTime, withdrawEnabled,
@@ -1365,9 +1155,7 @@
     document.getElementById("saveReferSettings").onclick = async () => {
       const enabled = document.getElementById("referEnabled").value === "true";
       const defaultReferCommission = parseFloat(document.getElementById("defaultReferCommission").value) || 0;
-
       if (defaultReferCommission < 0) return alert("Commission cannot be negative!");
-
       try {
         await setDoc(doc(db, "settings", "referral_config"), {
           enabled, defaultReferCommission,
@@ -1383,7 +1171,6 @@
       setTimeout(() => out.innerHTML = "", 3000);
     }
 
-    // ===== STATS =====
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
@@ -1408,6 +1195,7 @@
         return;
       }
       loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
+      loadReferrals();
     });
   </script>
 </body>
