@@ -4,7 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>প্রোফাইল — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
+  <style>
+    .refer-card {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+      color: white;
+      padding: 22px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 16px 40px rgba(99,102,241,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .refer-card::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
+      border-radius: 50%;
+    }
+    .refer-card h3 {
+      color: white;
+      font-size: 16px;
+      margin-bottom: 4px;
+      position: relative;
+    }
+    .refer-card .sub {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-bottom: 14px;
+      position: relative;
+    }
+    .refer-code-box {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+    .refer-code-box .code {
+      font-family: 'Courier New', monospace;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: white;
+      user-select: all;
+    }
+    .refer-code-box button {
+      background: white;
+      color: #6366f1;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .refer-link-box {
+      background: rgba(255,255,255,0.15);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 11px;
+      word-break: break-all;
+      font-family: 'Courier New', monospace;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+    }
+    .refer-link-box span { flex: 1; user-select: all; }
+    .refer-link-box button {
+      background: rgba(255,255,255,0.25);
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .refer-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+    }
+    .refer-stat {
+      background: rgba(255,255,255,0.2);
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .refer-stat .num {
+      font-size: 22px;
+      font-weight: 800;
+      font-family: 'Inter';
+      line-height: 1;
+    }
+    .refer-stat .lbl {
+      font-size: 10px;
+      opacity: 0.9;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+  </style>
 </head>
 <body>
 
@@ -43,6 +161,34 @@
   </div>
 
   <div class="container" style="padding-top:0">
+
+    <!-- REFER SECTION -->
+    <div class="refer-card">
+      <h3>🎁 Refer & Earn</h3>
+      <p class="sub">বন্ধুদের refer করো, প্রতি task-এ commission পাও</p>
+
+      <div class="refer-code-box">
+        <span class="code" id="myReferCode">------</span>
+        <button onclick="copyReferCode()">📋 Copy</button>
+      </div>
+
+      <div class="refer-link-box">
+        <span id="myReferLink">...</span>
+        <button onclick="copyReferLink()">Copy Link</button>
+      </div>
+
+      <div class="refer-stats">
+        <div class="refer-stat">
+          <div class="num" id="referCount">0</div>
+          <div class="lbl">Total Referrals</div>
+        </div>
+        <div class="refer-stat">
+          <div class="num" id="referEarning">৳0</div>
+          <div class="lbl">Refer Earning</div>
+        </div>
+      </div>
+    </div>
+
     <h3 style="margin:16px 0 12px; color:#0f172a">⚙️ অ্যাকাউন্ট সেটিংস</h3>
 
     <a href="wallet.html" class="menu-item">
@@ -79,7 +225,7 @@
         <p>Admin approve করলে নতুন password পাবেন</p>
       </div>
       <div class="menu-arrow">›</div>
-    </a>
+    </button>
 
     <a href="notifications.html" class="menu-item">
       <div class="menu-icon purple">🔔</div>
@@ -148,10 +294,26 @@
       document.getElementById("statBalance").textContent = "৳" + (userData.balance || 0);
       document.getElementById("statGood").textContent = userData.totalGood || 0;
 
+      // Refer Section
+      document.getElementById("myReferCode").textContent = userData.myReferCode || "------";
+      document.getElementById("referCount").textContent = userData.referCount || 0;
+      document.getElementById("referEarning").textContent = "৳" + (userData.totalReferEarning || 0).toFixed(2);
+      document.getElementById("myReferLink").textContent = "https://adq-income-zone.vercel.app/signup.html?ref=" + (userData.myReferCode || "");
+
       const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
       const subSnap = await getDocs(q);
       document.getElementById("statSubs").textContent = subSnap.size;
     });
+
+    window.copyReferCode = function() {
+      const code = userData?.myReferCode || "";
+      navigator.clipboard.writeText(code).then(() => alert("✅ Refer code copied: " + code));
+    };
+
+    window.copyReferLink = function() {
+      const link = "https://adq-income-zone.vercel.app/signup.html?ref=" + (userData?.myReferCode || "");
+      navigator.clipboard.writeText(link).then(() => alert("✅ Refer link copied!"));
+    };
 
     document.getElementById("changeUsernameBtn").onclick = async () => {
       const newName = prompt("নতুন নাম লিখুন:", userData.username);
