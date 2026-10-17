@@ -1861,3 +1861,20 @@ body {
 .premium-badge.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
 .premium-badge.green { background: linear-gradient(135deg, #10b981, #047857); }
 .premium-badge.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+/* Bottom nav active indicator always on top */
+.bottom-nav a.active .nav-ic {
+  transform: translateY(-4px);
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+  border-radius: 14px;
+  width: 40px; height: 40px;
+  color: white;
+  box-shadow: 0 10px 24px rgba(99,102,241,0.5);
+  z-index: 2;
+}
+
+/* Fix tap highlight color */
+.bottom-nav a:focus,
+.bottom-nav a:active {
+  outline: none;
+  background: transparent;
+}
