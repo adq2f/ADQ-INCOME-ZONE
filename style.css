@@ -1773,3 +1773,91 @@ body {
   .auth-title { font-size: 22px; }
   body { padding-bottom: 130px; }
 }
+/* ============================================
+   PREMIUM TELEGRAM-STYLE ANIMATED BADGE
+   ============================================ */
+
+.user-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.user-name-scroll {
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+  mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+  padding-right: 4px;
+}
+
+.user-name-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.premium-badge {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  animation: badgeGlow 2s ease-in-out infinite alternate;
+}
+
+.premium-badge::before {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  font-weight: 900;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Animated Shine Effect */
+.premium-badge::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.6) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  transform: rotate(30deg);
+  animation: badgeShine 3s infinite;
+}
+
+@keyframes badgeGlow {
+  0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); transform: scale(1); }
+  100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.9); transform: scale(1.05); }
+}
+
+@keyframes badgeShine {
+  0% { left: -100%; }
+  20% { left: 100%; }
+  100% { left: 100%; }
+}
+
+/* Different Badge Colors based on user custom color */
+.premium-badge.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+.premium-badge.silver { background: linear-gradient(135deg, #e2e8f0, #94a3b8); }
+.premium-badge.bronze { background: linear-gradient(135deg, #f97316, #ea580c); }
+.premium-badge.purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+.premium-badge.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.premium-badge.green { background: linear-gradient(135deg, #10b981, #047857); }
+.premium-badge.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
