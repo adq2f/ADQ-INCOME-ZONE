@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=33">
   <style>
     .hq-task-card {
       background: white;
@@ -19,7 +19,6 @@
       position: relative;
       overflow: hidden;
       transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
-      animation: fadeInUp 0.5s both;
     }
     .hq-task-card::before {
       content: '';
@@ -44,6 +43,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
       position: relative;
       overflow: hidden;
+      padding: 8px;
     }
     .hq-task-logo svg { width: 100%; height: 100%; }
     .hq-task-body { flex: 1; min-width: 0; }
@@ -121,23 +121,75 @@
       text-align: center;
       box-shadow: 0 6px 16px rgba(99,102,241,0.35);
       transition: all 0.3s;
-      font-family: inherit;
     }
-    .hq-task-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(99,102,241,0.5);
+
+    /* Badge in Dashboard */
+    .user-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      overflow: hidden;
     }
-    .user-badge-inline {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
+    .user-name-scroll {
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      max-width: 180px;
+      -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+      mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+      padding-right: 4px;
+    }
+    .user-name-scroll::-webkit-scrollbar { display: none; }
+
+    .premium-badge {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+      animation: badgeGlow 2s ease-in-out infinite alternate;
+      overflow: hidden;
+    }
+    .premium-badge::before {
+      content: '✓';
       color: white;
-      margin-left: 6px;
-      letter-spacing: 0.5px;
+      font-size: 11px;
+      font-weight: 900;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
+    .premium-badge::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+      transform: rotate(30deg);
+      animation: badgeShine 3s infinite;
+    }
+    @keyframes badgeGlow {
+      0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); transform: scale(1); }
+      100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.9); transform: scale(1.05); }
+    }
+    @keyframes badgeShine {
+      0% { left: -100%; }
+      20% { left: 100%; }
+      100% { left: 100%; }
+    }
+    .premium-badge.silver { background: linear-gradient(135deg, #e2e8f0, #94a3b8); }
+    .premium-badge.bronze { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .premium-badge.purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+    .premium-badge.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .premium-badge.green { background: linear-gradient(135deg, #10b981, #047857); }
+    .premium-badge.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
   </style>
 </head>
 <body>
@@ -156,8 +208,11 @@
     <div class="dash-welcome animate-in">
       <div class="avatar" id="avatar">U</div>
       <div style="min-width:0; flex:1">
-        <h3>👋 স্বাগতম, <span id="username">...</span><span id="dashBadge"></span></h3>
-        <p id="email">...</p>
+        <div class="user-name-wrap">
+          <h3 style="margin:0; font-size:15px; white-space:nowrap;">👋 স্বাগতম, <span id="username" class="user-name-scroll" style="display:inline-block; vertical-align:bottom;">...</span></h3>
+          <span id="dashBadge"></span>
+        </div>
+        <p id="email" style="margin-top:2px;">...</p>
       </div>
     </div>
 
@@ -262,6 +317,17 @@
       Other: { color: "#64748b", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` }
     };
 
+    function getBadgeClass(color) {
+      if (!color) return 'gold';
+      if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
+      if (color.includes("#ea580c") || color.includes("bronze")) return 'bronze';
+      if (color.includes("#a855f7")) return 'purple';
+      if (color.includes("#3b82f6")) return 'blue';
+      if (color.includes("#10b981")) return 'green';
+      if (color.includes("#ef4444")) return 'red';
+      return 'gold';
+    }
+
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
       await signOut(auth);
@@ -280,9 +346,9 @@
       document.getElementById("balance").textContent = "৳" + (u.balance || 0);
       document.getElementById("earnedTotal").textContent = "৳" + (u.balance || 0);
 
-      // Badge
       if (u.customBadge) {
-        document.getElementById("dashBadge").innerHTML = `<span class="user-badge-inline" style="background:${u.customBadgeColor || '#6366f1'}">🎖️ ${u.customBadge}</span>`;
+        const cls = getBadgeClass(u.customBadgeColor);
+        document.getElementById("dashBadge").innerHTML = `<span class="premium-badge ${cls}" title="${u.customBadge}"></span>`;
       }
 
       loadNotice();
@@ -420,7 +486,7 @@
             day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
           }) || "";
           return `
-            <div class="dash-recent" style="animation-delay:${0.4 + i * 0.05}s">
+            <div class="dash-recent">
               <div class="dash-recent-info">
                 <div class="uid">${ic} ${s.uid || "N/A"}</div>
                 <div class="time">🕐 ${time}</div>
