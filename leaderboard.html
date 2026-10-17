@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Leaderboard — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=31">
+  <link rel="stylesheet" href="style.css?v=33">
   <style>
     .lb-hero {
       background: linear-gradient(135deg, #f59e0b, #d97706, #b45309);
@@ -21,25 +21,13 @@
       content: '';
       position: absolute;
       top: -60px; right: -50px;
-      width: 200px;
-      height: 200px;
+      width: 200px; height: 200px;
       background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
       border-radius: 50%;
     }
-    .lb-hero h2 {
-      color: white;
-      font-size: 22px;
-      margin-bottom: 6px;
-      position: relative;
-      font-weight: 800;
-    }
-    .lb-hero p {
-      font-size: 13px;
-      opacity: 0.95;
-      position: relative;
-    }
+    .lb-hero h2 { color: white; font-size: 22px; margin-bottom: 6px; position: relative; font-weight: 800; }
+    .lb-hero p { font-size: 13px; opacity: 0.95; position: relative; }
 
-    /* Top 3 Podium */
     .podium {
       display: grid;
       grid-template-columns: 1fr 1.2fr 1fr;
@@ -57,85 +45,32 @@
       position: relative;
       transition: 0.3s;
     }
-    .podium-item:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 16px 40px rgba(15,23,42,0.15);
-    }
-    .podium-item.rank-1 {
-      border-color: #fbbf24;
-      background: linear-gradient(180deg, #fef3c7, white);
-      padding: 18px 8px;
-      order: 2;
-    }
-    .podium-item.rank-2 {
-      border-color: #cbd5e1;
-      background: linear-gradient(180deg, #f1f5f9, white);
-      order: 1;
-    }
-    .podium-item.rank-3 {
-      border-color: #d97706;
-      background: linear-gradient(180deg, #fed7aa, white);
-      order: 3;
-    }
-    .podium-crown {
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
+    .podium-item:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(15,23,42,0.15); }
+    .podium-item.rank-1 { border-color: #fbbf24; background: linear-gradient(180deg, #fef3c7, white); padding: 18px 8px; order: 2; }
+    .podium-item.rank-2 { border-color: #cbd5e1; background: linear-gradient(180deg, #f1f5f9, white); order: 1; }
+    .podium-item.rank-3 { border-color: #d97706; background: linear-gradient(180deg, #fed7aa, white); order: 3; }
+    .podium-crown { font-size: 24px; margin-bottom: 4px; }
     .podium-avatar {
-      width: 54px;
-      height: 54px;
+      width: 54px; height: 54px;
       border-radius: 50%;
       margin: 0 auto 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 800;
-      font-size: 20px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 20px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      position: relative;
     }
     .podium-item.rank-1 .podium-avatar { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
     .podium-item.rank-2 .podium-avatar { background: linear-gradient(135deg, #94a3b8, #64748b); }
     .podium-item.rank-3 .podium-avatar { background: linear-gradient(135deg, #f97316, #ea580c); }
 
     .podium-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #0f172a;
+      font-size: 13px; font-weight: 700; color: #0f172a;
       margin-bottom: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       padding: 0 4px;
     }
-    .podium-badge {
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: 3px 8px;
-      border-radius: 10px;
-      display: inline-block;
-      margin-bottom: 6px;
-    }
-    .podium-badge.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
-    .podium-badge.silver { background: linear-gradient(135deg, #94a3b8, #64748b); color: white; }
-    .podium-badge.bronze { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
-    .podium-good {
-      font-size: 16px;
-      font-weight: 800;
-      color: #10b981;
-      font-family: 'Inter';
-    }
-    .podium-good-lbl {
-      font-size: 9px;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
+    .podium-good { font-size: 16px; font-weight: 800; color: #10b981; font-family: 'Inter'; }
+    .podium-good-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
 
-    /* Full list */
     .lb-list-item {
       display: flex;
       align-items: center;
@@ -148,89 +83,92 @@
       border: 1px solid rgba(15,23,42,0.04);
       transition: 0.2s;
     }
-    .lb-list-item:hover {
-      transform: translateX(4px);
-      box-shadow: 0 6px 20px rgba(15,23,42,0.1);
-    }
-    .lb-list-item.me {
-      border: 2px solid #6366f1;
-      background: linear-gradient(90deg, #eef2ff, white);
-    }
+    .lb-list-item:hover { transform: translateX(4px); box-shadow: 0 6px 20px rgba(15,23,42,0.1); }
+    .lb-list-item.me { border: 2px solid #6366f1; background: linear-gradient(90deg, #eef2ff, white); }
     .lb-rank {
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       border-radius: 10px;
       background: #f1f5f9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 14px;
-      color: #0f172a;
-      flex-shrink: 0;
-      font-family: 'Inter';
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 14px; color: #0f172a;
+      flex-shrink: 0; font-family: 'Inter';
     }
     .lb-avatar {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 800;
-      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 16px;
       flex-shrink: 0;
     }
-    .lb-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .lb-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 2px;
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-meta { font-size: 11px; color: #94a3b8; }
+    .lb-good { text-align: right; flex-shrink: 0; }
+    .lb-good-num { font-size: 18px; font-weight: 800; color: #10b981; font-family: 'Inter'; line-height: 1; }
+    .lb-good-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; margin-top: 2px; }
+
+    /* Premium Badge */
+    .user-name-wrap {
       display: flex;
       align-items: center;
       gap: 6px;
+      max-width: 100%;
+      overflow: hidden;
     }
-    .lb-meta {
-      font-size: 11px;
-      color: #94a3b8;
+    .user-name-scroll {
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      max-width: 150px;
+      -webkit-mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+      mask-image: linear-gradient(90deg, #000 90%, transparent 100%);
+      padding-right: 4px;
     }
-    .lb-good {
-      text-align: right;
-      flex-shrink: 0;
-    }
-    .lb-good-num {
-      font-size: 18px;
-      font-weight: 800;
-      color: #10b981;
-      font-family: 'Inter';
-      line-height: 1;
-    }
-    .lb-good-lbl {
-      font-size: 9px;
-      color: #64748b;
-      text-transform: uppercase;
-      font-weight: 700;
-      margin-top: 2px;
-    }
+    .user-name-scroll::-webkit-scrollbar { display: none; }
 
-    /* Custom Badge */
-    .user-badge {
+    .premium-badge {
+      width: 18px; height: 18px;
+      flex-shrink: 0;
+      position: relative;
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 9px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: white;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+      animation: badgeGlow 2s ease-in-out infinite alternate;
+      overflow: hidden;
     }
+    .premium-badge::before {
+      content: '✓';
+      color: white; font-size: 10px; font-weight: 900;
+      position: relative; z-index: 2;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .premium-badge::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+      transform: rotate(30deg);
+      animation: badgeShine 3s infinite;
+    }
+    @keyframes badgeGlow {
+      0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); transform: scale(1); }
+      100% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.9); transform: scale(1.05); }
+    }
+    @keyframes badgeShine {
+      0% { left: -100%; }
+      20% { left: 100%; }
+      100% { left: 100%; }
+    }
+    .premium-badge.silver { background: linear-gradient(135deg, #e2e8f0, #94a3b8); }
+    .premium-badge.bronze { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .premium-badge.purple { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+    .premium-badge.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .premium-badge.green { background: linear-gradient(135deg, #10b981, #047857); }
+    .premium-badge.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
   </style>
 </head>
 <body>
@@ -249,7 +187,6 @@
   </div>
 
   <div class="container">
-
     <div class="lb-hero">
       <h2>🏆 Leaderboard</h2>
       <p>Good account count অনুযায়ী টপ প্লেয়ার</p>
@@ -273,15 +210,15 @@
   <nav class="bottom-nav">
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="leaderboard.html" data-page="leaderboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="leaderboard.html" data-page="leaderboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { collection, query, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
@@ -290,6 +227,17 @@
         location.href = "dashboard.html";
       }
     };
+
+    function getBadgeClass(color) {
+      if (!color) return 'gold';
+      if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
+      if (color.includes("#ea580c") || color.includes("bronze")) return 'bronze';
+      if (color.includes("#a855f7")) return 'purple';
+      if (color.includes("#3b82f6")) return 'blue';
+      if (color.includes("#10b981")) return 'green';
+      if (color.includes("#ef4444")) return 'red';
+      return 'gold';
+    }
 
     let currentUser = null;
     let allUsers = [];
@@ -311,7 +259,7 @@
       try {
         const snap = await getDocs(collection(db, "users"));
         allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .filter(u => u.role !== "admin") // Exclude admins from leaderboard
+          .filter(u => u.role !== "admin")
           .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
 
         renderPodium();
@@ -331,15 +279,10 @@
       }
 
       const rankLabels = ["🥇", "🥈", "🥉"];
-      const rankClasses = ["rank-1", "rank-2", "rank-3"];
-      const badgeClasses = ["gold", "silver", "bronze"];
-      const defaultBadgeNames = ["CHAMPION", "RUNNER-UP", "THIRD"];
+      const orderClasses = ["rank-2", "rank-1", "rank-3"];
+      const order = [1, 0, 2];
 
       let html = `<div class="podium">`;
-
-      // Arrange podium: rank 2, 1, 3
-      const order = [1, 0, 2]; // index in top3 array
-      const orderClasses = ["rank-2", "rank-1", "rank-3"];
 
       order.forEach((idx, position) => {
         const u = top3[idx];
@@ -347,20 +290,17 @@
           html += `<div class="podium-item ${orderClasses[position]}" style="opacity:0.3"></div>`;
           return;
         }
-        const rank = idx + 1;
         const icon = rankLabels[idx];
-        const badgeClass = badgeClasses[idx];
-        const customBadge = u.customBadge || defaultBadgeNames[idx];
-        const customColor = u.customBadgeColor || "";
+        const badgeClass = u.customBadge ? getBadgeClass(u.customBadgeColor) : "";
 
         html += `
           <div class="podium-item ${orderClasses[position]}">
             <div class="podium-crown">${icon}</div>
-            <div class="podium-avatar" ${customColor ? `style="background:${customColor}"` : ''}>
+            <div class="podium-avatar">
               ${(u.username || "U").charAt(0).toUpperCase()}
             </div>
             <div class="podium-name">${u.username || "User"}</div>
-            <div class="podium-badge ${badgeClass}" ${customColor ? `style="background:${customColor}"` : ''}>${customBadge}</div>
+            ${badgeClass ? `<div style="margin-bottom:6px;"><span class="premium-badge ${badgeClass}" title="${u.customBadge}" style="margin:0 auto;"></span></div>` : ''}
             <div class="podium-good">${u.totalGood || 0}</div>
             <div class="podium-good-lbl">GOOD</div>
           </div>
@@ -373,8 +313,6 @@
 
     function renderList() {
       const list = document.getElementById("lbList");
-
-      // Filter by range (for now, only all-time; can add monthly later)
       let filtered = allUsers;
       if (currentRange === "month") {
         const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
@@ -399,27 +337,22 @@
         const rank = idx + 1;
         const isMe = u.id === currentUser.uid;
         const initial = (u.username || "U").charAt(0).toUpperCase();
-
-        // Rank colors
         let rankColor = "#0f172a";
         let rankBg = "#f1f5f9";
         if (rank === 1) { rankColor = "#b45309"; rankBg = "#fef3c7"; }
         else if (rank === 2) { rankColor = "#475569"; rankBg = "#f1f5f9"; }
         else if (rank === 3) { rankColor = "#c2410c"; rankBg = "#fed7aa"; }
-
-        // Custom badge
-        const customBadge = u.customBadge || "";
-        const customColor = u.customBadgeColor || "#6366f1";
+        const badgeClass = u.customBadge ? getBadgeClass(u.customBadgeColor) : "";
 
         return `
           <div class="lb-list-item ${isMe ? 'me' : ''}">
             <div class="lb-rank" style="background:${rankBg};color:${rankColor}">${rank}</div>
-            <div class="lb-avatar" style="background:linear-gradient(135deg,${customColor},#8b5cf6)">${initial}</div>
+            <div class="lb-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">${initial}</div>
             <div class="lb-info">
-              <div class="lb-name">
-                ${u.username || "User"}
-                ${isMe ? '<span style="font-size:10px;background:#6366f1;color:white;padding:2px 6px;border-radius:6px">YOU</span>' : ''}
-                ${customBadge ? `<span class="user-badge" style="background:${customColor}">${customBadge}</span>` : ''}
+              <div class="user-name-wrap" style="margin-bottom:2px;">
+                <span class="user-name-scroll" style="font-size:14px; font-weight:700; color:#0f172a;">${u.username || "User"}</span>
+                ${isMe ? '<span style="font-size:9px;background:#6366f1;color:white;padding:2px 6px;border-radius:6px;flex-shrink:0;">YOU</span>' : ''}
+                ${badgeClass ? `<span class="premium-badge ${badgeClass}" title="${u.customBadge}"></span>` : ''}
               </div>
               <div class="lb-meta">✅ ${u.totalGood || 0} good • ❌ ${u.totalBad || 0} bad</div>
             </div>
