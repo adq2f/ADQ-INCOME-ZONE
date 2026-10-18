@@ -62,7 +62,7 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, setDoc, collection, query, where, getDocs, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, setDoc, collection, query, where, getDocs, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.togglePass = function(id, btn) {
       const input = document.getElementById(id);
@@ -70,7 +70,6 @@
       btn.style.color = input.type === "text" ? "#6366f1" : "";
     };
 
-    // Generate unique refer code
     function generateReferCode() {
       const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       let code = "ADQ";
@@ -80,7 +79,6 @@
       return code;
     }
 
-    // Auto-fill from URL
     const urlRef = new URLSearchParams(location.search).get("ref");
     if (urlRef) {
       document.getElementById("referCode").value = urlRef.toUpperCase().trim();
@@ -89,7 +87,6 @@
       document.getElementById("referInfo").innerHTML = "🎁 Refer code applied: <b>" + urlRef.toUpperCase() + "</b>";
     }
 
-    // Validate refer code
     const referInput = document.getElementById("referCode");
     const referInfo = document.getElementById("referInfo");
     let referTimer = null;
@@ -138,7 +135,6 @@
       btn.textContent = "তৈরি হচ্ছে...";
 
       try {
-        // Verify refer code
         let referrerId = null;
         if (referCode) {
           const rq = query(collection(db, "users"), where("myReferCode", "==", referCode));
@@ -146,13 +142,11 @@
           if (!rs.empty) referrerId = rs.docs[0].id;
         }
 
-        // Create user
         const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-        // Generate own refer code
         const myCode = generateReferCode();
 
-        // Save user
+        // নতুন user নিজের doc তৈরি করছে — এটা rules-এ allowed
         await setDoc(doc(db, "users", cred.user.uid), {
           username, email, role: "user",
           balance: 0, totalGood: 0, totalBad: 0, totalPending: 0,
@@ -163,12 +157,8 @@
           createdAt: new Date()
         });
 
-        // Update referrer count
-        if (referrerId) {
-          await updateDoc(doc(db, "users", referrerId), {
-            referCount: increment(1)
-          });
-        }
+        // ⚠️ referrer-এর doc update এখানে করা হচ্ছে না
+        // profile.html-এ Referral Count query দিয়ে দেখানো হবে
 
         document.getElementById("successBox").style.display = "flex";
         setTimeout(() => location.href = "login.html?registered=1", 1500);
