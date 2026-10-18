@@ -33,7 +33,7 @@ export function showWelcomeSplash(username) {
   }, 2200);
 }
 
-// ============ NOTICE POPUP (প্রথমবার দেখলে) ============
+// ============ NOTICE POPUP (Fixed for Mobile) ============
 export async function showNoticePopup() {
   try {
     const q = query(collection(db, "notices"), where("active", "==", true));
@@ -59,20 +59,29 @@ export async function showNoticePopup() {
     const el = document.createElement("div");
     el.id = "noticePopup";
     el.className = "notice-popup-overlay";
+    
+    // HTML স্ট্রাকচার আপডেট করা হলো (Scrollable Body + Fixed Footer)
     el.innerHTML = `
       <div class="notice-popup-card">
         <button class="np-close" id="npClose">✕</button>
-        <div class="np-head">
-          <div class="np-bell">🔔</div>
-          <div>
-            <div class="np-label">📢 নতুন নোটিশ</div>
-            <h2 class="np-title">${escapeHtml(latest.title)}</h2>
+        
+        <div class="notice-popup-scrollable">
+          <div class="np-head">
+            <div class="np-bell">🔔</div>
+            <div>
+              <div class="np-label">📢 নতুন নোটিশ</div>
+              <h2 class="np-title">${escapeHtml(latest.title)}</h2>
+            </div>
           </div>
+          <div class="np-msg">${escapeHtml(latest.message)}</div>
+          ${(apkBtn || linkBtn) ? `<div class="np-actions">${apkBtn}${linkBtn}</div>` : ""}
+          <div class="np-time">🕐 ${timeStr}</div>
         </div>
-        <div class="np-msg">${escapeHtml(latest.message)}</div>
-        ${(apkBtn || linkBtn) ? `<div class="np-actions">${apkBtn}${linkBtn}</div>` : ""}
-        <div class="np-time">🕐 ${timeStr}</div>
-        <button class="np-dismiss" id="npDismiss">বুঝেছি ✓</button>
+
+        <div class="notice-popup-footer">
+          <button class="np-dismiss" id="npDismiss">বুঝেছি ✓</button>
+        </div>
+
       </div>
     `;
     document.body.appendChild(el);
