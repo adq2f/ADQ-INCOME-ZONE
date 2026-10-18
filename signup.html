@@ -79,6 +79,7 @@
       return code;
     }
 
+    // URL থেকে রেফার কোড নেওয়া
     const urlRef = new URLSearchParams(location.search).get("ref");
     if (urlRef) {
       document.getElementById("referCode").value = urlRef.toUpperCase().trim();
@@ -91,6 +92,7 @@
     const referInfo = document.getElementById("referInfo");
     let referTimer = null;
 
+    // রেফার কোড টাইপ করার সময় ভ্যালিডেশন
     referInput.addEventListener("input", () => {
       clearTimeout(referTimer);
       const code = referInput.value.trim().toUpperCase();
@@ -115,7 +117,9 @@
             referInfo.innerHTML = "✅ Valid! <b>" + snap.docs[0].data().username + "</b> referred you";
             setTimeout(() => referInput.style.borderColor = "", 1500);
           }
-        } catch (e) {}
+        } catch (e) { 
+          console.log("Refer check error:", e); 
+        }
       }, 500);
     });
 
@@ -136,24 +140,31 @@
 
       try {
         let referrerId = null;
+        
+        // ১. রেফার কোড চেক করা (সাইনআপের আগে)
         if (referCode) {
           const rq = query(collection(db, "users"), where("myReferCode", "==", referCode));
           const rs = await getDocs(rq);
           if (!rs.empty) referrerId = rs.docs[0].id;
         }
 
-        // ইউজার ক্রিয়েট
+        // ২. নতুন ইউজার অ্যাকাউন্ট তৈরি
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা
+        // ৩. ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা (খুবই জরুরি)
         await new Promise(r => setTimeout(r, 1000));
 
         const myCode = generateReferCode();
 
-        // ডেটাবেসে ডেটা সেভ (রুলসে শুধু নিজের ডকুমেন্ট তৈরি করা যাবে)
+        // ৪. ফায়ারস্টোরে ডেটা সেভ (শুধু নিজের ডকুমেন্ট)
         await setDoc(doc(db, "users", cred.user.uid), {
-          username, email, role: "user",
-          balance: 0, totalGood: 0, totalBad: 0, totalPending: 0,
+          username, 
+          email, 
+          role: "user",
+          balance: 0, 
+          totalGood: 0, 
+          totalBad: 0, 
+          totalPending: 0,
           myReferCode: myCode,
           referredBy: referrerId || null,
           referCount: 0,
@@ -161,16 +172,21 @@
           createdAt: new Date()
         });
 
-        // ডেটা সেভ হওয়ার পর লগআউট
+        // ৫. সাইনআপ শেষে লগআউট করে দেওয়া (যাতে পরিষ্কারভাবে লগইন পেজে যায়)
         await signOut(auth);
 
         document.getElementById("successBox").style.display = "flex";
         setTimeout(() => location.href = "login.html?registered=1", 1500);
         
       } catch (e) {
+        // আসল এররটা কনসোলে দেখানোর জন্য
+        console.error("Signup Error:", e);
+
         let msg = e.message;
         if (e.code === "auth/email-already-in-use") msg = "এই ইমেইল আগেই ব্যবহার হয়েছে!";
-        else if (e.code === "permission-denied") msg = "রুলস আপডেট হয়নি, ফায়ারবেস কনসোল চেক করুন।";
+        else if (e.code === "auth/invalid-email") msg = "ইমেইল ফরম্যাট সঠিক নয়!";
+        else if (e.code === "auth/weak-password") msg = "পাসওয়ার্ড দুর্বল!";
+        else if (e.code === "permission-denied") msg = "ডেটাবেস পারমিশন সমস্যা। ফায়ারবেস রুলস চেক করুন।";
         
         alert("❌ " + msg);
         btn.disabled = false;
