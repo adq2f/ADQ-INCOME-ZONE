@@ -104,7 +104,7 @@
     .premium-badge.green { background: linear-gradient(135deg, #10b981, #047857); }
     .premium-badge.red { background: linear-gradient(135deg, #ef4444, #b91c1c); }
 
-    /* Modal / Bottom Sheet Styling */
+    /* Modal / Bottom Sheet */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(15,23,42,0.7);
@@ -116,7 +116,7 @@
     .modal-box {
       background: white;
       width: 100%; max-width: 500px;
-      height: 85vh; /* Max height */
+      height: 85vh;
       border-radius: 24px 24px 0 0;
       display: flex; flex-direction: column;
       animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -207,7 +207,6 @@
 
   <div class="container" style="padding-top:0">
 
-    <!-- Refer Card -->
     <div class="refer-card">
       <h3>🎁 Refer & Earn</h3>
       <p class="sub">বন্ধুদের refer করো, প্রতি good account-এ commission পাও</p>
@@ -234,10 +233,8 @@
       </div>
     </div>
 
-    <!-- Menu List (Replaces Tabs) -->
     <h3 style="margin:16px 0 12px; color:#0f172a">📊 Details & Settings</h3>
 
-    <!-- 1. Referred Users -->
     <button class="menu-item" id="btnOpenUsers" style="width:100%;text-align:left;">
       <div class="menu-icon purple">👥</div>
       <div class="menu-content">
@@ -247,17 +244,15 @@
       <div class="menu-arrow">›</div>
     </button>
 
-    <!-- 2. Earnings History -->
     <button class="menu-item" id="btnOpenEarnings" style="width:100%;text-align:left;">
       <div class="menu-icon green">💰</div>
       <div class="menu-content">
         <h4>Earnings History</h4>
-        <p>কোন টাস্ক থেকে কত কমিশন পেয়েছেন</p>
+        <p>কোন টাস্ক থেকে কত কমিশন পেয়েছেন</p>
       </div>
       <div class="menu-arrow">›</div>
     </button>
 
-    <!-- 3. Leaderboard -->
     <a href="leaderboard.html" class="menu-item">
       <div class="menu-icon orange">🏆</div>
       <div class="menu-content">
@@ -267,7 +262,6 @@
       <div class="menu-arrow">›</div>
     </a>
 
-    <!-- 4. Wallet -->
     <a href="wallet.html" class="menu-item">
       <div class="menu-icon blue">💳</div>
       <div class="menu-content">
@@ -277,7 +271,6 @@
       <div class="menu-arrow">›</div>
     </a>
 
-    <!-- 5. Task History -->
     <a href="task-history.html" class="menu-item">
       <div class="menu-icon purple">📊</div>
       <div class="menu-content">
@@ -287,7 +280,6 @@
       <div class="menu-arrow">›</div>
     </a>
 
-    <!-- 6. Change Name -->
     <button class="menu-item" id="changeUsernameBtn" style="width:100%;text-align:left;">
       <div class="menu-icon blue">👤</div>
       <div class="menu-content">
@@ -297,7 +289,6 @@
       <div class="menu-arrow">›</div>
     </button>
 
-    <!-- 7. Reset Password -->
     <a href="reset-request.html" class="menu-item">
       <div class="menu-icon orange">🔒</div>
       <div class="menu-content">
@@ -319,7 +310,6 @@
 
   </div>
 
-  <!-- MODAL: Referred Users -->
   <div class="modal-overlay" id="modalUsers">
     <div class="modal-box">
       <div class="modal-header">
@@ -332,7 +322,6 @@
     </div>
   </div>
 
-  <!-- MODAL: Earnings -->
   <div class="modal-overlay" id="modalEarnings">
     <div class="modal-box">
       <div class="modal-header">
@@ -357,6 +346,11 @@
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initChatWidget } from "./chat-widget.js";
+    import { initPremiumPopups } from "./premium-popup.js";
+
+    initChatWidget();
+    initPremiumPopups();
 
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
@@ -424,7 +418,6 @@
       loadReferEarnings();
     });
 
-    // Open Modals
     document.getElementById("btnOpenUsers").onclick = () => document.getElementById("modalUsers").classList.add("show");
     document.getElementById("btnOpenEarnings").onclick = () => document.getElementById("modalEarnings").classList.add("show");
 
