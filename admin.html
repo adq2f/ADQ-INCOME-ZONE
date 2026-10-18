@@ -125,7 +125,7 @@
         <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
       </div>
       <h3 style="margin: 16px 0 12px">⚡ Quick Actions</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px">
         <a href="withdraw-admin.html" class="dash-quick-item">
           <div class="dash-quick-icon qi-orange">💸</div>
           <div class="dash-quick-label">Withdraw</div>
@@ -133,6 +133,10 @@
         <a href="admin-reset-requests.html" class="dash-quick-item">
           <div class="dash-quick-icon qi-purple">🔐</div>
           <div class="dash-quick-label">Reset Req</div>
+        </a>
+        <a href="admin-chat.html" class="dash-quick-item">
+          <div class="dash-quick-icon qi-purple">💬</div>
+          <div class="dash-quick-label">Live Chat</div>
         </a>
       </div>
     </div>
@@ -177,7 +181,6 @@
       <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
       <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
-
     <!-- RESULT -->
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
@@ -196,6 +199,10 @@
         <h3>📢 Global Notice</h3>
         <input type="text" id="noticeTitle" class="admin-input" placeholder="Notice Title">
         <textarea id="noticeMsg" class="admin-input admin-textarea" placeholder="Notice Message"></textarea>
+        <label class="label-text">📱 APK Download Link (optional)</label>
+        <input type="url" id="noticeApk" class="admin-input" placeholder="https://.../app.apk">
+        <label class="label-text">🔗 Extra Link (optional)</label>
+        <input type="url" id="noticeLink" class="admin-input" placeholder="https://t.me/yourchannel">
         <button class="btn btn-success btn-full" id="addNoticeBtn">Publish</button>
       </div>
       <h3 style="margin:16px 0 12px">📢 Active Notices</h3>
@@ -330,6 +337,17 @@
         <button class="btn btn-primary btn-full" id="saveReferSettings">💾 Save Refer Settings</button>
       </div>
 
+      <div class="admin-form-card">
+        <h3>🟢 Admin Online Status</h3>
+        <p style="font-size:13px;color:#64748b;margin-bottom:12px">User-রা দেখবে আপনি online আছেন কিনা। চ্যাটে সবুজ dot দেখাবে।</p>
+        <label class="label-text">Online Status</label>
+        <select id="adminOnlineStatus" class="admin-input">
+          <option value="true">🟢 Online</option>
+          <option value="false">⚪ Offline</option>
+        </select>
+        <button class="btn btn-primary btn-full" id="saveOnlineStatus" style="margin-top:14px">💾 Save Online Status</button>
+      </div>
+
       <div id="settingsOutput"></div>
     </div>
   </div>
@@ -346,8 +364,7 @@
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
-
-  <script type="module">
+    <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -364,6 +381,12 @@
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
       sessionStorage.removeItem("admin_verified");
+      // Set offline
+      try {
+        await setDoc(doc(db, "settings", "online_status"), {
+          adminOnline: false, adminLastSeen: new Date()
+        }, { merge: true });
+      } catch (e) {}
       await signOut(auth);
       location.href = "index.html";
     };
@@ -866,15 +889,19 @@
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
+      const apkUrl = document.getElementById("noticeApk").value.trim() || null;
+      const linkUrl = document.getElementById("noticeLink").value.trim() || null;
       if (!title || !message) return alert("সব ঘর!");
       try {
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
         const oldSnap = await getDocs(oldQ);
         for (const d of oldSnap.docs) await updateDoc(doc(db, "notices", d.id), { active: false });
-        await addDoc(collection(db, "notices"), { title, message, active: true, createdAt: new Date() });
+        await addDoc(collection(db, "notices"), { title, message, apkUrl, linkUrl, active: true, createdAt: new Date() });
         alert("✅ Published!");
         document.getElementById("noticeTitle").value = "";
         document.getElementById("noticeMsg").value = "";
+        document.getElementById("noticeApk").value = "";
+        document.getElementById("noticeLink").value = "";
         loadNotices();
       } catch (e) { alert("❌ " + e.message); }
     };
@@ -886,7 +913,7 @@
       if (snap.empty) { list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`; return; }
       list.innerHTML = snap.docs.map(d => {
         const n = d.data();
-        return `<div class="notice"><h3>📢 ${n.title}</h3><p>${n.message}</p><button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button></div>`;
+        return `<div class="notice"><h3>📢 ${n.title}</h3><p>${n.message}</p>${n.apkUrl ? `<p style="font-size:12px;margin-top:6px">📱 APK: <a href="${n.apkUrl}" target="_blank">Download</a></p>` : ''}${n.linkUrl ? `<p style="font-size:12px">🔗 Link: <a href="${n.linkUrl}" target="_blank">Open</a></p>` : ''}<button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button></div>`;
       }).join("");
     }
     window.deleteNotice = async (id) => {
@@ -1153,7 +1180,6 @@
       }
     }
 
-    // BADGES TAB
     let allBadgeUsers = [];
     let selectedBadgeUserId = null;
     let badgeColor = "#6366f1";
@@ -1322,6 +1348,12 @@
           document.getElementById("referEnabled").value = "true";
           document.getElementById("defaultReferCommission").value = 0;
         }
+        const osSnap = await getDoc(doc(db, "settings", "online_status"));
+        if (osSnap.exists()) {
+          document.getElementById("adminOnlineStatus").value = String(osSnap.data().adminOnline === true);
+        } else {
+          document.getElementById("adminOnlineStatus").value = "false";
+        }
       } catch (e) {}
     }
 
@@ -1354,6 +1386,17 @@
       } catch (e) { alert("❌ " + e.message); }
     };
 
+    document.getElementById("saveOnlineStatus").onclick = async () => {
+      const adminOnline = document.getElementById("adminOnlineStatus").value === "true";
+      try {
+        await setDoc(doc(db, "settings", "online_status"), {
+          adminOnline,
+          adminLastSeen: new Date()
+        }, { merge: true });
+        showSettingsOutput("✅ Online status saved!");
+      } catch (e) { alert("❌ " + e.message); }
+    };
+
     function showSettingsOutput(msg) {
       const out = document.getElementById("settingsOutput");
       out.innerHTML = `<div class="result-box" style="margin-top:12px"><h3>${msg}</h3></div>`;
@@ -1383,6 +1426,24 @@
         location.href = "dashboard.html";
         return;
       }
+
+      // Auto-set admin online on load
+      try {
+        await setDoc(doc(db, "settings", "online_status"), {
+          adminOnline: true,
+          adminLastSeen: new Date(),
+          adminName: snap.data().username || "ADQ Admin"
+        }, { merge: true });
+
+        // Set offline on unload
+        window.addEventListener("beforeunload", () => {
+          setDoc(doc(db, "settings", "online_status"), {
+            adminOnline: false,
+            adminLastSeen: new Date()
+          }, { merge: true }).catch(() => {});
+        });
+      } catch (e) {}
+
       loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
       loadReferrals();
       loadBadgeUsers();
