@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Chat — Admin</title>
+  <link rel="stylesheet" href="style.css?v=35">
+  <style>
+    .chat-inbox { display: flex; flex-direction: column; gap: 10px; }
+    .chat-row {
+      background: white; border-radius: 14px; padding: 14px;
+      display: flex; gap: 12px; align-items: center;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+      border-left: 4px solid #e2e8f0;
+      cursor: pointer; transition: 0.2s;
+    }
+    .chat-row.unread { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2, white 40%); }
+    .chat-row:hover { transform: translateX(3px); }
+    .chat-row-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 800; font-size: 17px; flex-shrink: 0;
+    }
+    .chat-row-info { flex: 1; min-width: 0; }
+    .chat-row-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
+    .chat-row-info p { font-size: 12px; color: #64748b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-row-badge {
+      background: #ef4444; color: white; min-width: 22px; height: 22px;
+      border-radius: 11px; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; padding: 0 6px;
+    }
+    .admin-chat-panel {
+      position: fixed; inset: 0; background: white; z-index: 2000;
+      display: none; flex-direction: column;
+    }
+    .admin-chat-panel.open { display: flex; }
+    .admin-chat-panel .chat-body { background: linear-gradient(180deg, #f8fafc, #eef2ff); }
+    .online-toggle-row {
+      background: white; border-radius: 14px; padding: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; box-shadow: 0 4px 16px rgba(15,23,42,0.06);
+    }
+    .online-toggle-row h4 { font-size: 14px; color: #0f172a; margin: 0; }
+    .online-toggle-row p { font-size: 11px; color: #64748b; margin: 2px 0 0; }
+
+    /* Switch */
+    .switch {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #cbd5e1;
+      transition: 0.4s;
+      border-radius: 30px;
+    }
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 22px; width: 22px;
+      left: 4px; bottom: 4px;
+      background: white;
+      transition: 0.4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .switch input:checked + .slider {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .switch input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar admin-navbar">
+    <button class="nav-back" onclick="location.href='admin.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="logo"><div class="mark">⚡</div><span>Live Chat Inbox</span></div>
+    <div style="width:40px"></div>
+  </div>
+
+  <div class="container">
+    <div class="online-toggle-row">
+      <div>
+        <h4>🟢 Admin Online Status</h4>
+        <p>User-রা দেখবে আপনি online আছেন কিনা</p>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="onlineToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="inboxList" class="chat-inbox loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  </div>
+
+  <!-- Admin Chat View -->
+  <div class="admin-chat-panel" id="adminChatPanel">
+    <div class="chat-panel-head">
+      <button class="chat-close" onclick="closeAdminChat()">←</button>
+      <div class="chat-admin-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" id="acUserAvatar">U</div>
+      <div class="chat-panel-info">
+        <h4 id="acUserName">User</h4>
+        <p id="acUserEmail">email</p>
+      </div>
+    </div>
+    <div class="chat-body" id="adminChatBody"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="adminChatInput" placeholder="রিপ্লাই লিখুন..." maxlength="500">
+      <button class="chat-send" id="adminChatSend">➤</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from "./firebase.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import {
+      doc, getDoc, setDoc, collection, query, orderBy, onSnapshot,
+      updateDoc, increment, addDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let currentAdmin = null;
+    let activeChatId = null;
+    let unsubMsgs = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) { location.href = "login.html"; return; }
+      const uSnap = await getDoc(doc(db, "users", user.uid));
+      if (!uSnap.exists() || uSnap.data().role !== "admin") {
+        alert("❌ Admin না!"); location.href = "dashboard.html"; return;
+      }
+      currentAdmin = user;
+
+      // Initialize online toggle
+      const osSnap = await getDoc(doc(db, "settings", "online_status"));
+      const isOnline = osSnap.exists() ? osSnap.data().adminOnline === true : false;
+      document.getElementById("onlineToggle").checked = isOnline;
+
+      document.getElementById("onlineToggle").onchange = async (e) => {
+        await setDoc(doc(db, "settings", "online_status"), {
+          adminOnline: e.target.checked,
+          adminLastSeen: new Date(),
+          adminName: uSnap.data().username || "ADQ Admin"
+        }, { merge: true });
+      };
+
+      loadInbox();
+    });
+
+    function loadInbox() {
+      const list = document.getElementById("inboxList");
+      const q = query(collection(db, "chats"), orderBy("lastMessageAt", "desc"));
+      onSnapshot(q, (snap) => {
+        if (snap.empty) {
+          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো chat নেই</p></div>`;
+          return;
+        }
+        list.innerHTML = snap.docs.map(d => {
+          const c = d.data();
+          const unread = c.unreadForAdmin || 0;
+          const initial = (c.username || "U").charAt(0).toUpperCase();
+          const time = c.lastMessageAt?.toDate?.().toLocaleTimeString("bn-BD", {
+            hour: "2-digit", minute: "2-digit"
+          }) || "";
+          return `
+            <div class="chat-row ${unread > 0 ? 'unread' : ''}" onclick="openAdminChat('${d.id}','${escapeAttr(c.username||'User')}','${escapeAttr(c.userEmail||'')}','${initial}')">
+              <div class="chat-row-avatar">${initial}</div>
+              <div class="chat-row-info">
+                <h4>${escapeHtml(c.username || 'User')}</h4>
+                <p>${escapeHtml(c.lastMessage || '')} · ${time}</p>
+              </div>
+              ${unread > 0 ? `<div class="chat-row-badge">${unread}</div>` : ''}
+            </div>
+          `;
+        }).join("");
+      });
+    }
+
+    window.openAdminChat = async (chatId, username, email, initial) => {
+      activeChatId = chatId;
+      document.getElementById("adminChatPanel").classList.add("open");
+      document.getElementById("acUserName").textContent = username;
+      document.getElementById("acUserEmail").textContent = email;
+      document.getElementById("acUserAvatar").textContent = initial;
+
+      await updateDoc(doc(db, "chats", chatId), { unreadForAdmin: 0 });
+
+      if (unsubMsgs) unsubMsgs();
+      const body = document.getElementById("adminChatBody");
+      const msgsRef = collection(db, "chats", chatId, "messages");
+      const q = query(msgsRef, orderBy("createdAt", "asc"));
+      unsubMsgs = onSnapshot(q, (snap) => {
+        const msgs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        body.innerHTML = msgs.length ? msgs.map(m => {
+          const t = m.createdAt?.toDate?.();
+          const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
+          return `<div class="chat-msg ${m.sender}">${escapeHtml(m.text)}<span class="msg-time">${time}</span></div>`;
+        }).join("") : `<div class="chat-empty"><span class="em">💬</span>কোনো মেসেজ নেই</div>`;
+        body.scrollTop = body.scrollHeight;
+      });
+
+      document.getElementById("adminChatSend").onclick = async () => {
+        const input = document.getElementById("adminChatInput");
+        const text = input.value.trim();
+        if (!text) return;
+        document.getElementById("adminChatSend").disabled = true;
+        try {
+          await addDoc(collection(db, "chats", chatId, "messages"), {
+            sender: "admin",
+            senderName: "Admin",
+            text,
+            createdAt: serverTimestamp(),
+            readByAdmin: true,
+            readByUser: false
+          });
+          await updateDoc(doc(db, "chats", chatId), {
+            lastMessage: text,
+            lastMessageAt: serverTimestamp(),
+            lastSender: "admin",
+            unreadForUser: increment(1)
+          });
+          input.value = "";
+        } catch (e) { alert("❌ " + e.message); }
+        document.getElementById("adminChatSend").disabled = false;
+      };
+
+      document.getElementById("adminChatInput").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") document.getElementById("adminChatSend").click();
+      });
+    };
+
+    window.closeAdminChat = () => {
+      document.getElementById("adminChatPanel").classList.remove("open");
+      if (unsubMsgs) unsubMsgs();
+      activeChatId = null;
+    };
+
+    function escapeHtml(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]));
+    }
+    function escapeAttr(s) {
+      return String(s ?? "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
