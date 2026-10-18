@@ -79,7 +79,6 @@
       return code;
     }
 
-    // URL থেকে রেফার কোড নেওয়া
     const urlRef = new URLSearchParams(location.search).get("ref");
     if (urlRef) {
       document.getElementById("referCode").value = urlRef.toUpperCase().trim();
@@ -92,7 +91,6 @@
     const referInfo = document.getElementById("referInfo");
     let referTimer = null;
 
-    // রেফার কোড ভ্যালিডেশন
     referInput.addEventListener("input", () => {
       clearTimeout(referTimer);
       const code = referInput.value.trim().toUpperCase();
@@ -138,7 +136,6 @@
 
       try {
         let referrerId = null;
-        // রেফার কোড চেক
         if (referCode) {
           const rq = query(collection(db, "users"), where("myReferCode", "==", referCode));
           const rs = await getDocs(rq);
@@ -148,12 +145,12 @@
         // ১. Auth-এ ইউজার ক্রিয়েট
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         
-        // ⏱️ ফায়ারবেস অথেনটিকেশন সেশন তৈরি হওয়ার জন্য ১ সেকেন্ড অপেক্ষা (গুরুত্বপূর্ণ)
+        // ২. ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা
         await new Promise(r => setTimeout(r, 1000));
 
         const myCode = generateReferCode();
 
-        // ২. Firestore-এ ডেটা সেভ
+        // ৩. Firestore-এ ডেটা সেভ (শুধু নিজের ডকুমেন্ট)
         await setDoc(doc(db, "users", cred.user.uid), {
           username, 
           email, 
@@ -169,7 +166,7 @@
           createdAt: new Date()
         });
 
-        // ৩. নতুন ইউজারকে লগআউট করে দেওয়া যাতে সে লগইন পেজে যায়
+        // ৪. ডেটা সেভ হওয়ার পর অটো লগআউট
         await signOut(auth);
 
         document.getElementById("successBox").style.display = "flex";
@@ -180,7 +177,7 @@
         if (e.code === "auth/email-already-in-use") msg = "এই ইমেইল আগেই ব্যবহার হয়েছে!";
         else if (e.code === "auth/invalid-email") msg = "ইমেইল ফরম্যাট সঠিক নয়!";
         else if (e.code === "auth/weak-password") msg = "পাসওয়ার্ড দুর্বল!";
-        else if (e.code === "permission-denied") msg = "ফায়ারবেস রুলস আপডেট হতে ১-২ মিনিট সময় লাগে। একটু পরে আবার চেষ্টা করুন।";
+        else if (e.code === "permission-denied") msg = "ফায়ারবেস রুলস আপডেট হতে ১-২ মিনিট সময় লাগে। ব্রাউজারের ক্যাশ ক্লিয়ার করে আবার চেষ্টা করুন।";
         
         alert("❌ " + msg);
         btn.disabled = false;
