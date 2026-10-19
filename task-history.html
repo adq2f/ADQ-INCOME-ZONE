@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Task History — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=35">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     .task-group-card {
@@ -23,71 +23,24 @@
       margin-bottom: 12px;
       flex-wrap: wrap;
     }
-    .task-group-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 4px;
-    }
-    .task-group-meta {
-      font-size: 11px;
-      color: #94a3b8;
-    }
-    .task-group-stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .tg-stat {
-      background: #f8fafc;
-      padding: 10px 6px;
-      border-radius: 10px;
-      text-align: center;
-    }
+    .task-group-title { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .task-group-meta { font-size: 11px; color: #94a3b8; }
+    .task-group-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+    .tg-stat { background: #f8fafc; padding: 10px 6px; border-radius: 10px; text-align: center; }
     .tg-stat .v { font-size: 18px; font-weight: 800; font-family: 'Inter'; }
     .tg-stat.good .v { color: #10b981; }
     .tg-stat.bad .v { color: #ef4444; }
     .tg-stat.pending .v { color: #f59e0b; }
-    .tg-stat .l {
-      font-size: 10px; color: #64748b;
-      font-weight: 700; text-transform: uppercase; margin-top: 2px;
-    }
-    .task-group-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .tg-stat .l { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+    .task-group-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .task-group-actions button {
-      flex: 1;
-      min-width: 130px;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 12px;
-      font-family: inherit;
-      transition: 0.2s;
+      flex: 1; min-width: 130px; padding: 10px 14px; border-radius: 10px;
+      border: none; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; transition: 0.2s;
     }
-    .btn-xlsx-submit {
-      background: linear-gradient(135deg, #4f46e5, #7c3aed);
-      color: white;
-      box-shadow: 0 4px 12px rgba(79,70,229,0.3);
-    }
-    .btn-xlsx-result {
-      background: linear-gradient(135deg, #10b981, #059669);
-      color: white;
-      box-shadow: 0 4px 12px rgba(16,185,129,0.3);
-    }
+    .btn-xlsx-submit { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.3); }
+    .btn-xlsx-result { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
     .task-group-actions button:hover { transform: translateY(-1px); }
-    .task-group-actions button:disabled {
-      background: #cbd5e1;
-      color: white;
-      box-shadow: none;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .task-group-actions button:disabled { background: #cbd5e1; color: white; box-shadow: none; cursor: not-allowed; transform: none; }
   </style>
 </head>
 <body>
@@ -173,12 +126,7 @@
         const groups = {};
         subs.forEach(s => {
           if (!groups[s.taskId]) {
-            groups[s.taskId] = {
-              taskId: s.taskId,
-              taskTitle: s.taskTitle || "Task",
-              taskPlatform: s.taskPlatform || "Other",
-              items: []
-            };
+            groups[s.taskId] = { taskId: s.taskId, taskTitle: s.taskTitle || "Task", taskPlatform: s.taskPlatform || "Other", items: [] };
           }
           groups[s.taskId].items.push(s);
         });
@@ -225,11 +173,7 @@
         return;
       }
 
-      const platformIcons = {
-        Facebook: "📘", Twitter: "🐦", Instagram: "📷",
-        LinkedIn: "💼", TikTok: "🎵", Gmail: "📧",
-        WhatsApp: "💬", Other: "🔗"
-      };
+      const platformIcons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
 
       list.innerHTML = filtered.map(g => {
         const icon = platformIcons[g.taskPlatform] || "🔗";
@@ -249,18 +193,8 @@
               <div class="tg-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
             </div>
             <div class="task-group-actions">
-              <button class="btn-xlsx-submit" 
-                onclick="downloadSubmitXLSX('${g.taskId}')" 
-                ${submitDisabled ? 'disabled' : ''}
-                title="${submitDisabled ? 'Task closed হলে download পারবে' : ''}">
-                📊 My Submissions XLSX
-              </button>
-              <button class="btn-xlsx-result" 
-                onclick="downloadResultXLSX('${g.taskId}')" 
-                ${resultDisabled ? 'disabled' : ''}
-                title="${resultDisabled ? 'Result publish হলে download পারবে' : ''}">
-                📥 Result XLSX
-              </button>
+              <button class="btn-xlsx-submit" onclick="downloadSubmitXLSX('${g.taskId}')" ${submitDisabled ? 'disabled' : ''} title="${submitDisabled ? 'Task closed হলে download পারবে' : ''}">📊 My Submissions XLSX</button>
+              <button class="btn-xlsx-result" onclick="downloadResultXLSX('${g.taskId}')" ${resultDisabled ? 'disabled' : ''} title="${resultDisabled ? 'Result publish হলে download পারবে' : ''}">📥 Result XLSX</button>
             </div>
           </div>
         `;
@@ -272,11 +206,7 @@
       const group = allTaskGroups.find(g => g.taskId === taskId);
       if (!group) return alert("Task পাওয়া যায়নি!");
       const task = taskCache[taskId] || {};
-      const fields = task.fields || [
-        { key: "uid", label: "UID" },
-        { key: "password", label: "Password" },
-        { key: "2fa_key", label: "2FA Key" }
-      ];
+      const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "2fa_key", label: "2FA Key" }];
       const sheetData = group.items.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -289,10 +219,7 @@
           }
           row[f.label] = (v === undefined || v === null) ? "" : String(v);
         });
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit"
-        }) || "";
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) || "";
         row["Status"] = s.status || "pending";
         return row;
       });
