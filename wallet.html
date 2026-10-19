@@ -4,18 +4,99 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wallet — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=35">
   <style>
-    .wm-tabs {
-      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px;
+    /* Premium Wallet Design */
+    .wallet-hero {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      border-radius: 24px;
+      padding: 24px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(15,23,42,0.4);
+      margin-bottom: 20px;
     }
+    .wallet-hero::before {
+      content: ''; position: absolute;
+      top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 60%);
+      animation: rotateGlow 10s linear infinite;
+    }
+    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .wallet-hero-content { position: relative; z-index: 2; }
+    .wh-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: 700; }
+    .wh-amount { font-size: 42px; font-weight: 900; font-family: 'Inter', sans-serif; margin: 4px 0 20px; line-height: 1; text-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    
+    .wh-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .wh-btn {
+      background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2); color: white;
+      padding: 12px; border-radius: 14px; text-decoration: none;
+      font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: 0.3s;
+    }
+    .wh-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+    /* Premium Wallet Cards */
+    .premium-wallet-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,1);
+      border: 1px solid rgba(226,232,240,0.8);
+      position: relative; overflow: hidden;
+    }
+    .pwc-head {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+    }
+    .pwc-title { font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .pwc-edit-btn {
+      background: #eef2ff; color: #4f46e5; border: none; padding: 6px 14px; border-radius: 10px;
+      font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
+    }
+    .pwc-edit-btn:hover { background: #4f46e5; color: white; }
+
+    /* Wallet Info Rows */
+    .wallet-info-box {
+      background: #f8fafc; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #6366f1;
+      transition: 0.2s;
+    }
+    .wallet-info-box:hover { background: #eef2ff; transform: translateX(4px); }
+    .wib-left .method { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; }
+    .wib-left .number { font-size: 15px; color: #0f172a; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 2px; }
+    .wib-left .name { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .wib-copy { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    
+    /* Premium Stats */
+    .premium-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .ps-card {
+      background: white; border-radius: 16px; padding: 16px 10px; text-align: center;
+      box-shadow: 0 4px 16px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.6);
+      position: relative; overflow: hidden;
+    }
+    .ps-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+    .ps-card.good::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .ps-card.bad::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .ps-card.pending::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .ps-icon { font-size: 24px; margin-bottom: 6px; display: block; }
+    .ps-num { font-size: 22px; font-weight: 900; font-family: 'Inter', sans-serif; line-height: 1; }
+    .ps-card.good .ps-num { color: #10b981; }
+    .ps-card.bad .ps-num { color: #ef4444; }
+    .ps-card.pending .ps-num { color: #f59e0b; }
+    .ps-label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+
+    /* Tabs for Modal */
+    .wm-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
     .wm-tabs::-webkit-scrollbar { display: none; }
     .wm-tab {
       padding: 8px 16px; border-radius: 10px; background: #f1f5f9; color: #64748b;
-      border: 2px solid transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+      border: 2px solid transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s;
     }
     .wm-tab.active { background: #eef2ff; color: #4f46e5; border-color: #6366f1; }
-    .wm-input-group { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -26,7 +107,7 @@
     </button>
     <div class="logo">
       <div class="mark">A</div>
-      <span>Wallet</span>
+      <span>My Wallet</span>
     </div>
     <button class="nav-logout" id="logoutBtn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -34,43 +115,55 @@
   </div>
 
   <div class="container">
-    <div class="wallet-balance">
-      <div class="wallet-balance-label">💰 Available Balance</div>
-      <div class="wallet-balance-amount" id="balance">৳0</div>
-      <div class="wallet-balance-actions">
-        <a href="withdraw.html" id="withdrawBtnLink">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <polyline points="19 12 12 19 5 12"></polyline>
-          </svg>
-          Withdraw
-        </a>
-        <a href="task-history.html">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          History
-        </a>
+    <!-- Premium Hero Balance Card -->
+    <div class="wallet-hero">
+      <div class="wallet-hero-content">
+        <div class="wh-label">💰 Available Balance</div>
+        <div class="wh-amount" id="balance">৳0</div>
+        <div class="wh-actions">
+          <a href="withdraw.html" id="withdrawBtnLink" class="wh-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            Withdraw
+          </a>
+          <a href="task-history.html" class="wh-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            History
+          </a>
+        </div>
       </div>
     </div>
 
-    <div class="wallet-info-card" id="walletSetupCard">
-      <h3>
-        💳 My Payment Info
-        <button class="edit-btn" id="editWalletBtn">✏️ Edit</button>
-      </h3>
+    <!-- Wallet Setup Info Card -->
+    <div class="premium-wallet-card" id="walletSetupCard">
+      <div class="pwc-head">
+        <div class="pwc-title">💳 My Payment Info</div>
+        <button class="pwc-edit-btn" id="editWalletBtn">✏️ Edit</button>
+      </div>
       <div id="walletInfoContent"></div>
     </div>
 
-    <div class="wallet-stats">
-      <div class="w-stat g"><span class="w-icon">✅</span><div class="w-num" id="statGood">0</div><div class="w-label">Good</div></div>
-      <div class="w-stat b"><span class="w-icon">❌</span><div class="w-num" id="statBad">0</div><div class="w-label">Bad</div></div>
-      <div class="w-stat p"><span class="w-icon">⏳</span><div class="w-num" id="statPending">0</div><div class="w-label">Pending</div></div>
+    <!-- Premium Stats Cards -->
+    <div class="premium-stats">
+      <div class="ps-card good">
+        <span class="ps-icon">✅</span>
+        <div class="ps-num" id="statGood">0</div>
+        <div class="ps-label">Good</div>
+      </div>
+      <div class="ps-card bad">
+        <span class="ps-icon">❌</span>
+        <div class="ps-num" id="statBad">0</div>
+        <div class="ps-label">Bad</div>
+      </div>
+      <div class="ps-card pending">
+        <span class="ps-icon">⏳</span>
+        <div class="ps-num" id="statPending">0</div>
+        <div class="ps-label">Pending</div>
+      </div>
     </div>
 
+    <!-- History Header -->
     <div class="dash-section-head">
-      <h3>📜 Withdraw History</h3>
+      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a;">📜 Withdraw History</h3>
     </div>
     <div id="withdrawHistory" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
@@ -78,16 +171,16 @@
   <nav class="bottom-nav">
     <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
     <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
+    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
     <a href="wallet.html" data-page="wallet" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="task-history.html" data-page="history"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
-  <!-- Setup Modal -->
+  <!-- Premium Setup Modal -->
   <div class="modal-overlay" id="walletModal">
-    <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
-      <h3>💳 Wallet Setup</h3>
-      <p class="sub">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন। withdraw-এর সময় অটো ফিল হবে।</p>
+    <div class="modal-box" style="max-height: 90vh; overflow-y: auto; border-radius: 24px; padding: 24px;">
+      <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">💳 Wallet Setup</h3>
+      <p class="sub" style="font-size: 13px; color: #64748b; margin-bottom: 16px;">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন। withdraw-এর সময় অটো ফিল হবে।</p>
 
       <div class="wm-tabs">
         <button class="wm-tab active" data-method="bkash">bKash</button>
@@ -96,17 +189,17 @@
         <button class="wm-tab" data-method="binance">Binance</button>
       </div>
 
-      <div class="wm-input-group" id="wmInputGroup">
-        <label class="label-text" id="wmLabel">bKash Number</label>
-        <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX">
+      <div class="wm-input-group">
+        <label class="label-text" id="wmLabel" style="font-size: 12px; font-weight: 800; color: #475569;">bKash Number</label>
+        <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX" style="border-radius: 12px;">
         
-        <label class="label-text">Account Name (optional)</label>
-        <input type="text" id="wm-name" class="admin-input" placeholder="আপনার নাম">
+        <label class="label-text" style="font-size: 12px; font-weight: 800; color: #475569; margin-top: 12px; display: block;">Account Name (optional)</label>
+        <input type="text" id="wm-name" class="admin-input" placeholder="আপনার নাম" style="border-radius: 12px;">
       </div>
 
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button class="btn btn-primary" style="flex:1;margin:0" id="saveWalletBtn">💾 Save</button>
-        <button class="btn btn-outline" style="margin:0;padding:12px 16px" id="closeWalletBtn">✕</button>
+      <div style="display:flex;gap:10px;margin-top:20px">
+        <button class="btn btn-primary" style="flex:1;margin:0;border-radius:12px;" id="saveWalletBtn">💾 Save</button>
+        <button class="btn btn-outline" style="margin:0;padding:12px 20px;border-radius:12px;" id="closeWalletBtn">✕</button>
       </div>
     </div>
   </div>
@@ -127,8 +220,6 @@
     let currentUser = null;
     let userData = null;
     let enabledMethods = {};
-    
-    // লোকাল স্টেট (মোডাল ওপেন করলে এখানে ডেটা রাখব)
     let tempWalletData = {}; 
     let activeMethod = "bkash";
 
@@ -167,7 +258,6 @@
       document.getElementById("statBad").textContent = userData.totalBad || 0;
       document.getElementById("statPending").textContent = userData.totalPending || 0;
 
-      // ওল্ড ডেটা মাইগ্রেশন (যদি আগে শুধু ১টা info সেভ করা থাকে)
       if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
         userData.wallets = {};
         userData.wallets[userData.walletInfo.method] = {
@@ -192,31 +282,27 @@
       }
     }
 
-    // সেভ করা সব মেথড স্ক্রিনে দেখানো
     function renderWalletInfo() {
       const content = document.getElementById("walletInfoContent");
-      const card = document.getElementById("walletSetupCard");
       const wallets = userData?.wallets || {};
-      
       const savedKeys = Object.keys(wallets).filter(k => wallets[k] && wallets[k].number);
 
       if (savedKeys.length > 0) {
-        card.classList.add("setup");
         content.innerHTML = savedKeys.map(key => {
           const w = wallets[key];
           return `
-            <div class="wallet-info-item" style="margin-bottom:8px; border-left:3px solid #6366f1;">
-              <div>
-                <div style="font-size:11px;color:#64748b;font-weight:700">${METHOD_NAMES[key]}</div>
-                <div class="v" onclick="copyText('${w.number}')" style="cursor:pointer;color:#4f46e5;font-size:14px">${w.number} 📋</div>
-                ${w.name ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${w.name}</div>` : ''}
+            <div class="wallet-info-box">
+              <div class="wib-left">
+                <div class="method">${METHOD_NAMES[key]}</div>
+                <div class="number">${w.number}</div>
+                ${w.name ? `<div class="name">${w.name}</div>` : ''}
               </div>
+              <button class="wib-copy" onclick="copyText('${w.number}')">📋</button>
             </div>
           `;
         }).join("");
       } else {
-        card.classList.remove("setup");
-        content.innerHTML = `<div class="wallet-info-empty">⚠️ কোনো Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
+        content.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;font-weight:600;">⚠️ কোনো Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
       }
     }
 
@@ -224,27 +310,19 @@
       navigator.clipboard.writeText(text).then(() => alert("✅ Copied: " + text));
     };
 
-    // মোডাল হ্যান্ডলিং
     const modal = document.getElementById("walletModal");
-    
     document.getElementById("editWalletBtn").onclick = () => {
-      // লোকাল কপি তৈরি করা
       tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
       switchMethodTab("bkash");
       modal.classList.add("show");
     };
-    
     document.getElementById("closeWalletBtn").onclick = () => modal.classList.remove("show");
 
-    // ট্যাব সুইচিং লজিক
     document.querySelectorAll(".wm-tab").forEach(tab => {
-      tab.onclick = () => {
-        switchMethodTab(tab.dataset.method);
-      };
+      tab.onclick = () => switchMethodTab(tab.dataset.method);
     });
 
     function switchMethodTab(method) {
-      // আগের ইনপুট ভ্যালু সেভ করা
       const currentNum = document.getElementById("wm-number").value.trim();
       const currentName = document.getElementById("wm-name").value.trim();
       if (currentNum || currentName) {
@@ -254,20 +332,16 @@
       }
 
       activeMethod = method;
-      
-      // UI আপডেট
       document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === method));
       document.getElementById("wmLabel").textContent = METHOD_LABELS[method];
       document.getElementById("wm-number").placeholder = METHOD_PLACEHOLDERS[method];
       
-      // নতুন মেথডের ডেটা লোড
       const data = tempWalletData[method] || {};
       document.getElementById("wm-number").value = data.number || "";
       document.getElementById("wm-name").value = data.name || "";
     }
 
     document.getElementById("saveWalletBtn").onclick = async () => {
-      // শেষবারের ইনপুট ভ্যালু চেক
       const num = document.getElementById("wm-number").value.trim();
       const name = document.getElementById("wm-name").value.trim();
       
@@ -280,9 +354,7 @@
       }
 
       try {
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          wallets: tempWalletData
-        });
+        await updateDoc(doc(db, "users", currentUser.uid), { wallets: tempWalletData });
         userData.wallets = tempWalletData;
         renderWalletInfo();
         modal.classList.remove("show");
