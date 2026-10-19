@@ -1,7 +1,3 @@
-// ==================================================
-// ADQ INCOME ZONE — LIVE CHAT WIDGET
-// Floating bubble + Premium panel + Online status
-// ==================================================
 import { auth, db } from "./firebase.js";
 import {
   doc, getDoc, setDoc, collection, addDoc,
@@ -11,36 +7,26 @@ import {
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 export function initChatWidget() {
-  if (document.getElementById("chatFab")) return; // once only
+  if (document.getElementById("chatFab")) return;
 
-  // ===== INJECT MARKUP =====
   const wrap = document.createElement("div");
   wrap.innerHTML = `
     <button class="chat-fab" id="chatFab" title="Live Chat">
-      💬
-      <span class="fab-badge" id="chatBadge" style="display:none">0</span>
+      💬 <span class="fab-badge" id="chatBadge" style="display:none">0</span>
     </button>
-
     <div class="chat-panel" id="chatPanel">
       <div class="chat-panel-head">
+        <button class="chat-close" id="chatClose" style="font-size:20px;margin-right:5px;">←</button>
         <div class="chat-admin-avatar">
-          🛡️
-          <span class="chat-online-dot" id="chatOnlineDot"></span>
+          🛡️ <span class="chat-online-dot" id="chatOnlineDot"></span>
         </div>
         <div class="chat-panel-info">
-          <h4 id="chatAdminName">
-            ADQ Admin
-            <span class="admin-online-badge" id="chatStatusText">Online</span>
-          </h4>
+          <h4 id="chatAdminName">ADQ Admin <span class="admin-online-badge" id="chatStatusText">Online</span></h4>
           <p>সাধারণত ৫ মিনিটে রিপ্লাই</p>
         </div>
-        <button class="chat-close" id="chatClose">✕</button>
       </div>
       <div class="chat-body" id="chatBody">
-        <div class="chat-empty">
-          <span class="em">👋</span>
-          স্বাগতম! এখানে লিখুন, Admin শীঘ্রই রিপ্লাই দেবে।
-        </div>
+        <div class="chat-empty"><span class="em">👋</span>স্বাগতম! এখানে লিখুন, Admin শীঘ্রই রিপ্লাই দেবে।</div>
       </div>
       <div class="chat-input-bar">
         <input type="text" id="chatInput" placeholder="মেসেজ লিখুন..." maxlength="500">
@@ -63,7 +49,6 @@ export function initChatWidget() {
   let unsubMsgs = null;
   let unsubChat = null;
 
-  // ===== ONLINE STATUS =====
   function watchOnlineStatus() {
     try {
       const ref = doc(db, "settings", "online_status");
@@ -83,7 +68,6 @@ export function initChatWidget() {
     } catch (e) {}
   }
 
-  // ===== AUTH =====
   onAuthStateChanged(auth, async (user) => {
     if (!user) return;
     currentUser = user;
@@ -96,7 +80,6 @@ export function initChatWidget() {
     chatId = user.uid;
     const chatRef = doc(db, "chats", chatId);
 
-    // Ensure chat doc exists
     try {
       const chatSnap = await getDoc(chatRef);
       if (!chatSnap.exists()) {
@@ -112,11 +95,8 @@ export function initChatWidget() {
           createdAt: serverTimestamp()
         });
       }
-    } catch (e) {
-      console.error("chat init:", e);
-    }
+    } catch (e) {}
 
-    // listen unread count → badge
     unsubChat = onSnapshot(chatRef, (s) => {
       if (!s.exists()) return;
       const cnt = s.data().unreadForUser || 0;
@@ -128,7 +108,6 @@ export function initChatWidget() {
       }
     });
 
-    // listen messages
     if (unsubMsgs) unsubMsgs();
     const msgsRef = collection(db, "chats", chatId, "messages");
     const q = query(msgsRef, orderBy("createdAt", "asc"));
@@ -140,19 +119,16 @@ export function initChatWidget() {
         body.innerHTML = msgs.map(m => {
           const t = m.createdAt?.toDate?.();
           const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
-          return `<div class="chat-msg ${m.sender}">
-            ${escapeHtml(m.text)}
-            <span class="msg-time">${time}</span>
-          </div>`;
+          return `<div class="chat-msg ${m.sender}">${escapeHtml(m.text)}<span class="msg-time">${time}</span></div>`;
         }).join("");
         body.scrollTop = body.scrollHeight;
       }
     });
   });
 
-  // ===== OPEN =====
   fab.onclick = async () => {
     panel.classList.add("open");
+    history.pushState({ chatOpen: true }, ""); // মোবাইল ব্যাক বাটন হ্যান্ডেল করার জন্য
     if (chatId) {
       try {
         const cRef = doc(db, "chats", chatId);
@@ -164,7 +140,19 @@ export function initChatWidget() {
     }
   };
 
-  // ===== SEND =====
+  // ক্লোজ বাটনে ক্লিক করলে
+  document.getElementById("chatClose").onclick = () => {
+    panel.classList.remove("open");
+    history.back(); // হিস্ট্রি থেকে সরানো
+  };
+
+  // মোবাইলের ফিজিক্যাল ব্যাক বাটনে ক্লিক করলে চ্যাট বন্ধ হবে
+  window.addEventListener("popstate", () => {
+    if (panel.classList.contains("open")) {
+      panel.classList.remove("open");
+    }
+  });
+
   sendBtn.onclick = async () => {
     const text = input.value.trim();
     if (!text || !currentUser || !chatId) return;
@@ -185,9 +173,7 @@ export function initChatWidget() {
         unreadForAdmin: increment(1)
       });
       input.value = "";
-    } catch (e) {
-      alert("❌ " + e.message);
-    }
+    } catch (e) { alert("❌ " + e.message); }
     sendBtn.disabled = false;
   };
 
@@ -195,11 +181,6 @@ export function initChatWidget() {
     if (e.key === "Enter") sendBtn.click();
   });
 
-  document.getElementById("chatClose").onclick = () => {
-    panel.classList.remove("open");
-  };
-
-  // ===== UTIL =====
   function escapeHtml(s) {
     return String(s ?? "").replace(/[&<>"']/g, c => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
