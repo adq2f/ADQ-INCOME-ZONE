@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
   <style>
     .hq-task-card {
       background: white;
@@ -363,7 +363,6 @@
           return;
         }
         const now = new Date();
-        // এখানে slice(0, 3) সরিয়ে দেওয়া হয়েছে যাতে সব টাস্ক দেখায়
         const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .filter(t => {
             const end = t.endTime?.toDate?.();
