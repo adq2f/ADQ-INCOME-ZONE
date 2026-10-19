@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wallet — ADQ Income Zone</title>
   <link rel="stylesheet" href="style.css?v=28">
+  <style>
+    .wm-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px;
+    }
+    .wm-tabs::-webkit-scrollbar { display: none; }
+    .wm-tab {
+      padding: 8px 16px; border-radius: 10px; background: #f1f5f9; color: #64748b;
+      border: 2px solid transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .wm-tab.active { background: #eef2ff; color: #4f46e5; border-color: #6366f1; }
+    .wm-input-group { margin-top: 12px; }
+  </style>
 </head>
 <body>
 
@@ -22,7 +34,6 @@
   </div>
 
   <div class="container">
-
     <div class="wallet-balance">
       <div class="wallet-balance-label">💰 Available Balance</div>
       <div class="wallet-balance-amount" id="balance">৳0</div>
@@ -72,24 +83,26 @@
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
 
+  <!-- Setup Modal -->
   <div class="modal-overlay" id="walletModal">
-    <div class="modal-box">
-      <h3>💳 Wallet Info Setup</h3>
-      <p class="sub">তোমার payment info save করো — withdraw-এর সময় auto-fill হবে</p>
+    <div class="modal-box" style="max-height: 90vh; overflow-y: auto;">
+      <h3>💳 Wallet Setup</h3>
+      <p class="sub">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন। withdraw-এর সময় অটো ফিল হবে।</p>
 
-      <label class="label-text">Payment Method</label>
-      <select id="wm-method" class="admin-input">
-        <option value="bkash">bKash</option>
-        <option value="nagad">Nagad</option>
-        <option value="rocket">Rocket</option>
-        <option value="binance">Binance</option>
-      </select>
+      <div class="wm-tabs">
+        <button class="wm-tab active" data-method="bkash">bKash</button>
+        <button class="wm-tab" data-method="nagad">Nagad</button>
+        <button class="wm-tab" data-method="rocket">Rocket</button>
+        <button class="wm-tab" data-method="binance">Binance</button>
+      </div>
 
-      <label class="label-text">Account Number / Wallet ID</label>
-      <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX / Wallet ID">
-
-      <label class="label-text">Account Name (optional)</label>
-      <input type="text" id="wm-name" class="admin-input" placeholder="নাম">
+      <div class="wm-input-group" id="wmInputGroup">
+        <label class="label-text" id="wmLabel">bKash Number</label>
+        <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX">
+        
+        <label class="label-text">Account Name (optional)</label>
+        <input type="text" id="wm-name" class="admin-input" placeholder="আপনার নাম">
+      </div>
 
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn btn-primary" style="flex:1;margin:0" id="saveWalletBtn">💾 Save</button>
@@ -114,6 +127,18 @@
     let currentUser = null;
     let userData = null;
     let enabledMethods = {};
+    
+    // লোকাল স্টেট (মোডাল ওপেন করলে এখানে ডেটা রাখব)
+    let tempWalletData = {}; 
+    let activeMethod = "bkash";
+
+    const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
+    const METHOD_LABELS = {
+      bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID"
+    };
+    const METHOD_PLACEHOLDERS = {
+      bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address"
+    };
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -142,6 +167,15 @@
       document.getElementById("statBad").textContent = userData.totalBad || 0;
       document.getElementById("statPending").textContent = userData.totalPending || 0;
 
+      // ওল্ড ডেটা মাইগ্রেশন (যদি আগে শুধু ১টা info সেভ করা থাকে)
+      if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
+        userData.wallets = {};
+        userData.wallets[userData.walletInfo.method] = {
+          number: userData.walletInfo.number,
+          name: userData.walletInfo.name || ""
+        };
+      }
+
       await loadEnabledMethods();
       renderWalletInfo();
       checkWithdrawAvailability();
@@ -158,28 +192,31 @@
       }
     }
 
+    // সেভ করা সব মেথড স্ক্রিনে দেখানো
     function renderWalletInfo() {
-      const card = document.getElementById("walletSetupCard");
       const content = document.getElementById("walletInfoContent");
-      const info = userData?.walletInfo;
+      const card = document.getElementById("walletSetupCard");
+      const wallets = userData?.wallets || {};
+      
+      const savedKeys = Object.keys(wallets).filter(k => wallets[k] && wallets[k].number);
 
-      if (info && info.number) {
+      if (savedKeys.length > 0) {
         card.classList.add("setup");
-        const methodNames = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
-        content.innerHTML = `
-          <div class="wallet-info-item">
-            <span class="k">Method</span>
-            <span class="v">${methodNames[info.method] || info.method}</span>
-          </div>
-          <div class="wallet-info-item">
-            <span class="k">Number</span>
-            <span class="v" onclick="copyText('${info.number}')" style="cursor:pointer;color:#4f46e5">${info.number} 📋</span>
-          </div>
-          ${info.name ? `<div class="wallet-info-item"><span class="k">Name</span><span class="v">${info.name}</span></div>` : ''}
-        `;
+        content.innerHTML = savedKeys.map(key => {
+          const w = wallets[key];
+          return `
+            <div class="wallet-info-item" style="margin-bottom:8px; border-left:3px solid #6366f1;">
+              <div>
+                <div style="font-size:11px;color:#64748b;font-weight:700">${METHOD_NAMES[key]}</div>
+                <div class="v" onclick="copyText('${w.number}')" style="cursor:pointer;color:#4f46e5;font-size:14px">${w.number} 📋</div>
+                ${w.name ? `<div style="font-size:11px;color:#94a3b8;margin-top:2px">${w.name}</div>` : ''}
+              </div>
+            </div>
+          `;
+        }).join("");
       } else {
         card.classList.remove("setup");
-        content.innerHTML = `<div class="wallet-info-empty">⚠️ Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
+        content.innerHTML = `<div class="wallet-info-empty">⚠️ কোনো Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
       }
     }
 
@@ -187,27 +224,66 @@
       navigator.clipboard.writeText(text).then(() => alert("✅ Copied: " + text));
     };
 
+    // মোডাল হ্যান্ডলিং
     const modal = document.getElementById("walletModal");
+    
     document.getElementById("editWalletBtn").onclick = () => {
-      const info = userData?.walletInfo || {};
-      document.getElementById("wm-method").value = info.method || "bkash";
-      document.getElementById("wm-number").value = info.number || "";
-      document.getElementById("wm-name").value = info.name || "";
+      // লোকাল কপি তৈরি করা
+      tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
+      switchMethodTab("bkash");
       modal.classList.add("show");
     };
+    
     document.getElementById("closeWalletBtn").onclick = () => modal.classList.remove("show");
 
+    // ট্যাব সুইচিং লজিক
+    document.querySelectorAll(".wm-tab").forEach(tab => {
+      tab.onclick = () => {
+        switchMethodTab(tab.dataset.method);
+      };
+    });
+
+    function switchMethodTab(method) {
+      // আগের ইনপুট ভ্যালু সেভ করা
+      const currentNum = document.getElementById("wm-number").value.trim();
+      const currentName = document.getElementById("wm-name").value.trim();
+      if (currentNum || currentName) {
+        if (!tempWalletData[activeMethod]) tempWalletData[activeMethod] = {};
+        tempWalletData[activeMethod].number = currentNum;
+        tempWalletData[activeMethod].name = currentName;
+      }
+
+      activeMethod = method;
+      
+      // UI আপডেট
+      document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === method));
+      document.getElementById("wmLabel").textContent = METHOD_LABELS[method];
+      document.getElementById("wm-number").placeholder = METHOD_PLACEHOLDERS[method];
+      
+      // নতুন মেথডের ডেটা লোড
+      const data = tempWalletData[method] || {};
+      document.getElementById("wm-number").value = data.number || "";
+      document.getElementById("wm-name").value = data.name || "";
+    }
+
     document.getElementById("saveWalletBtn").onclick = async () => {
-      const method = document.getElementById("wm-method").value;
-      const number = document.getElementById("wm-number").value.trim();
+      // শেষবারের ইনপুট ভ্যালু চেক
+      const num = document.getElementById("wm-number").value.trim();
       const name = document.getElementById("wm-name").value.trim();
-      if (!number) return alert("Account number দাও!");
+      
+      if (num) {
+        if (!tempWalletData[activeMethod]) tempWalletData[activeMethod] = {};
+        tempWalletData[activeMethod].number = num;
+        tempWalletData[activeMethod].name = name;
+      } else if (tempWalletData[activeMethod]) {
+        delete tempWalletData[activeMethod];
+      }
 
       try {
         await updateDoc(doc(db, "users", currentUser.uid), {
-          walletInfo: { method, number, name }
+          wallets: tempWalletData
         });
-        userData.walletInfo = { method, number, name };
+        userData.wallets = tempWalletData;
         renderWalletInfo();
         modal.classList.remove("show");
         alert("✅ Wallet info saved!");
