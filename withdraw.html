@@ -114,11 +114,7 @@
       text-align: center;
       box-shadow: 0 4px 16px rgba(15,23,42,0.06);
     }
-    .empty-methods .icon {
-      font-size: 56px;
-      margin-bottom: 12px;
-      display: block;
-    }
+    .empty-methods .icon { font-size: 56px; margin-bottom: 12px; display: block; }
     .empty-methods h3 { font-size: 16px; color: #0f172a; margin-bottom: 6px; }
     .empty-methods p { font-size: 13px; color: #64748b; line-height: 1.5; }
 
@@ -137,18 +133,8 @@
     .wd-history-item.approved { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
     .wd-history-item.rejected { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
     .wd-history-left { flex: 1; min-width: 0; }
-    .wd-history-left .amount {
-      font-size: 15px;
-      font-weight: 800;
-      color: #0f172a;
-      font-family: 'Inter';
-      margin-bottom: 4px;
-    }
-    .wd-history-left .meta {
-      font-size: 11px;
-      color: #94a3b8;
-      word-break: break-all;
-    }
+    .wd-history-left .amount { font-size: 15px; font-weight: 800; color: #0f172a; font-family: 'Inter'; margin-bottom: 4px; }
+    .wd-history-left .meta { font-size: 11px; color: #94a3b8; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -275,7 +261,6 @@
         document.getElementById("balance").textContent = "৳" + userBalance;
       }
 
-      // Load settings
       try {
         const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
         if (wSnap.exists()) {
@@ -285,7 +270,6 @@
         }
       } catch (e) {}
 
-      // Update warning text
       document.getElementById("withdrawWarning").innerHTML = `
         ⚠️ <b>Minimum ৳${minWithdraw}</b><br>
         Withdraw request করলে সাথে সাথে তোমার balance থেকে কাটা হবে। Admin approve করলে টাকা পাবে, reject করলে ফেরত আসবে।<br>
@@ -313,7 +297,6 @@
     function renderMethods() {
       const list = document.getElementById("methodsList");
 
-      // If withdraw globally disabled
       if (!withdrawEnabled) {
         list.innerHTML = `
           <div class="empty-methods">
@@ -325,7 +308,6 @@
         return;
       }
 
-      // Filter enabled methods
       const availableMethods = Object.keys(PAY_METHODS).filter(k => enabledMethods[k] !== false);
 
       if (availableMethods.length === 0) {
@@ -362,8 +344,9 @@
           document.getElementById("accountLabel").textContent = m.accountLabel;
           document.getElementById("accountNum").placeholder = m.placeholder;
 
-          if (userData?.walletInfo && userData.walletInfo.method === selectedMethod) {
-            document.getElementById("accountNum").value = userData.walletInfo.number || "";
+          // ⚡️ এখানে wallets অবজেক্ট থেকে ডেটা অটো ফিল করা হচ্ছে
+          if (userData?.wallets && userData.wallets[selectedMethod]) {
+            document.getElementById("accountNum").value = userData.wallets[selectedMethod].number || "";
           } else {
             document.getElementById("accountNum").value = "";
           }
@@ -389,7 +372,6 @@
       btn.disabled = true;
       btn.textContent = "Verifying...";
 
-      // Password verify
       try {
         await signInWithEmailAndPassword(auth, currentUser.email, confirmPass);
       } catch (e) {
