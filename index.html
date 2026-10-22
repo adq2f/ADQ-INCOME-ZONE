@@ -6,35 +6,16 @@
   <title>ADQ Income Zone</title>
   <link rel="stylesheet" href="style.css?v=35">
   <style>
-    /* Premium Task Card Design */
     .premium-task-card {
       background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: 24px;
-      padding: 20px;
-      margin-bottom: 16px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 12px 32px rgba(15,23,42,0.06);
-      border: 1px solid rgba(226,232,240,0.8);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      border-radius: 24px; padding: 20px; margin-bottom: 16px; position: relative;
+      overflow: hidden; box-shadow: 0 12px 32px rgba(15,23,42,0.06);
+      border: 1px solid rgba(226,232,240,0.8); display: flex; flex-direction: column; gap: 14px;
       transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .premium-task-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 20px 48px rgba(99,102,241,0.15);
-      border-color: rgba(99,102,241,0.3);
-    }
-    .ptc-header {
-      display: flex; align-items: center; gap: 14px;
-    }
-    .ptc-logo {
-      width: 60px; height: 60px; border-radius: 18px;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-      padding: 10px; transition: 0.4s;
-    }
+    .premium-task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
+    .ptc-header { display: flex; align-items: center; gap: 14px; }
+    .ptc-logo { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.15); padding: 10px; transition: 0.4s; }
     .premium-task-card:hover .ptc-logo { transform: scale(1.08) rotate(-5deg); }
     .ptc-logo svg { width: 100%; height: 100%; }
     .ptc-title { flex: 1; min-width: 0; }
@@ -43,25 +24,24 @@
     .ptc-badge.open { background: #d1fae5; color: #065f46; }
     .ptc-badge.upcoming { background: #fef3c7; color: #92400e; }
     .ptc-badge.closed { background: #fee2e2; color: #991b1b; }
-    
     .ptc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .ptc-info-box {
-      background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center;
-      border: 1px solid rgba(226,232,240,0.6);
-    }
+    .ptc-info-box { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(226,232,240,0.6); }
     .ptc-info-box .val { font-size: 15px; font-weight: 900; color: #0f172a; font-family: 'Inter', sans-serif; }
     .ptc-info-box .lbl { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-
     .ptc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
     .ptc-price { font-size: 20px; font-weight: 900; color: #10b981; font-family: 'Inter', sans-serif; line-height: 1; }
     .ptc-price span { font-size: 12px; color: #64748b; font-weight: 600; }
-    .ptc-submit-btn {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white; padding: 10px 20px; border-radius: 12px;
-      font-size: 13px; font-weight: 800; text-decoration: none;
-      box-shadow: 0 8px 20px rgba(99,102,241,0.3); transition: 0.3s;
-    }
+    .ptc-submit-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 8px 20px rgba(99,102,241,0.3); transition: 0.3s; }
     .ptc-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,102,241,0.5); }
+
+    /* Search & Filter UI */
+    .search-filter-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-box { flex: 1; min-width: 200px; position: relative; }
+    .search-box input { width: 100%; padding: 14px 16px 14px 42px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; }
+    .search-box input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+    .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; stroke: #94a3b8; }
+    .filter-box select { padding: 14px 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600; outline: none; background: white; }
+    .filter-box select:focus { border-color: #6366f1; }
   </style>
 </head>
 <body>
@@ -83,6 +63,22 @@
     <div class="dash-section-head" style="margin-top: 10px; margin-bottom: 16px;">
       <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">🎯 Available Tasks</h3>
     </div>
+
+    <!-- নতুন সার্চ ও ফিল্টার সেকশন -->
+    <div class="search-filter-box">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input type="text" id="taskSearch" placeholder="টাস্কের নাম খুঁজুন...">
+      </div>
+      <div class="filter-box">
+        <select id="taskFilter">
+          <option value="all">সব টাস্ক</option>
+          <option value="open">🟢 Open</option>
+          <option value="upcoming">⏳ Upcoming</option>
+        </select>
+      </div>
+    </div>
+
     <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
 
@@ -115,6 +111,8 @@
       WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
       Other: { color: "#64748b", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` }
     };
+
+    let allTasks = [];
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -169,76 +167,97 @@
           list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো task নেই</p></div>`;
           return;
         }
-        const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-
-        list.innerHTML = tasks.map((t, i) => renderPremiumTaskCard(t, i)).join("");
+        
+        renderTasks();
       } catch (e) {
         list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">${e.message}</p></div>`;
       }
     }
 
-    function renderPremiumTaskCard(t, idx) {
-      const platformKey = t.platform || "Other";
-      const platform = PLATFORM_ICONS[platformKey] || PLATFORM_ICONS.Other;
-      const fieldCount = (t.fields || []).length;
-      
-      const now = new Date();
-      const start = t.startTime?.toDate?.();
-      const end = t.endTime?.toDate?.();
-      let status = "open", statusLabel = "🟢 Open";
-      if (start && now < start) { status = "upcoming"; statusLabel = "⏳ Upcoming"; }
-      else if (end && now > end) { status = "closed"; statusLabel = "🔴 Closed"; }
+    function renderTasks() {
+      const list = document.getElementById("taskList");
+      const search = (document.getElementById("taskSearch").value || "").toLowerCase();
+      const filter = document.getElementById("taskFilter").value;
 
-      let timeLeft = "—";
-      if (end) {
-        const diffMs = end - now;
-        if (diffMs > 0) {
-          const hrs = Math.floor(diffMs / 3600000);
-          const mins = Math.floor((diffMs % 3600000) / 60000);
-          if (hrs > 24) {
-            timeLeft = `${Math.floor(hrs / 24)}d ${hrs % 24}h`;
-          } else if (hrs > 0) {
-            timeLeft = `${hrs}h ${mins}m`;
-          } else {
-            timeLeft = `${mins}m`;
-          }
-        }
+      let filtered = allTasks;
+
+      // সার্চ ফিল্টার
+      if (search) {
+        filtered = filtered.filter(t => (t.title || "").toLowerCase().includes(search));
       }
 
-      return `
-        <div class="premium-task-card" style="animation-delay:${idx * 0.05}s">
-          <div class="ptc-header">
-            <div class="ptc-logo" style="background: ${platform.color}">
-              ${platform.svg}
-            </div>
-            <div class="ptc-title">
-              <h3>${t.title}</h3>
-              <span class="ptc-badge ${status}">${statusLabel}</span>
-            </div>
-          </div>
-          
-          <div class="ptc-info-grid">
-            <div class="ptc-info-box">
-              <div class="val">${timeLeft}</div>
-              <div class="lbl">Time Left</div>
-            </div>
-            <div class="ptc-info-box">
-              <div class="val">${fieldCount}</div>
-              <div class="lbl">Fields Needed</div>
-            </div>
-          </div>
+      // স্ট্যাটাস ফিল্টার
+      const now = new Date();
+      filtered = filtered.filter(t => {
+        const start = t.startTime?.toDate?.();
+        const end = t.endTime?.toDate?.();
+        let status = "open";
+        if (start && now < start) status = "upcoming";
+        else if (end && now > end) status = "closed";
 
-          <div class="ptc-footer">
-            <div>
-              <div class="ptc-price">৳${t.pricePerAccount} <span>/ account</span></div>
-              ${t.referCommission > 0 ? `<div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 4px;">🎁 ৳${t.referCommission} Refer Commission</div>` : ''}
+        if (filter === "open" && status !== "open") return false;
+        if (filter === "upcoming" && status !== "upcoming") return false;
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="dash-empty"><div class="em">🔍</div><p>কোনো টাস্ক খুঁজে পাওয়া যায়নি</p></div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map((t, i) => {
+        const platformKey = t.platform || "Other";
+        const platform = PLATFORM_ICONS[platformKey] || PLATFORM_ICONS.Other;
+        const fieldCount = (t.fields || []).length;
+        
+        const start = t.startTime?.toDate?.();
+        const end = t.endTime?.toDate?.();
+        let status = "open", statusLabel = "🟢 Open";
+        if (start && now < start) { status = "upcoming"; statusLabel = "⏳ Upcoming"; }
+        else if (end && now > end) { status = "closed"; statusLabel = "🔴 Closed"; }
+
+        let timeLeft = "—";
+        if (end) {
+          const diffMs = end - now;
+          if (diffMs > 0) {
+            const hrs = Math.floor(diffMs / 3600000);
+            const mins = Math.floor((diffMs % 3600000) / 60000);
+            if (hrs > 24) timeLeft = `${Math.floor(hrs / 24)}d ${hrs % 24}h`;
+            else if (hrs > 0) timeLeft = `${hrs}h ${mins}m`;
+            else timeLeft = `${mins}m`;
+          }
+        }
+
+        return `
+          <div class="premium-task-card" style="animation-delay:${i * 0.05}s">
+            <div class="ptc-header">
+              <div class="ptc-logo" style="background: ${platform.color}">${platform.svg}</div>
+              <div class="ptc-title">
+                <h3>${t.title}</h3>
+                <span class="ptc-badge ${status}">${statusLabel}</span>
+              </div>
             </div>
-            <a href="task.html?id=${t.id}" class="ptc-submit-btn">Submit Now →</a>
+            <div class="ptc-info-grid">
+              <div class="ptc-info-box"><div class="val">${timeLeft}</div><div class="lbl">Time Left</div></div>
+              <div class="ptc-info-box"><div class="val">${fieldCount}</div><div class="lbl">Fields Needed</div></div>
+            </div>
+            <div class="ptc-footer">
+              <div>
+                <div class="ptc-price">৳${t.pricePerAccount} <span>/ account</span></div>
+                ${t.referCommission > 0 ? `<div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 4px;">🎁 ৳${t.referCommission} Refer Commission</div>` : ''}
+              </div>
+              <a href="task.html?id=${t.id}" class="ptc-submit-btn">Submit Now →</a>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      }).join("");
     }
+
+    // ইভেন্ট লিসেনার
+    document.getElementById("taskSearch").addEventListener("input", renderTasks);
+    document.getElementById("taskFilter").addEventListener("change", renderTasks);
 
     loadNotice();
     loadTasks();
