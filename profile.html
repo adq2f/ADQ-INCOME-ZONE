@@ -4,93 +4,100 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>প্রোফাইল — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=34">
+  <link rel="stylesheet" href="style.css?v=35">
   <style>
-    .refer-card {
+    /* Premium Profile Header */
+    .premium-profile-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      padding: 30px 24px 60px; text-align: center; color: white;
+      position: relative; overflow: hidden; border-radius: 0 0 30px 30px;
+      margin: -20px -16px 0; box-shadow: 0 20px 40px rgba(15,23,42,0.4);
+    }
+    .premium-profile-header::before {
+      content: ''; position: absolute; width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(139,92,246,0.3), transparent 70%);
+      top: -100px; right: -100px; border-radius: 50%;
+    }
+    .premium-avatar {
+      width: 90px; height: 90px; background: white; border-radius: 50%;
+      margin: 0 auto 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 42px; font-weight: 900; color: #6366f1;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3); position: relative; z-index: 1;
+    }
+    .premium-profile-header h1 { font-size: 24px; font-weight: 900; margin-bottom: 4px; position: relative; z-index: 1; }
+    .premium-profile-header p { font-size: 14px; opacity: 0.8; position: relative; z-index: 1; font-weight: 600; }
+    
+    /* Premium Stats */
+    .premium-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      margin: -40px 16px 20px; position: relative; z-index: 2;
+    }
+    .p-stat {
+      background: white; padding: 16px 8px; border-radius: 18px; text-align: center;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.1); border: 1px solid rgba(226,232,240,0.8);
+    }
+    .p-stat .num { font-size: 22px; font-weight: 900; font-family: 'Inter'; line-height: 1.2; }
+    .p-stat .label { font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+
+    /* Premium Refer Card */
+    .premium-refer-card {
       background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
-      color: white; padding: 22px; border-radius: 20px;
-      margin-bottom: 16px; box-shadow: 0 16px 40px rgba(99,102,241,0.4);
-      position: relative; overflow: hidden;
+      color: white; padding: 24px; border-radius: 24px; margin-bottom: 24px;
+      box-shadow: 0 16px 40px rgba(99,102,241,0.3); position: relative; overflow: hidden;
     }
-    .refer-card::before {
-      content: ''; position: absolute; top: -60px; right: -50px;
-      width: 200px; height: 200px;
-      background: radial-gradient(circle, rgba(255,255,255,0.2), transparent);
-      border-radius: 50%;
+    .premium-refer-card::before {
+      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+      animation: rotateGlow 10s linear infinite;
     }
-    .refer-card h3 { color: white; font-size: 16px; margin-bottom: 4px; position: relative; }
-    .refer-card .sub { font-size: 12px; opacity: 0.9; margin-bottom: 14px; position: relative; }
-    .refer-code-box {
-      background: rgba(255,255,255,0.2); padding: 14px; border-radius: 14px;
-      margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
-      position: relative;
+    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .prc-content { position: relative; z-index: 2; }
+    .prc-title { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+    .prc-sub { font-size: 13px; opacity: 0.9; margin-bottom: 16px; font-weight: 500; }
+    
+    .prc-code-box {
+      background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);
+      padding: 16px; border-radius: 16px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      border: 1px solid rgba(255,255,255,0.3);
     }
-    .refer-code-box .code {
-      font-family: 'Courier New', monospace; font-size: 22px; font-weight: 800; letter-spacing: 2px; color: white;
+    .prc-code-box .code { font-family: 'Courier New', monospace; font-size: 24px; font-weight: 900; letter-spacing: 2px; }
+    .prc-code-box button { background: white; color: #6366f1; border: none; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; }
+    
+    .prc-link-box {
+      background: rgba(255,255,255,0.15); padding: 12px 16px; border-radius: 12px;
+      font-size: 12px; word-break: break-all; font-family: 'Courier New', monospace;
+      margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 10px;
     }
-    .refer-code-box button {
-      background: white; color: #6366f1; border: none; padding: 8px 14px; border-radius: 10px;
-      font-size: 12px; font-weight: 700; cursor: pointer;
-    }
-    .refer-link-box {
-      background: rgba(255,255,255,0.15); padding: 10px 14px; border-radius: 10px;
-      font-size: 11px; word-break: break-all; font-family: 'Courier New', monospace; margin-bottom: 12px;
-      display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;
-    }
-    .refer-link-box button {
-      background: rgba(255,255,255,0.25); color: white; border: none; padding: 6px 10px; border-radius: 8px;
-      font-size: 11px; font-weight: 700; cursor: pointer;
-    }
-    .refer-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; position: relative; }
-    .refer-stat { background: rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; text-align: center; }
-    .refer-stat .num { font-size: 22px; font-weight: 800; font-family: 'Inter'; }
-    .refer-stat .lbl { font-size: 10px; opacity: 0.9; text-transform: uppercase; margin-top: 4px; font-weight: 700; }
+    .prc-link-box button { background: rgba(255,255,255,0.25); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; }
+    
+    .prc-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .prc-stat { background: rgba(255,255,255,0.15); padding: 14px; border-radius: 14px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+    .prc-stat .num { font-size: 24px; font-weight: 900; font-family: 'Inter'; }
+    .prc-stat .lbl { font-size: 10px; opacity: 0.9; text-transform: uppercase; margin-top: 4px; font-weight: 800; letter-spacing: 0.5px; }
 
-    .user-name-wrap { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 100%; }
-    .user-name-scroll {
-      overflow-x: auto; white-space: nowrap; scrollbar-width: none; max-width: 220px;
-      -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
-      mask-image: linear-gradient(90deg, #000 92%, transparent 100%);
+    /* Menu Item */
+    .premium-menu-item {
+      display: flex; align-items: center; gap: 16px; padding: 18px;
+      background: white; border-radius: 18px; margin-bottom: 10px;
+      cursor: pointer; transition: 0.3s; border: 1px solid rgba(226,232,240,0.8);
+      text-decoration: none; color: inherit; box-shadow: 0 4px 16px rgba(15,23,42,0.03);
     }
+    .premium-menu-item:hover { background: #f8fafc; transform: translateX(4px); border-color: #cbd5e1; box-shadow: 0 8px 24px rgba(15,23,42,0.06); }
+    .pmi-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+    .pmi-content { flex: 1; }
+    .pmi-content h4 { font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 2px; }
+    .pmi-content p { font-size: 12.5px; color: #64748b; font-weight: 500; }
+    .pmi-arrow { color: #94a3b8; font-size: 22px; font-weight: 800; }
+
+    /* Badge Layout */
+    .user-name-wrap { display: flex; align-items: center; justify-content: center; gap: 8px; max-width: 100%; }
+    .user-name-scroll { overflow-x: auto; white-space: nowrap; scrollbar-width: none; max-width: 200px; }
     .user-name-scroll::-webkit-scrollbar { display: none; }
-
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,0.7); backdrop-filter: blur(6px);
-      display: none; align-items: flex-end; justify-content: center; z-index: 1000; transition: 0.3s;
-    }
-    .modal-overlay.show { display: flex; }
-    .modal-box {
-      background: white; width: 100%; max-width: 500px; height: 85vh; border-radius: 24px 24px 0 0;
-      display: flex; flex-direction: column; animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-    .modal-header {
-      padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;
-      position: sticky; top: 0; background: white; border-radius: 24px 24px 0 0; z-index: 10;
-    }
-    .modal-header h3 { margin: 0; font-size: 17px; color: #0f172a; }
-    .modal-close {
-      background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; color: #64748b;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .modal-body { flex: 1; overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; }
-
-    .referred-user-item, .refer-earning-item {
-      background: #f8fafc; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
-      display: flex; align-items: center; gap: 10px; border: 1px solid #e2e8f0;
-    }
-    .ru-avatar {
-      width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 15px; flex-shrink: 0;
-    }
-    .ru-info { flex: 1; min-width: 0; }
-    .ru-info .name { font-size: 14px; font-weight: 700; color: #0f172a; }
-    .ru-info .meta { font-size: 11px; color: #94a3b8; }
-    .ru-earned { background: #dcfce7; color: #10b981; padding: 5px 10px; border-radius: 8px; font-size: 13px; font-weight: 800; }
-    .refer-earning-item { border-left: 4px solid #8b5cf6; background: white; }
-    .refer-earning-item .task { font-size: 13px; font-weight: 700; color: #0f172a; }
-    .refer-earning-item .detail { font-size: 11px; color: #64748b; margin-top: 3px; }
-    .refer-earning-item .earned { background: #dcfce7; color: #10b981; padding: 5px 10px; border-radius: 8px; font-size: 13px; font-weight: 800; margin-left: auto; }
+    
+    /* Modal Fix */
+    .modal-box { max-height: 90vh; overflow-y: auto; border-radius: 24px; padding: 24px; }
   </style>
 </head>
 <body>
@@ -101,34 +108,34 @@
     </button>
     <div class="logo">
       <div class="mark">A</div>
-      <span>Profile</span>
+      <span>My Profile</span>
     </div>
     <button class="nav-logout" id="logoutBtn">
       <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </button>
   </div>
 
-  <div class="profile-header">
-    <div class="profile-avatar" id="avatar">U</div>
+  <div class="premium-profile-header">
+    <div class="premium-avatar" id="avatar">U</div>
     <div class="user-name-wrap">
       <h1 id="username" class="user-name-scroll" style="margin:0;">Loading...</h1>
       <div id="userBadgeDisplay" style="display:none;">
         <span class="premium-badge" id="userBadgeIcon"></span>
       </div>
     </div>
-    <p id="email" style="margin-top:6px;">...</p>
+    <p id="email" style="margin-top:8px;">...</p>
   </div>
 
-  <div class="profile-stats">
-    <div class="profile-stat">
-      <div class="num" id="statSubs">0</div>
+  <div class="premium-stats">
+    <div class="p-stat">
+      <div class="num" id="statSubs" style="color:#6366f1">0</div>
       <div class="label">Submissions</div>
     </div>
-    <div class="profile-stat">
+    <div class="p-stat">
       <div class="num" id="statGood" style="color:#10b981">0</div>
       <div class="label">Good</div>
     </div>
-    <div class="profile-stat">
+    <div class="p-stat">
       <div class="num" id="statBalance" style="color:#f59e0b">৳0</div>
       <div class="label">Balance</div>
     </div>
@@ -136,109 +143,119 @@
 
   <div class="container" style="padding-top:0">
 
-    <div class="refer-card">
-      <h3>🎁 Refer & Earn</h3>
-      <p class="sub">বন্ধুদের refer করো, প্রতি good account-এ commission পাও</p>
+    <div class="premium-refer-card">
+      <div class="prc-content">
+        <h3 class="prc-title">🎁 Refer & Earn</h3>
+        <p class="prc-sub">বন্ধুদের refer করো, প্রতি good account-এ commission পাও</p>
 
-      <div class="refer-code-box">
-        <span class="code" id="myReferCode">------</span>
-        <button onclick="copyReferCode()">📋 Copy</button>
-      </div>
-
-      <div class="refer-link-box">
-        <span id="myReferLink">...</span>
-        <button onclick="copyReferLink()">Copy Link</button>
-      </div>
-
-      <div class="refer-stats">
-        <div class="refer-stat">
-          <div class="num" id="referCount">0</div>
-          <div class="lbl">Total Referrals</div>
+        <div class="prc-code-box">
+          <span class="code" id="myReferCode">------</span>
+          <button onclick="copyReferCode()">📋 Copy</button>
         </div>
-        <div class="refer-stat">
-          <div class="num" id="referEarning">৳0</div>
-          <div class="lbl">Refer Earning</div>
+
+        <div class="prc-link-box">
+          <span id="myReferLink">...</span>
+          <button onclick="copyReferLink()">Copy</button>
+        </div>
+
+        <div class="prc-stats">
+          <div class="prc-stat">
+            <div class="num" id="referCount">0</div>
+            <div class="lbl">Total Referrals</div>
+          </div>
+          <div class="prc-stat">
+            <div class="num" id="referEarning">৳0</div>
+            <div class="lbl">Refer Earning</div>
+          </div>
         </div>
       </div>
     </div>
 
-    <h3 style="margin:16px 0 12px; color:#0f172a">📊 Details & Settings</h3>
+    <h3 style="margin:24px 0 16px; font-size: 18px; font-weight: 900; color: #0f172a;">📊 Details & Settings</h3>
 
-    <button class="menu-item" id="btnOpenUsers" style="width:100%;text-align:left;">
-      <div class="menu-icon purple">👥</div>
-      <div class="menu-content">
+    <!-- ১. Referred Users -->
+    <button class="premium-menu-item" id="btnOpenUsers" style="width:100%;text-align:left;">
+      <div class="pmi-icon" style="background:#eef2ff; color:#6366f1;">👥</div>
+      <div class="pmi-content">
         <h4>Referred Users</h4>
         <p>আপনার রেফার করা ইউজারদের লিস্ট</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </button>
 
-    <button class="menu-item" id="btnOpenEarnings" style="width:100%;text-align:left;">
-      <div class="menu-icon green">💰</div>
-      <div class="menu-content">
+    <!-- ২. Earnings History -->
+    <button class="premium-menu-item" id="btnOpenEarnings" style="width:100%;text-align:left;">
+      <div class="pmi-icon" style="background:#d1fae5; color:#10b981;">💰</div>
+      <div class="pmi-content">
         <h4>Earnings History</h4>
         <p>কোন টাস্ক থেকে কত কমিশন পেয়েছেন</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </button>
 
-    <a href="leaderboard.html" class="menu-item">
-      <div class="menu-icon orange">🏆</div>
-      <div class="menu-content">
+    <!-- ৩. Leaderboard -->
+    <a href="leaderboard.html" class="premium-menu-item">
+      <div class="pmi-icon" style="background:#fef3c7; color:#f59e0b;">🏆</div>
+      <div class="pmi-content">
         <h4>Leaderboard</h4>
         <p>দেখো কে টপে আছে</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </a>
 
-    <a href="wallet.html" class="menu-item">
-      <div class="menu-icon blue">💳</div>
-      <div class="menu-content">
+    <!-- ৪. Wallet -->
+    <a href="wallet.html" class="premium-menu-item">
+      <div class="pmi-icon" style="background:#dbeafe; color:#3b82f6;">💳</div>
+      <div class="pmi-content">
         <h4>Wallet & Balance</h4>
         <p>ব্যালেন্স ও লেনদেন দেখুন</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </a>
 
-    <a href="task-history.html" class="menu-item">
-      <div class="menu-icon purple">📊</div>
-      <div class="menu-content">
+    <!-- ৫. History -->
+    <a href="task-history.html" class="premium-menu-item">
+      <div class="pmi-icon" style="background:#eef2ff; color:#6366f1;">📊</div>
+      <div class="pmi-content">
         <h4>My Submissions</h4>
-        <p>আপনার সব submission</p>
+        <p>আপনার সব submission ও রেজাল্ট</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </a>
 
-    <button class="menu-item" id="changeUsernameBtn" style="width:100%;text-align:left;">
-      <div class="menu-icon blue">👤</div>
-      <div class="menu-content">
+    <!-- ৬. Change Username -->
+    <button class="premium-menu-item" id="changeUsernameBtn" style="width:100%;text-align:left;">
+      <div class="pmi-icon" style="background:#dbeafe; color:#3b82f6;">👤</div>
+      <div class="pmi-content">
         <h4>নাম পরিবর্তন করুন</h4>
         <p>আপনার username আপডেট</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </button>
 
-    <a href="reset-request.html" class="menu-item">
-      <div class="menu-icon orange">🔒</div>
-      <div class="menu-content">
+    <!-- ৭. Password Reset -->
+    <a href="reset-request.html" class="premium-menu-item">
+      <div class="pmi-icon" style="background:#fef3c7; color:#f59e0b;">🔒</div>
+      <div class="pmi-content">
         <h4>পাসওয়ার্ড রিসেট</h4>
-        <p>Admin approve করলে নতুন password পাবেন</p>
+        <p>ইমেইলে রিসেট লিংক নিন</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </a>
 
-    <h3 style="margin:20px 0 12px; color:#0f172a">⚠️ Danger Zone</h3>
-    <button class="menu-item" id="logoutMenuBtn" style="width:100%;text-align:left;background:#fef2f2;">
-      <div class="menu-icon red">🚪</div>
-      <div class="menu-content">
+    <!-- Danger Zone -->
+    <h3 style="margin:24px 0 16px; font-size: 18px; font-weight: 900; color: #0f172a;">⚠️ Danger Zone</h3>
+    <button class="premium-menu-item" id="logoutMenuBtn" style="width:100%;text-align:left;background:#fef2f2; border-color:#fecaca;">
+      <div class="pmi-icon" style="background:#fee2e2; color:#dc2626;">🚪</div>
+      <div class="pmi-content">
         <h4 style="color:#dc2626">লগআউট</h4>
         <p>নিরাপদে বেরিয়ে যান</p>
       </div>
-      <div class="menu-arrow">›</div>
+      <div class="pmi-arrow">›</div>
     </button>
 
   </div>
-
+    <!-- Referred Users Modal -->
   <div class="modal-overlay" id="modalUsers">
     <div class="modal-box">
       <div class="modal-header">
@@ -251,6 +268,7 @@
     </div>
   </div>
 
+  <!-- Earnings Modal -->
   <div class="modal-overlay" id="modalEarnings">
     <div class="modal-box">
       <div class="modal-header">
@@ -342,7 +360,6 @@
       const subSnap = await getDocs(q);
       document.getElementById("statSubs").textContent = subSnap.size;
 
-      // ⚡️ এখানে লাইভ কোয়েরি করে রেফারেল সংখ্যা বের করা হচ্ছে (যাতে সঠিক সংখ্যা দেখায়)
       const refQ = query(collection(db, "users"), where("referredBy", "==", user.uid));
       const refSnap = await getDocs(refQ);
       document.getElementById("referCount").textContent = refSnap.size;
@@ -381,13 +398,13 @@
           const joinDate = ru.createdAt?.toDate?.().toLocaleDateString("bn-BD", { day: "numeric", month: "short", year: "numeric" }) || "";
 
           return `
-            <div class="referred-user-item">
-              <div class="ru-avatar">${initial}</div>
-              <div class="ru-info">
-                <div class="name">${ru.username || "User"}</div>
-                <div class="meta">📅 ${joinDate} • ✅ ${earn.totalGood} good</div>
+            <div style="background:white; border-radius:14px; padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px; box-shadow:0 4px 12px rgba(15,23,42,0.04); border:1px solid #e2e8f0;">
+              <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;flex-shrink:0">${initial}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:15px;font-weight:800;color:#0f172a">${ru.username || "User"}</div>
+                <div style="font-size:12px;color:#94a3b8; font-weight:600;">📅 ${joinDate} • ✅ ${earn.totalGood} good</div>
               </div>
-              <div class="ru-earned">৳${earn.totalEarned.toFixed(2)}</div>
+              <div style="background:#dcfce7;color:#10b981;padding:6px 12px;border-radius:8px;font-size:14px;font-weight:800;">৳${earn.totalEarned.toFixed(2)}</div>
             </div>
           `;
         }).join("");
@@ -412,13 +429,13 @@
         list.innerHTML = earnings.map(e => {
           const date = e.createdAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
           return `
-            <div class="refer-earning-item">
-              <div class="left">
-                <div class="task">🎯 ${e.taskTitle || "Task"}</div>
-                <div class="detail">👤 ${e.referredUsername} • ${e.goodAccounts}×৳${e.commissionPerAccount}</div>
-                <div class="detail">🕐 ${date}</div>
+            <div style="background:white;border-left:4px solid #8b5cf6;border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;border:1px solid #e2e8f0">
+              <div style="flex:1">
+                <div style="font-size:14px;font-weight:800;color:#0f172a">🎯 ${e.taskTitle || "Task"}</div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px; font-weight:600;">👤 ${e.referredUsername} • ${e.goodAccounts}×৳${e.commissionPerAccount}</div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:2px;">🕐 ${date}</div>
               </div>
-              <div class="earned">+৳${(e.totalEarned || 0).toFixed(2)}</div>
+              <div style="background:#dcfce7;color:#10b981;padding:6px 12px;border-radius:8px;font-size:14px;font-weight:800;">+৳${(e.totalEarned || 0).toFixed(2)}</div>
             </div>
           `;
         }).join("");
