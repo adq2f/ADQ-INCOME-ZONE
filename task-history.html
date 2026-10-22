@@ -7,40 +7,31 @@
   <link rel="stylesheet" href="style.css?v=35">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    .task-group-card {
-      background: white;
-      border-radius: 16px;
-      padding: 18px;
-      margin-bottom: 14px;
-      box-shadow: 0 4px 20px rgba(15,23,42,0.06);
-      border-left: 4px solid #6366f1;
+    .premium-history-card {
+      background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(15,23,42,0.06); border: 1px solid rgba(226,232,240,0.8);
+      border-left: 5px solid #6366f1; position: relative; overflow: hidden;
     }
-    .task-group-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-      flex-wrap: wrap;
+    .premium-history-card.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
+    .phc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .phc-title { font-size: 16px; font-weight: 900; color: #0f172a; margin-bottom: 4px; }
+    .phc-meta { font-size: 12px; color: #64748b; font-weight: 600; }
+    .phc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+    .phc-stat { background: #f8fafc; padding: 12px 8px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; }
+    .phc-stat .v { font-size: 20px; font-weight: 900; font-family: 'Inter'; }
+    .phc-stat.good .v { color: #10b981; }
+    .phc-stat.bad .v { color: #ef4444; }
+    .phc-stat.pending .v { color: #f59e0b; }
+    .phc-stat .l { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+    .phc-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .phc-btn {
+      flex: 1; min-width: 130px; padding: 12px 16px; border-radius: 12px; border: none;
+      font-weight: 800; font-size: 13px; font-family: inherit; cursor: pointer; transition: 0.3s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .task-group-title { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
-    .task-group-meta { font-size: 11px; color: #94a3b8; }
-    .task-group-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-    .tg-stat { background: #f8fafc; padding: 10px 6px; border-radius: 10px; text-align: center; }
-    .tg-stat .v { font-size: 18px; font-weight: 800; font-family: 'Inter'; }
-    .tg-stat.good .v { color: #10b981; }
-    .tg-stat.bad .v { color: #ef4444; }
-    .tg-stat.pending .v { color: #f59e0b; }
-    .tg-stat .l { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-    .task-group-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .task-group-actions button {
-      flex: 1; min-width: 130px; padding: 10px 14px; border-radius: 10px;
-      border: none; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; transition: 0.2s;
-    }
-    .btn-xlsx-submit { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; box-shadow: 0 4px 12px rgba(79,70,229,0.3); }
-    .btn-xlsx-result { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-    .task-group-actions button:hover { transform: translateY(-1px); }
-    .task-group-actions button:disabled { background: #cbd5e1; color: white; box-shadow: none; cursor: not-allowed; transform: none; }
+    .phc-btn-submit { background: #eef2ff; color: #4f46e5; }
+    .phc-btn-result { background: #d1fae5; color: #065f46; }
+    .phc-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -59,14 +50,14 @@
   </div>
 
   <div class="container">
-    <div class="card" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white">
-      <h2 style="color: white; font-size: 18px; margin-bottom: 4px">📊 Task History</h2>
-      <p style="opacity: 0.9; font-size: 13px; margin: 0">Task অনুযায়ী submission এবং download</p>
+    <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); color: white; border: none; border-radius: 20px; padding: 24px; margin-bottom: 20px; box-shadow: 0 16px 32px rgba(15,23,42,0.3);">
+      <h2 style="color: white; font-size: 22px; margin-bottom: 4px; font-weight: 900;">📊 My Task History</h2>
+      <p style="opacity: 0.9; font-size: 13px; margin: 0; font-weight: 600;">আপনার সাবমিট করা অ্যাকাউন্টের রেজাল্ট ডাউনলোড করুন</p>
     </div>
 
     <div class="tabs">
       <button class="active" data-filter="all">সব</button>
-      <button data-filter="open">🟢 Open</button>
+      <button data-filter="open">⏳ Pending</button>
       <button data-filter="processed">✅ Processed</button>
     </div>
 
@@ -114,6 +105,7 @@
     async function loadHistory() {
       const list = document.getElementById("historyList");
       try {
+        // ⚡️ এখানে শুধু কারেন্ট ইউজারের সাবমিশন কোয়েরি করা হচ্ছে
         const q = query(collection(db, "submissions"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
         const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -180,21 +172,26 @@
         const submitDisabled = !g.isClosed;
         const resultDisabled = !g.isProcessed;
         return `
-          <div class="task-group-card">
-            <div class="task-group-head">
+          <div class="premium-history-card ${g.isProcessed ? 'processed' : ''}">
+            <div class="phc-head">
               <div>
-                <div class="task-group-title">${icon} ${g.taskTitle}</div>
-                <div class="task-group-meta">📊 ${g.items.length} submissions • 🌐 ${g.taskPlatform}</div>
+                <div class="phc-title">${icon} ${g.taskTitle}</div>
+                <div class="phc-meta">📊 ${g.items.length} submissions • 🌐 ${g.taskPlatform}</div>
               </div>
+              ${g.isProcessed ? '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">✅ PROCESSED</span>' : '<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">⏳ PENDING</span>'}
             </div>
-            <div class="task-group-stats">
-              <div class="tg-stat good"><div class="v">${g.good}</div><div class="l">Good</div></div>
-              <div class="tg-stat bad"><div class="v">${g.bad}</div><div class="l">Bad</div></div>
-              <div class="tg-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
+            <div class="phc-stats">
+              <div class="phc-stat good"><div class="v">${g.good}</div><div class="l">Good</div></div>
+              <div class="phc-stat bad"><div class="v">${g.bad}</div><div class="l">Bad</div></div>
+              <div class="phc-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
             </div>
-            <div class="task-group-actions">
-              <button class="btn-xlsx-submit" onclick="downloadSubmitXLSX('${g.taskId}')" ${submitDisabled ? 'disabled' : ''} title="${submitDisabled ? 'Task closed হলে download পারবে' : ''}">📊 My Submissions XLSX</button>
-              <button class="btn-xlsx-result" onclick="downloadResultXLSX('${g.taskId}')" ${resultDisabled ? 'disabled' : ''} title="${resultDisabled ? 'Result publish হলে download পারবে' : ''}">📥 Result XLSX</button>
+            <div class="phc-actions">
+              <button class="phc-btn phc-btn-submit" onclick="downloadSubmitXLSX('${g.taskId}')" ${submitDisabled ? 'disabled' : ''}>
+                📊 My Submissions
+              </button>
+              <button class="phc-btn phc-btn-result" onclick="downloadResultXLSX('${g.taskId}')" ${resultDisabled ? 'disabled' : ''}>
+                📥 Download Result
+              </button>
             </div>
           </div>
         `;
@@ -207,6 +204,7 @@
       if (!group) return alert("Task পাওয়া যায়নি!");
       const task = taskCache[taskId] || {};
       const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "2fa_key", label: "2FA Key" }];
+      
       const sheetData = group.items.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -223,14 +221,10 @@
         row["Status"] = s.status || "pending";
         return row;
       });
+      
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "My Submissions");
-      const colWidths = [{ wch: 5 }];
-      fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
-      colWidths.push({ wch: 20 });
-      colWidths.push({ wch: 12 });
-      ws["!cols"] = colWidths;
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_my_submissions_${dateStr}.xlsx`);
@@ -242,8 +236,11 @@
       if (!group) return alert("Task পাওয়া যায়নি!");
       const task = taskCache[taskId] || {};
       const fields = task.fields || [{ key: "uid", label: "UID" }];
+      
+      // ⚡️ এখানে শুধু ওই ইউজারের Good এবং Bad অ্যাকাউন্টগুলো ফিল্টার করা হচ্ছে
       const goodItems = group.items.filter(i => i.status === "good");
       const badItems = group.items.filter(i => i.status === "bad");
+      
       const goodSheet = goodItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -260,6 +257,7 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
+      
       const badSheet = badItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -276,11 +274,13 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
+      
       const wb = XLSX.utils.book_new();
       const wsGood = XLSX.utils.json_to_sheet(goodSheet.length ? goodSheet : [{ "No Data": "No good accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsGood, "GOOD Accounts");
       const wsBad = XLSX.utils.json_to_sheet(badSheet.length ? badSheet : [{ "No Data": "No bad accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsBad, "BAD Accounts");
+      
       const totalEarned = goodItems.reduce((sum, s) => sum + (s.price || 0), 0);
       const summary = [
         { "Summary": "Total Submissions", "Value": group.items.length },
@@ -290,6 +290,7 @@
       ];
       const wsSummary = XLSX.utils.json_to_sheet(summary);
       XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
+      
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
