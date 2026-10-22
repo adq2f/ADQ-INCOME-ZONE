@@ -4,34 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Task History — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
-    .premium-history-card {
-      background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(15,23,42,0.06); border: 1px solid rgba(226,232,240,0.8);
-      border-left: 5px solid #6366f1; position: relative; overflow: hidden;
+    /* Premium History Design */
+    .history-header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+      padding: 20px; border-radius: 20px; color: white; text-align: center;
+      box-shadow: 0 10px 30px rgba(15,23,42,0.3); margin-bottom: 20px;
     }
-    .premium-history-card.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
-    .phc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-    .phc-title { font-size: 16px; font-weight: 900; color: #0f172a; margin-bottom: 4px; }
-    .phc-meta { font-size: 12px; color: #64748b; font-weight: 600; }
-    .phc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
-    .phc-stat { background: #f8fafc; padding: 12px 8px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; }
-    .phc-stat .v { font-size: 20px; font-weight: 900; font-family: 'Inter'; }
-    .phc-stat.good .v { color: #10b981; }
-    .phc-stat.bad .v { color: #ef4444; }
-    .phc-stat.pending .v { color: #f59e0b; }
-    .phc-stat .l { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
-    .phc-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .phc-btn {
-      flex: 1; min-width: 130px; padding: 12px 16px; border-radius: 12px; border: none;
-      font-weight: 800; font-size: 13px; font-family: inherit; cursor: pointer; transition: 0.3s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+    .history-header h2 { color: white; font-size: 20px; margin-bottom: 4px; font-weight: 900; }
+    .history-header p { font-size: 12px; opacity: 0.85; font-weight: 600; }
+
+    .premium-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+    .premium-tabs::-webkit-scrollbar { display: none; }
+    .premium-tabs button {
+      padding: 10px 18px; border-radius: 12px; background: white; color: #64748b;
+      border: 2px solid #e2e8f0; font-size: 13px; font-weight: 800; white-space: nowrap;
+      cursor: pointer; transition: 0.3s; font-family: inherit;
     }
-    .phc-btn-submit { background: #eef2ff; color: #4f46e5; }
-    .phc-btn-result { background: #d1fae5; color: #065f46; }
-    .phc-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+    .premium-tabs button.active {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
+      border-color: transparent; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+    }
+
+    /* Compact History Row */
+    .history-row {
+      background: white; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      box-shadow: 0 4px 12px rgba(15,23,42,0.04); border-left: 4px solid #6366f1;
+      transition: 0.2s;
+    }
+    .history-row:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,23,42,0.08); }
+    .history-row.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4, white 30%); }
+    
+    .hr-left { flex: 1; min-width: 0; }
+    .hr-title { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+    .hr-meta { font-size: 11px; color: #64748b; font-weight: 600; }
+    
+    .hr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .hr-status { padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .hr-status.pending { background: #fef3c7; color: #92400e; }
+    .hr-status.done { background: #d1fae5; color: #065f46; }
+    
+    .hr-download-btn {
+      background: #eef2ff; color: #4f46e5; border: none; padding: 6px 12px; border-radius: 8px;
+      font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;
+      transition: 0.2s;
+    }
+    .hr-download-btn:hover { background: #4f46e5; color: white; }
+    .hr-download-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -50,14 +72,14 @@
   </div>
 
   <div class="container">
-    <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); color: white; border: none; border-radius: 20px; padding: 24px; margin-bottom: 20px; box-shadow: 0 16px 32px rgba(15,23,42,0.3);">
-      <h2 style="color: white; font-size: 22px; margin-bottom: 4px; font-weight: 900;">📊 My Task History</h2>
-      <p style="opacity: 0.9; font-size: 13px; margin: 0; font-weight: 600;">আপনার সাবমিট করা অ্যাকাউন্টের রেজাল্ট ডাউনলোড করুন</p>
+    <div class="history-header">
+      <h2>📊 My History</h2>
+      <p>আপনার সাবমিট করা টাস্ক এবং রেজাল্ট</p>
     </div>
 
-    <div class="tabs">
-      <button class="active" data-filter="all">সব</button>
-      <button data-filter="open">⏳ Pending</button>
+    <div class="premium-tabs">
+      <button class="active" data-filter="all">সব টাস্ক</button>
+      <button data-filter="pending">⏳ Pending</button>
       <button data-filter="processed">✅ Processed</button>
     </div>
 
@@ -75,7 +97,7 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
@@ -99,69 +121,66 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       currentUser = user;
-      await loadHistory();
+      
+      // রিয়েল-টাইম আপডেটের জন্য onSnapshot ব্যবহার করা হচ্ছে
+      const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
+      onSnapshot(q, async (snap) => {
+        const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await processHistoryData(subs);
+      });
     });
 
-    async function loadHistory() {
+    async function processHistoryData(subs) {
       const list = document.getElementById("historyList");
-      try {
-        // ⚡️ এখানে শুধু কারেন্ট ইউজারের সাবমিশন কোয়েরি করা হচ্ছে
-        const q = query(collection(db, "submissions"), where("userId", "==", currentUser.uid));
-        const snap = await getDocs(q);
-        const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-        if (subs.length === 0) {
-          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো submission নেই</p></div>`;
-          return;
-        }
-
-        const groups = {};
-        subs.forEach(s => {
-          if (!groups[s.taskId]) {
-            groups[s.taskId] = { taskId: s.taskId, taskTitle: s.taskTitle || "Task", taskPlatform: s.taskPlatform || "Other", items: [] };
-          }
-          groups[s.taskId].items.push(s);
-        });
-
-        for (const taskId of Object.keys(groups)) {
-          if (!taskCache[taskId]) {
-            try {
-              const tSnap = await getDoc(doc(db, "tasks", taskId));
-              if (tSnap.exists()) taskCache[taskId] = tSnap.data();
-            } catch (e) {}
-          }
-        }
-
-        allTaskGroups = Object.values(groups).map(g => {
-          const task = taskCache[g.taskId] || {};
-          const end = task.endTime?.toDate?.();
-          const now = new Date();
-          const isClosed = end && now > end;
-          const good = g.items.filter(i => i.status === "good").length;
-          const bad = g.items.filter(i => i.status === "bad").length;
-          const pending = g.items.filter(i => i.status === "pending").length;
-          const isProcessed = pending === 0 && g.items.length > 0;
-          return { ...g, isClosed, isProcessed, good, bad, pending, task };
-        }).sort((a, b) => {
-          const aTime = Math.max(...a.items.map(i => i.submittedAt?.toMillis?.() || 0));
-          const bTime = Math.max(...b.items.map(i => i.submittedAt?.toMillis?.() || 0));
-          return bTime - aTime;
-        });
-
-        renderHistory();
-      } catch (e) {
-        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+      
+      if (subs.length === 0) {
+        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো submission নেই</p></div>`;
+        return;
       }
+
+      // টাস্ক অনুযায়ী গ্রুপ করা
+      const groups = {};
+      subs.forEach(s => {
+        if (!groups[s.taskId]) {
+          groups[s.taskId] = { taskId: s.taskId, taskTitle: s.taskTitle || "Task", taskPlatform: s.taskPlatform || "Other", items: [] };
+        }
+        groups[s.taskId].items.push(s);
+      });
+
+      // টাস্কের বিস্তারিত তথ্য ক্যাশ করা
+      for (const taskId of Object.keys(groups)) {
+        if (!taskCache[taskId]) {
+          try {
+            const tSnap = await getDoc(doc(db, "tasks", taskId));
+            if (tSnap.exists()) taskCache[taskId] = tSnap.data();
+          } catch (e) {}
+        }
+      }
+
+      allTaskGroups = Object.values(groups).map(g => {
+        const task = taskCache[g.taskId] || {};
+        const good = g.items.filter(i => i.status === "good").length;
+        const bad = g.items.filter(i => i.status === "bad").length;
+        const pending = g.items.filter(i => i.status === "pending").length;
+        const isProcessed = pending === 0 && g.items.length > 0;
+        return { ...g, isProcessed, good, bad, pending, task };
+      }).sort((a, b) => {
+        const aTime = Math.max(...a.items.map(i => i.submittedAt?.toMillis?.() || 0));
+        const bTime = Math.max(...b.items.map(i => i.submittedAt?.toMillis?.() || 0));
+        return bTime - aTime;
+      });
+
+      renderHistory();
     }
 
     function renderHistory() {
       const list = document.getElementById("historyList");
       let filtered = allTaskGroups;
-      if (currentFilter === "open") filtered = allTaskGroups.filter(g => !g.isProcessed);
+      if (currentFilter === "pending") filtered = allTaskGroups.filter(g => !g.isProcessed);
       else if (currentFilter === "processed") filtered = allTaskGroups.filter(g => g.isProcessed);
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এই filter-এ কিছু নেই</p></div>`;
+        list.innerHTML = `<div class="dash-empty"><div class="em">🔍</div><p>এই ফিল্টারে কোনো টাস্ক নেই</p></div>`;
         return;
       }
 
@@ -169,66 +188,22 @@
 
       list.innerHTML = filtered.map(g => {
         const icon = platformIcons[g.taskPlatform] || "🔗";
-        const submitDisabled = !g.isClosed;
-        const resultDisabled = !g.isProcessed;
         return `
-          <div class="premium-history-card ${g.isProcessed ? 'processed' : ''}">
-            <div class="phc-head">
-              <div>
-                <div class="phc-title">${icon} ${g.taskTitle}</div>
-                <div class="phc-meta">📊 ${g.items.length} submissions • 🌐 ${g.taskPlatform}</div>
-              </div>
-              ${g.isProcessed ? '<span style="background:#d1fae5;color:#065f46;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">✅ PROCESSED</span>' : '<span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">⏳ PENDING</span>'}
+          <div class="history-row ${g.isProcessed ? 'processed' : ''}">
+            <div class="hr-left">
+              <div class="hr-title">${icon} ${g.taskTitle}</div>
+              <div class="hr-meta">✅ ${g.good} good • ❌ ${g.bad} bad • ⏳ ${g.pending} pending</div>
             </div>
-            <div class="phc-stats">
-              <div class="phc-stat good"><div class="v">${g.good}</div><div class="l">Good</div></div>
-              <div class="phc-stat bad"><div class="v">${g.bad}</div><div class="l">Bad</div></div>
-              <div class="phc-stat pending"><div class="v">${g.pending}</div><div class="l">Pending</div></div>
-            </div>
-            <div class="phc-actions">
-              <button class="phc-btn phc-btn-submit" onclick="downloadSubmitXLSX('${g.taskId}')" ${submitDisabled ? 'disabled' : ''}>
-                📊 My Submissions
-              </button>
-              <button class="phc-btn phc-btn-result" onclick="downloadResultXLSX('${g.taskId}')" ${resultDisabled ? 'disabled' : ''}>
-                📥 Download Result
+            <div class="hr-right">
+              <span class="hr-status ${g.isProcessed ? 'done' : 'pending'}">${g.isProcessed ? 'Processed' : 'Pending'}</span>
+              <button class="hr-download-btn" onclick="downloadResultXLSX('${g.taskId}')" ${!g.isProcessed ? 'disabled' : ''}>
+                📥 Download
               </button>
             </div>
           </div>
         `;
       }).join("");
     }
-
-    window.downloadSubmitXLSX = function(taskId) {
-      if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
-      const group = allTaskGroups.find(g => g.taskId === taskId);
-      if (!group) return alert("Task পাওয়া যায়নি!");
-      const task = taskCache[taskId] || {};
-      const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "2fa_key", label: "2FA Key" }];
-      
-      const sheetData = group.items.map((s, idx) => {
-        const row = { "#": idx + 1 };
-        fields.forEach(f => {
-          let v = s[f.key];
-          if ((v === undefined || v === null || v === "") && f.label) {
-            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
-            for (const k of Object.keys(s)) {
-              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
-            }
-          }
-          row[f.label] = (v === undefined || v === null) ? "" : String(v);
-        });
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) || "";
-        row["Status"] = s.status || "pending";
-        return row;
-      });
-      
-      const ws = XLSX.utils.json_to_sheet(sheetData);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "My Submissions");
-      const now = new Date();
-      const dateStr = now.toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_my_submissions_${dateStr}.xlsx`);
-    };
 
     window.downloadResultXLSX = function(taskId) {
       if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
@@ -237,7 +212,7 @@
       const task = taskCache[taskId] || {};
       const fields = task.fields || [{ key: "uid", label: "UID" }];
       
-      // ⚡️ এখানে শুধু ওই ইউজারের Good এবং Bad অ্যাকাউন্টগুলো ফিল্টার করা হচ্ছে
+      // শুধু ইউজারের নিজের Good এবং Bad অ্যাকাউন্টগুলো ফিল্টার করা হচ্ছে
       const goodItems = group.items.filter(i => i.status === "good");
       const badItems = group.items.filter(i => i.status === "bad");
       
@@ -296,9 +271,9 @@
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
     };
 
-    document.querySelectorAll(".tabs button").forEach(tab => {
+    document.querySelectorAll(".premium-tabs button").forEach(tab => {
       tab.onclick = () => {
-        document.querySelectorAll(".tabs button").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".premium-tabs button").forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         currentFilter = tab.dataset.filter;
         renderHistory();
