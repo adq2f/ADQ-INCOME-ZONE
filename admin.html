@@ -4,87 +4,132 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=32">
+  <link rel="stylesheet" href="style.css?v=35">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
+    /* Premium Admin Design System */
     body { background: #f1f5f9; }
-    .admin-navbar { background: linear-gradient(135deg, #1e1b4b, #312e81, #4c1d95); }
-    .admin-navbar .logo span { color: white; }
-    .admin-navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
-    .admin-tab-bar { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 14px; margin-bottom: 4px; }
+    .admin-navbar { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); }
+    .admin-navbar .logo span { color: white; font-weight: 800; }
+    .admin-navbar .mark { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; box-shadow: 0 4px 12px rgba(245,158,11,0.4); }
+    
+    /* Premium Tabs */
+    .admin-tab-bar { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 16px; margin-bottom: 4px; }
     .admin-tab-bar::-webkit-scrollbar { display: none; }
-    .admin-tab { padding: 9px 16px; border-radius: 10px; background: white; color: #64748b; border: 2px solid #e2e8f0; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; font-family: inherit; transition: 0.25s; }
-    .admin-tab.active { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border-color: #4f46e5; box-shadow: 0 6px 16px rgba(79,70,229,0.35); }
+    .admin-tab { 
+      padding: 10px 18px; border-radius: 14px; background: white; color: #64748b; 
+      border: 1px solid #e2e8f0; font-size: 13px; font-weight: 700; cursor: pointer; 
+      white-space: nowrap; font-family: inherit; transition: 0.3s; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+    .admin-tab.active { 
+      background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; 
+      border-color: transparent; box-shadow: 0 8px 20px rgba(79,70,229,0.4); 
+      transform: translateY(-2px);
+    }
+
+    /* Premium Cards */
+    .admin-form-card { 
+      background: white; border-radius: 20px; padding: 24px; 
+      box-shadow: 0 8px 24px rgba(15,23,42,0.06); margin-bottom: 20px; 
+      border: 1px solid rgba(226,232,240,0.8); 
+    }
+    .admin-form-card h3 { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 18px; }
+    
+    .card { background: white; border-radius: 20px; padding: 24px; box-shadow: 0 8px 24px rgba(15,23,42,0.06); margin-bottom: 20px; border: 1px solid rgba(226,232,240,0.8); }
+    
+    /* Stats Grid */
+    .stats-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+    .stat-box { 
+      background: white; padding: 20px 14px; border-radius: 18px; text-align: center; 
+      box-shadow: 0 4px 16px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.8); 
+      transition: 0.3s;
+    }
+    .stat-box:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.08); }
+    .stat-box .num { font-size: 28px; font-weight: 900; color: #4f46e5; font-family: 'Inter'; line-height: 1.2; }
+    .stat-box.good .num { color: #10b981; }
+    .stat-box.pending .num { color: #f59e0b; }
+    .stat-box .label { font-size: 11px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; }
+
+    /* Quick Actions */
+    .dash-quick-item { 
+      background: white; padding: 20px 10px; border-radius: 18px; text-align: center; 
+      text-decoration: none; color: #0f172a; box-shadow: 0 4px 16px rgba(15,23,42,0.04); 
+      border: 1px solid rgba(226,232,240,0.8); transition: 0.3s; 
+      display: flex; flex-direction: column; align-items: center; gap: 10px; 
+    }
+    .dash-quick-item:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(15,23,42,0.08); border-color: #6366f1; }
+    .dash-quick-icon { width: 50px; height: 50px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
+    .qi-orange { background: #fef3c7; color: #d97706; }
+    .qi-purple { background: #eef2ff; color: #4f46e5; }
+    .dash-quick-label { font-size: 13px; font-weight: 800; color: #334155; }
+
+    /* Inputs & Labels */
+    .label-text { font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin: 16px 0 8px; }
+    .admin-input { width: 100%; padding: 14px 16px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14.5px; font-family: inherit; background: #f8fafc; transition: 0.3s; outline: none; }
+    .admin-input:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
+    .admin-textarea { min-height: 100px; resize: vertical; }
+
+    /* Platform Picker */
     .platform-picker { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 12px; }
     .platform-picker::-webkit-scrollbar { display: none; }
-    .platform-opt { padding: 10px 16px; border-radius: 12px; background: white; border: 2px solid #e2e8f0; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; transition: 0.25s; }
-    .platform-opt.active { border-color: #6366f1; background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: #4f46e5; }
-    .field-builder { background: #f8fafc; border-radius: 12px; padding: 14px; margin-bottom: 12px; border: 1px dashed #cbd5e1; }
-    .field-builder-title { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .add-field-btn { padding: 5px 12px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .field-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: white; border-radius: 10px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
-    .field-row input[type="text"] { flex: 1; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; margin: 0; font-family: inherit; }
-    .field-remove { width: 26px; height: 26px; border-radius: 8px; background: #fee2e2; color: #dc2626; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
-    .time-group-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 14px; box-shadow: 0 4px 20px rgba(15,23,42,0.08); border-left: 4px solid #6366f1; }
-    .time-group-card.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 25%); }
-    .time-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-    .time-group-time { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; font-family: 'Inter'; }
-    .time-group-date { font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.5; }
-    .time-group-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
-    .tg-stat { background: #f8fafc; padding: 10px 6px; border-radius: 10px; text-align: center; }
-    .tg-stat .v { font-size: 18px; font-weight: 800; font-family: 'Inter'; }
+    .platform-opt { 
+      padding: 10px 16px; border-radius: 12px; background: #f8fafc; border: 2px solid #e2e8f0; 
+      cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; 
+      white-space: nowrap; transition: 0.25s; color: #64748b;
+    }
+    .platform-opt.active { border-color: #6366f1; background: #eef2ff; color: #4f46e5; }
+
+    /* Field Builder */
+    .field-builder { background: #f8fafc; border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 1px dashed #cbd5e1; }
+    .field-builder-title { font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .add-field-btn { padding: 6px 14px; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; font-family: inherit; }
+    .field-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: white; border-radius: 12px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+    .field-row input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; margin: 0; font-family: inherit; }
+    .field-remove { width: 30px; height: 30px; border-radius: 8px; background: #fee2e2; color: #dc2626; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; }
+
+    /* Result Groups */
+    .time-group-card { background: white; border-radius: 18px; padding: 20px; margin-bottom: 16px; box-shadow: 0 6px 20px rgba(15,23,42,0.06); border-left: 5px solid #6366f1; border: 1px solid rgba(226,232,240,0.6); border-left: 5px solid #6366f1; }
+    .time-group-card.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 40%); }
+    .time-group-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .time-group-time { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 800; display: inline-block; font-family: 'Inter'; }
+    .time-group-date { font-size: 13px; color: #64748b; margin-top: 6px; line-height: 1.5; font-weight: 600; }
+    .time-group-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+    .tg-stat { background: #f8fafc; padding: 12px 8px; border-radius: 12px; text-align: center; border: 1px solid #e2e8f0; }
+    .tg-stat .v { font-size: 20px; font-weight: 900; font-family: 'Inter'; }
     .tg-stat.good .v { color: #10b981; }
     .tg-stat.bad .v { color: #ef4444; }
     .tg-stat.pending .v { color: #f59e0b; }
     .tg-stat.pending.zero .v { color: #cbd5e1; }
-    .tg-stat .l { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-    .time-group-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-    .time-group-actions button { flex: 1; min-width: 100px; padding: 10px; border-radius: 10px; border: none; cursor: pointer; font-weight: 700; font-size: 12px; font-family: inherit; }
-    .tga-download { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
-    .tga-process { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+    .tg-stat .l { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 4px; }
+    
+    /* Buttons */
+    .btn { padding: 14px 20px; border-radius: 12px; border: none; font-weight: 800; font-size: 14px; font-family: inherit; cursor: pointer; transition: 0.3s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-full { width: 100%; }
+    .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 8px 20px rgba(99,102,241,0.3); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,102,241,0.4); }
+    .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+    .btn-success:hover { transform: translateY(-2px); }
+    .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; box-shadow: 0 8px 20px rgba(239,68,68,0.3); }
+    .btn-danger:hover { transform: translateY(-2px); }
+    .btn-outline { background: white; border: 2px solid #e2e8f0; color: #475569; }
+    .btn-outline:hover { border-color: #6366f1; color: #4f46e5; background: #eef2ff; }
+    
+    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .time-input-label { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+
+    .time-group-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+    .time-group-actions button { flex: 1; min-width: 120px; padding: 12px; border-radius: 12px; border: none; cursor: pointer; font-weight: 800; font-size: 13px; font-family: inherit; }
+    .tga-download { background: #d1fae5; color: #065f46; }
+    .tga-process { background: #eef2ff; color: #4f46e5; }
     .tga-delete { background: #fee2e2; color: #dc2626; max-width: 60px; flex: 0 0 auto; }
-    .bulk-delete-card { background: linear-gradient(135deg, #fef2f2, #fee2e2); border: 2px dashed #fca5a5; border-radius: 16px; padding: 20px; margin-bottom: 16px; }
-    .bulk-delete-card h3 { color: #991b1b; font-size: 16px; margin-bottom: 10px; }
-    .bulk-delete-card p { color: #7f1d1d; font-size: 13px; margin-bottom: 12px; line-height: 1.5; }
-    .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-    .time-input-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
-    .label-text { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin: 14px 0 8px; }
-    .user-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
-    .user-card { background: white; border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 12px rgba(15,23,42,0.05); border: 1px solid rgba(15,23,42,0.04); }
-    .user-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 18px; flex-shrink: 0; }
-    .user-avatar.admin { background: linear-gradient(135deg, #ef4444, #dc2626); }
-    .user-avatar.user { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-    .user-info { flex: 1; min-width: 0; }
-    .user-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .user-info p { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
-    .user-info .badges { display: flex; gap: 6px; font-size: 10px; color: #64748b; flex-wrap: wrap; }
-    .user-checkbox { width: 22px; height: 22px; border-radius: 6px; border: 2px solid #cbd5e1; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .user-checkbox.checked { background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #ef4444; color: white; }
-    .user-checkbox.checked::after { content: '✓'; font-size: 14px; font-weight: 700; }
-    .admin-action-bar { position: fixed; bottom: 90px; left: 12px; right: 12px; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; padding: 12px 16px; border-radius: 14px; display: none; align-items: center; justify-content: space-between; box-shadow: 0 12px 32px rgba(220,38,38,0.5); z-index: 900; }
-    .admin-action-bar.show { display: flex; }
-    .admin-action-bar .count { font-weight: 700; font-size: 14px; }
-    .admin-action-bar button { background: white; color: #dc2626; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .stat-box { background: white; padding: 16px 10px; border-radius: 14px; text-align: center; box-shadow: 0 2px 12px rgba(15,23,42,0.05); }
-    .stat-box .num { font-size: 24px; font-weight: 800; color: #4f46e5; font-family: 'Inter'; }
-    .stat-box.good .num { color: #10b981; }
-    .stat-box.pending .num { color: #f59e0b; }
-    .stat-box .label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 4px; }
-    .stats-grid { display: grid; gap: 10px; margin-bottom: 14px; }
-    .dash-quick-item { background: white; padding: 16px 8px; border-radius: 14px; text-align: center; text-decoration: none; color: #0f172a; box-shadow: 0 2px 12px rgba(15,23,42,0.05); border: 1px solid rgba(15,23,42,0.04); transition: 0.25s; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-    .dash-quick-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
-    .qi-orange { background: #fef3c7; }
-    .qi-purple { background: #eef2ff; }
-    .dash-quick-label { font-size: 11px; font-weight: 700; color: #475569; }
-    .result-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 4px solid #10b981; padding: 20px; border-radius: 14px; margin-top: 16px; }
-    .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; }
-    .result-box p { color: #065f46; font-size: 14px; margin-bottom: 6px; }
-    .result-box .big { font-size: 24px; font-weight: 800; font-family: 'Inter'; }
-    .dash-empty { text-align: center; padding: 40px 20px; color: #64748b; }
+    
+    .dash-empty { text-align: center; padding: 40px 20px; color: #64748b; font-weight: 600; }
     .dash-empty .em { font-size: 48px; margin-bottom: 12px; display: block; }
-    .badge-color-btn { width: 36px; height: 36px; border-radius: 10px; border: 3px solid transparent; cursor: pointer; transition: 0.2s; }
-    .badge-color-btn:hover { transform: scale(1.1); }
-    .badge-user-row:hover { background: #f8fafc !important; }
+    .result-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border-left: 5px solid #10b981; padding: 20px; border-radius: 16px; margin-top: 16px; }
+    .result-box h3 { color: #065f46; font-size: 16px; margin-bottom: 12px; font-weight: 800; }
+    .result-box p { color: #065f46; font-size: 14px; margin-bottom: 6px; font-weight: 600; }
+    .result-box .big { font-size: 24px; font-weight: 900; font-family: 'Inter'; }
   </style>
 </head>
 <body>
@@ -114,25 +159,23 @@
 
     <!-- DASHBOARD -->
     <div id="dashboardTab" class="admin-section">
-      <div class="card" style="background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; text-align: center">
-        <h2 style="color: white; font-size: 18px; margin-bottom: 4px">👋 স্বাগতম, Admin</h2>
-        <p style="opacity: 0.9; font-size: 13px">সব activity এক জায়গায়</p>
+      <div class="card" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); color: white; text-align: center; border: none; box-shadow: 0 12px 32px rgba(15,23,42,0.3);">
+        <h2 style="color: white; font-size: 22px; margin-bottom: 6px; font-weight: 900;">👋 স্বাগতম, Admin</h2>
+        <p style="opacity: 0.9; font-size: 14px; font-weight: 600;">সব অ্যাক্টিভিটি এক জায়গায়</p>
       </div>
+      
       <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr)">
         <div class="stat-box"><div class="num" id="statTasks">0</div><div class="label">Active Tasks</div></div>
         <div class="stat-box"><div class="num" id="statUsers">0</div><div class="label">Total Users</div></div>
         <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Submissions</div></div>
         <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
       </div>
-      <h3 style="margin: 16px 0 12px">⚡ Quick Actions</h3>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px">
+
+      <h3 style="margin: 20px 0 14px; font-size: 18px; font-weight: 900; color: #0f172a;">⚡ Quick Actions</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
         <a href="withdraw-admin.html" class="dash-quick-item">
           <div class="dash-quick-icon qi-orange">💸</div>
           <div class="dash-quick-label">Withdraw</div>
-        </a>
-        <a href="admin-reset-requests.html" class="dash-quick-item">
-          <div class="dash-quick-icon qi-purple">🔐</div>
-          <div class="dash-quick-label">Reset Req</div>
         </a>
         <a href="admin-chat.html" class="dash-quick-item">
           <div class="dash-quick-icon qi-purple">💬</div>
@@ -176,24 +219,24 @@
           <div id="fieldList"></div>
         </div>
         <button class="btn btn-success btn-full" id="addTaskBtn">Add Task</button>
-        <button class="btn btn-outline btn-full" id="cancelEditBtn" style="display:none;margin-top:8px">✕ Cancel Edit</button>
+        <button class="btn btn-outline btn-full" id="cancelEditBtn" style="display:none;margin-top:10px">✕ Cancel Edit</button>
       </div>
-      <h3 style="margin:16px 0 12px">📋 All Tasks</h3>
+      <h3 style="margin:20px 0 14px; font-size: 18px; font-weight: 900; color: #0f172a;">📋 All Tasks</h3>
       <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
+
     <!-- RESULT -->
     <div id="resultTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📥 Result Process</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">Task select → সময় অনুযায়ী আলাদা file → process</p>
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px;font-weight:600;">Task select → সময় অনুযায়ী আলাদা file → process</p>
         <select id="resultTask" class="admin-input"></select>
-        <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:8px">🔍 Load Submissions</button>
+        <button class="btn btn-primary btn-full" id="loadBtn" style="margin-top:10px">🔍 Load Submissions</button>
       </div>
       <div id="taskGroups"></div>
       <div id="resultOutput"></div>
     </div>
-
-    <!-- NOTICE -->
+        <!-- NOTICE -->
     <div id="noticeTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>📢 Global Notice</h3>
@@ -203,9 +246,9 @@
         <input type="url" id="noticeApk" class="admin-input" placeholder="https://.../app.apk">
         <label class="label-text">🔗 Extra Link (optional)</label>
         <input type="url" id="noticeLink" class="admin-input" placeholder="https://t.me/yourchannel">
-        <button class="btn btn-success btn-full" id="addNoticeBtn">Publish</button>
+        <button class="btn btn-success btn-full" id="addNoticeBtn" style="margin-top:16px">Publish Notice</button>
       </div>
-      <h3 style="margin:16px 0 12px">📢 Active Notices</h3>
+      <h3 style="margin:20px 0 14px; font-size: 18px; font-weight: 900; color: #0f172a;">📢 Active Notices</h3>
       <div id="noticeList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
@@ -214,9 +257,9 @@
       <div class="admin-form-card">
         <h3>👥 সব Members</h3>
         <input type="text" id="userSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল...">
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button class="btn btn-primary" style="flex:1;margin:0;font-size:13px;padding:10px" id="selectAllUsersBtn">☑️ সব Select</button>
-          <button class="btn btn-outline" style="margin:0;font-size:13px;padding:10px" id="clearSelectionBtn">✕ Clear</button>
+        <div style="display:flex;gap:10px;margin-top:12px">
+          <button class="btn btn-primary" style="flex:1;padding:12px;font-size:13px" id="selectAllUsersBtn">☑️ সব Select</button>
+          <button class="btn btn-outline" style="padding:12px;font-size:13px" id="clearSelectionBtn">✕ Clear</button>
         </div>
       </div>
       <div id="userList" class="user-grid"><div class="loading"><div class="spinner"></div>লোড হচ্ছে...</div></div>
@@ -224,13 +267,13 @@
 
     <!-- BULK -->
     <div id="bulkTab" class="admin-section" style="display:none">
-      <div class="bulk-delete-card">
-        <h3>⚠️ Bulk Delete</h3>
-        <p>সাবধানে — Delete হলে ফেরত আসবে না!</p>
+      <div class="card" style="background: linear-gradient(135deg, #fef2f2, #fee2e2); border-color: #fca5a5; border-style: dashed;">
+        <h3 style="color: #991b1b; font-size: 18px; margin-bottom: 8px;">⚠️ Bulk Delete</h3>
+        <p style="color: #7f1d1d; font-size: 14px; font-weight: 600;">সাবধানে — Delete হলে ফেরত আসবে না!</p>
       </div>
       <div class="admin-form-card">
         <h3>🗑️ সব Pending Delete</h3>
-        <button class="btn btn-danger btn-full" id="delAllPendingBtn" style="margin-top:8px">🗑️ Delete All Pending</button>
+        <button class="btn btn-danger btn-full" id="delAllPendingBtn" style="margin-top:12px">🗑️ Delete All Pending</button>
       </div>
       <div class="admin-form-card">
         <h3>🗑️ Status Filter</h3>
@@ -240,7 +283,7 @@
           <option value="good">Only Good</option>
           <option value="bad">Only Bad</option>
         </select>
-        <button class="btn btn-danger btn-full" id="delByStatusBtn" style="margin-top:8px">🗑️ Delete</button>
+        <button class="btn btn-danger btn-full" id="delByStatusBtn" style="margin-top:12px">🗑️ Delete by Status</button>
       </div>
       <div class="admin-form-card">
         <h3>🗑️ Time Range Delete</h3>
@@ -248,7 +291,7 @@
           <div><span class="time-input-label">শুরু</span><input type="datetime-local" id="bulkStart" class="admin-input"></div>
           <div><span class="time-input-label">শেষ</span><input type="datetime-local" id="bulkEnd" class="admin-input"></div>
         </div>
-        <button class="btn btn-danger btn-full" id="delByRangeBtn">🗑️ Delete Range</button>
+        <button class="btn btn-danger btn-full" id="delByRangeBtn" style="margin-top:12px">🗑️ Delete Range</button>
       </div>
     </div>
 
@@ -256,12 +299,12 @@
     <div id="referralsTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>🎁 Refer System Overview</h3>
-        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top:12px">
+        <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top:16px">
           <div class="stat-box"><div class="num" id="totalRefUsers">0</div><div class="label">Total Referrals</div></div>
           <div class="stat-box good"><div class="num" id="totalRefEarnings">৳0</div><div class="label">Total Commission</div></div>
         </div>
       </div>
-      <h3 style="margin:16px 0 12px">👥 All Referrals</h3>
+      <h3 style="margin:20px 0 14px; font-size: 18px; font-weight: 900; color: #0f172a;">👥 All Referrals</h3>
       <div id="referralsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
@@ -269,15 +312,15 @@
     <div id="badgesTab" class="admin-section" style="display:none">
       <div class="admin-form-card">
         <h3>🎖️ Quick Badge Assign</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">User search করো → badge দাও।</p>
+        <p style="font-size:14px;color:#64748b;margin-bottom:16px;font-weight:600;">User search করো → badge দাও।</p>
 
         <label class="label-text">Search User</label>
         <input type="text" id="badgeUserSearch" class="admin-input" placeholder="🔍 নাম বা ইমেইল...">
-        <div id="badgeUserResults" style="max-height:280px;overflow-y:auto;margin-bottom:12px"></div>
+        <div id="badgeUserResults" style="max-height:280px;overflow-y:auto;margin-bottom:16px"></div>
 
-        <div id="selectedBadgeUser" style="display:none;background:#eef2ff;padding:12px;border-radius:10px;margin-bottom:14px;border-left:4px solid #6366f1">
-          <div style="font-size:11px;color:#64748b;font-weight:700;text-transform:uppercase;margin-bottom:4px">Selected User</div>
-          <div id="selectedBadgeUserName" style="font-size:14px;font-weight:700;color:#0f172a"></div>
+        <div id="selectedBadgeUser" style="display:none;background:#eef2ff;padding:14px;border-radius:12px;margin-bottom:16px;border-left:5px solid #6366f1">
+          <div style="font-size:11px;color:#64748b;font-weight:800;text-transform:uppercase;margin-bottom:4px">Selected User</div>
+          <div id="selectedBadgeUserName" style="font-size:15px;font-weight:800;color:#0f172a"></div>
           <div id="selectedBadgeUserEmail" style="font-size:12px;color:#64748b"></div>
         </div>
 
@@ -285,7 +328,7 @@
         <input type="text" id="badgeName" class="admin-input" placeholder="যেমন: CHAMPION, VIP, PRO" maxlength="20">
 
         <label class="label-text">Badge Color</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
           <button type="button" class="badge-color-btn" data-color="#fbbf24" style="background:#fbbf24"></button>
           <button type="button" class="badge-color-btn" data-color="#ef4444" style="background:#ef4444"></button>
           <button type="button" class="badge-color-btn" data-color="#10b981" style="background:#10b981"></button>
@@ -297,12 +340,12 @@
         </div>
         <input type="text" id="badgeCustomColor" class="admin-input" placeholder="Custom color" value="#6366f1">
 
-        <button class="btn btn-primary btn-full" id="saveBadgeBtn" style="margin-top:14px">🎖️ Assign Badge</button>
-        <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:8px">🗑️ Remove Badge from Selected</button>
+        <button class="btn btn-primary btn-full" id="saveBadgeBtn" style="margin-top:16px">🎖️ Assign Badge</button>
+        <button class="btn btn-danger btn-full" id="removeBadgeBtn" style="margin-top:10px">🗑️ Remove Badge from Selected</button>
       </div>
       <div id="badgeOutput"></div>
 
-      <h3 style="margin:20px 0 12px">📋 All Users with Badges</h3>
+      <h3 style="margin:20px 0 14px; font-size: 18px; font-weight: 900; color: #0f172a;">📋 All Users with Badges</h3>
       <div id="badgedUsersList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
     </div>
 
@@ -321,7 +364,7 @@
           <option value="true">✅ Enabled</option>
           <option value="false">❌ Disabled</option>
         </select>
-        <button class="btn btn-primary btn-full" id="saveWithdrawSettings" style="margin-top:14px">💾 Save Withdraw Settings</button>
+        <button class="btn btn-primary btn-full" id="saveWithdrawSettings" style="margin-top:16px">💾 Save Withdraw Settings</button>
       </div>
 
       <div class="admin-form-card">
@@ -333,19 +376,19 @@
         </select>
         <label class="label-text">Default Refer Commission (৳ per account)</label>
         <input type="number" id="defaultReferCommission" class="admin-input" placeholder="0.2" step="0.01" min="0" value="0">
-        <p style="font-size:12px;color:#64748b;margin:8px 0 14px;line-height:1.5">ℹ️ এটা default value। প্রতিটা task-এ আলাদাভাবে refer commission set করা যাবে।</p>
+        <p style="font-size:12px;color:#64748b;margin:8px 0 16px;line-height:1.5;font-weight:600;">ℹ️ এটা default value। প্রতিটা task-এ আলাদাভাবে refer commission set করা যাবে।</p>
         <button class="btn btn-primary btn-full" id="saveReferSettings">💾 Save Refer Settings</button>
       </div>
 
       <div class="admin-form-card">
         <h3>🟢 Admin Online Status</h3>
-        <p style="font-size:13px;color:#64748b;margin-bottom:12px">User-রা দেখবে আপনি online আছেন কিনা। চ্যাটে সবুজ dot দেখাবে।</p>
+        <p style="font-size:13px;color:#64748b;margin-bottom:16px;font-weight:600;">User-রা দেখবে আপনি online আছেন কিনা। চ্যাটে সবুজ dot দেখাবে।</p>
         <label class="label-text">Online Status</label>
         <select id="adminOnlineStatus" class="admin-input">
           <option value="true">🟢 Online</option>
           <option value="false">⚪ Offline</option>
         </select>
-        <button class="btn btn-primary btn-full" id="saveOnlineStatus" style="margin-top:14px">💾 Save Online Status</button>
+        <button class="btn btn-primary btn-full" id="saveOnlineStatus" style="margin-top:16px">💾 Save Online Status</button>
       </div>
 
       <div id="settingsOutput"></div>
@@ -364,7 +407,8 @@
     <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
     <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
   </nav>
-    <script type="module">
+
+  <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -381,7 +425,6 @@
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
       sessionStorage.removeItem("admin_verified");
-      // Set offline
       try {
         await setDoc(doc(db, "settings", "online_status"), {
           adminOnline: false, adminLastSeen: new Date()
@@ -542,19 +585,19 @@
           <div class="task-card">
             <div class="task-card-logo default">${ic}</div>
             <div class="task-card-body">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-                <h3 style="margin:0">${t.title}</h3>
-                <span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;background:${bg};color:${fg}">${label}</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+                <h3 style="margin:0; font-size:16px; font-weight:800;">${t.title}</h3>
+                <span style="display:inline-block;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;text-transform:uppercase;background:${bg};color:${fg}">${label}</span>
               </div>
               <span class="price">৳${t.pricePerAccount}/account</span>
               ${t.referCommission > 0 ? `<span class="price" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;margin-left:6px">🎁 ৳${t.referCommission} refer</span>` : ''}
-              <p style="font-size:12px;color:#64748b;margin-top:8px;line-height:1.6">
+              <p style="font-size:12px;color:#64748b;margin-top:10px;line-height:1.6;font-weight:600;">
                 🌐 ${t.platform || "Other"} • 📝 ${fieldCount} fields<br>
                 ⏰ ${startStr} → ${endStr}
               </p>
-              <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-                <button class="btn btn-primary" style="padding:6px 12px;font-size:12px;margin:0" onclick="editTask('${t.id}')">✏️ Edit</button>
-                <button class="btn btn-danger" style="padding:6px 12px;font-size:12px;margin:0" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
+              <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;margin:0" onclick="editTask('${t.id}')">✏️ Edit</button>
+                <button class="btn btn-danger" style="padding:8px 16px;font-size:12px;margin:0" onclick="deleteTask('${t.id}')">🗑️ Delete</button>
               </div>
             </div>
           </div>
@@ -679,8 +722,8 @@
                   <div class="time-group-date">📅 ${niceDate}<br>🕐 ${niceTimeRange}</div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:22px;font-weight:800;color:#0f172a;font-family:'Inter'">${items.length}</div>
-                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Submissions</div>
+                  <div style="font-size:24px;font-weight:900;color:#0f172a;font-family:'Inter'">${items.length}</div>
+                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:800;letter-spacing:0.5px">Submissions</div>
                 </div>
               </div>
               <div class="time-group-stats">
@@ -703,8 +746,8 @@
                 <div class="time-group-date">📅 ${niceDate}<br>🕐 ${niceTimeRange}</div>
               </div>
               <div style="text-align:right">
-                <div style="font-size:22px;font-weight:800;color:#0f172a;font-family:'Inter'">${items.length}</div>
-                <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:0.5px">Submissions</div>
+                <div style="font-size:24px;font-weight:900;color:#0f172a;font-family:'Inter'">${items.length}</div>
+                <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:800;letter-spacing:0.5px">Submissions</div>
               </div>
             </div>
             <div class="time-group-stats">
@@ -913,7 +956,7 @@
       if (snap.empty) { list.innerHTML = `<div class="dash-empty"><p>কোনো notice নেই</p></div>`; return; }
       list.innerHTML = snap.docs.map(d => {
         const n = d.data();
-        return `<div class="notice"><h3>📢 ${n.title}</h3><p>${n.message}</p>${n.apkUrl ? `<p style="font-size:12px;margin-top:6px">📱 APK: <a href="${n.apkUrl}" target="_blank">Download</a></p>` : ''}${n.linkUrl ? `<p style="font-size:12px">🔗 Link: <a href="${n.linkUrl}" target="_blank">Open</a></p>` : ''}<button class="btn btn-danger" style="margin-top:8px;padding:8px 16px;font-size:13px" onclick="deleteNotice('${d.id}')">Delete</button></div>`;
+        return `<div class="notice" style="background:white; border-left:4px solid #f59e0b; padding:16px; border-radius:12px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.05);"><h3 style="font-size:15px; font-weight:800; color:#92400e; margin-bottom:6px;">📢 ${n.title}</h3><p style="font-size:13px; color:#78350f; line-height:1.5;">${n.message}</p>${n.apkUrl ? `<p style="font-size:12px;margin-top:8px;font-weight:700;">📱 APK: <a href="${n.apkUrl}" target="_blank" style="color:#4f46e5;">Download</a></p>` : ''}${n.linkUrl ? `<p style="font-size:12px;font-weight:700;">🔗 Link: <a href="${n.linkUrl}" target="_blank" style="color:#4f46e5;">Open</a></p>` : ''}<button class="btn btn-danger" style="margin-top:12px;padding:8px 16px;font-size:12px;border-radius:8px;" onclick="deleteNotice('${d.id}')">Delete</button></div>`;
       }).join("");
     }
     window.deleteNotice = async (id) => {
@@ -1154,21 +1197,21 @@
                 <div style="display:flex;align-items:center;gap:10px">
                   <div class="user-avatar user">${(referrer.username || "U").charAt(0).toUpperCase()}</div>
                   <div>
-                    <div style="font-size:14px;font-weight:700;color:#0f172a">${referrer.username || "User"}</div>
-                    <div style="font-size:11px;color:#94a3b8">${referrer.email || ""}</div>
-                    <div style="font-size:11px;color:#64748b;margin-top:2px">Code: <b>${referrer.myReferCode || "—"}</b></div>
+                    <div style="font-size:14px;font-weight:800;color:#0f172a">${referrer.username || "User"}</div>
+                    <div style="font-size:11px;color:#94a3b8; font-weight:600;">${referrer.email || ""}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px; font-weight:700;">Code: <b>${referrer.myReferCode || "—"}</b></div>
                   </div>
                 </div>
                 <div style="text-align:right">
-                  <div style="font-size:18px;font-weight:800;color:#10b981;font-family:'Inter'">৳${refEarned.toFixed(2)}</div>
-                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:700">Earned</div>
+                  <div style="font-size:20px;font-weight:900;color:#10b981;font-family:'Inter'">৳${refEarned.toFixed(2)}</div>
+                  <div style="font-size:10px;color:#64748b;text-transform:uppercase;font-weight:800">Earned</div>
                 </div>
               </div>
-              <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px">👥 Referred Users (${refs.length}):</div>
+              <div style="font-size:12px;color:#64748b;font-weight:800;margin-bottom:8px">👥 Referred Users (${refs.length}):</div>
               ${refs.map(r => `
-                <div style="background:#f8fafc;padding:8px 10px;border-radius:8px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;gap:8px">
-                  <span style="color:#0f172a;font-weight:600">👤 ${r.username || "User"}</span>
-                  <span style="color:#94a3b8">${r.email || ""}</span>
+                <div style="background:#f8fafc;padding:10px 12px;border-radius:10px;margin-bottom:6px;font-size:13px;display:flex;justify-content:space-between;gap:8px; font-weight:600;">
+                  <span style="color:#0f172a;">👤 ${r.username || "User"}</span>
+                  <span style="color:#94a3b8; font-size:11px;">${r.email || ""}</span>
                 </div>
               `).join("")}
             </div>
@@ -1221,17 +1264,17 @@
       filtered = filtered.slice(0, 50);
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">কোনো user পাওয়া যায়নি</div>`;
+        container.innerHTML = `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px; font-weight:600;">কোনো user পাওয়া যায়নি</div>`;
         return;
       }
 
       container.innerHTML = filtered.map(u => `
         <div class="badge-user-row" data-uid="${u.id}" data-name="${u.username || 'User'}" data-email="${u.email || ''}" 
-          style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:2px solid ${selectedBadgeUserId === u.id ? '#6366f1' : '#e2e8f0'};border-radius:10px;margin-bottom:6px;cursor:pointer;transition:0.2s">
-          <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;flex-shrink:0">${(u.username || "U").charAt(0).toUpperCase()}</div>
+          style="display:flex;align-items:center;gap:10px;padding:12px;background:white;border:2px solid ${selectedBadgeUserId === u.id ? '#6366f1' : '#e2e8f0'};border-radius:12px;margin-bottom:8px;cursor:pointer;transition:0.2s">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:16px;flex-shrink:0">${(u.username || "U").charAt(0).toUpperCase()}</div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:13px;font-weight:700;color:#0f172a">${u.username || "User"} ${u.customBadge ? `<span style="background:${u.customBadgeColor || '#6366f1'};color:white;padding:1px 6px;border-radius:8px;font-size:9px;margin-left:4px">${u.customBadge}</span>` : ''}</div>
-            <div style="font-size:11px;color:#94a3b8">${u.email || ""} • ✅ ${u.totalGood || 0}</div>
+            <div style="font-size:14px;font-weight:800;color:#0f172a">${u.username || "User"} ${u.customBadge ? `<span style="background:${u.customBadgeColor || '#6366f1'};color:white;padding:2px 8px;border-radius:10px;font-size:9px;margin-left:6px;font-weight:800;">${u.customBadge}</span>` : ''}</div>
+            <div style="font-size:11px;color:#94a3b8; font-weight:600;">${u.email || ""} • ✅ ${u.totalGood || 0}</div>
           </div>
         </div>
       `).join("");
@@ -1262,14 +1305,14 @@
           return;
         }
         list.innerHTML = badgedUsers.map(u => `
-          <div class="user-card" style="margin-bottom:8px">
+          <div class="user-card" style="margin-bottom:10px">
             <div class="user-avatar user">${(u.username || "U").charAt(0).toUpperCase()}</div>
             <div class="user-info">
               <h4>${u.username || "User"} <span style="display:inline-block;background:${u.customBadgeColor || '#6366f1'};color:white;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:800;text-transform:uppercase">${u.customBadge}</span></h4>
               <p>${u.email || ""}</p>
               <div class="badges">✅ ${u.totalGood || 0} good</div>
             </div>
-            <button class="btn btn-danger" style="padding:6px 10px;font-size:11px;margin:0" onclick="removeUserBadge('${u.id}')">Remove</button>
+            <button class="btn btn-danger" style="padding:8px 12px;font-size:12px;margin:0" onclick="removeUserBadge('${u.id}')">Remove</button>
           </div>
         `).join("");
       } catch (e) {}
@@ -1427,7 +1470,6 @@
         return;
       }
 
-      // Auto-set admin online on load
       try {
         await setDoc(doc(db, "settings", "online_status"), {
           adminOnline: true,
@@ -1435,7 +1477,6 @@
           adminName: snap.data().username || "ADQ Admin"
         }, { merge: true });
 
-        // Set offline on unload
         window.addEventListener("beforeunload", () => {
           setDoc(doc(db, "settings", "online_status"), {
             adminOnline: false,
