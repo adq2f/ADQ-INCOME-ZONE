@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wallet — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=35">
+  <link rel="stylesheet" href="style.css?v=36">
   <style>
+    /* Premium Wallet Hero */
     .wallet-hero {
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
       border-radius: 24px; padding: 24px; color: white; position: relative; overflow: hidden;
@@ -32,42 +33,44 @@
     }
     .wh-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
 
+    /* Compact Wallet Info Card */
     .premium-wallet-card {
-      background: white; border-radius: 20px; padding: 20px; margin-bottom: 16px;
-      box-shadow: 0 8px 24px rgba(15,23,42,0.06); border: 1px solid rgba(226,232,240,0.8);
-      position: relative; overflow: hidden;
+      background: white; border-radius: 20px; padding: 18px;
+      margin-bottom: 16px; box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+      border: 1px solid rgba(226,232,240,0.8); position: relative; overflow: hidden;
     }
-    .pwc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .pwc-title { font-size: 16px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-    .pwc-edit-btn { background: #eef2ff; color: #4f46e5; border: none; padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-    .pwc-edit-btn:hover { background: #4f46e5; color: white; }
-
-    .wallet-info-box {
-      background: #f8fafc; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
-      display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #6366f1; transition: 0.2s;
-    }
-    .wallet-info-box:hover { background: #eef2ff; transform: translateX(4px); }
-    .wib-left .method { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; }
-    .wib-left .number { font-size: 15px; color: #0f172a; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 2px; }
-    .wib-left .name { font-size: 11px; color: #94a3b8; margin-top: 2px; }
-    .wib-copy { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    .pwc-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .pwc-title { font-size: 15px; font-weight: 900; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    .pwc-edit-btn { background: #eef2ff; color: #4f46e5; border: none; padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
     
+    /* Compact Info Row */
+    .wallet-info-compact {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 12px; background: #f8fafc; border-radius: 12px;
+      margin-bottom: 8px; border-left: 3px solid #6366f1;
+    }
+    .wic-left .method { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; }
+    .wic-left .number { font-size: 14px; color: #0f172a; font-weight: 800; font-family: 'Courier New', monospace; margin-top: 2px; }
+    .wic-right { display: flex; align-items: center; gap: 8px; }
+    .wic-copy { background: #e0e7ff; color: #4f46e5; border: none; padding: 6px 10px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+    
+    /* Stats */
     .premium-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
     .ps-card {
-      background: white; border-radius: 16px; padding: 16px 10px; text-align: center;
+      background: white; border-radius: 16px; padding: 14px 8px; text-align: center;
       box-shadow: 0 4px 16px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.6);
       position: relative; overflow: hidden;
     }
-    .ps-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; }
-    .ps-card.good::before { background: linear-gradient(90deg, #10b981, #34d399); }
-    .ps-card.bad::before { background: linear-gradient(90deg, #ef4444, #f87171); }
-    .ps-card.pending::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-    .ps-icon { font-size: 24px; margin-bottom: 6px; display: block; }
-    .ps-num { font-size: 22px; font-weight: 900; font-family: 'Inter', sans-serif; line-height: 1; }
+    .ps-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+    .ps-card.good::before { background: #10b981; }
+    .ps-card.bad::before { background: #ef4444; }
+    .ps-card.pending::before { background: #f59e0b; }
+    .ps-icon { font-size: 20px; margin-bottom: 4px; display: block; }
+    .ps-num { font-size: 20px; font-weight: 900; font-family: 'Inter', sans-serif; line-height: 1; }
     .ps-card.good .ps-num { color: #10b981; }
     .ps-card.bad .ps-num { color: #ef4444; }
     .ps-card.pending .ps-num { color: #f59e0b; }
-    .ps-label { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+    .ps-label { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 2px; }
 
     .wm-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
     .wm-tabs::-webkit-scrollbar { display: none; }
@@ -151,7 +154,7 @@
   <div class="modal-overlay" id="walletModal">
     <div class="modal-box">
       <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">💳 Wallet Setup</h3>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন। withdraw-এর সময় অটো ফিল হবে।</p>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন।</p>
 
       <div class="wm-tabs">
         <button class="wm-tab active" data-method="bkash">bKash</button>
@@ -198,7 +201,6 @@
     const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
     const METHOD_PLACEHOLDERS = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
 
-    // ব্যালেন্স কাউন্টার অ্যানিমেশন ফাংশন
     function animateValue(obj, start, end, duration) {
       let startTimestamp = null;
       const step = (timestamp) => {
@@ -206,11 +208,8 @@
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
         const currentVal = Math.floor(progress * (end - start) + start);
         obj.textContent = "৳" + currentVal;
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        } else {
-          obj.textContent = "৳" + end;
-        }
+        if (progress < 1) window.requestAnimationFrame(step);
+        else obj.textContent = "৳" + end;
       };
       window.requestAnimationFrame(step);
     }
@@ -237,7 +236,6 @@
       if (!snap.exists()) return;
       userData = snap.data();
 
-      // ⚡️ এখানে ব্যালেন্স অ্যানিমেশন কল করা হচ্ছে
       const currentBalance = userData.balance || 0;
       animateValue(document.getElementById("balance"), 0, currentBalance, 1000);
 
@@ -247,10 +245,7 @@
 
       if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
         userData.wallets = {};
-        userData.wallets[userData.walletInfo.method] = {
-          number: userData.walletInfo.number,
-          name: userData.walletInfo.name || ""
-        };
+        userData.wallets[userData.walletInfo.method] = { number: userData.walletInfo.number, name: userData.walletInfo.name || "" };
       }
 
       await loadEnabledMethods();
@@ -278,18 +273,19 @@
         content.innerHTML = savedKeys.map(key => {
           const w = wallets[key];
           return `
-            <div class="wallet-info-box">
-              <div class="wib-left">
+            <div class="wallet-info-compact">
+              <div class="wic-left">
                 <div class="method">${METHOD_NAMES[key]}</div>
                 <div class="number">${w.number}</div>
-                ${w.name ? `<div class="name">${w.name}</div>` : ''}
               </div>
-              <button class="wib-copy" onclick="copyText('${w.number}')">📋</button>
+              <div class="wic-right">
+                <button class="wic-copy" onclick="copyText('${w.number}')">📋</button>
+              </div>
             </div>
           `;
         }).join("");
       } else {
-        content.innerHTML = `<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;font-weight:600;">⚠️ কোনো Wallet setup করা হয়নি<br>Withdraw করার আগে setup করো</div>`;
+        content.innerHTML = `<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px;font-weight:600;">⚠️ কোনো Wallet setup করা হয়নি</div>`;
       }
     }
 
