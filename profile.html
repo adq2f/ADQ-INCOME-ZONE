@@ -64,6 +64,39 @@
     .prc-stat .num { font-size: 20px; font-weight: 900; font-family: 'Inter'; }
     .prc-stat .lbl { font-size: 9px; opacity: 0.9; text-transform: uppercase; margin-top: 2px; font-weight: 800; }
 
+    /* 🏆 Achievements Section */
+    .achievements-container {
+      display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px;
+    }
+    .achievements-container::-webkit-scrollbar { display: none; }
+    .ach-badge-card {
+      flex: 0 0 auto; width: 100px; background: white; border-radius: 16px;
+      padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+      border: 1px solid rgba(226,232,240,0.8); position: relative; overflow: hidden;
+      transition: 0.3s;
+    }
+    .ach-badge-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(15,23,42,0.08); }
+    .ach-badge-icon {
+      width: 50px; height: 50px; margin: 0 auto 8px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      background: #f1f5f9; color: #94a3b8; border: 2px solid #e2e8f0;
+      transition: 0.3s;
+    }
+    .ach-badge-card.unlocked .ach-badge-icon {
+      background: linear-gradient(135deg, #fef08a, #f59e0b);
+      color: white; border-color: #fbbf24;
+      box-shadow: 0 6px 16px rgba(245,158,11,0.4);
+      animation: floatCrown 2s ease-in-out infinite;
+    }
+    .ach-badge-title { font-size: 12px; font-weight: 800; color: #64748b; margin-bottom: 2px; }
+    .ach-badge-card.unlocked .ach-badge-title { color: #0f172a; }
+    .ach-badge-desc { font-size: 9px; color: #94a3b8; font-weight: 600; line-height: 1.2; }
+    .ach-badge-card.unlocked::before {
+      content: '✓'; position: absolute; top: 6px; right: 6px; font-size: 10px;
+      background: #10b981; color: white; width: 16px; height: 16px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-weight: 900;
+    }
+
     /* Menu Item */
     .premium-menu-item {
       display: flex; align-items: center; gap: 14px; padding: 16px;
@@ -143,6 +176,12 @@
       </div>
     </div>
 
+    <!-- 🏆 Achievements Section (New) -->
+    <h3 style="margin:20px 0 12px; font-size: 16px; font-weight: 900; color: #0f172a;">🏆 Achievements</h3>
+    <div class="achievements-container" id="achievementsList">
+      <!-- JS দিয়ে ডাইনামিকালি লোড হবে -->
+    </div>
+
     <h3 style="margin:20px 0 12px; font-size: 16px; font-weight: 900; color: #0f172a;">📊 Details & Settings</h3>
 
     <button class="premium-menu-item" id="btnOpenUsers">
@@ -194,8 +233,7 @@
     </button>
 
   </div>
-
-  <div class="modal-overlay" id="modalUsers">
+    <div class="modal-overlay" id="modalUsers">
     <div class="modal-box">
       <div class="modal-header">
         <h3>👥 Referred Users</h3>
@@ -298,9 +336,33 @@
       const refSnap = await getDocs(refQ);
       document.getElementById("referCount").textContent = refSnap.size;
 
+      // অ্যাচিভমেন্ট লোড করা
+      loadAchievements(userData.totalGood || 0, userData.totalReferEarning || 0, userData.balance || 0);
+
       loadReferredUsers();
       loadReferEarnings();
     });
+
+    // 🏆 Achievements Logic
+    function loadAchievements(good, referEarning, balance) {
+      const list = document.getElementById("achievementsList");
+      
+      const achievements = [
+        { id: "starter", title: "Starter", desc: "প্রথম Good অ্যাকাউন্ট", icon: "🌟", unlocked: good >= 1 },
+        { id: "rising", title: "Rising Star", desc: "১০টি Good অ্যাকাউন্ট", icon: "🚀", unlocked: good >= 10 },
+        { id: "pro", title: "Pro Worker", desc: "৫০টি Good অ্যাকাউন্ট", icon: "🔥", unlocked: good >= 50 },
+        { id: "referrer", title: "Referrer", desc: "প্রথম রেফারেল আয়", icon: "🤝", unlocked: referEarning > 0 },
+        { id: "earner", title: "Money Maker", desc: "৳১০০০ ব্যালেন্স", icon: "💎", unlocked: balance >= 1000 }
+      ];
+
+      list.innerHTML = achievements.map(a => `
+        <div class="ach-badge-card ${a.unlocked ? 'unlocked' : ''}">
+          <div class="ach-badge-icon">${a.icon}</div>
+          <div class="ach-badge-title">${a.title}</div>
+          <div class="ach-badge-desc">${a.desc}</div>
+        </div>
+      `).join("");
+    }
 
     document.getElementById("btnOpenUsers").onclick = () => document.getElementById("modalUsers").classList.add("show");
     document.getElementById("btnOpenEarnings").onclick = () => document.getElementById("modalEarnings").classList.add("show");
