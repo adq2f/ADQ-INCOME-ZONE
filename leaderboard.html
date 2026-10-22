@@ -64,18 +64,20 @@
 
     /* Sticky My Position Bar */
     .my-position-bar {
-      position: fixed; bottom: 85px; left: 12px; right: 12px; max-width: 500px; margin: 0 auto;
+      position: fixed; 
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* চ্যাট বাটন ও নেভ বারের ঠিক ওপরে */
+      left: 12px; right: 12px; max-width: 500px; margin: 0 auto;
       background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white;
-      padding: 14px 20px; border-radius: 16px; display: none; align-items: center; justify-content: space-between;
-      box-shadow: 0 10px 30px rgba(79,70,229,0.5); z-index: 900; border: 1px solid rgba(255,255,255,0.2);
+      padding: 12px 18px; border-radius: 16px; display: none; align-items: center; justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(79,70,229,0.5); z-index: 990; border: 1px solid rgba(255,255,255,0.2);
       animation: slideUpBar 0.3s cubic-bezier(0.34,1.56,0.64,1);
     }
     .my-position-bar.show { display: flex; }
     @keyframes slideUpBar { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .mpb-left { display: flex; align-items: center; gap: 12px; }
-    .mpb-rank { font-size: 18px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 10px; }
-    .mpb-name { font-size: 14px; font-weight: 800; }
-    .mpb-good { font-size: 16px; font-weight: 900; color: #a7f3d0; }
+    .mpb-left { display: flex; align-items: center; gap: 10px; }
+    .mpb-rank { font-size: 16px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px; }
+    .mpb-name { font-size: 13px; font-weight: 800; }
+    .mpb-good { font-size: 14px; font-weight: 900; color: #a7f3d0; }
   </style>
 </head>
 <body>
@@ -311,7 +313,7 @@
         tab.classList.add("active");
         currentRange = tab.dataset.range;
         renderList();
-        updateMyPositionBar(); // ফিল্টার চেঞ্জ হলে পজিশন আপডেট হবে
+        updateMyPositionBar();
       };
     });
   </script>
