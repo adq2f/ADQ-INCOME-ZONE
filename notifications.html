@@ -4,72 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>নোটিফিকেশন — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=35">
   <style>
-    /* ===== Premium Notification Cards ===== */
     .notif-premium-item {
-      position: relative;
-      background: white;
-      border-radius: 16px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-      border-left: 4px solid #6366f1;
-      overflow: hidden;
-      animation: notifSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+      position: relative; background: white; border-radius: 18px; padding: 16px; margin-bottom: 12px;
+      display: flex; gap: 14px; align-items: flex-start; box-shadow: 0 6px 20px rgba(15,23,42,0.06);
+      border-left: 5px solid #6366f1; overflow: hidden; animation: notifSlideIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
     }
-    @keyframes notifSlideIn {
-      from { opacity: 0; transform: translateX(-16px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
+    @keyframes notifSlideIn { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+    
     .notif-premium-item.notice-type { border-left-color: #f59e0b; }
     .notif-premium-item.task-type   { border-left-color: #6366f1; }
     .notif-premium-item.good-type   { border-left-color: #10b981; }
     .notif-premium-item.bad-type    { border-left-color: #ef4444; }
 
-    .notif-premium-item .npi-icon {
-      width: 42px; height: 42px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      background: #eef2ff;
-    }
+    .npi-icon { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; background: #eef2ff; }
     .notif-premium-item.notice-type .npi-icon { background: #fef3c7; }
     .notif-premium-item.task-type   .npi-icon { background: #eef2ff; }
     .notif-premium-item.good-type   .npi-icon { background: #d1fae5; }
     .notif-premium-item.bad-type    .npi-icon { background: #fee2e2; }
 
-    .notif-premium-item .npi-body { flex: 1; min-width: 0; }
-    .notif-premium-item .npi-title {
-      font-size: 14px; font-weight: 700; color: #0f172a;
-      margin-bottom: 3px;
-    }
-    .notif-premium-item .npi-msg {
-      font-size: 12.5px; color: #64748b;
-      line-height: 1.5;
-      margin-bottom: 6px;
-    }
-    .notif-premium-item .npi-time {
-      font-size: 10.5px; color: #94a3b8;
-      font-weight: 600;
-    }
-    .notif-premium-item.unread::after {
-      content: '';
-      position: absolute;
-      top: 14px; right: 14px;
-      width: 8px; height: 8px;
-      background: #ef4444;
-      border-radius: 50%;
-      box-shadow: 0 0 0 3px rgba(239,68,68,0.2);
-      animation: unreadPulse 1.6s ease-in-out infinite;
-    }
-    @keyframes unreadPulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.3); opacity: 0.6; }
+    .npi-body { flex: 1; min-width: 0; }
+    .npi-title { font-size: 15px; font-weight: 800; color: #0f172a; margin-bottom: 4px; }
+    .npi-msg { font-size: 13px; color: #475569; line-height: 1.5; margin-bottom: 8px; font-weight: 500; }
+    .npi-time { font-size: 11px; color: #94a3b8; font-weight: 600; }
+    
+    /* Sound Toggle Button */
+    .sound-toggle {
+      position: fixed; top: 70px; right: 16px; background: white; border: 1px solid #e2e8f0;
+      width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; z-index: 100; font-size: 18px;
     }
   </style>
 </head>
@@ -88,9 +52,12 @@
     </button>
   </div>
 
+  <!-- সাউন্ড অন/অফ বাটন -->
+  <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔔</div>
+
   <div class="container">
     <div class="dash-section-head">
-      <h3>🔔 নোটিফিকেশন</h3>
+      <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">🔔 নোটিফিকেশন</h3>
     </div>
     <div id="notifList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
   </div>
@@ -122,6 +89,44 @@
       location.href = "index.html";
     };
 
+    // সাউন্ড লজিক
+    let soundEnabled = localStorage.getItem("notif_sound_enabled") !== "false";
+    const soundToggleBtn = document.getElementById("soundToggle");
+    
+    function updateSoundIcon() {
+      soundToggleBtn.textContent = soundEnabled ? "🔔" : "🔕";
+      soundToggleBtn.style.opacity = soundEnabled ? "1" : "0.5";
+    }
+    updateSoundIcon();
+
+    window.toggleSound = function() {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem("notif_sound_enabled", soundEnabled);
+      updateSoundIcon();
+      if (soundEnabled) playNotificationSound();
+    };
+
+    function playNotificationSound() {
+      if (!soundEnabled) return;
+      // ছোট একটি নোটিফিকেশন সাউন্ড (Base64 ডেটা)
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+      oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // A6 note
+      
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.3);
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       const notifications = [];
@@ -133,10 +138,8 @@
         snap.forEach(d => {
           const n = d.data();
           notifications.push({
-            type: "notice", icon: "📢",
-            title: n.title, message: n.message,
-            sortTime: n.createdAt?.toMillis?.() || Date.now(),
-            time: n.createdAt?.toDate?.() || new Date()
+            type: "notice", icon: "📢", title: n.title, message: n.message,
+            sortTime: n.createdAt?.toMillis?.() || Date.now(), time: n.createdAt?.toDate?.() || new Date()
           });
         });
       } catch (e) {}
@@ -148,11 +151,9 @@
         snap.forEach(d => {
           const t = d.data();
           notifications.push({
-            type: "task", icon: "🎯",
-            title: "নতুন Task: " + t.title,
+            type: "task", icon: "🎯", title: "নতুন Task: " + t.title,
             message: `প্রতি account ৳${t.pricePerAccount}`,
-            sortTime: t.createdAt?.toMillis?.() || Date.now(),
-            time: t.createdAt?.toDate?.() || new Date()
+            sortTime: t.createdAt?.toMillis?.() || Date.now(), time: t.createdAt?.toDate?.() || new Date()
           });
         });
       } catch (e) {}
@@ -165,16 +166,14 @@
           const s = d.data();
           if (s.status === "good") {
             notifications.push({
-              type: "good", icon: "✅",
-              title: "Good account approved",
+              type: "good", icon: "✅", title: "Good account approved",
               message: `UID ${s.uid} — ৳${s.price} যোগ হয়েছে`,
               sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now(),
               time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date()
             });
           } else if (s.status === "bad") {
             notifications.push({
-              type: "bad", icon: "❌",
-              title: "Bad account detected",
+              type: "bad", icon: "❌", title: "Bad account detected",
               message: `UID ${s.uid} — কোনো reward নেই`,
               sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now(),
               time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date()
@@ -191,10 +190,16 @@
         return;
       }
 
+      // নতুন নোটিফিকেশন থাকলে সাউন্ড বাজানো (শুধু একবার)
+      const latestTime = notifications[0].sortTime;
+      const lastSeenTime = parseInt(localStorage.getItem("last_notif_time") || "0");
+      if (latestTime > lastSeenTime && lastSeenTime !== 0) {
+        playNotificationSound();
+      }
+      localStorage.setItem("last_notif_time", latestTime);
+
       list.innerHTML = notifications.map((n, i) => {
-        const time = n.time.toLocaleString("bn-BD", {
-          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-        });
+        const time = n.time.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
         return `
           <div class="notif-premium-item ${n.type}-type" style="animation-delay:${i * 0.04}s">
             <div class="npi-icon">${n.icon}</div>
