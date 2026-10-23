@@ -1,137 +1,135 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Leaderboard — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=35">
-  <style>
-    .lb-hero {
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-      color: white; padding: 26px 20px; border-radius: 24px; margin-bottom: 24px;
-      box-shadow: 0 16px 40px rgba(15,23,42,0.4); position: relative; overflow: hidden; text-align: center;
-    }
-    .lb-hero::before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 60%);
-      animation: rotateGlow 10s linear infinite;
-    }
-    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .lb-hero h2 { color: white; font-size: 24px; margin-bottom: 4px; position: relative; font-weight: 900; }
-    .lb-hero p { font-size: 13px; opacity: 0.85; position: relative; font-weight: 600; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Leaderboard — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<!-- style.css রাখা হয়েছে: premium-badge এর স্টাইলের জন্য -->
+<link rel="stylesheet" href="style.css?v=35">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    .podium { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 30px; padding: 0 10px; min-height: 200px; }
-    .podium-item {
-      flex: 1; max-width: 120px; background: white; border-radius: 18px; padding: 16px 6px; text-align: center;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.08); border: 2px solid transparent; position: relative; transition: 0.3s;
-    }
-    .podium-item.rank-1 { border-color: #fbbf24; background: linear-gradient(180deg, #fefce8, #fef3c7); transform: translateY(-16px); box-shadow: 0 16px 32px rgba(245,158,11,0.25); z-index: 2; }
-    .podium-item.rank-2 { border-color: #cbd5e1; background: linear-gradient(180deg, #f8fafc, #f1f5f9); }
-    .podium-item.rank-3 { border-color: #fdba74; background: linear-gradient(180deg, #fff7ed, #ffedd5); }
-    
-    .podium-crown { font-size: 22px; margin-bottom: 4px; }
-    .rank-1 .podium-crown { animation: floatCrown 2s ease-in-out infinite; font-size: 28px; }
-    @keyframes floatCrown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-    
-    .podium-avatar { width: 46px; height: 46px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    .rank-1 .podium-avatar { background: linear-gradient(135deg, #fbbf24, #f59e0b); width: 56px; height: 56px; font-size: 22px; border: 2px solid white; }
-    .rank-2 .podium-avatar { background: linear-gradient(135deg, #94a3b8, #64748b); }
-    .rank-3 .podium-avatar { background: linear-gradient(135deg, #f97316, #ea580c); }
-
-    .podium-name { font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px; }
-    .podium-good { font-size: 18px; font-weight: 900; color: #10b981; font-family: 'Inter'; line-height: 1; }
-    .podium-good-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 800; margin-top: 2px; }
-
-    .lb-list-item {
-      display: flex; align-items: center; gap: 12px; background: white; padding: 14px 16px; border-radius: 16px; margin-bottom: 10px;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.6); transition: 0.3s;
-    }
-    .lb-list-item:hover { transform: translateX(4px); box-shadow: 0 8px 24px rgba(15,23,42,0.08); }
-    .lb-list-item.me { border: 2px solid #6366f1; background: linear-gradient(90deg, #eef2ff, white 40%); }
-    
-    .lb-rank { width: 36px; height: 36px; border-radius: 10px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; color: #64748b; flex-shrink: 0; font-family: 'Inter'; }
-    .lb-rank.r1 { background: #fef3c7; color: #b45309; }
-    .lb-rank.r2 { background: #f1f5f9; color: #475569; }
-    .lb-rank.r3 { background: #ffedd5; color: #c2410c; }
-
-    .lb-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 16px; flex-shrink: 0; background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-    .lb-info { flex: 1; min-width: 0; }
-    .lb-meta { font-size: 11.5px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
-    
-    .lb-good { text-align: right; flex-shrink: 0; }
-    .lb-good-num { font-size: 18px; font-weight: 900; color: #10b981; font-family: 'Inter'; line-height: 1; }
-    .lb-good-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 800; margin-top: 2px; }
-
-    /* Sticky My Position Bar */
-    .my-position-bar {
-      position: fixed; bottom: calc(85px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; max-width: 500px; margin: 0 auto;
-      background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 12px 18px; border-radius: 16px;
-      display: none; align-items: center; justify-content: space-between;
-      box-shadow: 0 10px 30px rgba(79,70,229,0.5); z-index: 900; border: 1px solid rgba(255,255,255,0.2);
-      animation: slideUpBar 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    .my-position-bar.show { display: flex; }
-    @keyframes slideUpBar { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .mpb-left { display: flex; align-items: center; gap: 10px; }
-    .mpb-rank { font-size: 16px; font-weight: 900; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 8px; }
-    .mpb-name { font-size: 13px; font-weight: 800; }
-    .mpb-good { font-size: 14px; font-weight: 900; color: #a7f3d0; }
-  </style>
+body{padding-bottom:0!important}
+.lbh{position:relative;overflow:hidden;text-align:center;border-radius:28px;padding:26px 20px;margin-bottom:26px;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -22px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.lbh::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(251,191,36,.28),transparent 62%);pointer-events:none}
+.lbh::after{content:'';position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 26px rgba(255,255,255,.05),0 0 0 54px rgba(255,255,255,.03);pointer-events:none}
+.lbh h2{position:relative;z-index:1;margin:0 0 4px;font-size:26px;font-weight:700}
+.lbh p{position:relative;z-index:1;margin:0;font-size:13.5px;color:rgba(255,255,255,.85);font-weight:500}
+.podium{display:flex;justify-content:center;align-items:flex-end;gap:8px;margin:6px 0 26px;min-height:215px}
+.pd{flex:1;max-width:130px;text-align:center;padding:14px 6px 14px;border-radius:24px;position:relative}
+.pd.rank-1{transform:translateY(-18px);border-color:rgba(251,191,36,.6);background:linear-gradient(180deg,rgba(251,191,36,.24),rgba(251,191,36,.04));box-shadow:0 26px 50px -22px rgba(245,158,11,.95);z-index:2;padding-bottom:18px}
+.pd.rank-2{border-color:rgba(203,213,225,.45);background:linear-gradient(180deg,rgba(203,213,225,.15),rgba(203,213,225,.03))}
+.pd.rank-3{border-color:rgba(251,146,60,.45);background:linear-gradient(180deg,rgba(251,146,60,.16),rgba(251,146,60,.03))}
+.pd-medal{font-size:22px;line-height:1.2}
+.rank-1 .pd-medal{font-size:30px;animation:flt 2s ease-in-out infinite}
+.pd-av{width:48px;height:48px;border-radius:50%;margin:6px auto 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:19px;font-family:'Inter'}
+.rank-1 .pd-av{width:62px;height:62px;font-size:25px;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:0 0 0 3px rgba(251,191,36,.35),0 12px 26px -6px rgba(245,158,11,.85)}
+.rank-2 .pd-av{background:linear-gradient(135deg,#cbd5e1,#64748b);box-shadow:0 0 0 3px rgba(203,213,225,.25)}
+.rank-3 .pd-av{background:linear-gradient(135deg,#fdba74,#ea580c);box-shadow:0 0 0 3px rgba(251,146,60,.25)}
+.pd-name{font-size:12.5px;font-weight:700;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.pd-ach{font-size:11px;margin-bottom:4px;letter-spacing:2px}
+.pd-good{font-family:'Inter';font-size:20px;font-weight:900;color:#34d399;line-height:1}
+.pd-lbl{font-size:10px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.5px}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.lr{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:9px;border-radius:20px;transition:.25s}
+.lr:hover{transform:translateX(4px);border-color:rgba(255,255,255,.2)}
+.lr.me{border:1.5px solid rgba(139,92,246,.85);background:linear-gradient(90deg,rgba(99,102,241,.25),rgba(99,102,241,.05) 60%);box-shadow:0 14px 34px -18px rgba(139,92,246,.9)}
+.lr-rank{width:36px;height:36px;flex:0 0 36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:'Inter';font-weight:900;font-size:15px;color:var(--muted);background:rgba(255,255,255,.07)}
+.lr-rank.r1{background:rgba(251,191,36,.2);color:#fde68a}
+.lr-rank.r2{background:rgba(203,213,225,.18);color:#e2e8f0}
+.lr-rank.r3{background:rgba(251,146,60,.2);color:#fdba74}
+.lr-av{width:42px;height:42px;flex:0 0 42px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:16px;font-family:'Inter';background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.lr-info{flex:1;min-width:0}
+.lr-nr{display:flex;align-items:center;gap:6px;min-width:0}
+.lr-name{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.you{flex:0 0 auto;font-size:9.5px;font-weight:800;background:#6366f1;color:#fff;padding:2px 7px;border-radius:6px}
+.lr-meta{font-size:11.5px;color:var(--muted);font-weight:500;margin-top:2px}
+.lr-good{text-align:right;flex:0 0 auto}
+.lr-gn{font-family:'Inter';font-size:19px;font-weight:900;color:#34d399;line-height:1}
+.lr-gl{font-size:10px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.5px}
+.mybar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 92px);width:calc(100% - 32px);max-width:488px;display:none;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:18px;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:1px solid rgba(255,255,255,.25);box-shadow:0 16px 36px -10px rgba(79,70,229,.8);z-index:55;animation:rise .4s cubic-bezier(.2,.8,.2,1)}
+.mybar.show{display:flex}
+.mb-l{display:flex;align-items:center;gap:10px;min-width:0}
+.mb-r{font-family:'Inter';font-size:16px;font-weight:900;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:9px}
+.mb-n{font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-g{font-size:14px;font-weight:800;color:#a7f3d0;white-space:nowrap}
+</style>
 </head>
 <body>
-
-  <div class="navbar">
-    <button class="nav-back" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>Leaderboard</span>
-    </div>
-    <button class="nav-logout" id="logoutBtn">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Leaderboard</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<main class="page" style="padding-bottom:calc(170px + env(safe-area-inset-bottom,0px))">
+  <div class="lbh">
+    <h2>🏆 Top Players</h2>
+    <p>Good account count অনুযায়ী টপ প্লেয়ার</p>
   </div>
 
-  <div class="container">
-    <div class="lb-hero">
-      <h2>🏆 Top Players</h2>
-      <p>Good account count অনুযায়ী টপ প্লেয়ার</p>
-    </div>
+  <div id="podiumArea"><div class="skel big"></div></div>
 
-    <div id="podiumArea" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="sec" style="margin-top:8px"><span>📊 All Rankings</span></div>
 
-    <div class="dash-section-head" style="margin-top:20px">
-      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a;">📊 All Rankings</h3>
-    </div>
-
-    <div class="tabs">
-      <button class="active" data-range="all">🏆 All Time</button>
-      <button data-range="month">📅 This Month</button>
-      <button data-range="week">📆 This Week</button>
-    </div>
-
-    <div id="lbList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="tabs2">
+    <button class="active" data-range="all">🏆 All Time</button>
+    <button data-range="month">📅 This Month</button>
+    <button data-range="week">📆 This Week</button>
   </div>
 
-  <!-- Sticky My Position Bar -->
-  <div class="my-position-bar" id="myPositionBar">
-    <div class="mpb-left">
-      <div class="mpb-rank" id="mpbRank">#0</div>
-      <div class="mpb-name" id="mpbName">Your Position</div>
-    </div>
-    <div class="mpb-good" id="mpbGood">0 Good</div>
+  <div id="lbList"><div class="skel sm" style="height:66px"></div><div class="skel" style="height:66px"></div><div class="skel" style="height:66px"></div></div>
+</main>
+
+<div class="mybar" id="myPositionBar">
+  <div class="mb-l">
+    <div class="mb-r" id="mpbRank">#0</div>
+    <div class="mb-n" id="mpbName">Your Position</div>
   </div>
+  <div class="mb-g" id="mpbGood">0 Good</div>
+</div>
+<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders" class="active"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
-  <nav class="bottom-nav">
-    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
-
-  <script type="module">
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { collection, query, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -143,6 +141,10 @@
         location.href = "dashboard.html";
       }
     };
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     function getBadgeClass(color) {
       if (!color) return 'gold';
@@ -169,7 +171,7 @@
       const good = u.totalGood || 0;
       const referEarning = u.totalReferEarning || 0;
       const balance = u.balance || 0;
-      
+
       let icons = [];
       if (good >= 50) icons.push("🔥"); // Pro
       else if (good >= 10) icons.push("🚀"); // Rising
@@ -208,7 +210,7 @@
         renderList();
         updateMyPositionBar();
       } catch (e) {
-        document.getElementById("podiumArea").innerHTML = `<p style="color:red">${e.message}</p>`;
+        document.getElementById("podiumArea").innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
     }
 
@@ -217,7 +219,7 @@
       const top3 = allUsers.slice(0, 3);
 
       if (top3.length === 0) {
-        area.innerHTML = `<div class="dash-empty"><div class="em">🏆</div><p>এখনো কোনো ranking নেই</p></div>`;
+        area.innerHTML = `<div class="empty"><div class="em">🏆</div>এখনো কোনো ranking নেই</div>`;
         return;
       }
 
@@ -230,24 +232,24 @@
       order.forEach((idx, position) => {
         const u = top3[idx];
         if (!u) {
-          html += `<div class="podium-item ${orderClasses[position]}" style="opacity:0.3"></div>`;
+          html += `<div class="pd glass ${orderClasses[position]}" style="opacity:0.3"></div>`;
           return;
         }
         const icon = rankLabels[idx];
         const badgeClass = u.customBadge ? getBadgeClass(u.customBadgeColor) : "";
         const displayName = getDisplayName(u);
         const achIcons = getAchievementIcons(u);
-        const achHtml = achIcons.length > 0 ? `<div style="font-size: 10px; margin-bottom: 4px; letter-spacing: 2px;">${achIcons.join('')}</div>` : '';
+        const achHtml = achIcons.length > 0 ? `<div class="pd-ach">${achIcons.join('')}</div>` : '';
 
         html += `
-          <div class="podium-item ${orderClasses[position]}">
-            <div class="podium-crown">${icon}</div>
-            <div class="podium-avatar">${displayName.charAt(0).toUpperCase()}</div>
-            <div class="podium-name">${displayName}</div>
-            ${badgeClass ? `<div style="margin-bottom:6px;"><span class="premium-badge ${badgeClass}" style="margin:0 auto; transform:scale(0.8);" title="${u.customBadge}"></span></div>` : ''}
+          <div class="pd glass ${orderClasses[position]}">
+            <div class="pd-medal">${icon}</div>
+            <div class="pd-av">${esc(displayName.charAt(0).toUpperCase())}</div>
+            <div class="pd-name">${esc(displayName)}</div>
+            ${badgeClass ? `<div style="margin-bottom:6px;"><span class="premium-badge ${badgeClass}" style="margin:0 auto; transform:scale(0.8);" title="${esc(u.customBadge)}"></span></div>` : ''}
             ${achHtml}
-            <div class="podium-good">${u.totalGood || 0}</div>
-            <div class="podium-good-lbl">GOOD</div>
+            <div class="pd-good">${u.totalGood || 0}</div>
+            <div class="pd-lbl">GOOD</div>
           </div>
         `;
       });
@@ -268,7 +270,7 @@
       }
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো user নেই</p></div>`;
+        list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`;
         return;
       }
 
@@ -276,7 +278,7 @@
         const rank = idx + 1;
         const isMe = u.id === currentUser.uid;
         const displayName = getDisplayName(u);
-        
+
         let rankClass = "";
         if (rank === 1) rankClass = "r1";
         else if (rank === 2) rankClass = "r2";
@@ -284,24 +286,24 @@
 
         const badgeClass = u.customBadge ? getBadgeClass(u.customBadgeColor) : "";
         const achIcons = getAchievementIcons(u);
-        const achHtml = achIcons.length > 0 ? `<span style="margin-left:6px; font-size: 12px; letter-spacing: 1px;">${achIcons.join('')}</span>` : '';
+        const achHtml = achIcons.length > 0 ? `<span style="font-size:12px; letter-spacing:1px; flex:0 0 auto;">${achIcons.join('')}</span>` : '';
 
         return `
-          <div class="lb-list-item ${isMe ? 'me' : ''}">
-            <div class="lb-rank ${rankClass}">${rank}</div>
-            <div class="lb-avatar">${displayName.charAt(0).toUpperCase()}</div>
-            <div class="lb-info">
-              <div class="user-name-wrap" style="margin-bottom:2px;">
-                <span class="user-name-scroll" style="font-size:15px; font-weight:800; color:#0f172a;">${displayName}</span>
-                ${isMe ? '<span style="font-size:9px;background:#6366f1;color:white;padding:2px 6px;border-radius:6px;flex-shrink:0;font-weight:800;">YOU</span>' : ''}
-                ${badgeClass ? `<span class="premium-badge ${badgeClass}" style="transform:scale(0.85);" title="${u.customBadge}"></span>` : ''}
+          <div class="lr glass ${isMe ? 'me' : ''}">
+            <div class="lr-rank ${rankClass}">${rank}</div>
+            <div class="lr-av">${esc(displayName.charAt(0).toUpperCase())}</div>
+            <div class="lr-info">
+              <div class="lr-nr">
+                <span class="lr-name">${esc(displayName)}</span>
+                ${isMe ? '<span class="you">YOU</span>' : ''}
+                ${badgeClass ? `<span class="premium-badge ${badgeClass}" style="transform:scale(0.85);" title="${esc(u.customBadge)}"></span>` : ''}
                 ${achHtml}
               </div>
-              <div class="lb-meta">✅ ${u.totalGood || 0} good • ❌ ${u.totalBad || 0} bad</div>
+              <div class="lr-meta">✅ ${u.totalGood || 0} good • ❌ ${u.totalBad || 0} bad</div>
             </div>
-            <div class="lb-good">
-              <div class="lb-good-num">${u.totalGood || 0}</div>
-              <div class="lb-good-lbl">GOOD</div>
+            <div class="lr-good">
+              <div class="lr-gn">${u.totalGood || 0}</div>
+              <div class="lr-gl">GOOD</div>
             </div>
           </div>
         `;
@@ -311,7 +313,7 @@
     function updateMyPositionBar() {
       const bar = document.getElementById("myPositionBar");
       const myIndex = allUsers.findIndex(u => u.id === currentUser.uid);
-      
+
       if (myIndex === -1) {
         bar.classList.remove("show");
         return;
@@ -324,13 +326,13 @@
       document.getElementById("mpbRank").textContent = `#${rank}`;
       document.getElementById("mpbName").textContent = displayName;
       document.getElementById("mpbGood").textContent = `${myData.totalGood || 0} Good`;
-      
+
       bar.classList.add("show");
     }
 
-    document.querySelectorAll(".tabs button").forEach(tab => {
+    document.querySelectorAll(".tabs2 button").forEach(tab => {
       tab.onclick = () => {
-        document.querySelectorAll(".tabs button").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tabs2 button").forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         currentRange = tab.dataset.range;
         renderList();
@@ -338,5 +340,6 @@
       };
     });
   </script>
+
 </body>
 </html>
