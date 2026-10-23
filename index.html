@@ -2,75 +2,111 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>ADQ Income Zone</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css?v=35">
   <style>
-    .premium-task-card {
-      background: linear-gradient(160deg, #ffffff 0%, #f8fafc 100%);
-      border-radius: 24px; padding: 20px; margin-bottom: 16px; position: relative;
-      overflow: hidden; box-shadow: 0 12px 32px rgba(15,23,42,0.06);
-      border: 1px solid rgba(226,232,240,0.8); display: flex; flex-direction: column; gap: 14px;
-      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    :root {
+      --bg: #06060f; --ink: #f4f4ff; --muted: #9a9bb8; --dim: #6f7090;
+      --line: rgba(255,255,255,0.09); --violet: #8b5cf6; --indigo: #6366f1;
+      --cyan: #22d3ee; --gold: #fbbf24; --ok: #10b981; --bad: #ef4444;
     }
-    .premium-task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 48px rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.3); }
-    .ptc-header { display: flex; align-items: center; gap: 14px; }
-    .ptc-logo { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.15); padding: 10px; transition: 0.4s; }
-    .premium-task-card:hover .ptc-logo { transform: scale(1.08) rotate(-5deg); }
-    .ptc-logo svg { width: 100%; height: 100%; }
-    .ptc-title { flex: 1; min-width: 0; }
-    .ptc-title h3 { font-size: 17px; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.2; }
-    .ptc-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-    .ptc-badge.open { background: #d1fae5; color: #065f46; }
-    .ptc-badge.upcoming { background: #fef3c7; color: #92400e; }
-    .ptc-badge.closed { background: #fee2e2; color: #991b1b; }
-    .ptc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .ptc-info-box { background: #f8fafc; border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(226,232,240,0.6); }
-    .ptc-info-box .val { font-size: 15px; font-weight: 900; color: #0f172a; font-family: 'Inter', sans-serif; }
-    .ptc-info-box .lbl { font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-    .ptc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-    .ptc-price { font-size: 20px; font-weight: 900; color: #10b981; font-family: 'Inter', sans-serif; line-height: 1; }
-    .ptc-price span { font-size: 12px; color: #64748b; font-weight: 600; }
-    .ptc-submit-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 8px 20px rgba(99,102,241,0.3); transition: 0.3s; }
-    .ptc-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,102,241,0.5); }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html, body { background: var(--bg) !important; }
+    body { font-family: 'Hind Siliguri', 'Inter', sans-serif !important; color: var(--ink); margin: 0; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; position: relative; }
+    a { text-decoration: none; }
 
-    /* Search & Filter UI */
-    .search-filter-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .search-box { flex: 1; min-width: 200px; position: relative; }
-    .search-box input { width: 100%; padding: 14px 16px 14px 42px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; }
-    .search-box input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
-    .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; stroke: #94a3b8; }
-    .filter-box select { padding: 14px 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 14px; font-weight: 600; outline: none; background: white; }
-    .filter-box select:focus { border-color: #6366f1; }
+    /* Background */
+    .h-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .h-orb { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
+    .h-orb.o1 { width: 420px; height: 420px; background: #4f46e5; top: -140px; left: -120px; opacity: .5; animation: hDrift1 20s ease-in-out infinite; }
+    .h-orb.o2 { width: 380px; height: 380px; background: #9333ea; bottom: -160px; right: -120px; opacity: .45; animation: hDrift2 24s ease-in-out infinite; }
+    @keyframes hDrift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(50px,40px) scale(1.1); } }
+    @keyframes hDrift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,-50px) scale(1.08); } }
+    .h-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%); }
+
+    /* Top Bar */
+    .h-top { position: sticky; top: 0; z-index: 50; padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px; background: rgba(6,6,15,0.65); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid var(--line); }
+    .h-top-in { max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .h-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.2px; }
+    .h-mark { width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #22d3ee); color: #fff; font-family: 'Inter'; font-weight: 900; font-size: 17px; box-shadow: 0 8px 20px -6px rgba(139,92,246,.8), inset 0 1px 0 rgba(255,255,255,.35); }
+    .h-icon-btn { width: 40px; height: 40px; border-radius: 13px; border: 1px solid var(--line); background: rgba(255,255,255,0.05); color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: .2s; }
+    .h-icon-btn:hover { color: #fff; background: rgba(255,255,255,.1); }
+
+    /* Page */
+    .h-page { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 18px 16px calc(120px + env(safe-area-inset-bottom, 0px)); }
+
+    /* Search & Filter */
+    .h-filters { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .h-search { flex: 1; min-width: 200px; position: relative; }
+    .h-search input { width: 100%; padding: 14px 16px 14px 42px; border-radius: 14px; border: 1px solid var(--line); font-size: 14px; outline: none; background: rgba(255,255,255,0.05); color: #fff; transition: 0.3s; }
+    .h-search input:focus { border-color: var(--violet); box-shadow: 0 0 0 4px rgba(139,92,246,0.15); }
+    .h-search input::placeholder { color: var(--dim); }
+    .h-search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; stroke: var(--muted); }
+    .h-filter select { padding: 14px 16px; border-radius: 14px; border: 1px solid var(--line); font-size: 14px; font-weight: 600; outline: none; background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; }
+    .h-filter select option { background: #12122a; color: #fff; }
+
+    /* Task Card */
+    .h-task { position: relative; display: flex; flex-direction: column; gap: 14px; padding: 20px; margin-bottom: 16px; border-radius: 24px; overflow: hidden; background: linear-gradient(160deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid var(--line); transition: .3s; }
+    .h-task:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.55); box-shadow: 0 20px 44px -18px rgba(139,92,246,.7); }
+    .h-task-h { display: flex; align-items: center; gap: 14px; }
+    .h-task-logo { width: 60px; height: 60px; border-radius: 18px; flex: 0 0 60px; padding: 10px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 26px -8px rgba(0,0,0,.6); }
+    .h-task-logo svg { width: 100%; height: 100%; }
+    .h-task-t { flex: 1; min-width: 0; }
+    .h-task-t h3 { font-size: 17px; font-weight: 800; color: var(--ink); margin: 0 0 4px; line-height: 1.25; }
+    .h-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .h-badge.open { background: rgba(16,185,129,.2); color: #6ee7b7; }
+    .h-badge.upcoming { background: rgba(245,158,11,.2); color: #fde68a; }
+    .h-badge.closed { background: rgba(239,68,68,.2); color: #fca5a5; }
+    .h-task-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .h-meta-box { background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,.06); }
+    .h-meta-box .v { font-size: 15px; font-weight: 900; color: var(--ink); font-family: 'Inter'; }
+    .h-meta-box .l { font-size: 10px; color: var(--muted); font-weight: 700; text-transform: uppercase; margin-top: 2px; }
+    .h-task-f { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .h-price { font-size: 20px; font-weight: 900; color: #34d399; font-family: 'Inter'; line-height: 1; }
+    .h-price span { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .h-submit-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 8px 20px rgba(99,102,241,0.3); transition: 0.3s; }
+    .h-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,102,241,0.5); }
+
+    /* Dock */
+    .h-dock { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: calc(100% - 24px); max-width: 500px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; padding: 8px; background: rgba(18,18,40,.78); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%); border: 1px solid rgba(255,255,255,.12); border-radius: 26px; box-shadow: 0 20px 50px -10px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1); }
+    .h-dock a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px 6px; border-radius: 18px; color: var(--dim); font-size: 10px; font-weight: 600; transition: .25s; }
+    .h-dock a svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: .25s; }
+    .h-dock a:hover { color: #fff; }
+    .h-dock a.active { color: #fff; background: linear-gradient(135deg, rgba(99,102,241,.5), rgba(139,92,246,.35)); box-shadow: inset 0 0 0 1px rgba(167,139,250,.5), 0 8px 20px -8px rgba(139,92,246,.9); }
+    .h-dock a.active svg { transform: translateY(-1px) scale(1.08); }
   </style>
 </head>
 <body>
 
-  <div class="navbar">
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>ADQ Income Zone</span>
-    </div>
-    <button class="nav-logout" id="logoutBtn" style="display:none" title="Logout">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
-    <a href="login.html" id="loginBtnTop" style="padding:8px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 6px 16px rgba(99,102,241,0.35)">Login</a>
-  </div>
+  <div class="h-bg" aria-hidden="true"><div class="h-orb o1"></div><div class="h-orb o2"></div><div class="h-grid"></div></div>
 
-  <div class="container">
+  <header class="h-top">
+    <div class="h-top-in">
+      <div class="h-brand"><div class="h-mark">A</div><span>ADQ Income Zone</span></div>
+      <button class="h-icon-btn" id="logoutBtn" style="display:none" title="Logout">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+      <a href="login.html" id="loginBtnTop" style="padding:8px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;">Login</a>
+    </div>
+  </header>
+
+  <main class="h-page">
     <div id="noticeArea"></div>
 
     <div class="dash-section-head" style="margin-top: 10px; margin-bottom: 16px;">
-      <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">🎯 Available Tasks</h3>
+      <h3 style="font-size: 20px; font-weight: 900; color: #fff;">🎯 Available Tasks</h3>
     </div>
 
-    <!-- নতুন সার্চ ও ফিল্টার সেকশন -->
-    <div class="search-filter-box">
-      <div class="search-box">
+    <div class="h-filters">
+      <div class="h-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
         <input type="text" id="taskSearch" placeholder="টাস্কের নাম খুঁজুন...">
       </div>
-      <div class="filter-box">
+      <div class="h-filter">
         <select id="taskFilter">
           <option value="all">সব টাস্ক</option>
           <option value="open">🟢 Open</option>
@@ -80,15 +116,15 @@
     </div>
 
     <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
-  </div>
+  </main>
 
-  <nav class="bottom-nav">
-    <a href="index.html" data-page="home" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+  <nav class="h-dock">
+    <a href="index.html" class="active"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+    <a href="dashboard.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a>
+    <a href="index.html#tasks"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a>
+    <a href="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a>
+    <a href="wallet.html"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a>
+    <a href="profile.html"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
   </nav>
 
   <script type="module">
@@ -183,12 +219,10 @@
 
       let filtered = allTasks;
 
-      // সার্চ ফিল্টার
       if (search) {
         filtered = filtered.filter(t => (t.title || "").toLowerCase().includes(search));
       }
 
-      // স্ট্যাটাস ফিল্টার
       const now = new Date();
       filtered = filtered.filter(t => {
         const start = t.startTime?.toDate?.();
@@ -231,31 +265,30 @@
         }
 
         return `
-          <div class="premium-task-card" style="animation-delay:${i * 0.05}s">
-            <div class="ptc-header">
-              <div class="ptc-logo" style="background: ${platform.color}">${platform.svg}</div>
-              <div class="ptc-title">
+          <div class="h-task" style="animation-delay:${i * 0.05}s">
+            <div class="h-task-h">
+              <div class="h-task-logo" style="background: ${platform.color}">${platform.svg}</div>
+              <div class="h-task-t">
                 <h3>${t.title}</h3>
-                <span class="ptc-badge ${status}">${statusLabel}</span>
+                <span class="h-badge ${status}">${statusLabel}</span>
               </div>
             </div>
-            <div class="ptc-info-grid">
-              <div class="ptc-info-box"><div class="val">${timeLeft}</div><div class="lbl">Time Left</div></div>
-              <div class="ptc-info-box"><div class="val">${fieldCount}</div><div class="lbl">Fields Needed</div></div>
+            <div class="h-task-meta">
+              <div class="h-meta-box"><div class="v">${timeLeft}</div><div class="l">Time Left</div></div>
+              <div class="h-meta-box"><div class="v">${fieldCount}</div><div class="l">Fields Needed</div></div>
             </div>
-            <div class="ptc-footer">
+            <div class="h-task-f">
               <div>
-                <div class="ptc-price">৳${t.pricePerAccount} <span>/ account</span></div>
+                <div class="h-price">৳${t.pricePerAccount} <span>/ account</span></div>
                 ${t.referCommission > 0 ? `<div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 4px;">🎁 ৳${t.referCommission} Refer Commission</div>` : ''}
               </div>
-              <a href="task.html?id=${t.id}" class="ptc-submit-btn">Submit Now →</a>
+              <a href="task.html?id=${t.id}" class="h-submit-btn">Submit Now →</a>
             </div>
           </div>
         `;
       }).join("");
     }
 
-    // ইভেন্ট লিসেনার
     document.getElementById("taskSearch").addEventListener("input", renderTasks);
     document.getElementById("taskFilter").addEventListener("change", renderTasks);
 
