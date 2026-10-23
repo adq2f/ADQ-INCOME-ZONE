@@ -1,5 +1,5 @@
 // ==================================================
-// ADQ INCOME ZONE — PREMIUM POPUP SYSTEM
+// ADQ INCOME ZONE — PREMIUM POPUP SYSTEM (Dark Premium)
 // Welcome Splash + Notice Popup + Live Badge
 // ==================================================
 import { auth, db } from "./firebase.js";
@@ -8,10 +8,44 @@ import {
   doc, getDoc, collection, query, where, getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ============ DARK PREMIUM STYLES (style.css-এর উপরে বসে) ============
+function injectPopupStyles() {
+  if (document.getElementById("adq-popup-styles")) return;
+  const s = document.createElement("style");
+  s.id = "adq-popup-styles";
+  s.textContent = `
+    body #welcomeSplash .ws-bg{background:#06060f}
+    body #welcomeSplash .ws-bg::after{background:radial-gradient(circle at 18% 25%,rgba(99,102,241,.55),transparent 45%),radial-gradient(circle at 82% 75%,rgba(168,85,247,.5),transparent 45%),radial-gradient(circle at 70% 15%,rgba(34,211,238,.25),transparent 40%)}
+    body #welcomeSplash .ws-card{background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.14);border-radius:30px;box-shadow:0 30px 80px -20px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.14)}
+    body #welcomeSplash .ws-logo{background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);box-shadow:0 20px 50px -8px rgba(139,92,246,.8),inset 0 2px 0 rgba(255,255,255,.35);color:#fff}
+    body #welcomeSplash .ws-title{font-family:'Hind Siliguri','Inter',sans-serif}
+    body #welcomeSplash .ws-name{color:#fde68a}
+    body #welcomeSplash .ws-loader{background:rgba(255,255,255,.12)}
+    body #welcomeSplash .ws-loader-fill{background:linear-gradient(90deg,#6366f1,#22d3ee)}
+
+    body .notice-popup-overlay{background:rgba(3,3,10,.78)}
+    body .notice-popup-card{background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.14);border-radius:28px;color:#f4f4ff;box-shadow:0 30px 80px -10px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.1)}
+    body .notice-popup-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#fbbf24,#f59e0b,#a855f7)}
+    body .notice-popup-card .np-close{background:rgba(255,255,255,.08);color:#9a9bb8;border:1px solid rgba(255,255,255,.1)}
+    body .notice-popup-card .np-close:hover{background:rgba(255,255,255,.16);color:#fff}
+    body .notice-popup-card .np-bell{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 10px 24px -6px rgba(245,158,11,.7)}
+    body .notice-popup-card .np-label{color:#fcd34d}
+    body .notice-popup-card .np-title{color:#fff}
+    body .notice-popup-card .np-msg{color:#cfd0e6}
+    body .notice-popup-card .np-time{color:#9a9bb8}
+    body .notice-popup-card .np-btn-apk{background:linear-gradient(135deg,#10b981,#0d9488)}
+    body .notice-popup-card .np-btn-link{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+    body .notice-popup-footer{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.1)}
+    body .notice-popup-card .np-dismiss{background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);box-shadow:0 14px 30px -10px rgba(139,92,246,.9)}
+  `;
+  document.head.appendChild(s);
+}
+
 // ============ WELCOME SPLASH (once per session) ============
 export function showWelcomeSplash(username) {
   if (sessionStorage.getItem("adq_welcome_shown")) return;
   sessionStorage.setItem("adq_welcome_shown", "1");
+  injectPopupStyles();
 
   const el = document.createElement("div");
   el.id = "welcomeSplash";
@@ -46,6 +80,7 @@ export async function showNoticePopup() {
     const latest = notices[0];
     const seenKey = `adq_notice_seen_${latest.id}`;
     if (localStorage.getItem(seenKey)) return; // already seen
+    injectPopupStyles();
 
     const timeStr = latest.createdAt?.toDate?.().toLocaleString("bn-BD", {
       day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
@@ -59,12 +94,12 @@ export async function showNoticePopup() {
     const el = document.createElement("div");
     el.id = "noticePopup";
     el.className = "notice-popup-overlay";
-    
-    // HTML স্ট্রাকচার আপডেট করা হলো (Scrollable Body + Fixed Footer)
+
+    // HTML স্ট্রাকচার (Scrollable Body + Fixed Footer)
     el.innerHTML = `
       <div class="notice-popup-card">
         <button class="np-close" id="npClose">✕</button>
-        
+
         <div class="notice-popup-scrollable">
           <div class="np-head">
             <div class="np-bell">🔔</div>
@@ -102,9 +137,10 @@ export async function showNoticePopup() {
 }
 
 // ============ LIVE BADGE — Task card-এ "● LIVE" pulse ============
+// নতুন dashboard (.d-task .d-badge.open) এবং পুরনো (.hq-task-card .hq-badge.open) দুটোই কাজ করবে
 export function injectLiveBadges() {
   const tryInject = () => {
-    document.querySelectorAll(".hq-task-card .hq-badge.open").forEach(badge => {
+    document.querySelectorAll(".d-task .d-badge.open, .hq-task-card .hq-badge.open").forEach(badge => {
       if (badge.dataset.liveAdded) return;
       badge.dataset.liveAdded = "1";
       const live = document.createElement("span");
