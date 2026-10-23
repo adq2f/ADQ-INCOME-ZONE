@@ -1,100 +1,115 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Task History — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=36">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <style>
-    /* Premium History Design */
-    .history-header {
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-      padding: 20px; border-radius: 20px; color: white; text-align: center;
-      box-shadow: 0 10px 30px rgba(15,23,42,0.3); margin-bottom: 20px;
-    }
-    .history-header h2 { color: white; font-size: 20px; margin-bottom: 4px; font-weight: 900; }
-    .history-header p { font-size: 12px; opacity: 0.85; font-weight: 600; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Task History — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    .premium-tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
-    .premium-tabs::-webkit-scrollbar { display: none; }
-    .premium-tabs button {
-      padding: 10px 18px; border-radius: 12px; background: white; color: #64748b;
-      border: 2px solid #e2e8f0; font-size: 13px; font-weight: 800; white-space: nowrap;
-      cursor: pointer; transition: 0.3s; font-family: inherit;
-    }
-    .premium-tabs button.active {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white;
-      border-color: transparent; box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-    }
-
-    /* Compact History Row */
-    .history-row {
-      background: white; border-radius: 16px; padding: 14px 16px; margin-bottom: 10px;
-      display: flex; justify-content: space-between; align-items: center; gap: 12px;
-      box-shadow: 0 4px 12px rgba(15,23,42,0.04); border-left: 4px solid #6366f1;
-      transition: 0.2s;
-    }
-    .history-row:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,23,42,0.08); }
-    .history-row.processed { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4, white 30%); }
-    
-    .hr-left { flex: 1; min-width: 0; }
-    .hr-title { font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-    .hr-meta { font-size: 11px; color: #64748b; font-weight: 600; }
-    
-    .hr-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-    .hr-status { padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
-    .hr-status.pending { background: #fef3c7; color: #92400e; }
-    .hr-status.done { background: #d1fae5; color: #065f46; }
-    
-    .hr-download-btn {
-      background: #eef2ff; color: #4f46e5; border: none; padding: 6px 12px; border-radius: 8px;
-      font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px;
-      transition: 0.2s;
-    }
-    .hr-download-btn:hover { background: #4f46e5; color: white; }
-    .hr-download-btn:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
-  </style>
+.hhead{margin-bottom:16px}
+.hhead h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.3px}
+.hhead p{margin:4px 0 0;color:var(--muted);font-size:13.5px;font-weight:500}
+.sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.sum-i{position:relative;overflow:hidden;padding:12px 4px 10px;border-radius:18px;text-align:center}
+.sum-i::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
+.sum-i .n{font-family:'Inter';font-size:19px;font-weight:900;color:var(--c);line-height:1.1}
+.sum-i .l{font-size:11px;color:var(--muted);font-weight:600;margin-top:3px}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.hrow{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:22px;border-left:4px solid #6366f1;animation:rise .5s cubic-bezier(.2,.8,.2,1) both;transition:.25s}
+.hrow:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.5);box-shadow:0 18px 40px -20px rgba(139,92,246,.7)}
+.hrow.done{border-left-color:#10b981}
+.hr-ic{width:44px;height:44px;flex:0 0 44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:21px;background:rgba(99,102,241,.2)}
+.hrow.done .hr-ic{background:rgba(16,185,129,.2)}
+.hr-main{flex:1;min-width:0}
+.hr-t{font-size:15px;font-weight:700;word-break:break-word}
+.hr-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.chip{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.chip.g{background:rgba(16,185,129,.16);color:#6ee7b7}
+.chip.b{background:rgba(239,68,68,.16);color:#fca5a5}
+.chip.p{background:rgba(245,158,11,.16);color:#fcd34d}
+.hr-bar{display:flex;height:5px;border-radius:5px;overflow:hidden;background:rgba(255,255,255,.08);margin-top:10px}
+.hr-bar i{display:block;height:100%}
+.hr-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.st{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+.st.pending{background:rgba(245,158,11,.16);color:#fcd34d}
+.st.done{background:rgba(16,185,129,.16);color:#6ee7b7}
+.dl{display:flex;align-items:center;gap:4px;padding:8px 12px;border-radius:12px;border:none;cursor:pointer;font-size:12px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 8px 18px -8px rgba(139,92,246,.9);transition:.2s}
+.dl:hover:not(:disabled){transform:translateY(-2px)}
+.dl:disabled{background:rgba(255,255,255,.06);color:var(--dim);box-shadow:none;cursor:not-allowed}
+</style>
 </head>
 <body>
-
-  <div class="navbar">
-    <button class="nav-back" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>Task History</span>
-    </div>
-    <button class="nav-logout" id="logoutBtn">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Task History</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<main class="page">
+  <div class="hhead">
+    <h2>📊 My History</h2>
+    <p>আপনার সাবমিট করা টাস্ক এবং রেজাল্ট</p>
   </div>
 
-  <div class="container">
-    <div class="history-header">
-      <h2>📊 My History</h2>
-      <p>আপনার সাবমিট করা টাস্ক এবং রেজাল্ট</p>
-    </div>
-
-    <div class="premium-tabs">
-      <button class="active" data-filter="all">সব টাস্ক</button>
-      <button data-filter="pending">⏳ Pending</button>
-      <button data-filter="processed">✅ Processed</button>
-    </div>
-
-    <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="sum">
+    <div class="sum-i glass" style="--c:#818cf8"><div class="n" id="sumTotal">0</div><div class="l">Total</div></div>
+    <div class="sum-i glass" style="--c:#34d399"><div class="n" id="sumGood">0</div><div class="l">Good</div></div>
+    <div class="sum-i glass" style="--c:#f87171"><div class="n" id="sumBad">0</div><div class="l">Bad</div></div>
+    <div class="sum-i glass" style="--c:#fbbf24"><div class="n" id="sumPending">0</div><div class="l">Pending</div></div>
   </div>
 
-  <nav class="bottom-nav">
-    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
-    <a href="task-history.html" data-page="history" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span><span class="nav-label">History</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
+  <div class="tabs2">
+    <button class="active" data-filter="all">সব টাস্ক</button>
+    <button data-filter="pending">⏳ Pending</button>
+    <button data-filter="processed">✅ Processed</button>
+  </div>
 
-  <script type="module">
+  <div id="historyList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+</main>
+<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="task-history.html" data-page="history" class="active"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>History</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
+
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { collection, query, where, getDocs, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -106,6 +121,10 @@
         location.href = "dashboard.html";
       }
     };
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     let currentUser = null;
     let allTaskGroups = [];
@@ -121,8 +140,8 @@
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       currentUser = user;
-      
-      // রিয়েল-টাইম আপডেটের জন্য onSnapshot ব্যবহার করা হচ্ছে
+
+      // রিয়েল-টাইম আপডেটের জন্য onSnapshot ব্যবহার করা হচ্ছে
       const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
       onSnapshot(q, async (snap) => {
         const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -132,13 +151,18 @@
 
     async function processHistoryData(subs) {
       const list = document.getElementById("historyList");
-      
+
+      document.getElementById("sumTotal").textContent = subs.length;
+      document.getElementById("sumGood").textContent = subs.filter(s => s.status === "good").length;
+      document.getElementById("sumBad").textContent = subs.filter(s => s.status === "bad").length;
+      document.getElementById("sumPending").textContent = subs.filter(s => s.status === "pending").length;
+
       if (subs.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো submission নেই</p></div>`;
+        list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো submission নেই</div>`;
         return;
       }
 
-      // টাস্ক অনুযায়ী গ্রুপ করা
+      // টাস্ক অনুযায়ী গ্রুপ করা
       const groups = {};
       subs.forEach(s => {
         if (!groups[s.taskId]) {
@@ -180,25 +204,31 @@
       else if (currentFilter === "processed") filtered = allTaskGroups.filter(g => g.isProcessed);
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">🔍</div><p>এই ফিল্টারে কোনো টাস্ক নেই</p></div>`;
+        list.innerHTML = `<div class="empty"><div class="em">🔍</div>এই ফিল্টারে কোনো টাস্ক নেই</div>`;
         return;
       }
 
       const platformIcons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
 
-      list.innerHTML = filtered.map(g => {
+      list.innerHTML = filtered.map((g, i) => {
         const icon = platformIcons[g.taskPlatform] || "🔗";
+        const total = g.items.length || 1;
+        const pg = (g.good / total) * 100, pb = (g.bad / total) * 100, pp = (g.pending / total) * 100;
         return `
-          <div class="history-row ${g.isProcessed ? 'processed' : ''}">
-            <div class="hr-left">
-              <div class="hr-title">${icon} ${g.taskTitle}</div>
-              <div class="hr-meta">✅ ${g.good} good • ❌ ${g.bad} bad • ⏳ ${g.pending} pending</div>
+          <div class="hrow glass ${g.isProcessed ? 'done' : ''}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
+            <div class="hr-ic">${icon}</div>
+            <div class="hr-main">
+              <div class="hr-t">${esc(g.taskTitle)}</div>
+              <div class="hr-chips">
+                <span class="chip g">✅ ${g.good} good</span>
+                <span class="chip b">❌ ${g.bad} bad</span>
+                <span class="chip p">⏳ ${g.pending} pending</span>
+              </div>
+              <div class="hr-bar"><i style="width:${pg}%;background:#10b981"></i><i style="width:${pb}%;background:#ef4444"></i><i style="width:${pp}%;background:#f59e0b"></i></div>
             </div>
-            <div class="hr-right">
-              <span class="hr-status ${g.isProcessed ? 'done' : 'pending'}">${g.isProcessed ? 'Processed' : 'Pending'}</span>
-              <button class="hr-download-btn" onclick="downloadResultXLSX('${g.taskId}')" ${!g.isProcessed ? 'disabled' : ''}>
-                📥 Download
-              </button>
+            <div class="hr-side">
+              <span class="st ${g.isProcessed ? 'done' : 'pending'}">${g.isProcessed ? 'Processed' : 'Pending'}</span>
+              <button class="dl" onclick="downloadResultXLSX('${g.taskId}')" ${!g.isProcessed ? 'disabled' : ''}>📥 Download</button>
             </div>
           </div>
         `;
@@ -211,11 +241,11 @@
       if (!group) return alert("Task পাওয়া যায়নি!");
       const task = taskCache[taskId] || {};
       const fields = task.fields || [{ key: "uid", label: "UID" }];
-      
+
       // শুধু ইউজারের নিজের Good এবং Bad অ্যাকাউন্টগুলো ফিল্টার করা হচ্ছে
       const goodItems = group.items.filter(i => i.status === "good");
       const badItems = group.items.filter(i => i.status === "bad");
-      
+
       const goodSheet = goodItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -232,7 +262,7 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
-      
+
       const badSheet = badItems.map((s, idx) => {
         const row = { "#": idx + 1 };
         fields.forEach(f => {
@@ -249,13 +279,13 @@
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
         return row;
       });
-      
+
       const wb = XLSX.utils.book_new();
       const wsGood = XLSX.utils.json_to_sheet(goodSheet.length ? goodSheet : [{ "No Data": "No good accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsGood, "GOOD Accounts");
       const wsBad = XLSX.utils.json_to_sheet(badSheet.length ? badSheet : [{ "No Data": "No bad accounts" }]);
       XLSX.utils.book_append_sheet(wb, wsBad, "BAD Accounts");
-      
+
       const totalEarned = goodItems.reduce((sum, s) => sum + (s.price || 0), 0);
       const summary = [
         { "Summary": "Total Submissions", "Value": group.items.length },
@@ -265,20 +295,21 @@
       ];
       const wsSummary = XLSX.utils.json_to_sheet(summary);
       XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-      
+
       const now = new Date();
       const dateStr = now.toISOString().slice(0, 10);
       XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
     };
 
-    document.querySelectorAll(".premium-tabs button").forEach(tab => {
+    document.querySelectorAll(".tabs2 button").forEach(tab => {
       tab.onclick = () => {
-        document.querySelectorAll(".premium-tabs button").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tabs2 button").forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         currentFilter = tab.dataset.filter;
         renderHistory();
       };
     });
   </script>
+
 </body>
 </html>
