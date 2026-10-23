@@ -1,52 +1,116 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Submissions — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=7">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>My Submissions — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
+
+.hhead h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.hhead p{margin:4px 0 16px;color:var(--muted);font-size:13.5px}
+.cnt{font-family:'Inter';font-size:13px;font-weight:800;color:#c4b5fd;background:rgba(99,102,241,.22);padding:3px 12px;border-radius:999px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.sum-i{position:relative;overflow:hidden;padding:13px 6px 11px;border-radius:20px;text-align:center}
+.sum-i::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
+.sum-i .n{font-family:'Inter';font-size:20px;font-weight:900;color:var(--c);line-height:1.1}
+.sum-i .l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.tabs2 button i{font-style:normal;font-family:'Inter';font-size:11px;opacity:.8;margin-left:4px}
+.sr{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:9px;border-radius:20px;border-left:4px solid #f59e0b;animation:rise .5s cubic-bezier(.2,.8,.2,1) both;transition:.25s}
+.sr:hover{transform:translateY(-2px)}
+.sr.good{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.12),rgba(255,255,255,.025) 50%)}
+.sr.bad{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,255,255,.025) 50%)}
+.sr.pending{background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(255,255,255,.025) 50%)}
+.sr-ic{width:42px;height:42px;flex:0 0 42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;background:rgba(245,158,11,.18)}
+.sr.good .sr-ic{background:rgba(16,185,129,.18)}.sr.bad .sr-ic{background:rgba(239,68,68,.18)}
+.sr-info{flex:1;min-width:0}
+.sr-u{font-family:'Courier New',monospace;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-m{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:500;word-break:break-word}
+.sr-amt{font-family:'Inter';font-size:12.5px;font-weight:800;padding:5px 11px;border-radius:999px;white-space:nowrap;background:rgba(245,158,11,.16);color:#fcd34d}
+.sr.good .sr-amt{background:rgba(16,185,129,.18);color:#6ee7b7}
+.sr.bad .sr-amt{background:rgba(255,255,255,.07);color:var(--muted)}
+</style>
 </head>
 <body>
-
-  <div class="navbar">
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>ADQ Income Zone</span>
-    </div>
-    <button class="nav-logout" id="logoutBtn" title="Logout">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">A</div><span>ADQ Income Zone</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<main class="page">
+  <div class="hhead">
+    <h2>📁 আমার Submissions <span class="cnt" id="totalCount">0</span></h2>
+    <p>আপনার সব সাবমিট করা অ্যাকাউন্ট ও তার রেজাল্ট</p>
   </div>
 
-  <div class="container">
-    <div class="dash-section-head">
-      <h3>📁 আমার Submissions <span class="count-badge" id="totalCount">0</span></h3>
-    </div>
-
-    <div class="tabs">
-      <button class="active" data-filter="all">সব</button>
-      <button data-filter="pending">⏳ Pending</button>
-      <button data-filter="good">✅ Good</button>
-      <button data-filter="bad">❌ Bad</button>
-    </div>
-
-    <div id="subList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="sum">
+    <div class="sum-i glass" style="--c:#34d399"><div class="n" id="sumGood">0</div><div class="l">Good</div></div>
+    <div class="sum-i glass" style="--c:#f87171"><div class="n" id="sumBad">0</div><div class="l">Bad</div></div>
+    <div class="sum-i glass" style="--c:#fbbf24"><div class="n" id="sumPending">0</div><div class="l">Pending</div></div>
   </div>
 
-  <nav class="bottom-nav">
-    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="dashboard.html" data-page="dashboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
+  <div class="tabs2">
+    <button class="active" data-filter="all">সব</button>
+    <button data-filter="pending">⏳ Pending</button>
+    <button data-filter="good">✅ Good</button>
+    <button data-filter="bad">❌ Bad</button>
+  </div>
 
-  <script type="module">
+  <div id="subList"><div class="skel sm" style="height:68px"></div><div class="skel" style="height:68px"></div><div class="skel" style="height:68px"></div></div>
+</main>
+<nav class="dock"><a href="index.html" data-page="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a href="dashboard.html" data-page="dash" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
+
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     let allSubs = [], currentFilter = "all";
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -63,9 +127,12 @@
           (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0)
         );
         document.getElementById("totalCount").textContent = allSubs.length;
+        document.getElementById("sumGood").textContent = allSubs.filter(s => s.status === "good").length;
+        document.getElementById("sumBad").textContent = allSubs.filter(s => s.status === "bad").length;
+        document.getElementById("sumPending").textContent = allSubs.filter(s => s.status === "pending").length;
         renderSubs();
       } catch (e) {
-        document.getElementById("subList").innerHTML = `<p style="color:red">${e.message}</p>`;
+        document.getElementById("subList").innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
     });
 
@@ -74,39 +141,39 @@
       const filtered = currentFilter === "all" ? allSubs : allSubs.filter(s => s.status === currentFilter);
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>${currentFilter === "all" ? "এখনো কোনো submission নেই" : "এই filter-এ কিছু নেই"}</p></div>`;
+        list.innerHTML = `<div class="empty"><div class="em">📭</div>${currentFilter === "all" ? "এখনো কোনো submission নেই" : "এই filter-এ কিছু নেই"}</div>`;
         return;
       }
 
       list.innerHTML = filtered.map((s, i) => {
-        const ic = s.status === "good" ? "✅" : s.status === "bad" ? "❌" : "⏳";
+        const st = s.status === "good" ? "good" : s.status === "bad" ? "bad" : "pending";
+        const ic = st === "good" ? "✅" : st === "bad" ? "❌" : "⏳";
         const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
         const time = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
           day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
         }) || "";
         return `
-          <div class="hist-item ${s.status}" style="animation-delay:${i * 0.03}s">
-            <div class="hist-left">
-              <div class="hist-icon">${ic}</div>
-              <div class="hist-info">
-                <div class="u">UID ${s.uid}</div>
-                <div class="m">🎯 ${s.taskTitle || "Task"} • 🕐 ${time}</div>
-              </div>
+          <div class="sr glass ${st}" style="animation-delay:${Math.min(i, 10) * 0.03}s">
+            <div class="sr-ic">${ic}</div>
+            <div class="sr-info">
+              <div class="sr-u">UID ${esc(s.uid)}</div>
+              <div class="sr-m">🎯 ${esc(s.taskTitle || "Task")} • 🕐 ${time}</div>
             </div>
-            <div class="hist-amount">${earned}</div>
+            <div class="sr-amt">${earned}</div>
           </div>
         `;
       }).join("");
     }
 
-    document.querySelectorAll(".tabs button").forEach(tab => {
+    document.querySelectorAll(".tabs2 button").forEach(tab => {
       tab.onclick = () => {
-        document.querySelectorAll(".tabs button").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tabs2 button").forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         currentFilter = tab.dataset.filter;
         renderSubs();
       };
     });
   </script>
+
 </body>
 </html>
