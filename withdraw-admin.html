@@ -1,174 +1,156 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Withdraw Admin — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=28">
-  <style>
-    .method-toggle {
-      background: white;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-      transition: 0.3s;
-    }
-    .method-toggle.off { opacity: 0.55; background: #f8fafc; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Withdraw Admin — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    .pay-logo {
-      width: 50px; height: 50px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-family: 'Inter';
-      color: white; font-size: 16px;
-      flex-shrink: 0;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-    .pay-logo.bkash { background: linear-gradient(135deg, #E2136E, #B0105A); }
-    .pay-logo.nagad { background: linear-gradient(135deg, #F15A24, #D94315); }
-    .pay-logo.rocket { background: linear-gradient(135deg, #8B1F8B, #6A156A); }
-    .pay-logo.binance { background: linear-gradient(135deg, #F3BA2F, #D9A420); color: #1a1a1a; font-size: 12px; }
+.atag{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.8px;color:#2a1700;background:linear-gradient(135deg,#fde68a,#f59e0b);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.top .mark{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);color:#2a1700;box-shadow:0 8px 20px -6px rgba(245,158,11,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.switch{position:relative;width:54px;height:30px;flex:0 0 54px;display:inline-block}
+.switch input{opacity:0;width:0;height:0;position:absolute;margin:0}
+.slider{position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid var(--line);border-radius:30px;transition:.3s}
+.slider::before{content:"";position:absolute;height:22px;width:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.switch input:checked+.slider{background:linear-gradient(135deg,#10b981,#0d9488);border-color:transparent;box-shadow:0 0 18px -2px rgba(16,185,129,.8)}
+.switch input:checked+.slider::before{transform:translateX(24px)}
+.inp{display:block;width:100%;padding:15px 16px;margin:0 0 12px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:15px;font-weight:500;outline:none;transition:.25s;color-scheme:dark}
+.inp::placeholder{color:#6f7090;font-weight:400}
+.inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+.inp:disabled{opacity:.55;cursor:not-allowed}
+select.inp option{background:#12122a;color:#fff}
+.lab{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:2px 2px 7px}
+.acard{border-radius:26px;padding:20px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.acard h3{margin:0 0 6px;font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px}
+.acard .hi{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(99,102,241,.22)}
+.acard .sub{margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.cta.red{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 16px 32px -12px rgba(239,68,68,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta.amber{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);box-shadow:0 16px 34px -10px rgba(245,158,11,.9),inset 0 1px 0 rgba(255,255,255,.4);color:#2a1700}
+.cta.outline{background:rgba(255,255,255,.05);border:1.5px solid rgba(139,92,246,.55);color:#c4b5fd;box-shadow:none}
+.cta+.cta{margin-top:10px}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.page{max-width:640px}
 
-    /* Toggle Switch */
-    .switch {
-      position: relative;
-      width: 54px;
-      height: 30px;
-      flex-shrink: 0;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #cbd5e1;
-      transition: 0.4s;
-      border-radius: 30px;
-    }
-    .slider:before {
-      content: "";
-      position: absolute;
-      height: 22px; width: 22px;
-      left: 4px; bottom: 4px;
-      background: white;
-      transition: 0.4s;
-      border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .switch input:checked + .slider {
-      background: linear-gradient(135deg, #10b981, #059669);
-    }
-    .switch input:checked + .slider:before {
-      transform: translateX(24px);
-    }
-
-    /* Withdraw Request */
-    .wd-request {
-      background: white;
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 10px;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-      border-left: 4px solid #f59e0b;
-      animation: fadeInUp 0.4s var(--ease);
-    }
-    .wd-request.approved { border-left-color: #10b981; background: linear-gradient(90deg, #f0fdf4 0%, white 30%); }
-    .wd-request.rejected { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2 0%, white 30%); }
-
-    .wd-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-    .wd-info .user { font-size: 14px; font-weight: 700; color: #0f172a; }
-    .wd-info .email { font-size: 11px; color: #94a3b8; margin-top: 2px; }
-    .wd-info .acc { font-size: 12px; color: #64748b; margin-top: 6px; }
-
-    .wd-amount {
-      font-size: 20px;
-      font-weight: 800;
-      font-family: 'Inter';
-      color: #E2136E;
-      white-space: nowrap;
-    }
-    .wd-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 10px;
-    }
-    .wd-actions button {
-      flex: 1;
-      padding: 8px;
-      font-size: 12px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      font-weight: 700;
-      font-family: inherit;
-    }
-  </style>
+.wsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.wsum-i{position:relative;overflow:hidden;padding:13px 6px 11px;border-radius:20px;text-align:center}
+.wsum-i::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
+.wsum-i .n{font-family:'Inter';font-size:18px;font-weight:900;color:var(--c);line-height:1.15}
+.wsum-i .l{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
+.wq{padding:16px;margin-bottom:12px;border-radius:24px;border-left:4px solid #f59e0b;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.wq.approved{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(255,255,255,.025) 50%)}
+.wq.rejected{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.14),rgba(255,255,255,.025) 50%)}
+.wq-h{display:flex;gap:12px;align-items:flex-start}
+.wq-logo{width:48px;height:48px;flex:0 0 48px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;font-family:'Inter';background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -8px var(--c1),inset 0 1px 0 rgba(255,255,255,.3)}
+.wq-i{flex:1;min-width:0}
+.wq-u{font-size:15px;font-weight:700;word-break:break-word}
+.wq-e{font-size:12px;color:var(--muted);margin-top:2px;word-break:break-all}
+.wq-acc{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#dcdcf2;font-weight:600}
+.wq-acc b{font-family:'Courier New',monospace;letter-spacing:.5px;color:#fff;word-break:break-all}
+.cp{border:none;cursor:pointer;padding:3px 9px;border-radius:8px;font-size:11px;font-weight:700;color:#c4b5fd;background:rgba(99,102,241,.2)}
+.cp.done{background:#fff;color:#059669}
+.wq-t{font-size:11.5px;color:var(--muted);margin-top:6px}
+.wq-amt{font-family:'Inter';font-size:22px;font-weight:900;white-space:nowrap;color:#fff}
+.wq-amt small{display:block;text-align:right;font-size:11px;font-weight:700;color:var(--muted);font-family:'Hind Siliguri'}
+.wq-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.wq-acts button{padding:13px;border-radius:15px;border:none;cursor:pointer;font-size:13.5px;font-weight:700;color:#fff;transition:.2s}
+.wq-acts .ok{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 12px 24px -10px rgba(16,185,129,.9)}
+.wq-acts .no{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 12px 24px -10px rgba(239,68,68,.9)}
+.wq-acts button:hover{transform:translateY(-2px)}
+.wq-acts button:disabled{filter:saturate(.4);cursor:not-allowed}
+.st{display:inline-block;margin-top:10px;padding:4px 11px;border-radius:999px;font-size:11.5px;font-weight:800}
+.st.approved{background:rgba(16,185,129,.18);color:#6ee7b7}.st.rejected{background:rgba(239,68,68,.18);color:#fca5a5}
+.mt{display:flex;align-items:center;gap:14px;padding:15px;margin-bottom:10px;border-radius:22px;transition:.3s}
+.mt.off{opacity:.6}
+.mt-logo{width:50px;height:50px;flex:0 0 50px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px;font-family:'Inter';background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -8px var(--c1)}
+.mt-i{flex:1}
+.mt-i h4{margin:0 0 2px;font-size:15.5px;font-weight:700}
+.mt-i p{margin:0;font-size:12.5px;color:var(--muted)}
+.hint{margin:0 2px 14px;font-size:13px;color:var(--muted);line-height:1.6}
+</style>
 </head>
 <body>
-
-  <div class="navbar">
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>Withdraw Admin</span>
-    </div>
-    <button class="nav-logout" id="logoutBtn" title="Logout">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">⚡</div><span>Withdraw Admin<em class="atag">ADMIN</em></span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<main class="page">
+  <div class="tabs2">
+    <button id="tabRequests" class="active">📥 Requests</button>
+    <button id="tabMethods">💳 Methods</button>
   </div>
 
-  <div class="container">
-    <div class="tabs">
-      <button id="tabRequests" class="active">📥 Requests</button>
-      <button id="tabMethods">💳 Methods</button>
+  <div id="requestsSection">
+    <div class="wsum">
+      <div class="wsum-i glass" style="--c:#fbbf24"><div class="n" id="sumPendingN">0</div><div class="l">Pending</div></div>
+      <div class="wsum-i glass" style="--c:#f87171"><div class="n" id="sumPendingAmt">৳0</div><div class="l">Pending ৳</div></div>
+      <div class="wsum-i glass" style="--c:#34d399"><div class="n" id="sumApprovedAmt">৳0</div><div class="l">Approved ৳</div></div>
     </div>
 
-    <!-- REQUESTS -->
-    <div id="requestsSection">
-      <div class="dash-section-head">
-        <h3>⏳ Pending Withdraw Requests</h3>
-      </div>
-      <div id="pendingList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+    <div class="sec"><span>⏳ Pending Withdraw Requests</span></div>
+    <div id="pendingList"><div class="skel"></div><div class="skel"></div></div>
 
-      <div class="dash-section-head" style="margin-top:24px">
-        <h3>✅ History</h3>
-      </div>
-      <div id="historyList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
-    </div>
-
-    <!-- METHODS -->
-    <div id="methodsSection" style="display:none">
-      <div class="dash-section-head">
-        <h3>💳 Payment Methods On/Off</h3>
-      </div>
-      <p style="font-size:13px;color:#64748b;margin-bottom:16px">
-        ON থাকলে user withdraw request করতে পারবে, OFF থাকলে পারবে না।
-      </p>
-      <div id="methodsList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
-    </div>
+    <div class="sec"><span>✅ History</span></div>
+    <div id="historyList"><div class="skel"></div></div>
   </div>
 
-  <nav class="bottom-nav">
-    <a href="index.html" data-page="home"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="dashboard.html" data-page="dashboard" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
+  <div id="methodsSection" style="display:none">
+    <div class="sec" style="margin-top:4px"><span>💳 Payment Methods On/Off</span></div>
+    <p class="hint">ON থাকলে user withdraw request করতে পারবে, OFF থাকলে পারবে না।</p>
+    <div id="methodsList"><div class="skel"></div><div class="skel"></div></div>
+  </div>
+</main>
+<nav class="dock"><a href="index.html" data-page="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a href="dashboard.html" data-page="dash" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
-  <script type="module">
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
@@ -188,11 +170,12 @@
       };
     });
 
+    const METHOD_COLORS = {bkash:['#e2136e','#9d0b4f'],nagad:['#f6921e','#d1560f'],rocket:['#8c3494','#5b1f66'],binance:['#f0b90b','#b8860b']};
     const PAY_METHODS = {
-      bkash: { name: "bKash", logo: "bKash", logoClass: "bkash" },
-      nagad: { name: "Nagad", logo: "Nagad", logoClass: "nagad" },
-      rocket: { name: "Rocket", logo: "Rocket", logoClass: "rocket" },
-      binance: { name: "Binance", logo: "BNB", logoClass: "binance" }
+      bkash: { name: "bKash", logo: "bKash" },
+      nagad: { name: "Nagad", logo: "Nagad" },
+      rocket: { name: "Rocket", logo: "Rocket" },
+      binance: { name: "Binance", logo: "BNB" }
     };
 
     let currentUser = null;
@@ -216,7 +199,6 @@
       const snap = await getDocs(q);
       allWithdrawals = await Promise.all(snap.docs.map(async d => {
         const w = d.data();
-        // Get user info
         try {
           const uSnap = await getDoc(doc(db, "users", w.userId));
           if (uSnap.exists()) {
@@ -234,54 +216,77 @@
       const pending = allWithdrawals.filter(w => w.status === "pending");
       const history = allWithdrawals.filter(w => w.status !== "pending");
 
+      document.getElementById("sumPendingN").textContent = pending.length;
+      document.getElementById("sumPendingAmt").textContent = "৳" + pending.reduce((s, w) => s + (Number(w.amount) || 0), 0);
+      document.getElementById("sumApprovedAmt").textContent = "৳" + allWithdrawals.filter(w => w.status === "approved").reduce((s, w) => s + (Number(w.amount) || 0), 0);
+
       const pendingList = document.getElementById("pendingList");
       const historyList = document.getElementById("historyList");
 
-      if (pending.length === 0) {
-        pendingList.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো pending request নেই</p></div>`;
-      } else {
-        pendingList.innerHTML = pending.map(w => renderCard(w, true)).join("");
-      }
+      pendingList.innerHTML = pending.length === 0
+        ? `<div class="empty"><div class="em">📭</div>কোনো pending request নেই</div>`
+        : pending.map((w, i) => renderCard(w, true, i)).join("");
 
-      if (history.length === 0) {
-        historyList.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>কোনো history নেই</p></div>`;
-      } else {
-        historyList.innerHTML = history.slice(0, 30).map(w => renderCard(w, false)).join("");
-      }
+      historyList.innerHTML = history.length === 0
+        ? `<div class="empty"><div class="em">📭</div>কোনো history নেই</div>`
+        : history.slice(0, 30).map((w, i) => renderCard(w, false, i)).join("");
     }
 
-    function renderCard(w, isPending) {
-      const m = PAY_METHODS[w.method] || { name: w.methodName, logo: "?", logoClass: "bkash" };
+    function renderCard(w, isPending, i) {
+      const m = PAY_METHODS[w.method] || { name: w.methodName || "?", logo: "?" };
+      const [c1, c2] = METHOD_COLORS[w.method] || ["#6366f1", "#312e81"];
       const time = w.requestedAt?.toDate?.().toLocaleString("bn-BD", {
         day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
       }) || "";
 
       return `
-        <div class="wd-request ${w.status !== "pending" ? w.status : ''}">
-          <div class="wd-head">
-            <div class="wd-info">
-              <div class="user">👤 ${w.userName || "User"}</div>
-              <div class="email">${w.userEmail || ""}</div>
-              <div class="acc">${m.logo} ${m.name} → <b>${w.accountNum}</b></div>
-              <div class="email">🕐 ${time}</div>
+        <div class="wq glass ${w.status !== "pending" ? w.status : ''}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
+          <div class="wq-h">
+            <div class="wq-logo" style="--c1:${c1};--c2:${c2}">${esc((m.name || "?").charAt(0).toUpperCase())}</div>
+            <div class="wq-i">
+              <div class="wq-u">👤 ${esc(w.userName || "User")}</div>
+              <div class="wq-e">${esc(w.userEmail || "")}</div>
+              <div class="wq-acc">${esc(m.name)} → <b>${esc(w.accountNum)}</b> <button class="cp" data-copy="${esc(w.accountNum)}">📋</button></div>
+              <div class="wq-t">🕐 ${time}</div>
             </div>
-            <div class="wd-amount">৳${w.amount}</div>
+            <div class="wq-amt">৳${esc(w.amount)}<small>${esc(m.name)}</small></div>
           </div>
           ${isPending ? `
-            <div class="wd-actions">
-              <button style="background:#d1fae5;color:#065f46" onclick="approveW('${w.id}')">✅ Approve</button>
-              <button style="background:#fee2e2;color:#991b1b" onclick="rejectW('${w.id}')">❌ Reject</button>
+            <div class="wq-acts">
+              <button class="ok" onclick="approveW('${w.id}', this)">✅ Approve</button>
+              <button class="no" onclick="rejectW('${w.id}', this)">❌ Reject</button>
             </div>
-          ` : `<div style="font-size:11px;color:#94a3b8;margin-top:8px">Status: ${w.status}</div>`}
+          ` : `<span class="st ${w.status}">${w.status === "approved" ? "✅ Approved" : "❌ Rejected"}</span>`}
         </div>
       `;
     }
 
-    window.approveW = async (id) => {
+    document.addEventListener("click", (e) => {
+      const b = e.target.closest(".cp");
+      if (!b) return;
+      navigator.clipboard.writeText(b.dataset.copy).then(() => {
+        b.classList.add("done"); b.textContent = "✓";
+        setTimeout(() => { b.classList.remove("done"); b.textContent = "📋"; }, 1300);
+      });
+    });
+
+    // ডাবল approve/reject (এবং ডাবল refund) আটকাতে server-এ status আবার চেক
+    async function freshPending(id) {
+      const cur = await getDoc(doc(db, "withdrawals", id));
+      if (!cur.exists() || cur.data().status !== "pending") {
+        alert("⚠️ এই request আগেই process হয়ে গেছে!");
+        loadWithdrawals();
+        return null;
+      }
+      return { id, ...cur.data() };
+    }
+
+    window.approveW = async (id, btn) => {
       if (!confirm("Approve করবে? (User-এর balance থেকে টাকা আগেই কাটা হয়েছে, শুধু approve mark হবে)")) return;
-      const w = allWithdrawals.find(x => x.id === id);
-      if (!w) return;
+      btn.disabled = true;
       try {
+        const w = await freshPending(id);
+        if (!w) return;
         await updateDoc(doc(db, "withdrawals", id), {
           status: "approved",
           approvedAt: new Date(),
@@ -289,26 +294,26 @@
         });
         alert("✅ Approved!");
         loadWithdrawals();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) { alert("❌ " + e.message); btn.disabled = false; }
     };
 
-    window.rejectW = async (id) => {
+    window.rejectW = async (id, btn) => {
       if (!confirm("Reject করবে? (টাকা user-এর balance-এ ফেরত যাবে)")) return;
-      const w = allWithdrawals.find(x => x.id === id);
-      if (!w) return;
+      btn.disabled = true;
       try {
+        const w = await freshPending(id);
+        if (!w) return;
         await updateDoc(doc(db, "withdrawals", id), {
           status: "rejected",
           rejectedAt: new Date(),
           rejectedBy: currentUser.uid
         });
-        // Refund
         await updateDoc(doc(db, "users", w.userId), {
           balance: increment(w.amount)
         });
         alert("✅ Rejected! টাকা ফেরত দেওয়া হয়েছে।");
         loadWithdrawals();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) { alert("❌ " + e.message); btn.disabled = false; }
     };
 
     // ===== METHODS =====
@@ -322,13 +327,14 @@
 
       list.innerHTML = Object.keys(PAY_METHODS).map(key => {
         const m = PAY_METHODS[key];
+        const [c1, c2] = METHOD_COLORS[key];
         const isOn = config[key] !== false;
         return `
-          <div class="method-toggle ${isOn ? '' : 'off'}">
-            <div class="pay-logo ${m.logoClass}">${m.logo}</div>
-            <div style="flex:1">
-              <h4 style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:2px">${m.name}</h4>
-              <p style="font-size:12px;color:#64748b">Withdraw ${isOn ? 'চালু' : 'বন্ধ'}</p>
+          <div class="mt glass ${isOn ? '' : 'off'}">
+            <div class="mt-logo" style="--c1:${c1};--c2:${c2}">${esc(m.name.charAt(0))}</div>
+            <div class="mt-i">
+              <h4>${m.name}</h4>
+              <p>Withdraw ${isOn ? 'চালু' : 'বন্ধ'}</p>
             </div>
             <label class="switch">
               <input type="checkbox" ${isOn ? 'checked' : ''} data-key="${key}">
@@ -348,13 +354,13 @@
             const current = snap.exists() ? snap.data() : { bkash: true, nagad: true, rocket: true, binance: true };
             current[key] = isOn;
             await setDoc(ref, current);
-            e.target.closest(".method-toggle").classList.toggle("off", !isOn);
-            const p = e.target.closest(".method-toggle").querySelector("p");
-            p.textContent = `Withdraw ${isOn ? 'চালু' : 'বন্ধ'}`;
-          } catch (err) { alert("❌ " + err.message); }
+            e.target.closest(".mt").classList.toggle("off", !isOn);
+            e.target.closest(".mt").querySelector("p").textContent = `Withdraw ${isOn ? 'চালু' : 'বন্ধ'}`;
+          } catch (err) { alert("❌ " + err.message); e.target.checked = !isOn; }
         };
       });
     }
   </script>
+
 </body>
 </html>
