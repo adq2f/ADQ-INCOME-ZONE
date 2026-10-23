@@ -1,137 +1,178 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Chat — Admin</title>
-  <link rel="stylesheet" href="style.css?v=35">
-  <style>
-    .chat-inbox { display: flex; flex-direction: column; gap: 10px; }
-    .chat-row {
-      background: white; border-radius: 14px; padding: 14px;
-      display: flex; gap: 12px; align-items: center;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-      border-left: 4px solid #e2e8f0;
-      cursor: pointer; transition: 0.2s;
-    }
-    .chat-row.unread { border-left-color: #ef4444; background: linear-gradient(90deg, #fef2f2, white 40%); }
-    .chat-row:hover { transform: translateX(3px); }
-    .chat-row-avatar {
-      width: 44px; height: 44px; border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-weight: 800; font-size: 17px; flex-shrink: 0;
-    }
-    .chat-row-info { flex: 1; min-width: 0; }
-    .chat-row-info h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 2px; }
-    .chat-row-info p { font-size: 12px; color: #64748b; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .chat-row-badge {
-      background: #ef4444; color: white; min-width: 22px; height: 22px;
-      border-radius: 11px; display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 800; padding: 0 6px;
-    }
-    .admin-chat-panel {
-      position: fixed; inset: 0; background: white; z-index: 2000;
-      display: none; flex-direction: column;
-    }
-    .admin-chat-panel.open { display: flex; }
-    .admin-chat-panel .chat-body { background: linear-gradient(180deg, #f8fafc, #eef2ff); }
-    .online-toggle-row {
-      background: white; border-radius: 14px; padding: 16px;
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px; box-shadow: 0 4px 16px rgba(15,23,42,0.06);
-    }
-    .online-toggle-row h4 { font-size: 14px; color: #0f172a; margin: 0; }
-    .online-toggle-row p { font-size: 11px; color: #64748b; margin: 2px 0 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Live Chat — Admin — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    /* Switch */
-    .switch {
-      position: relative;
-      width: 54px;
-      height: 30px;
-      flex-shrink: 0;
-      display: inline-block;
-    }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #cbd5e1;
-      transition: 0.4s;
-      border-radius: 30px;
-    }
-    .slider:before {
-      content: "";
-      position: absolute;
-      height: 22px; width: 22px;
-      left: 4px; bottom: 4px;
-      background: white;
-      transition: 0.4s;
-      border-radius: 50%;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    .switch input:checked + .slider {
-      background: linear-gradient(135deg, #10b981, #059669);
-    }
-    .switch input:checked + .slider:before {
-      transform: translateX(24px);
-    }
-  </style>
+.atag{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.8px;color:#2a1700;background:linear-gradient(135deg,#fde68a,#f59e0b);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
+.top .mark{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);color:#2a1700;box-shadow:0 8px 20px -6px rgba(245,158,11,.8),inset 0 1px 0 rgba(255,255,255,.4)}
+.switch{position:relative;width:54px;height:30px;flex:0 0 54px;display:inline-block}
+.switch input{opacity:0;width:0;height:0;position:absolute;margin:0}
+.slider{position:absolute;inset:0;cursor:pointer;background:rgba(255,255,255,.14);border:1px solid var(--line);border-radius:30px;transition:.3s}
+.slider::before{content:"";position:absolute;height:22px;width:22px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.switch input:checked+.slider{background:linear-gradient(135deg,#10b981,#0d9488);border-color:transparent;box-shadow:0 0 18px -2px rgba(16,185,129,.8)}
+.switch input:checked+.slider::before{transform:translateX(24px)}
+.inp{display:block;width:100%;padding:15px 16px;margin:0 0 12px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:15px;font-weight:500;outline:none;transition:.25s;color-scheme:dark}
+.inp::placeholder{color:#6f7090;font-weight:400}
+.inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+.inp:disabled{opacity:.55;cursor:not-allowed}
+select.inp option{background:#12122a;color:#fff}
+.lab{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:2px 2px 7px}
+.acard{border-radius:26px;padding:20px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.acard h3{margin:0 0 6px;font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px}
+.acard .hi{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(99,102,241,.22)}
+.acard .sub{margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.cta.red{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 16px 32px -12px rgba(239,68,68,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta.amber{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);box-shadow:0 16px 34px -10px rgba(245,158,11,.9),inset 0 1px 0 rgba(255,255,255,.4);color:#2a1700}
+.cta.outline{background:rgba(255,255,255,.05);border:1.5px solid rgba(139,92,246,.55);color:#c4b5fd;box-shadow:none}
+.cta+.cta{margin-top:10px}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.page{max-width:640px}
+
+.otr{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;border-radius:24px;margin-bottom:14px}
+.otr h4{margin:0 0 3px;font-size:15.5px;font-weight:700}
+.otr p{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
+.ostate{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;margin-top:9px;padding:5px 12px;border-radius:999px}
+.ostate i{width:8px;height:8px;border-radius:50%;background:currentColor}
+.ostate.on{background:rgba(16,185,129,.16);color:#6ee7b7}
+.ostate.on i{animation:op 2s infinite}
+.ostate.off{background:rgba(255,255,255,.07);color:var(--muted)}
+@keyframes op{0%{box-shadow:0 0 0 0 rgba(16,185,129,.8)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.srch{position:relative;margin-bottom:12px}
+.srch svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.srch input{width:100%;padding:14px 16px 14px 44px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:#fff;font-family:inherit;font-size:14.5px;outline:none;transition:.25s}
+.srch input:focus{border-color:rgba(139,92,246,.9);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+.cr{display:flex;gap:12px;align-items:center;padding:13px 14px;margin-bottom:9px;border-radius:20px;border-left:4px solid transparent;cursor:pointer;transition:.25s;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.cr:hover{transform:translateX(4px);border-color:rgba(139,92,246,.6)}
+.cr.unread{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.16),rgba(255,255,255,.025) 50%)}
+.cr-av{width:46px;height:46px;flex:0 0 46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;font-family:'Inter';background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px #8b5cf6}
+.cr-i{flex:1;min-width:0}
+.cr-i h4{margin:0 0 2px;font-size:14.5px;font-weight:700}
+.cr-i p{margin:0;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-b{min-width:24px;height:24px;border-radius:12px;padding:0 7px;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;color:#fff;background:#ef4444;box-shadow:0 8px 18px -6px #ef4444}
+.achat{position:fixed;inset:0;z-index:2000;display:none;flex-direction:column;background:linear-gradient(180deg,#17172f,#0b0b1c)}
+.achat.open{display:flex}
+.ac-w{width:100%;max-width:720px;margin:0 auto;display:flex;flex-direction:column;height:100%}
+.ac-h{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) 16px 14px;background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#c026d3);box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.ac-back{width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.18);color:#fff;font-size:19px;cursor:pointer;flex:0 0 38px}
+.ac-av{width:44px;height:44px;flex:0 0 44px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:18px;font-family:'Inter';background:linear-gradient(135deg,#fbbf24,#f59e0b)}
+.ac-n h4{margin:0;font-size:15.5px;font-weight:700;color:#fff}
+.ac-n p{margin:2px 0 0;font-size:12px;color:rgba(255,255,255,.8)}
+.ac-body{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.cm{max-width:78%;padding:10px 14px;border-radius:18px;font-size:14px;line-height:1.55;word-wrap:break-word;animation:rise .3s ease both}
+.cm.admin{align-self:flex-end;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 10px 22px -10px rgba(139,92,246,.9)}
+.cm.user{align-self:flex-start;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:5px}
+.cm .t{display:block;font-size:10px;opacity:.65;margin-top:4px}
+.ac-in{display:flex;gap:8px;align-items:center;padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1)}
+.ac-in input{flex:1;padding:13px 16px;border-radius:999px;border:1.5px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#fff;font-family:inherit;font-size:14px;outline:none}
+.ac-in input:focus{border-color:rgba(139,92,246,.9);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+.ac-send{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;color:#fff;font-size:18px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.95)}
+.ac-send:disabled{background:rgba(255,255,255,.12);box-shadow:none}
+</style>
 </head>
 <body>
-
-  <div class="navbar admin-navbar">
-    <button class="nav-back" onclick="location.href='admin.html'">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="logo"><div class="mark">⚡</div><span>Live Chat Inbox</span></div>
-    <div style="width:40px"></div>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="location.href='admin.html'" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">⚡</div><span>Live Chat<em class="atag">ADMIN</em></span></div><div style="width:40px"></div></div></header>
+<main class="page">
+  <div class="otr glass">
+    <div style="min-width:0">
+      <h4>🟢 Admin Online Status</h4>
+      <p>Online করলে সব user আপনাকে <b>Online</b> দেখবে (chat button ও chat panel-এ)</p>
+      <span class="ostate off" id="ostate"><i></i><span id="ostateText">Offline — user-রা Offline দেখছে</span></span>
+    </div>
+    <label class="switch"><input type="checkbox" id="onlineToggle"><span class="slider"></span></label>
   </div>
 
-  <div class="container">
-    <div class="online-toggle-row">
-      <div>
-        <h4>🟢 Admin Online Status</h4>
-        <p>User-রা দেখবে আপনি online আছেন কিনা</p>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="onlineToggle">
-        <span class="slider"></span>
-      </label>
-    </div>
-
-    <div id="inboxList" class="chat-inbox loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="srch">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="inboxSearch" placeholder="User এর নাম দিয়ে খুঁজুন..." autocomplete="off">
   </div>
 
-  <!-- Admin Chat View -->
-  <div class="admin-chat-panel" id="adminChatPanel">
-    <div class="chat-panel-head">
-      <button class="chat-close" onclick="closeAdminChat()">←</button>
-      <div class="chat-admin-avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)" id="acUserAvatar">U</div>
-      <div class="chat-panel-info">
-        <h4 id="acUserName">User</h4>
-        <p id="acUserEmail">email</p>
-      </div>
-    </div>
-    <div class="chat-body" id="adminChatBody"></div>
-    <div class="chat-input-bar">
-      <input type="text" id="adminChatInput" placeholder="রিপ্লাই লিখুন..." maxlength="500">
-      <button class="chat-send" id="adminChatSend">➤</button>
-    </div>
-  </div>
+  <div id="inboxList"><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div><div class="skel" style="height:70px"></div></div>
+</main>
 
-  <script type="module">
+<div class="achat" id="adminChatPanel"><div class="ac-w">
+  <div class="ac-h">
+    <button class="ac-back" id="acBack" aria-label="Back">←</button>
+    <div class="ac-av" id="acUserAvatar">U</div>
+    <div class="ac-n"><h4 id="acUserName">User</h4><p id="acUserEmail">email</p></div>
+  </div>
+  <div class="ac-body" id="adminChatBody"></div>
+  <div class="ac-in">
+    <input type="text" id="adminChatInput" placeholder="রিপ্লাই লিখুন..." maxlength="500">
+    <button class="ac-send" id="adminChatSend" aria-label="Send">➤</button>
+  </div>
+</div></div>
+
+
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import {
       doc, getDoc, setDoc, collection, query, orderBy, onSnapshot,
       updateDoc, increment, addDoc, serverTimestamp
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     let currentAdmin = null;
     let activeChatId = null;
     let unsubMsgs = null;
+    let allChats = [];
+
+    function paintOnline(on) {
+      const st = document.getElementById("ostate");
+      st.className = "ostate " + (on ? "on" : "off");
+      document.getElementById("ostateText").textContent = on ? "Online — সব user আপনাকে Online দেখছে" : "Offline — user-রা Offline দেখছে";
+    }
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
@@ -144,56 +185,77 @@
       // Initialize online toggle
       const osSnap = await getDoc(doc(db, "settings", "online_status"));
       const isOnline = osSnap.exists() ? osSnap.data().adminOnline === true : false;
-      document.getElementById("onlineToggle").checked = isOnline;
+      const toggle = document.getElementById("onlineToggle");
+      toggle.checked = isOnline;
+      paintOnline(isOnline);
 
-      document.getElementById("onlineToggle").onchange = async (e) => {
-        await setDoc(doc(db, "settings", "online_status"), {
-          adminOnline: e.target.checked,
-          adminLastSeen: new Date(),
-          adminName: uSnap.data().username || "ADQ Admin"
-        }, { merge: true });
+      toggle.onchange = async (e) => {
+        const on = e.target.checked;
+        paintOnline(on);
+        try {
+          await setDoc(doc(db, "settings", "online_status"), {
+            adminOnline: on,
+            adminLastSeen: new Date(),
+            adminName: uSnap.data().username || "ADQ Admin"
+          }, { merge: true });
+        } catch (err) {
+          e.target.checked = !on;
+          paintOnline(!on);
+          alert("❌ " + err.message);
+        }
       };
 
       loadInbox();
     });
 
-    function loadInbox() {
+    function renderInbox() {
       const list = document.getElementById("inboxList");
+      const term = (document.getElementById("inboxSearch").value || "").toLowerCase();
+      const rows = allChats.filter(c => !term || (c.username || "").toLowerCase().includes(term));
+      if (rows.length === 0) {
+        list.innerHTML = `<div class="empty"><div class="em">📭</div>${allChats.length ? "কাউকে খুঁজে পাওয়া যায়নি" : "এখনো কোনো chat নেই"}</div>`;
+        return;
+      }
+      list.innerHTML = rows.map((c, i) => {
+        const unread = c.unreadForAdmin || 0;
+        const initial = (c.username || "U").charAt(0).toUpperCase();
+        const time = c.lastMessageAt?.toDate?.().toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) || "";
+        return `
+          <div class="cr glass ${unread > 0 ? 'unread' : ''}" data-id="${esc(c.id)}" style="animation-delay:${Math.min(i, 8) * 0.04}s">
+            <div class="cr-av">${esc(initial)}</div>
+            <div class="cr-i">
+              <h4>${esc(c.username || 'User')}</h4>
+              <p>${esc(c.lastMessage || '')}${time ? ' · ' + time : ''}</p>
+            </div>
+            ${unread > 0 ? `<div class="cr-b">${unread}</div>` : ''}
+          </div>`;
+      }).join("");
+    }
+
+    function loadInbox() {
       const q = query(collection(db, "chats"), orderBy("lastMessageAt", "desc"));
       onSnapshot(q, (snap) => {
-        if (snap.empty) {
-          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো chat নেই</p></div>`;
-          return;
-        }
-        list.innerHTML = snap.docs.map(d => {
-          const c = d.data();
-          const unread = c.unreadForAdmin || 0;
-          const initial = (c.username || "U").charAt(0).toUpperCase();
-          const time = c.lastMessageAt?.toDate?.().toLocaleTimeString("bn-BD", {
-            hour: "2-digit", minute: "2-digit"
-          }) || "";
-          return `
-            <div class="chat-row ${unread > 0 ? 'unread' : ''}" onclick="openAdminChat('${d.id}','${escapeAttr(c.username||'User')}','${escapeAttr(c.userEmail||'')}','${initial}')">
-              <div class="chat-row-avatar">${initial}</div>
-              <div class="chat-row-info">
-                <h4>${escapeHtml(c.username || 'User')}</h4>
-                <p>${escapeHtml(c.lastMessage || '')} · ${time}</p>
-              </div>
-              ${unread > 0 ? `<div class="chat-row-badge">${unread}</div>` : ''}
-            </div>
-          `;
-        }).join("");
+        allChats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderInbox();
       });
     }
 
-    window.openAdminChat = async (chatId, username, email, initial) => {
+    document.getElementById("inboxSearch").addEventListener("input", renderInbox);
+    document.getElementById("inboxList").addEventListener("click", (e) => {
+      const row = e.target.closest(".cr");
+      if (!row) return;
+      const c = allChats.find(x => x.id === row.dataset.id);
+      if (c) openAdminChat(c.id, c.username || "User", c.userEmail || "", (c.username || "U").charAt(0).toUpperCase());
+    });
+
+    async function openAdminChat(chatId, username, email, initial) {
       activeChatId = chatId;
       document.getElementById("adminChatPanel").classList.add("open");
       document.getElementById("acUserName").textContent = username;
       document.getElementById("acUserEmail").textContent = email;
       document.getElementById("acUserAvatar").textContent = initial;
 
-      await updateDoc(doc(db, "chats", chatId), { unreadForAdmin: 0 });
+      try { await updateDoc(doc(db, "chats", chatId), { unreadForAdmin: 0 }); } catch (e) {}
 
       if (unsubMsgs) unsubMsgs();
       const body = document.getElementById("adminChatBody");
@@ -204,55 +266,56 @@
         body.innerHTML = msgs.length ? msgs.map(m => {
           const t = m.createdAt?.toDate?.();
           const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
-          return `<div class="chat-msg ${m.sender}">${escapeHtml(m.text)}<span class="msg-time">${time}</span></div>`;
-        }).join("") : `<div class="chat-empty"><span class="em">💬</span>কোনো মেসেজ নেই</div>`;
+          return `<div class="cm ${m.sender === 'admin' ? 'admin' : 'user'}">${esc(m.text)}<span class="t">${time}</span></div>`;
+        }).join("") : `<div class="empty" style="margin:auto"><div class="em">💬</div>কোনো মেসেজ নেই</div>`;
         body.scrollTop = body.scrollHeight;
+        // chat খোলা থাকলে নতুন user মেসেজ আসামাত্র unread 0 করা
+        const last = msgs[msgs.length - 1];
+        if (last && last.sender === "user" && activeChatId === chatId) {
+          updateDoc(doc(db, "chats", chatId), { unreadForAdmin: 0 }).catch(() => {});
+        }
       });
+    }
 
-      document.getElementById("adminChatSend").onclick = async () => {
-        const input = document.getElementById("adminChatInput");
-        const text = input.value.trim();
-        if (!text) return;
-        document.getElementById("adminChatSend").disabled = true;
-        try {
-          await addDoc(collection(db, "chats", chatId, "messages"), {
-            sender: "admin",
-            senderName: "Admin",
-            text,
-            createdAt: serverTimestamp(),
-            readByAdmin: true,
-            readByUser: false
-          });
-          await updateDoc(doc(db, "chats", chatId), {
-            lastMessage: text,
-            lastMessageAt: serverTimestamp(),
-            lastSender: "admin",
-            unreadForUser: increment(1)
-          });
-          input.value = "";
-        } catch (e) { alert("❌ " + e.message); }
-        document.getElementById("adminChatSend").disabled = false;
-      };
-
-      document.getElementById("adminChatInput").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") document.getElementById("adminChatSend").click();
-      });
+    document.getElementById("adminChatSend").onclick = async () => {
+      if (!activeChatId) return;
+      const chatId = activeChatId;
+      const input = document.getElementById("adminChatInput");
+      const sendBtn = document.getElementById("adminChatSend");
+      const text = input.value.trim();
+      if (!text) return;
+      sendBtn.disabled = true;
+      try {
+        await addDoc(collection(db, "chats", chatId, "messages"), {
+          sender: "admin",
+          senderName: "Admin",
+          text,
+          createdAt: serverTimestamp(),
+          readByAdmin: true,
+          readByUser: false
+        });
+        await updateDoc(doc(db, "chats", chatId), {
+          lastMessage: text,
+          lastMessageAt: serverTimestamp(),
+          lastSender: "admin",
+          unreadForUser: increment(1)
+        });
+        input.value = "";
+      } catch (e) { alert("❌ " + e.message); }
+      sendBtn.disabled = false;
     };
 
-    window.closeAdminChat = () => {
+    document.getElementById("adminChatInput").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") document.getElementById("adminChatSend").click();
+    });
+
+    function closeAdminChat() {
       document.getElementById("adminChatPanel").classList.remove("open");
       if (unsubMsgs) unsubMsgs();
       activeChatId = null;
-    };
-
-    function escapeHtml(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-      }[c]));
     }
-    function escapeAttr(s) {
-      return String(s ?? "").replace(/'/g, "\\'").replace(/"/g, "&quot;");
-    }
+    document.getElementById("acBack").onclick = closeAdminChat;
   </script>
+
 </body>
 </html>
