@@ -1,235 +1,222 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wallet — ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=36">
-  <style>
-    /* Premium Wallet Hero */
-    .wallet-hero {
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
-      border-radius: 24px; padding: 24px; color: white; position: relative; overflow: hidden;
-      box-shadow: 0 20px 40px rgba(15,23,42,0.4); margin-bottom: 16px;
-    }
-    .wallet-hero::before {
-      content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 60%);
-      animation: rotateGlow 10s linear infinite;
-    }
-    @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .wallet-hero::before { animation: none; } }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Wallet — ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    .wallet-hero-content { position: relative; z-index: 2; }
-    .wh-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.8; font-weight: 700; }
-    .wh-amount { font-size: 46px; font-weight: 900; font-family: 'Inter', sans-serif; margin: 4px 0 20px; line-height: 1; text-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.bal{position:relative;overflow:hidden;border-radius:28px;padding:22px 22px 20px;margin-bottom:14px;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.bal::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
+.bal::after{content:'';position:absolute;right:-70px;bottom:-90px;width:240px;height:240px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.03);pointer-events:none}
+.bal>*{position:relative;z-index:1}
+.bal-top{display:flex;align-items:center;justify-content:space-between}
+.bal-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.88)}
+.chip-gold{width:38px;height:28px;border-radius:7px;background:linear-gradient(135deg,#fde68a,#f59e0b);position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.chip-gold::before{content:'';position:absolute;inset:6px 8px;border:1.5px solid rgba(120,53,15,.4);border-radius:3px}
+.bal-amt{font-family:'Inter';font-weight:900;font-size:46px;letter-spacing:-1.5px;line-height:1;margin:14px 0 4px;text-shadow:0 6px 20px rgba(0,0,0,.25)}
+.bal-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.bal-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:15px;font-size:14px;font-weight:700;color:#fff;transition:.25s;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28)}
+.bal-btn.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 10px 24px -8px rgba(0,0,0,.45)}
+.bal-btn:hover{transform:translateY(-2px)}
+.bal-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 
-    .wh-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .wh-btn {
-      background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2); color: white;
-      padding: 12px; border-radius: 14px; text-decoration: none;
-      font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: 0.3s;
-    }
-    .wh-btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+.wdsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.wdsum-i{position:relative;overflow:hidden;padding:12px 6px 10px;border-radius:18px;text-align:center}
+.wdsum-i::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
+.wdsum-i .n{font-family:'Inter';font-size:17px;font-weight:900;color:var(--c);line-height:1.15}
+.wdsum-i .l{font-size:11px;color:var(--muted);font-weight:600;margin-top:3px}
+.wdi{display:flex;gap:12px;padding:14px;margin-bottom:10px;border-radius:22px;border-left:4px solid #f59e0b;animation:rise .5s cubic-bezier(.2,.8,.2,1) both;transition:.25s}
+.wdi:hover{transform:translateY(-2px)}
+.wdi.pending{background:linear-gradient(90deg,rgba(245,158,11,.12),rgba(255,255,255,.025) 50%)}
+.wdi.approved{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(255,255,255,.025) 50%)}
+.wdi.rejected{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.14),rgba(255,255,255,.025) 50%)}
+.wdi-logo{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;font-family:'Inter';color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 10px 22px -8px var(--c1)}
+.wdi-main{flex:1;min-width:0}
+.wdi-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wdi-amt{font-family:'Inter';font-size:19px;font-weight:900}
+.wdi-st{font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.wdi-st.pending{background:rgba(245,158,11,.18);color:#fcd34d}
+.wdi-st.approved{background:rgba(16,185,129,.18);color:#6ee7b7}
+.wdi-st.rejected{background:rgba(239,68,68,.18);color:#fca5a5}
+.wdi-meta{font-size:12.5px;color:#dcdcf2;font-weight:600;margin-top:4px;word-break:break-all}
+.wdi-time{font-size:11.5px;color:var(--muted);margin-top:3px}
+.wdi-hint{margin-top:8px;font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05);color:var(--muted)}
 
-    /* ===== Compact Premium Payment Info ===== */
-    .pay-strip { margin-bottom: 14px; }
-    .pay-strip-head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin: 0 2px 8px;
-    }
-    .pay-strip-title { font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; }
-    .pay-strip-count {
-      font-size: 11px; font-weight: 800; color: #4f46e5; background: #eef2ff;
-      padding: 2px 8px; border-radius: 999px;
-    }
-    .pay-edit-btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: #0f172a; color: #fff; border: none;
-      padding: 6px 12px; border-radius: 999px;
-      font-size: 12px; font-weight: 700; cursor: pointer; transition: 0.2s;
-    }
-    .pay-edit-btn:hover { background: #312e81; }
-    .pay-edit-btn svg { width: 13px; height: 13px; }
+.fcard{border-radius:26px;padding:20px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.fcard h3{margin:0 0 14px;font-size:17px;font-weight:700}
+.lab{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 2px 7px}
+.field{position:relative;display:flex;align-items:center;margin-bottom:4px;background:rgba(255,255,255,.05);border:1.5px solid var(--line);border-radius:16px;transition:.25s}
+.field:hover{background:rgba(255,255,255,.07)}
+.field:focus-within{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18),0 8px 24px -10px rgba(139,92,246,.6)}
+.field.err{border-color:rgba(239,68,68,.9);box-shadow:0 0 0 4px rgba(239,68,68,.15)}
+.f-ic{flex:0 0 48px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;font-weight:800}
+.field:focus-within .f-ic{color:#c4b5fd}
+.f-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.field input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:15.5px;font-weight:500;padding:16px 12px 16px 0}
+.field input::placeholder{color:#6f7090;font-weight:400}
+.field input:-webkit-autofill{-webkit-text-fill-color:var(--ink);-webkit-box-shadow:0 0 0 60px #15152b inset}
+.f-tg{flex:0 0 46px;align-self:stretch;background:transparent;border:none;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.f-tg:hover{color:#fff}
+.f-tg svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cta{position:relative;overflow:hidden;display:block;width:100%;border:none;cursor:pointer;border-radius:16px;padding:16px;color:#fff;font-size:16px;font-weight:700;transition:.25s;text-align:center}
+.cta.purple{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);box-shadow:0 16px 34px -10px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+.cta.green{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 16px 32px -12px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta::before{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .7s}
+.cta:hover:not(:disabled)::before{left:130%}
+.cta:hover:not(:disabled){transform:translateY(-2px)}
+.cta:active:not(:disabled){transform:scale(.985)}
+.cta:disabled{filter:saturate(.5) brightness(.85);cursor:not-allowed}
+.cta.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);box-shadow:none}
 
-    .pay-scroll {
-      display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 8px;
-      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
-    }
-    .pay-scroll::-webkit-scrollbar { display: none; }
-
-    .pm-tile {
-      flex: 0 0 auto; min-width: 158px; max-width: 200px;
-      scroll-snap-align: start;
-      position: relative; overflow: hidden;
-      border-radius: 16px; padding: 11px 12px;
-      color: #fff; background: linear-gradient(135deg, var(--c1), var(--c2));
-      box-shadow: 0 8px 18px -6px var(--c1);
-      display: flex; flex-direction: column; gap: 8px;
-    }
-    .pm-tile::after {
-      content: ''; position: absolute; right: -24px; top: -24px;
-      width: 80px; height: 80px; border-radius: 50%;
-      background: rgba(255,255,255,0.16);
-    }
-    .pm-top { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
-    .pm-name { font-size: 12px; font-weight: 800; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; }
-    .pm-dot {
-      width: 20px; height: 20px; border-radius: 7px; background: rgba(255,255,255,0.25);
-      display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900;
-    }
-    .pm-copy {
-      background: rgba(255,255,255,0.22); border: none; color: #fff;
-      width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center;
-      transition: 0.2s; backdrop-filter: blur(6px);
-    }
-    .pm-copy:hover { background: rgba(255,255,255,0.38); }
-    .pm-copy svg { width: 13px; height: 13px; }
-    .pm-copy.done { background: #fff; color: #059669; }
-    .pm-num {
-      position: relative; z-index: 1;
-      font-family: 'Courier New', monospace; font-size: 13.5px; font-weight: 700;
-      letter-spacing: 0.6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .pm-holder { position: relative; z-index: 1; font-size: 10px; opacity: 0.8; font-weight: 600; margin-top: -4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    .pay-empty {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: white; border: 1.5px dashed #c7d2fe; border-radius: 14px; padding: 10px 14px;
-    }
-    .pay-empty span { font-size: 12.5px; color: #64748b; font-weight: 600; }
-
-    /* Stats */
-    .premium-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
-    .ps-card {
-      background: white; border-radius: 16px; padding: 12px 8px; text-align: center;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.04); border: 1px solid rgba(226,232,240,0.6);
-      position: relative; overflow: hidden;
-    }
-    .ps-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-    .ps-card.good::before { background: #10b981; }
-    .ps-card.bad::before { background: #ef4444; }
-    .ps-card.pending::before { background: #f59e0b; }
-    .ps-icon { font-size: 18px; margin-bottom: 4px; display: block; }
-    .ps-num { font-size: 20px; font-weight: 900; font-family: 'Inter', sans-serif; line-height: 1; }
-    .ps-card.good .ps-num { color: #10b981; }
-    .ps-card.bad .ps-num { color: #ef4444; }
-    .ps-card.pending .ps-num { color: #f59e0b; }
-    .ps-label { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; margin-top: 2px; }
-
-    .wm-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; }
-    .wm-tabs::-webkit-scrollbar { display: none; }
-    .wm-tab { padding: 8px 16px; border-radius: 10px; background: #f1f5f9; color: #64748b; border: 2px solid transparent; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-    .wm-tab.active { background: #eef2ff; color: #4f46e5; border-color: #6366f1; }
-  </style>
+.pstrip{margin-bottom:14px}
+.pstrip-head{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px}
+.pstrip-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.pcount{font-size:11px;font-weight:800;color:#c4b5fd;background:rgba(99,102,241,.22);padding:2px 9px;border-radius:999px}
+.pedit{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;padding:7px 13px;border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;transition:.2s}
+.pedit:hover{background:rgba(139,92,246,.35)}
+.pedit svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.pscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 10px;scroll-snap-type:x mandatory}
+.pscroll::-webkit-scrollbar{display:none}
+.pm-tile{flex:0 0 auto;min-width:168px;max-width:210px;scroll-snap-align:start;position:relative;overflow:hidden;border-radius:20px;padding:13px 14px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 14px 28px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.3);display:flex;flex-direction:column;gap:9px}
+.pm-tile::after{content:'';position:absolute;right:-26px;top:-26px;width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.16)}
+.pm-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.pm-name{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:7px}
+.pm-dot{width:22px;height:22px;border-radius:8px;background:rgba(255,255,255,.25);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+.pm-copy{background:rgba(255,255,255,.22);border:none;color:#fff;width:28px;height:28px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:.2s}
+.pm-copy:hover{background:rgba(255,255,255,.4)}
+.pm-copy svg{width:13px;height:13px}
+.pm-copy.done{background:#fff;color:#059669}
+.pm-num{position:relative;z-index:1;font-family:'Courier New',monospace;font-size:14.5px;font-weight:700;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm-holder{position:relative;z-index:1;font-size:10.5px;opacity:.85;font-weight:600;margin-top:-4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pempty{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1.5px dashed rgba(167,139,250,.5);color:var(--muted);font-size:13px;font-weight:600}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
+.s3{position:relative;overflow:hidden;padding:13px 6px 11px;border-radius:20px;text-align:center}
+.s3::before{content:'';position:absolute;top:0;left:22%;right:22%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 14px var(--c)}
+.s3 .ic{font-size:17px;display:block;margin-bottom:3px}
+.s3 .num{font-family:'Inter';font-size:21px;font-weight:900;color:var(--c);line-height:1.1}
+.s3 .lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
+.p-modal{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,3,10,.7);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.p-modal.show{opacity:1;visibility:visible}
+.p-sheet{width:100%;max-width:520px;max-height:88vh;max-height:88dvh;display:flex;flex-direction:column;border-radius:28px 28px 0 0;background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.12);border-bottom:none;box-shadow:0 -20px 60px -10px rgba(0,0,0,.7);transform:translateY(40px);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.p-modal.show .p-sheet{transform:none}
+.p-sheet::before{content:'';width:42px;height:4px;border-radius:4px;background:rgba(255,255,255,.2);margin:10px auto 0;flex:0 0 4px}
+.p-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px 4px}
+.p-sheet-head h3{margin:0;font-size:19px;font-weight:700}
+.p-sub{padding:0 18px 8px;font-size:13px;color:var(--muted)}
+.p-close{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--muted);cursor:pointer;font-size:14px}
+.p-sheet-body{overflow-y:auto;padding:4px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+.wm-tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:4px}
+.wm-tabs::-webkit-scrollbar{display:none}
+.wm-tab{padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.2s}
+.wm-tab.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.sheet-acts{display:grid;grid-template-columns:1fr 64px;gap:10px;margin-top:20px}
+</style>
 </head>
 <body>
-
-  <div class="navbar">
-    <button class="nav-back" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>My Wallet</span>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>My Wallet</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<main class="page">
+  <section class="bal">
+    <div class="bal-top">
+      <div class="bal-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>Available Balance</div>
+      <div class="chip-gold"></div>
     </div>
-    <button class="nav-logout" id="logoutBtn">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
+    <div class="bal-amt" id="balance">৳0</div>
+    <div class="bal-acts">
+      <a href="withdraw.html" id="withdrawBtnLink" class="bal-btn solid"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Withdraw</a>
+      <a href="task-history.html" class="bal-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</a>
+    </div>
+  </section>
+
+  <div class="pstrip" id="walletSetupCard">
+    <div class="pstrip-head">
+      <div class="pstrip-title">💳 My Payment Info <span class="pcount" id="payCount" style="display:none"></span></div>
+      <button class="pedit" id="editWalletBtn"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edit</button>
+    </div>
+    <div id="walletInfoContent"></div>
   </div>
 
-  <div class="container">
-    <div class="wallet-hero">
-      <div class="wallet-hero-content">
-        <div class="wh-label">💰 Available Balance</div>
-        <div class="wh-amount" id="balance">৳0</div>
-        <div class="wh-actions">
-          <a href="withdraw.html" id="withdrawBtnLink" class="wh-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-            Withdraw
-          </a>
-          <a href="task-history.html" class="wh-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            History
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="pay-strip" id="walletSetupCard">
-      <div class="pay-strip-head">
-        <div class="pay-strip-title">💳 My Payment Info <span class="pay-strip-count" id="payCount" style="display:none"></span></div>
-        <button class="pay-edit-btn" id="editWalletBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-          Edit
-        </button>
-      </div>
-      <div id="walletInfoContent"></div>
-    </div>
-
-    <div class="premium-stats">
-      <div class="ps-card good">
-        <span class="ps-icon">✅</span>
-        <div class="ps-num" id="statGood">0</div>
-        <div class="ps-label">Good</div>
-      </div>
-      <div class="ps-card bad">
-        <span class="ps-icon">❌</span>
-        <div class="ps-num" id="statBad">0</div>
-        <div class="ps-label">Bad</div>
-      </div>
-      <div class="ps-card pending">
-        <span class="ps-icon">⏳</span>
-        <div class="ps-num" id="statPending">0</div>
-        <div class="ps-label">Pending</div>
-      </div>
-    </div>
-
-    <div class="dash-section-head">
-      <h3 style="font-size: 18px; font-weight: 800; color: #0f172a;">📜 Withdraw History</h3>
-    </div>
-    <div id="withdrawHistory" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="stats3">
+    <div class="s3 glass" style="--c:#34d399"><span class="ic">✅</span><div class="num" id="statGood">0</div><div class="lbl">Good</div></div>
+    <div class="s3 glass" style="--c:#f87171"><span class="ic">❌</span><div class="num" id="statBad">0</div><div class="lbl">Bad</div></div>
+    <div class="s3 glass" style="--c:#fbbf24"><span class="ic">⏳</span><div class="num" id="statPending">0</div><div class="lbl">Pending</div></div>
   </div>
 
-  <nav class="bottom-nav">
-    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
-    <a href="wallet.html" data-page="wallet" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
+  <div class="sec"><span>📜 Withdraw History</span></div>
+  <div class="wdsum">
+    <div class="wdsum-i glass" style="--c:#818cf8"><div class="n" id="wdSumReq">0</div><div class="l">Requests</div></div>
+    <div class="wdsum-i glass" style="--c:#34d399"><div class="n" id="wdSumApproved">৳0</div><div class="l">Approved</div></div>
+    <div class="wdsum-i glass" style="--c:#fbbf24"><div class="n" id="wdSumPending">৳0</div><div class="l">Pending</div></div>
+  </div>
+  <div id="withdrawHistory"><div class="skel"></div><div class="skel"></div></div>
+</main>
 
-  <div class="modal-overlay" id="walletModal">
-    <div class="modal-box">
-      <h3 style="font-size: 20px; font-weight: 900; color: #0f172a;">💳 Wallet Setup</h3>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন।</p>
-
+<div class="p-modal" id="walletModal">
+  <div class="p-sheet">
+    <div class="p-sheet-head"><h3>💳 Wallet Setup</h3><button class="p-close" id="closeWalletX" aria-label="Close">✕</button></div>
+    <div class="p-sub">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন।</div>
+    <div class="p-sheet-body">
       <div class="wm-tabs">
         <button class="wm-tab active" data-method="bkash">bKash</button>
         <button class="wm-tab" data-method="nagad">Nagad</button>
         <button class="wm-tab" data-method="rocket">Rocket</button>
         <button class="wm-tab" data-method="binance">Binance</button>
       </div>
-
-      <div class="wm-input-group">
-        <label class="label-text" id="wmLabel" style="font-size: 12px; font-weight: 800; color: #475569;">bKash Number</label>
-        <input type="text" id="wm-number" class="admin-input" placeholder="01XXXXXXXXX" style="border-radius: 12px;">
-        
-        <label class="label-text" style="font-size: 12px; font-weight: 800; color: #475569; margin-top: 12px; display: block;">Account Name (optional)</label>
-        <input type="text" id="wm-name" class="admin-input" placeholder="আপনার নাম" style="border-radius: 12px;">
-      </div>
-
-      <div style="display:flex;gap:10px;margin-top:20px">
-        <button class="btn btn-primary" style="flex:1;margin:0;border-radius:12px;" id="saveWalletBtn">💾 Save</button>
-        <button class="btn btn-outline" style="margin:0;padding:12px 20px;border-radius:12px;" id="closeWalletBtn">✕</button>
+      <label class="lab" id="wmLabel">bKash Number</label>
+      <div class="field"><span class="f-ic">📱</span><input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off"></div>
+      <label class="lab">Account Name (optional)</label>
+      <div class="field"><span class="f-ic">👤</span><input type="text" id="wm-name" placeholder="আপনার নাম" autocomplete="off"></div>
+      <div class="sheet-acts">
+        <button class="cta purple" id="saveWalletBtn">💾 Save</button>
+        <button class="cta ghost" id="closeWalletBtn" aria-label="Close">✕</button>
       </div>
     </div>
   </div>
+</div>
+<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet" class="active"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
-  <script type="module">
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -245,30 +232,53 @@
     let currentUser = null;
     let userData = null;
     let enabledMethods = {};
-    let tempWalletData = {}; 
+    let tempWalletData = {};
     let activeMethod = "bkash";
 
     const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
     const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
     const METHOD_PLACEHOLDERS = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
-    const METHOD_COLORS = {
-      bkash:   ["#e2136e", "#9d0b4f"],
-      nagad:   ["#f6921e", "#d1560f"],
-      rocket:  ["#8c3494", "#5b1f66"],
-      binance: ["#f0b90b", "#b8860b"]
-    };
+    const METHOD_COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
 
     function esc(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
+    
+    const WD_COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
+    function renderWdHistory(items, list) {
+      let approved = 0, pending = 0;
+      items.forEach(h => { if (h.status === "approved") approved += Number(h.amount) || 0; else if (h.status === "pending") pending += Number(h.amount) || 0; });
+      document.getElementById("wdSumReq").textContent = items.length;
+      document.getElementById("wdSumApproved").textContent = "৳" + approved;
+      document.getElementById("wdSumPending").textContent = "৳" + pending;
+
+      list.innerHTML = items.map((h, i) => {
+        const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
+        const stText = st === "pending" ? "⏳ Pending" : st === "approved" ? "✅ Approved" : "❌ Rejected";
+        const hint = st === "pending" ? "⏳ Admin approve করার অপেক্ষায়" : st === "approved" ? "✅ পেমেন্ট সম্পন্ন হয়েছে" : "↩️ টাকা তোমার balance-এ ফেরত এসেছে";
+        const [c1, c2] = WD_COLORS[h.method] || ["#6366f1", "#312e81"];
+        const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
+        return `
+          <div class="wdi glass ${st}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
+            <div class="wdi-logo" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
+            <div class="wdi-main">
+              <div class="wdi-top"><span class="wdi-amt">৳${esc(h.amount)}</span><span class="wdi-st ${st}">${stText}</span></div>
+              <div class="wdi-meta">${esc(h.methodName || h.method)} • 📱 ${esc(h.accountNum)}</div>
+              <div class="wdi-time">🕐 ${time}</div>
+              <div class="wdi-hint">${hint}</div>
+            </div>
+          </div>`;
+      }).join("");
+    }
 
     function animateValue(obj, start, end, duration) {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { obj.textContent = "৳" + end; return; }
       let startTimestamp = null;
       const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        const currentVal = Math.floor(progress * (end - start) + start);
-        obj.textContent = "৳" + currentVal;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        obj.textContent = "৳" + Math.floor(eased * (end - start) + start);
         if (progress < 1) window.requestAnimationFrame(step);
         else obj.textContent = "৳" + end;
       };
@@ -337,7 +347,7 @@
       if (savedKeys.length > 0) {
         countEl.style.display = "inline-block";
         countEl.textContent = savedKeys.length;
-        content.innerHTML = `<div class="pay-scroll">` + savedKeys.map(key => {
+        content.innerHTML = `<div class="pscroll">` + savedKeys.map(key => {
           const w = wallets[key];
           const [c1, c2] = METHOD_COLORS[key] || ["#6366f1", "#312e81"];
           const label = METHOD_NAMES[key] || key;
@@ -349,23 +359,18 @@
               </div>
               <div class="pm-num">${esc(w.number)}</div>
               ${w.name ? `<div class="pm-holder">${esc(w.name)}</div>` : ""}
-            </div>
-          `;
+            </div>`;
         }).join("") + `</div>`;
       } else {
         countEl.style.display = "none";
-        content.innerHTML = `
-          <div class="pay-empty">
-            <span>⚠️ কোনো Wallet setup করা হয়নি</span>
-          </div>`;
+        content.innerHTML = `<div class="pempty">⚠️ কোনো Wallet setup করা হয়নি</div>`;
       }
     }
 
     document.getElementById("walletInfoContent").addEventListener("click", (e) => {
       const btn = e.target.closest(".pm-copy");
       if (!btn) return;
-      const text = btn.dataset.copy;
-      navigator.clipboard.writeText(text).then(() => {
+      navigator.clipboard.writeText(btn.dataset.copy).then(() => {
         btn.classList.add("done");
         btn.innerHTML = CHECK_ICON;
         setTimeout(() => { btn.classList.remove("done"); btn.innerHTML = COPY_ICON; }, 1400);
@@ -373,12 +378,15 @@
     });
 
     const modal = document.getElementById("walletModal");
+    const closeModal = () => modal.classList.remove("show");
     document.getElementById("editWalletBtn").onclick = () => {
       tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
       switchMethodTab("bkash");
       modal.classList.add("show");
     };
-    document.getElementById("closeWalletBtn").onclick = () => modal.classList.remove("show");
+    document.getElementById("closeWalletBtn").onclick = closeModal;
+    document.getElementById("closeWalletX").onclick = closeModal;
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
 
     document.querySelectorAll(".wm-tab").forEach(tab => {
       tab.onclick = () => switchMethodTab(tab.dataset.method);
@@ -397,7 +405,7 @@
       document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === method));
       document.getElementById("wmLabel").textContent = METHOD_LABELS[method];
       document.getElementById("wm-number").placeholder = METHOD_PLACEHOLDERS[method];
-      
+
       const data = tempWalletData[method] || {};
       document.getElementById("wm-number").value = data.number || "";
       document.getElementById("wm-name").value = data.name || "";
@@ -406,7 +414,7 @@
     document.getElementById("saveWalletBtn").onclick = async () => {
       const num = document.getElementById("wm-number").value.trim();
       const name = document.getElementById("wm-name").value.trim();
-      
+
       if (num) {
         if (!tempWalletData[activeMethod]) tempWalletData[activeMethod] = {};
         tempWalletData[activeMethod].number = num;
@@ -419,7 +427,7 @@
         await updateDoc(doc(db, "users", currentUser.uid), { wallets: tempWalletData });
         userData.wallets = tempWalletData;
         renderWalletInfo();
-        modal.classList.remove("show");
+        closeModal();
         alert("✅ Wallet info saved!");
       } catch (e) { alert("❌ " + e.message); }
     };
@@ -430,32 +438,17 @@
         const q = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
         const snap = await getDocs(q);
         if (snap.empty) {
-          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো withdraw নেই</p></div>`;
+          list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো withdraw নেই</div>`;
           return;
         }
         const items = snap.docs.map(d => d.data())
           .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
-
-        list.innerHTML = items.map(h => {
-          const statusColor = h.status === "pending" ? "badge-pending" : h.status === "approved" ? "badge-good" : "badge-bad";
-          const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-          return `
-            <div class="hist-item" style="border-left-color: ${h.status === 'approved' ? '#10b981' : h.status === 'rejected' ? '#ef4444' : '#f59e0b'}">
-              <div class="hist-left">
-                <div class="hist-icon" style="background:#eef2ff;color:#4f46e5;font-weight:800">${(h.method||"?").charAt(0).toUpperCase()}</div>
-                <div class="hist-info">
-                  <div class="u">${h.methodName || h.method} • ৳${h.amount}</div>
-                  <div class="m">${h.accountNum} • 🕐 ${time}</div>
-                </div>
-              </div>
-              <span class="badge ${statusColor}">${h.status}</span>
-            </div>
-          `;
-        }).join("");
+        renderWdHistory(items, list);
       } catch (e) {
-        list.innerHTML = `<p style="color:red">${e.message}</p>`;
+        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
     }
   </script>
+
 </body>
 </html>
