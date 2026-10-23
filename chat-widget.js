@@ -6,8 +6,43 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+// ============ DARK PREMIUM STYLES (style.css-এর উপরে বসে) ============
+function injectChatStyles() {
+  if (document.getElementById("adq-chat-styles")) return;
+  const s = document.createElement("style");
+  s.id = "adq-chat-styles";
+  s.textContent = `
+    body .chat-fab{bottom:calc(98px + env(safe-area-inset-bottom,0px));right:16px;width:58px;height:58px;font-size:25px;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);background-size:200% 200%;border:1px solid rgba(255,255,255,.3);box-shadow:0 16px 36px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+    body .chat-fab .fab-badge{border:2px solid #06060f;background:#ef4444}
+    body .chat-panel{max-width:440px;height:86vh;height:86dvh;background:linear-gradient(180deg,#17172f,#0b0b1c);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;box-shadow:0 -24px 70px -10px rgba(0,0,0,.85);color:#f4f4ff;font-family:'Hind Siliguri','Inter',sans-serif}
+    body .chat-panel-head{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#c026d3);border-radius:28px 28px 0 0;padding:16px 16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+    body .chat-close{background:rgba(255,255,255,.18)}
+    body .chat-admin-avatar{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 8px 20px -4px rgba(0,0,0,.4)}
+    body .chat-online-dot{border-color:#4338ca}
+    body .chat-panel-info h4{color:#fff}
+    body .chat-panel-info p{color:rgba(255,255,255,.8)}
+    body .admin-online-badge{color:#a7f3d0}
+    body .admin-online-badge.offline{color:#cbd5e1}
+    body .chat-body{background:transparent;padding:16px;gap:10px}
+    body .chat-body::-webkit-scrollbar{width:0}
+    body .chat-msg{font-size:14px;line-height:1.55;border-radius:18px}
+    body .chat-msg.user{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 10px 22px -10px rgba(139,92,246,.9)}
+    body .chat-msg.admin{background:rgba(255,255,255,.08);color:#f4f4ff;border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:5px;box-shadow:none}
+    body .chat-msg .msg-time{opacity:.65}
+    body .chat-empty{color:#9a9bb8}
+    body .chat-input-bar{background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1)}
+    body .chat-input-bar input{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);color:#fff;border-radius:999px}
+    body .chat-input-bar input::placeholder{color:#6f7090}
+    body .chat-input-bar input:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.1);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+    body .chat-send{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.95)}
+    body .chat-send:disabled{background:rgba(255,255,255,.12);box-shadow:none}
+  `;
+  document.head.appendChild(s);
+}
+
 export function initChatWidget() {
   if (document.getElementById("chatFab")) return;
+  injectChatStyles();
 
   const wrap = document.createElement("div");
   wrap.innerHTML = `
