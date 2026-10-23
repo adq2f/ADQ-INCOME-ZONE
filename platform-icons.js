@@ -1,5 +1,7 @@
 // ==================================================
-// PLATFORM ICONS — Real SVG
+// PLATFORM ICONS — Real SVG (Premium)
+// পুরনো export গুলো (PLATFORM_ICONS, PAYMENT_ICONS) আগের মতোই আছে।
+// নিচে নতুন premium helper যোগ করা হয়েছে।
 // ==================================================
 
 export const PLATFORM_ICONS = {
@@ -79,3 +81,54 @@ export const PAYMENT_ICONS = {
     </svg>`
   }
 };
+
+// ==================================================
+// ✨ PREMIUM ADDITIONS (নতুন)
+// ==================================================
+
+// Brand gradient — dark premium UI-তে logo tile এর background হিসেবে
+export const PLATFORM_GRADIENTS = {
+  Facebook:  "linear-gradient(135deg,#2d8cff,#0b4fb3)",
+  Twitter:   "linear-gradient(135deg,#4cc2ff,#0f8ad1)",
+  Instagram: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)",
+  LinkedIn:  "linear-gradient(135deg,#2a86d9,#084a94)",
+  TikTok:    "linear-gradient(135deg,#25f4ee,#111 45%,#fe2c55)",
+  Gmail:     "linear-gradient(135deg,#f2605a,#b3261e)",
+  WhatsApp:  "linear-gradient(135deg,#3ee27f,#128c4a)",
+  Other:     "linear-gradient(135deg,#94a3b8,#475569)"
+};
+
+export const PAYMENT_GRADIENTS = {
+  bkash:   ["#e2136e", "#9d0b4f"],
+  nagad:   ["#f6921e", "#d1560f"],
+  rocket:  ["#8c3494", "#5b1f66"],
+  binance: ["#f0b90b", "#b8860b"]
+};
+
+// ব্র্যান্ড-রঙের svg কে সাদা করে (gradient tile এর ওপর বসানোর জন্য).
+// Gmail এর মাল্টি-কালার path সাদা blob হয়ে যায়, তাই সেটা আলাদা simple আইকন।
+function toWhiteSvg(key) {
+  const p = PLATFORM_ICONS[key] || PLATFORM_ICONS.Other;
+  if (key === "Gmail") {
+    return `<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>`;
+  }
+  return p.svg
+    .replace(/fill="#[0-9a-fA-F]{3,8}"/g, 'fill="white"')
+    .replace(/stroke="#[0-9a-fA-F]{3,8}"/g, 'stroke="white"');
+}
+
+// Premium platform logo tile (HTML string)
+// ব্যবহার: platformLogo("Facebook", 56)
+export function platformLogo(key, size = 56) {
+  const k = PLATFORM_ICONS[key] ? key : "Other";
+  const pad = Math.round(size * 0.22);
+  return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size * 0.31)}px;padding:${pad}px;display:flex;align-items:center;justify-content:center;flex:0 0 ${size}px;background:${PLATFORM_GRADIENTS[k]};box-shadow:0 12px 26px -8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3)">${toWhiteSvg(k).replace("<svg", '<svg style="width:100%;height:100%"')}</div>`;
+}
+
+// Premium payment method badge (HTML string)
+// ব্যবহার: paymentLogo("bkash", 52)
+export function paymentLogo(key, size = 52) {
+  const g = PAYMENT_GRADIENTS[key] || ["#6366f1", "#312e81"];
+  const name = (PAYMENT_ICONS[key]?.name || key || "?");
+  return `<div style="width:${size}px;height:${size}px;border-radius:${Math.round(size * 0.3)}px;display:flex;align-items:center;justify-content:center;flex:0 0 ${size}px;color:#fff;font-weight:900;font-size:${Math.round(size * 0.4)}px;font-family:Inter,sans-serif;background:linear-gradient(135deg,${g[0]},${g[1]});box-shadow:0 12px 24px -8px ${g[0]}, inset 0 1px 0 rgba(255,255,255,.3)">${String(name).charAt(0).toUpperCase()}</div>`;
+}
