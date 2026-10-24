@@ -50,7 +50,7 @@
 }
 
 /* ============================================
-   BASE · SCROLL FIX
+   BASE · SCROLL FIX & SMOOTH ANIMATIONS
    ============================================ */
 html {
   scroll-behavior: smooth;
@@ -116,10 +116,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -128,11 +124,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
 
 .animate-in { animation: fadeInUp 0.5s var(--ease) both; }
 
+/* স্ক্রল রিভিল অ্যানিমেশন */
+.scroll-reveal {
+  animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  opacity: 0;
+}
+
 /* ============ NAVBAR ============ */
 .navbar {
-  background: rgba(6,6,15,0.68);
-  backdrop-filter: saturate(170%) blur(20px);
-  -webkit-backdrop-filter: saturate(170%) blur(20px);
+  background: rgba(6,6,15,0.85);
+  backdrop-filter: saturate(150%) blur(6px); /* ল্যাগ কমানোর জন্য blur কমানো হয়েছে */
+  -webkit-backdrop-filter: saturate(150%) blur(6px);
   padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
   display: flex;
   justify-content: space-between;
@@ -238,8 +240,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
   box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.08);
   margin-bottom: 16px;
   border: 1px solid var(--line);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(6px); /* ল্যাগ কমানো হয়েছে */
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .card h1, .card h2, .card h3 {
@@ -414,8 +416,8 @@ input[type="checkbox"], input[type="radio"] {
 }
 .auth-box {
   background: var(--glass);
-  backdrop-filter: blur(26px) saturate(150%);
-  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(6px) saturate(150%); /* ল্যাগ কমানো হয়েছে */
+  -webkit-backdrop-filter: blur(6px) saturate(150%);
   border-radius: 28px;
   padding: 34px 26px 28px;
   width: 100%; max-width: 420px;
@@ -456,9 +458,9 @@ input[type="checkbox"], input[type="radio"] {
   right: 12px;
   max-width: 500px;
   margin: 0 auto;
-  background: rgba(18,18,40,0.8);
-  backdrop-filter: blur(24px) saturate(170%);
-  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  background: rgba(18,18,40,0.9);
+  backdrop-filter: blur(6px) saturate(170%);
+  -webkit-backdrop-filter: blur(6px) saturate(170%);
   display: flex;
   justify-content: space-around;
   align-items: center;
@@ -1149,8 +1151,8 @@ input[type="checkbox"], input[type="radio"] {
 }
 .profile-stat {
   background: rgba(18,18,40,0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(255,255,255,0.12);
   padding: 15px 8px;
   border-radius: 20px;
@@ -1272,8 +1274,8 @@ input[type="checkbox"], input[type="radio"] {
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(3,3,10,0.72);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: none;
   align-items: center;
   justify-content: center;
@@ -2255,8 +2257,8 @@ input[type="checkbox"], input[type="radio"] {
 #welcomeSplash .ws-card {
   position: relative;
   background: linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.03));
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(6px) saturate(180%);
+  -webkit-backdrop-filter: blur(6px) saturate(180%);
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: 30px;
   padding: 36px 28px;
@@ -2323,8 +2325,8 @@ input[type="checkbox"], input[type="radio"] {
 .notice-popup-overlay {
   position: fixed; inset: 0;
   background: rgba(3,3,10,0.78);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 99998;
   display: flex; align-items: center; justify-content: center;
   padding: 16px;
