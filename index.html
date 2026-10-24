@@ -1,108 +1,175 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ADQ Income Zone</title>
-  <link rel="stylesheet" href="style.css?v=41">
-  <style>
-    .premium-task-card {
-      background: linear-gradient(160deg, rgba(255,255,255,0.075), rgba(255,255,255,0.025));
-      border: 1px solid rgba(255,255,255,0.09);
-      border-radius: 24px; padding: 20px; margin-bottom: 16px; position: relative;
-      overflow: hidden; box-shadow: 0 8px 20px -10px rgba(0,0,0,0.65); display: flex; flex-direction: column; gap: 14px;
-      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-    }
-    .premium-task-card:hover { transform: translateY(-5px); box-shadow: 0 20px 44px -18px rgba(139,92,246,0.7); border-color: rgba(139,92,246,0.5); }
-    .ptc-header { display: flex; align-items: center; gap: 14px; }
-    .ptc-logo { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 8px 20px rgba(0,0,0,0.15); padding: 10px; transition: 0.4s; }
-    .premium-task-card:hover .ptc-logo { transform: scale(1.08) rotate(-5deg); }
-    .ptc-logo svg { width: 100%; height: 100%; }
-    .ptc-title { flex: 1; min-width: 0; }
-    .ptc-title h3 { font-size: 17px; font-weight: 800; color: #f4f4ff; margin-bottom: 4px; line-height: 1.2; }
-    .ptc-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-    .ptc-badge.open { background: rgba(16,185,129,0.15); color: #6ee7b7; }
-    .ptc-badge.upcoming { background: rgba(245,158,11,0.15); color: #fcd34d; }
-    .ptc-badge.closed { background: rgba(239,68,68,0.15); color: #fca5a5; }
-    .ptc-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .ptc-info-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.09); }
-    .ptc-info-box .val { font-size: 15px; font-weight: 900; color: #f4f4ff; font-family: 'Inter', sans-serif; }
-    .ptc-info-box .lbl { font-size: 10px; color: #9a9bb8; font-weight: 700; text-transform: uppercase; margin-top: 2px; }
-    .ptc-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-    .ptc-price { font-size: 20px; font-weight: 900; color: #6ee7b7; font-family: 'Inter', sans-serif; line-height: 1; }
-    .ptc-price span { font-size: 12px; color: #9a9bb8; font-weight: 600; }
-    .ptc-submit-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 800; text-decoration: none; box-shadow: 0 8px 20px rgba(99,102,241,0.3); transition: 0.3s; }
-    .ptc-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(99,102,241,0.5); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ADQ Income Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<!-- style.css রাখা হয়েছে: chat widget ও popup এর স্টাইলের জন্য -->
+<link rel="stylesheet" href="style.css?v=35">
+<style>
+:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+a{text-decoration:none;color:inherit}button{font-family:inherit}
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
+.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.empty .em{font-size:30px;margin-bottom:6px}
+.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.skel.big{height:170px;border-radius:28px}
+@keyframes shim{to{background-position:-200% 0}}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
+.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.dock a:hover{color:#fff}
+.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
+.dock a.active svg{transform:translateY(-1px) scale(1.08)}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-    /* Search & Filter UI */
-    .search-filter-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-    .search-box { flex: 1; min-width: 200px; position: relative; }
-    .search-box input { width: 100%; padding: 14px 16px 14px 42px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #f4f4ff; font-size: 14px; outline: none; transition: 0.3s; margin: 0; }
-    .search-box input:focus { border-color: #6366f1; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
-    .search-box svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; stroke: #9a9bb8; }
-    .filter-box select { padding: 14px 16px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: #f4f4ff; font-size: 14px; font-weight: 600; outline: none; }
-    .filter-box select:focus { border-color: #6366f1; }
-    .filter-box select option { background: #12122a; color: #f4f4ff; }
-    
-    /* Scroll Animation */
-    .scroll-reveal {
-      animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-      opacity: 0;
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+body{padding-bottom:0!important}
+.hero{position:relative;overflow:hidden;border-radius:30px;padding:26px 22px 22px;margin-bottom:22px;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.hero::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
+.hero::after{content:'';position:absolute;right:-70px;bottom:-90px;width:240px;height:240px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.03);pointer-events:none}
+.hero>*{position:relative;z-index:1}
+.hero-tag{display:inline-flex;gap:6px;padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);margin-bottom:14px}
+.hero h1{margin:0 0 10px;font-size:29px;line-height:1.25;font-weight:700;letter-spacing:-.5px}
+.hero h1 .g{color:#fde68a}
+.hero p{margin:0 0 18px;font-size:14px;line-height:1.65;color:rgba(255,255,255,.9);font-weight:500}
+.hero-cta{display:grid;grid-template-columns:1.3fr 1fr;gap:10px}
+.hbtn{display:flex;align-items:center;justify-content:center;padding:14px;border-radius:16px;font-size:14.5px;font-weight:700;transition:.25s;color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3)}
+.hbtn.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 12px 26px -8px rgba(0,0,0,.45)}
+.hbtn:hover{transform:translateY(-2px)}
+.hero-pts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.hero-pt{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(0,0,0,.24)}
+.welcome{display:none;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:20px;border-radius:22px}
+.welcome b{font-size:15px}
+.welcome span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.welcome a{flex:0 0 auto;padding:10px 16px;border-radius:13px;font-size:13px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.dn{position:relative;border-radius:24px;padding:16px;margin-bottom:20px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));border:1px solid rgba(251,191,36,.35)}
+.dn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#fbbf24,#f59e0b)}
+.dn-h{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.dn-bell{width:34px;height:34px;flex:0 0 34px;border-radius:11px;background:rgba(251,191,36,.2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.dn-t{font-size:15.5px;font-weight:700;color:#fde68a;line-height:1.3}
+.dn-m{font-size:13.5px;color:#e7e5f4;line-height:1.6;word-break:break-word}
+.dn-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dn-b{padding:9px 14px;border-radius:12px;font-size:12.5px;font-weight:700;color:#fff;transition:.2s}
+.dn-b.apk{background:linear-gradient(135deg,#10b981,#059669)}.dn-b.link{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.dn-b:hover{transform:translateY(-2px)}
+.dn-time{margin-top:10px;font-size:11.5px;color:var(--muted)}
+.sech{display:flex;align-items:center;justify-content:space-between;margin:4px 2px 14px;scroll-margin-top:80px}
+.sech h3{margin:0;font-size:20px;font-weight:700;letter-spacing:-.3px}
+.cnt{font-family:'Inter';font-size:12px;font-weight:800;color:#c4b5fd;background:rgba(99,102,241,.22);padding:3px 11px;border-radius:999px}
+.search{position:relative;margin-bottom:12px}
+.search svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:19px;height:19px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.search input{margin:0;width:100%;padding:15px 16px 15px 44px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:#fff;font-family:inherit;font-size:14.5px;font-weight:500;outline:none;transition:.25s}
+.search input::placeholder{color:var(--dim)}
+.search input:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
+.tabs2::-webkit-scrollbar{display:none}
+.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
+.tabs2 button:hover{color:#fff}
+.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.d-task{position:relative;display:flex;gap:14px;padding:16px;margin-bottom:12px;border-radius:24px;overflow:hidden;animation:rise .55s cubic-bezier(.2,.8,.2,1) both;transition:.3s;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.d-task:hover{transform:translateY(-4px);border-color:rgba(139,92,246,.55);box-shadow:0 20px 44px -18px rgba(139,92,246,.7)}
+.d-task-logo{width:58px;height:58px;border-radius:18px;flex:0 0 58px;padding:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 26px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.3)}
+.d-task-logo svg{width:100%;height:100%}
+.d-task-body{flex:1;min-width:0}
+.d-task-title{font-size:15.5px;font-weight:700;line-height:1.35;margin-bottom:8px;word-break:break-word}
+.d-price{display:inline-flex;align-items:center;padding:4px 12px;border-radius:999px;font-family:'Inter';font-size:13px;font-weight:800;color:#6ee7b7;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:10px}
+.d-price small{font-family:'Hind Siliguri';font-weight:600;opacity:.75;margin-left:4px;font-size:11.5px}
+.d-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.d-meta-i{padding:8px 10px;border-radius:12px;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:11px;color:var(--muted);font-weight:600}
+.d-meta-i .v{display:block;font-family:'Inter';font-size:14px;font-weight:800;color:var(--ink);margin-bottom:1px}
+.d-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.d-badge{padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700}
+.d-badge.open{background:rgba(16,185,129,.15);color:#6ee7b7}
+.d-badge.upcoming{background:rgba(245,158,11,.15);color:#fcd34d}
+.d-badge.closed{background:rgba(239,68,68,.15);color:#fca5a5}
+.d-badge.commission{background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.35)}
+.d-badge.open::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;margin-right:6px;vertical-align:1px;animation:pl 1.8s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}70%{box-shadow:0 0 0 7px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+.d-task-btn{position:relative;overflow:hidden;display:block;text-align:center;padding:13px;border-radius:15px;color:#fff;font-size:14.5px;font-weight:700;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);box-shadow:0 12px 26px -10px rgba(139,92,246,.95),inset 0 1px 0 rgba(255,255,255,.3);transition:.25s}
+.d-task-btn::before{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .7s}
+.d-task-btn:hover::before{left:130%}
+.d-task-btn:hover{transform:translateY(-2px)}
+.d-task.is-closed .d-task-btn{background:rgba(255,255,255,.07);box-shadow:none;color:var(--muted)}
+.dock.six{grid-template-columns:repeat(6,1fr)}
+.dock.six a{font-size:10px}
+.lbtn{padding:9px 18px;border-radius:12px;color:#fff;font-size:13px;font-weight:700;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+@media(max-width:380px){.hero h1{font-size:25px}}
+@media(prefers-reduced-motion:reduce){.d-task,.d-badge.open::before{animation:none}}
+</style>
 </head>
 <body>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">A</div><span>ADQ Income Zone</span></div><button class="ibtn danger" id="logoutBtn" style="display:none" title="Logout" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button><a href="login.html" id="loginBtnTop" class="lbtn">Login</a></div></header>
+<main class="page">
 
-  <div class="navbar">
-    <div class="logo">
-      <div class="mark">A</div>
-      <span>ADQ Income Zone</span>
+  <section class="hero" id="heroGuest">
+    <div class="hero-tag">⚡ Premium Earning Platform</div>
+    <h1>প্রতিটি অ্যাকাউন্টে <span class="g">আয় করুন</span></h1>
+    <p>টাস্ক সাবমিট করুন, Good অ্যাকাউন্টে টাকা পান আর বন্ধুদের refer করে কমিশন নিন।</p>
+    <div class="hero-cta">
+      <a href="signup.html" class="hbtn solid">অ্যাকাউন্ট খুলুন</a>
+      <a href="login.html" class="hbtn">লগইন</a>
     </div>
-    <button class="nav-logout" id="logoutBtn" style="display:none" title="Logout">
-      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    </button>
-    <a href="login.html" id="loginBtnTop" style="padding:8px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border-radius:10px;text-decoration:none;font-size:13px;font-weight:700;box-shadow:0 6px 16px rgba(99,102,241,0.35)">Login</a>
+    <div class="hero-pts">
+      <span class="hero-pt">⏱ ৩০ সেকেন্ডে রেজিস্ট্রেশন</span>
+      <span class="hero-pt">💳 bKash · Nagad · Rocket · Binance</span>
+      <span class="hero-pt">🎁 Refer Commission</span>
+    </div>
+  </section>
+
+  <div class="welcome glass" id="welcomeBack">
+    <div><b>👋 স্বাগতম ফিরে!</b><span>আপনার ড্যাশবোর্ড ও ব্যালেন্স দেখুন</span></div>
+    <a href="dashboard.html">Dashboard →</a>
   </div>
 
-  <div class="container">
-    <div id="noticeArea"></div>
+  <div id="noticeArea"></div>
 
-    <div class="dash-section-head" style="margin-top: 10px; margin-bottom: 16px;">
-      <h3 style="font-size: 20px; font-weight: 900; color: #f4f4ff;">🎯 Available Tasks</h3>
-    </div>
-
-    <!-- নতুন সার্চ ও ফিল্টার সেকশন -->
-    <div class="search-filter-box">
-      <div class="search-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" id="taskSearch" placeholder="টাস্কের নাম খুঁজুন...">
-      </div>
-      <div class="filter-box">
-        <select id="taskFilter">
-          <option value="all">সব টাস্ক</option>
-          <option value="open">🟢 Open</option>
-          <option value="upcoming">⏳ Upcoming</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="taskList" class="loading"><div class="spinner"></div>লোড হচ্ছে...</div>
+  <div class="sech" id="tasks">
+    <h3>🎯 Available Tasks</h3>
+    <span class="cnt" id="taskCount">0</span>
   </div>
 
-  <nav class="bottom-nav">
-    <a href="index.html" data-page="home" class="active"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-    <a href="dashboard.html" data-page="dashboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span><span class="nav-label">Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></span><span class="nav-label">Leaders</span></a>
-    <a href="wallet.html" data-page="wallet"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></span><span class="nav-label">Wallet</span></a>
-    <a href="profile.html" data-page="profile"><span class="nav-ic"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-  </nav>
+  <div class="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="taskSearch" placeholder="টাস্কের নাম খুঁজুন..." autocomplete="off">
+  </div>
 
-  <script type="module">
+  <div class="tabs2" id="taskFilter">
+    <button class="active" data-f="all">সব টাস্ক</button>
+    <button data-f="open">🟢 Open</button>
+    <button data-f="upcoming">⏳ Upcoming</button>
+  </div>
+
+  <div id="taskList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+</main>
+<nav class="dock six"><a href="index.html" data-page="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
+
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -113,22 +180,29 @@
     initPremiumPopups();
 
     const PLATFORM_ICONS = {
-      Facebook: { color: "#1877F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
-      Twitter: { color: "#1DA1F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>` },
-      Instagram: { color: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>` },
-      LinkedIn: { color: "#0A66C2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>` },
-      TikTok: { color: "#000", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>` },
-      Gmail: { color: "#EA4335", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>` },
-      WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
-      Other: { color: "#64748b", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` }
-    };
+  Facebook: { color: "#1877F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
+  Twitter: { color: "#1DA1F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>` },
+  Instagram: { color: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>` },
+  LinkedIn: { color: "#0A66C2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>` },
+  TikTok: { color: "#000", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>` },
+  Gmail: { color: "#EA4335", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>` },
+  WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
+  Other: { color: "#64748b", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` }
+};
 
     let allTasks = [];
+    let currentFilter = "all";
+
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById("logoutBtn").style.display = "flex";
         document.getElementById("loginBtnTop").style.display = "none";
+        document.getElementById("heroGuest").style.display = "none";
+        document.getElementById("welcomeBack").style.display = "flex";
         document.getElementById("logoutBtn").onclick = async () => {
           if (!confirm("লগআউট?")) return;
           await signOut(auth);
@@ -151,19 +225,19 @@
         }) || "";
 
         const apkBtn = n.apkUrl
-          ? `<a href="${n.apkUrl}" class="pn-btn pn-btn-apk" target="_blank" rel="noopener noreferrer">⬇️ Download APK</a>` : "";
+          ? `<a href="${n.apkUrl}" class="dn-b apk" target="_blank" rel="noopener noreferrer">⬇️ Download APK</a>` : "";
         const linkBtn = n.linkUrl
-          ? `<a href="${n.linkUrl}" class="pn-btn pn-btn-link" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : "";
+          ? `<a href="${n.linkUrl}" class="dn-b link" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : "";
 
         document.getElementById("noticeArea").innerHTML = `
-          <div class="premium-notice">
-            <div class="pn-head">
-              <div class="pn-bell">🔔</div>
-              <div class="pn-title">${n.title}</div>
+          <div class="dn">
+            <div class="dn-h">
+              <div class="dn-bell">🔔</div>
+              <div class="dn-t">${n.title}</div>
             </div>
-            <div class="pn-msg">${n.message}</div>
-            ${(apkBtn || linkBtn) ? `<div class="pn-actions">${apkBtn}${linkBtn}</div>` : ""}
-            <div class="pn-time">🕐 ${timeStr}</div>
+            <div class="dn-m">${n.message}</div>
+            ${(apkBtn || linkBtn) ? `<div class="dn-a">${apkBtn}${linkBtn}</div>` : ""}
+            <div class="dn-time">🕐 ${timeStr}</div>
           </div>
         `;
       } catch (e) {}
@@ -175,31 +249,29 @@
         const q = query(collection(db, "tasks"), where("active", "==", true));
         const snap = await getDocs(q);
         if (snap.empty) {
-          list.innerHTML = `<div class="dash-empty"><div class="em">📭</div><p>এখনো কোনো task নেই</p></div>`;
+          list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
           return;
         }
         allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
           .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-        
+
         renderTasks();
       } catch (e) {
-        list.innerHTML = `<div class="dash-empty"><p style="color:#ef4444">${e.message}</p></div>`;
+        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
     }
 
     function renderTasks() {
       const list = document.getElementById("taskList");
       const search = (document.getElementById("taskSearch").value || "").toLowerCase();
-      const filter = document.getElementById("taskFilter").value;
+      const filter = currentFilter;
 
       let filtered = allTasks;
 
-      // সার্চ ফিল্টার
       if (search) {
         filtered = filtered.filter(t => (t.title || "").toLowerCase().includes(search));
       }
 
-      // স্ট্যাটাস ফিল্টার
       const now = new Date();
       filtered = filtered.filter(t => {
         const start = t.startTime?.toDate?.();
@@ -213,8 +285,10 @@
         return true;
       });
 
+      document.getElementById("taskCount").textContent = filtered.length;
+
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="dash-empty"><div class="em">🔍</div><p>কোনো টাস্ক খুঁজে পাওয়া যায়নি</p></div>`;
+        list.innerHTML = `<div class="empty"><div class="em">🔍</div>কোনো টাস্ক খুঁজে পাওয়া যায়নি</div>`;
         return;
       }
 
@@ -222,10 +296,10 @@
         const platformKey = t.platform || "Other";
         const platform = PLATFORM_ICONS[platformKey] || PLATFORM_ICONS.Other;
         const fieldCount = (t.fields || []).length;
-        
+
         const start = t.startTime?.toDate?.();
         const end = t.endTime?.toDate?.();
-        let status = "open", statusLabel = "🟢 Open";
+        let status = "open", statusLabel = "Open";
         if (start && now < start) { status = "upcoming"; statusLabel = "⏳ Upcoming"; }
         else if (end && now > end) { status = "closed"; statusLabel = "🔴 Closed"; }
 
@@ -242,36 +316,39 @@
         }
 
         return `
-          <div class="premium-task-card scroll-reveal" style="animation-delay:${i * 0.05}s">
-            <div class="ptc-header">
-              <div class="ptc-logo" style="background: ${platform.color}">${platform.svg}</div>
-              <div class="ptc-title">
-                <h3>${t.title}</h3>
-                <span class="ptc-badge ${status}">${statusLabel}</span>
+          <div class="d-task glass ${status === 'closed' ? 'is-closed' : ''}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
+            <div class="d-task-logo" style="background: ${platform.color}">${platform.svg}</div>
+            <div class="d-task-body">
+              <div class="d-task-title">${t.title}</div>
+              <span class="d-price">৳${t.pricePerAccount}<small>/ account</small></span>
+              <div class="d-meta">
+                <div class="d-meta-i"><span class="v">${timeLeft}</span>Time Left</div>
+                <div class="d-meta-i"><span class="v">${fieldCount}</span>Fields</div>
               </div>
-            </div>
-            <div class="ptc-info-grid">
-              <div class="ptc-info-box"><div class="val">${timeLeft}</div><div class="lbl">Time Left</div></div>
-              <div class="ptc-info-box"><div class="val">${fieldCount}</div><div class="lbl">Fields Needed</div></div>
-            </div>
-            <div class="ptc-footer">
-              <div>
-                <div class="ptc-price">৳${t.pricePerAccount} <span>/ account</span></div>
-                ${t.referCommission > 0 ? `<div style="font-size: 11px; color: #f59e0b; font-weight: 700; margin-top: 4px;">🎁 ৳${t.referCommission} Refer Commission</div>` : ''}
+              <div class="d-badges">
+                <span class="d-badge ${status}">${statusLabel}</span>
+                ${t.referCommission > 0 ? `<span class="d-badge commission">🎁 ৳${t.referCommission} Refer Commission</span>` : ''}
               </div>
-              <a href="task.html?id=${t.id}" class="ptc-submit-btn">Submit Now →</a>
+              <a href="task.html?id=${t.id}" class="d-task-btn">${status === 'closed' ? 'Closed' : 'Submit Now →'}</a>
             </div>
           </div>
         `;
       }).join("");
     }
 
-    // ইভেন্ট লিসেনার
     document.getElementById("taskSearch").addEventListener("input", renderTasks);
-    document.getElementById("taskFilter").addEventListener("change", renderTasks);
+    document.querySelectorAll("#taskFilter button").forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll("#taskFilter button").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        currentFilter = b.dataset.f;
+        renderTasks();
+      };
+    });
 
     loadNotice();
     loadTasks();
   </script>
+
 </body>
 </html>
