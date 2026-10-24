@@ -36,6 +36,8 @@ function injectChatStyles() {
     body .chat-input-bar input:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.1);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
     body .chat-send{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.95)}
     body .chat-send:disabled{background:rgba(255,255,255,.12);box-shadow:none}
+    body .fab-online{position:absolute;bottom:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#10b981;border:2.5px solid #06060f;animation:onlinePulse 2s infinite}
+    body .fab-pill{position:fixed;z-index:9997;bottom:calc(112px + env(safe-area-inset-bottom,0px));right:84px;align-items:center;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;color:#a7f3d0;background:rgba(18,18,40,.88);border:1px solid rgba(16,185,129,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 26px -10px rgba(16,185,129,.7);white-space:nowrap}
   `;
   document.head.appendChild(s);
 }
@@ -46,8 +48,9 @@ export function initChatWidget() {
 
   const wrap = document.createElement("div");
   wrap.innerHTML = `
+    <span class="fab-pill" id="fabPill" style="display:none">🟢 Admin Online</span>
     <button class="chat-fab" id="chatFab" title="Live Chat">
-      💬 <span class="fab-badge" id="chatBadge" style="display:none">0</span>
+      💬 <span class="fab-online" id="fabOnline" style="display:none"></span><span class="fab-badge" id="chatBadge" style="display:none">0</span>
     </button>
     <div class="chat-panel" id="chatPanel">
       <div class="chat-panel-head">
@@ -96,6 +99,12 @@ export function initChatWidget() {
         const name = data.adminName || "ADQ Admin";
 
         if (dot) dot.classList.toggle("offline", !isOnline);
+        const fo = document.getElementById("fabOnline");
+        const fp = document.getElementById("fabPill");
+        if (fo) fo.style.display = isOnline ? "block" : "none";
+        if (fp) fp.style.display = isOnline ? "inline-flex" : "none";
+        const fb = document.getElementById("chatFab");
+        if (fb) fb.title = isOnline ? "Admin Online — Live Chat" : "Live Chat";
         if (adminName) {
           adminName.innerHTML = `${escapeHtml(name)} <span class="admin-online-badge ${isOnline ? '' : 'offline'}" id="chatStatusText">${isOnline ? 'Online' : 'Offline'}</span>`;
         }
