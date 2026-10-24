@@ -5,6 +5,12 @@ import {
   updateDoc, increment, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// 🚨 এরর দেখার জন্য Eruda স্ক্রিপ্ট (শুধু আপনার ফোনে কাজ করবে)
+const erudaScript = document.createElement('script');
+erudaScript.src = "https://cdn.jsdelivr.net/npm/eruda";
+document.head.appendChild(erudaScript);
+erudaScript.onload = () => { eruda.init(); };
+
 // আপনার Vercel API লিংক
 const VERCEL_AI_URL = "https://adq-income-zone.vercel.app/api/ai-support";
 
@@ -14,17 +20,14 @@ let unsubMsgs = null;
 let recentMessages = [];
 
 export function initChatWidget() {
-  // ডুপ্লিকেট চ্যাট বাটন তৈরি আটকাতে
   if (document.getElementById("chatWidgetFab")) return;
 
-  // চ্যাট বাটন তৈরি
   const fab = document.createElement("button");
   fab.id = "chatWidgetFab";
   fab.className = "chat-fab";
   fab.innerHTML = `💬<span class="fab-badge" id="chatBadge" style="display:none">0</span>`;
   document.body.appendChild(fab);
 
-  // চ্যাট প্যানেল তৈরি
   const panel = document.createElement("div");
   panel.id = "chatWidgetPanel";
   panel.className = "chat-panel";
@@ -55,7 +58,6 @@ export function initChatWidget() {
   const sendBtn = document.getElementById("chatSendBtn");
   const badge = document.getElementById("chatBadge");
 
-  // চ্যাট ওপেন/ক্লোজ
   fab.onclick = () => {
     panel.classList.add("open");
     if (badge) badge.style.display = "none";
@@ -66,7 +68,6 @@ export function initChatWidget() {
 
   document.getElementById("chatCloseBtn").onclick = () => panel.classList.remove("open");
 
-  // ইউজার লগইন চেক
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
@@ -76,7 +77,6 @@ export function initChatWidget() {
     }
   });
 
-  // চ্যাট হিস্ট্রি লোড করা
   function loadChatHistory() {
     if (unsubMsgs) unsubMsgs();
     const msgsRef = collection(db, "chats", chatId, "messages");
@@ -160,7 +160,7 @@ export function initChatWidget() {
     } catch (e) {}
   }
 
-  // AI থেকে রিপ্লাই নেওয়া
+  // 🚨 AI রিকোয়েস্ট এবং এরর ধরার আপডেট করা লজিক
   async function getAIReply(text) {
     try {
       const res = await fetch(VERCEL_AI_URL, {
@@ -168,16 +168,23 @@ export function initChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history: recentMessages })
       });
-      if (!res.ok) return null;
+      
+      // যদি রেসপন্স OK না হয়, তবে Eruda কনসোলে এরর দেখাবে
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("🔥 VERCEL API ERROR:", res.status, errorText);
+        return null;
+      }
+      
       const data = await res.json();
+      console.log("✅ AI Success Data:", data); // সফল হলে ডেটা দেখাবে
       return data;
     } catch (e) {
-      console.error("AI Fetch Error:", e);
+      console.error("🔥 FETCH CATCH ERROR:", e);
       return null;
     }
   }
 
-  // মেসেজ পাঠানোর মূল ফাংশন
   async function sendMessage() {
     const text = input.value.trim();
     if (!text || !currentUser) return;
@@ -186,7 +193,6 @@ export function initChatWidget() {
     sendBtn.disabled = true;
 
     try {
-      // ১. চ্যাট ডকুমেন্ট চেক ও তৈরি করা (এরর আসার সম্ভাবনা দূর করতে)
       const chatRef = doc(db, "chats", chatId);
       const chatSnap = await getDoc(chatRef);
       
@@ -210,7 +216,6 @@ export function initChatWidget() {
         });
       }
 
-      // ২. ইউজারের মেসেজ সেভ করা
       await addDoc(collection(db, "chats", chatId, "messages"), {
         sender: "user",
         text: text,
@@ -218,11 +223,10 @@ export function initChatWidget() {
         readByAdmin: false
       });
 
-      // ৩. এআই থেকে উত্তর নেওয়া
+      // এআই থেকে উত্তর নেওয়া
       const aiData = await getAIReply(text);
 
       if (aiData && aiData.reply) {
-        // ৪. এআই এর উত্তর সেভ করা
         await addDoc(collection(db, "chats", chatId, "messages"), {
           sender: "admin",
           senderName: "ADQ Support",
@@ -233,7 +237,6 @@ export function initChatWidget() {
           readByUser: false
         });
 
-        // ৫. চ্যাট সামারি আপডেট
         const updates = {
           lastMessage: aiData.reply,
           lastMessageAt: serverTimestamp(),
@@ -246,12 +249,12 @@ export function initChatWidget() {
         }
 
         await updateDoc(chatRef, updates);
+      } else {
+        console.log("⚠️ AI থেকে কোনো উত্তর আসেনি বা এরর হয়েছে।");
       }
 
     } catch (e) {
-      console.error("Send error:", e);
-      // যদি কোনো কারণে এরর হয়, তবে কনসোলে জানাবে
-      alert("মেসেজ পাঠাতে সমস্যা হচ্ছে। ইন্টারনেট চেক করুন।");
+      console.error("🔥 FIRESTORE ERROR:", e);
     }
     sendBtn.disabled = false;
   }
@@ -262,7 +265,6 @@ export function initChatWidget() {
   });
 }
 
-// HTML এস্কেপ ফাংশন (XSS ঠেকাতে)
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
