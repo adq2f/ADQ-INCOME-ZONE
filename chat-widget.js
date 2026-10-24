@@ -5,23 +5,26 @@ import {
   updateDoc, increment, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// আপনার লিংক এখানে বসানো হয়েছে
+// আপনার Vercel API লিংক
 const VERCEL_AI_URL = "https://adq-income-zone.vercel.app/api/ai-support";
 
 let currentUser = null;
 let chatId = null;
 let unsubMsgs = null;
-let recentMessages = []; // AI-কে কনটেক্সট দেওয়ার জন্য
+let recentMessages = [];
 
 export function initChatWidget() {
+  // ডুপ্লিকেট চ্যাট বাটন তৈরি আটকাতে
   if (document.getElementById("chatWidgetFab")) return;
 
+  // চ্যাট বাটন তৈরি
   const fab = document.createElement("button");
   fab.id = "chatWidgetFab";
   fab.className = "chat-fab";
   fab.innerHTML = `💬<span class="fab-badge" id="chatBadge" style="display:none">0</span>`;
   document.body.appendChild(fab);
 
+  // চ্যাট প্যানেল তৈরি
   const panel = document.createElement("div");
   panel.id = "chatWidgetPanel";
   panel.className = "chat-panel";
@@ -52,6 +55,7 @@ export function initChatWidget() {
   const sendBtn = document.getElementById("chatSendBtn");
   const badge = document.getElementById("chatBadge");
 
+  // চ্যাট ওপেন/ক্লোজ
   fab.onclick = () => {
     panel.classList.add("open");
     if (badge) badge.style.display = "none";
@@ -62,6 +66,7 @@ export function initChatWidget() {
 
   document.getElementById("chatCloseBtn").onclick = () => panel.classList.remove("open");
 
+  // ইউজার লগইন চেক
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       currentUser = user;
@@ -71,13 +76,14 @@ export function initChatWidget() {
     }
   });
 
+  // চ্যাট হিস্ট্রি লোড করা
   function loadChatHistory() {
     if (unsubMsgs) unsubMsgs();
     const msgsRef = collection(db, "chats", chatId, "messages");
     const q = query(msgsRef, orderBy("createdAt", "asc"));
     
     unsubMsgs = onSnapshot(q, (snap) => {
-      recentMessages = []; // রিসেট
+      recentMessages = [];
       if (snap.empty) {
         body.innerHTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
         return;
@@ -88,7 +94,6 @@ export function initChatWidget() {
         const t = m.createdAt?.toDate?.();
         const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
         
-        // AI কনটেক্সটের জন্য মেসেজ সেভ করা (শেষ ৬টি)
         if (m.sender === "user") {
           recentMessages.push({ role: "user", text: m.text });
         } else if (m.sender === "admin") {
@@ -102,7 +107,6 @@ export function initChatWidget() {
         </div>`;
       }).join("");
       
-      // শেষ ৬টি মেসেজ রাখা
       recentMessages = recentMessages.slice(-6);
       body.scrollTop = body.scrollHeight;
     });
@@ -156,7 +160,7 @@ export function initChatWidget() {
     } catch (e) {}
   }
 
-  // AI থেকে উত্তর আনা
+  // AI থেকে রিপ্লাই নেওয়া
   async function getAIReply(text) {
     try {
       const res = await fetch(VERCEL_AI_URL, {
@@ -166,13 +170,14 @@ export function initChatWidget() {
       });
       if (!res.ok) return null;
       const data = await res.json();
-      return data; // { reply, needsHuman }
+      return data;
     } catch (e) {
       console.error("AI Fetch Error:", e);
       return null;
     }
   }
 
+  // মেসেজ পাঠানোর মূল ফাংশন
   async function sendMessage() {
     const text = input.value.trim();
     if (!text || !currentUser) return;
@@ -181,21 +186,12 @@ export function initChatWidget() {
     sendBtn.disabled = true;
 
     try {
-      // ১. ইউজারের মেসেজ সেভ করা
-      await addDoc(collection(db, "chats", chatId, "messages"), {
-        sender: "user",
-        text: text,
-        createdAt: serverTimestamp(),
-        readByAdmin: false
-      });
-
-      await updateDoc(doc(db, "chats", chatId), {
-        lastMessage: text,
-        lastMessageAt: serverTimestamp(),
-        lastSender: "user",
-        unreadForAdmin: increment(1)
-      }).catch(async () => {
-        await setDoc(doc(db, "chats", chatId), {
+      // ১. চ্যাট ডকুমেন্ট চেক ও তৈরি করা (এরর আসার সম্ভাবনা দূর করতে)
+      const chatRef = doc(db, "chats", chatId);
+      const chatSnap = await getDoc(chatRef);
+      
+      if (!chatSnap.exists()) {
+        await setDoc(chatRef, {
           userId: currentUser.uid,
           username: currentUser.displayName || "User",
           userEmail: currentUser.email,
@@ -204,14 +200,29 @@ export function initChatWidget() {
           lastSender: "user",
           unreadForAdmin: 1,
           unreadForUser: 0
-        }, { merge: true });
+        });
+      } else {
+        await updateDoc(chatRef, {
+          lastMessage: text,
+          lastMessageAt: serverTimestamp(),
+          lastSender: "user",
+          unreadForAdmin: increment(1)
+        });
+      }
+
+      // ২. ইউজারের মেসেজ সেভ করা
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        sender: "user",
+        text: text,
+        createdAt: serverTimestamp(),
+        readByAdmin: false
       });
 
-      // ২. এআই থেকে উত্তর নেওয়া
+      // ৩. এআই থেকে উত্তর নেওয়া
       const aiData = await getAIReply(text);
 
       if (aiData && aiData.reply) {
-        // ৩. এআই এর উত্তর সেভ করা
+        // ৪. এআই এর উত্তর সেভ করা
         await addDoc(collection(db, "chats", chatId, "messages"), {
           sender: "admin",
           senderName: "ADQ Support",
@@ -222,7 +233,7 @@ export function initChatWidget() {
           readByUser: false
         });
 
-        // ৪. চ্যাট সামারি আপডেট
+        // ৫. চ্যাট সামারি আপডেট
         const updates = {
           lastMessage: aiData.reply,
           lastMessageAt: serverTimestamp(),
@@ -230,16 +241,17 @@ export function initChatWidget() {
           unreadForUser: increment(1)
         };
         
-        // ইউজার যদি মানুষের সাথে কথা বলতে চায়
         if (aiData.needsHuman) {
           updates.unreadForAdmin = increment(1);
         }
 
-        await updateDoc(doc(db, "chats", chatId), updates);
+        await updateDoc(chatRef, updates);
       }
 
     } catch (e) {
       console.error("Send error:", e);
+      // যদি কোনো কারণে এরর হয়, তবে কনসোলে জানাবে
+      alert("মেসেজ পাঠাতে সমস্যা হচ্ছে। ইন্টারনেট চেক করুন।");
     }
     sendBtn.disabled = false;
   }
@@ -250,6 +262,7 @@ export function initChatWidget() {
   });
 }
 
+// HTML এস্কেপ ফাংশন (XSS ঠেকাতে)
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
