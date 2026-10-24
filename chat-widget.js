@@ -5,12 +5,6 @@ import {
   updateDoc, increment, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 🚨 এরর দেখার জন্য Eruda স্ক্রিপ্ট (শুধু আপনার ফোনে কাজ করবে)
-const erudaScript = document.createElement('script');
-erudaScript.src = "https://cdn.jsdelivr.net/npm/eruda";
-document.head.appendChild(erudaScript);
-erudaScript.onload = () => { eruda.init(); };
-
 // আপনার Vercel API লিংক
 const VERCEL_AI_URL = "https://adq-income-zone.vercel.app/api/ai-support";
 
@@ -74,11 +68,16 @@ export function initChatWidget() {
       chatId = user.uid;
       loadChatHistory();
       listenAdminStatus();
+    } else {
+      currentUser = null;
+      chatId = null;
     }
   });
 
   function loadChatHistory() {
     if (unsubMsgs) unsubMsgs();
+    if (!chatId) return;
+
     const msgsRef = collection(db, "chats", chatId, "messages");
     const q = query(msgsRef, orderBy("createdAt", "asc"));
     
@@ -109,6 +108,8 @@ export function initChatWidget() {
       
       recentMessages = recentMessages.slice(-6);
       body.scrollTop = body.scrollHeight;
+    }, (error) => {
+      console.error("Chat history load error:", error);
     });
   }
 
@@ -125,8 +126,8 @@ export function initChatWidget() {
 
   function listenAdminStatus() {
     const statusRef = doc(db, "settings", "online_status");
-    onSnapshot(statusRef, (doc) => {
-      const isOnline = doc.exists() ? doc.data().adminOnline : false;
+    onSnapshot(statusRef, (docSnap) => {
+      const isOnline = docSnap.exists() ? docSnap.data().adminOnline : false;
       const dot = document.getElementById("chatOnlineDot");
       const txt = document.getElementById("chatOnlineText");
       if (isOnline) {
@@ -160,16 +161,23 @@ export function initChatWidget() {
     } catch (e) {}
   }
 
-  // 🚨 AI রিকোয়েস্ট এবং এরর ধরার আপডেট করা লজিক
+  // 🚨 AI রিকোয়েস্ট (টোকেন যুক্ত করা হয়েছে)
   async function getAIReply(text) {
     try {
+      let token = "";
+      if (currentUser) {
+        token = await currentUser.getIdToken(); // ফায়ারবেস টোকেন নেওয়া
+      }
+
       const res = await fetch(VERCEL_AI_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // টোকেন হেডারে পাঠানো
+        },
         body: JSON.stringify({ message: text, history: recentMessages })
       });
       
-      // যদি রেসপন্স OK না হয়, তবে Eruda কনসোলে এরর দেখাবে
       if (!res.ok) {
         const errorText = await res.text();
         console.error("🔥 VERCEL API ERROR:", res.status, errorText);
@@ -177,7 +185,7 @@ export function initChatWidget() {
       }
       
       const data = await res.json();
-      console.log("✅ AI Success Data:", data); // সফল হলে ডেটা দেখাবে
+      console.log("✅ AI Success Data:", data);
       return data;
     } catch (e) {
       console.error("🔥 FETCH CATCH ERROR:", e);
@@ -187,7 +195,10 @@ export function initChatWidget() {
 
   async function sendMessage() {
     const text = input.value.trim();
-    if (!text || !currentUser) return;
+    if (!text || !currentUser) {
+      if (!currentUser) alert("মেসেজ পাঠাতে দয়া করে লগইন করুন।");
+      return;
+    }
 
     input.value = "";
     sendBtn.disabled = true;
