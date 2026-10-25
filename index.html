@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-<!-- style.css রাখা হয়েছে: chat widget ও popup এর স্টাইলের জন্য -->
 <link rel="stylesheet" href="style.css?v=35">
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
@@ -172,7 +171,7 @@ body{padding-bottom:0!important}
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { initChatWidget } from "./chat-widget.js";
     import { initPremiumPopups } from "./premium-popup.js";
 
@@ -247,15 +246,18 @@ body{padding-bottom:0!important}
       const list = document.getElementById("taskList");
       try {
         const q = query(collection(db, "tasks"), where("active", "==", true));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
-          return;
-        }
-        allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        
+        // ✅ ফিক্স: রিয়েল-টাইম লিসেনার ব্যবহার করা হয়েছে
+        onSnapshot(q, (snap) => {
+          if (snap.empty) {
+            list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
+            return;
+          }
+          allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
 
-        renderTasks();
+          renderTasks();
+        });
       } catch (e) {
         list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
