@@ -10,7 +10,6 @@ const TOTAL_BUDGET_MS = 25000;
 const PER_CALL_TIMEOUT_MS = 12000;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ---------- Gemini call (fallback + retry + timeout) ----------
 async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
     let body = payload;
@@ -63,7 +62,6 @@ async function callGemini(payload, apiKey, deadline, state) {
   return null;
 }
 
-// ---------- History clean ----------
 function cleanHistory(history) {
   const list = Array.isArray(history) ? history : [];
   const filtered = list
@@ -81,7 +79,6 @@ function cleanHistory(history) {
   return out;
 }
 
-// ---------- Handler ----------
 export default async function handler(req, res) {
   setCors(res);
   if (req.method === "OPTIONS") return res.status(204).end();
@@ -106,39 +103,150 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    console.error("GEMINI_API_KEY env missing");
-    return res.status(200).json({
-      reply: DEBUG ? "DEBUG: GEMINI_API_KEY env নেই" : "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।"
-    });
+    return res.status(200).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
   }
 
-  let userData = { balance: 0, username: "User", totalGood: 0 };
+  // ==========================================
+  // 🔥 ইউজারের সব ডাটা লোড
+  // ==========================================
+  let userData = { 
+    balance: 0, username: "User", email: user.email, totalGood: 0, totalBad: 0, totalPending: 0, 
+    wallets: {}, totalReferEarning: 0, myReferCode: "",
+    recentWithdrawals: [], recentSubmissions: []
+  };
+
   try {
     const snap = await db.doc(`users/${user.uid}`).get();
     if (snap.exists) {
       const d = snap.data();
-      userData = {
-        balance: Number(d.balance) || 0,
-        username: d.username || "User",
-        totalGood: Number(d.totalGood) || 0
-      };
+      userData.balance = Number(d.balance) || 0;
+      userData.username = d.username || "User";
+      userData.totalGood = Number(d.totalGood) || 0;
+      userData.totalBad = Number(d.totalBad) || 0;
+      userData.totalPending = Number(d.totalPending) || 0;
+      userData.wallets = d.wallets || {};
+      userData.totalReferEarning = Number(d.totalReferEarning) || 0;
+      userData.myReferCode = d.myReferCode || "";
     }
-  } catch (e) { console.error("Firestore read error:", e); }
 
+    const wdQuery = db.collection("withdrawals")
+      .where("userId", "==", user.uid)
+      .orderBy("requestedAt", "desc")
+      .limit(5);
+    const wdSnap = await wdQuery.get();
+    wdSnap.forEach(doc => {
+      const w = doc.data();
+      userData.recentWithdrawals.push({
+        amount: w.amount,
+        method: w.method,
+        account: w.accountNum || w.account,
+        status: w.status,
+        date: w.requestedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
+      });
+    });
+
+    const subQuery = db.collection("submissions")
+      .where("userId", "==", user.uid)
+      .orderBy("submittedAt", "desc")
+      .limit(3);
+    const subSnap = await subQuery.get();
+    subSnap.forEach(doc => {
+      const s = doc.data();
+      userData.recentSubmissions.push({
+        taskTitle: s.taskTitle || "Task",
+        status: s.status,
+        price: s.price || 0,
+        date: s.submittedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
+      });
+    });
+  } catch (e) { 
+    console.error("Firestore read error:", e); 
+  }
+
+  const savedWallets = Object.keys(userData.wallets).filter(k => userData.wallets[k]?.number);
+  const hasWallet = savedWallets.length > 0;
+  
+  let walletDetails = "কোনো ওয়ালেট সেভ করা নেই।";
+  if (hasWallet) {
+    walletDetails = savedWallets.map(k => `- ${k.toUpperCase()}: ${userData.wallets[k].number}`).join("\n");
+  }
+
+  let wdHistoryText = "কোনো উইথড্র হিস্টোরি নেই।";
+  if (userData.recentWithdrawals.length > 0) {
+    wdHistoryText = userData.recentWithdrawals.map(w => 
+      `- ৳${w.amount} (${w.method.toUpperCase()}) → ${w.account} → ${w.status} → ${w.date}`
+    ).join("\n");
+  }
+
+  let subHistoryText = "কোনো সাবমিশন নেই।";
+  if (userData.recentSubmissions.length > 0) {
+    subHistoryText = userData.recentSubmissions.map(s => 
+      `- ${s.taskTitle} → ${s.status} → ৳${s.price} → ${s.date}`
+    ).join("\n");
+  }
+
+  // ==========================================
+  // 🧠 AI System Prompt
+  // ==========================================
   const SYSTEM_PROMPT = `
-    তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
-    ইউজারের বর্তমান তথ্য:
-    - নাম: ${userData.username}
-    - ব্যালেন্স: ৳${userData.balance}
-    - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
+    তুমি "ADQ Income Zone" এর একজন অত্যন্ত স্মার্ট, বন্ধুত্বপূর্ণ এবং মানুষের মতো আচরণকারী এআই অ্যাসিস্ট্যান্ট। তোমার নাম "ADQ AI"। ইউজারকে বাংলায় সাহায্য করো।
 
-    নিয়ম:
-    - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
-    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। তিনটি তথ্য পেলেই request_withdraw কল করো।
-    - তুমি কখনো পাসওয়ার্ড চাইবে না। পাসওয়ার্ড সিস্টেম নিজেই একটি নিরাপদ ফর্মে নেবে।
-    - ইউজার চ্যাটে পাসওয়ার্ড লিখতে চাইলে বারণ করো এবং বলো পাসওয়ার্ড কাউকে বা চ্যাটে দেওয়া যাবে না।
-    - save_wallet এ মেথড শুধু bkash, nagad বা rocket হতে পারবে।
-    - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
+    ==========================================
+    👤 ইউজারের বর্তমান ডাটা:
+    ==========================================
+    - নাম: ${userData.username}
+    - ইমেইল: ${userData.email}
+    - ব্যালেন্স: ৳${userData.balance}
+    - মোট Good: ${userData.totalGood} টি
+    - মোট Bad: ${userData.totalBad} টি
+    - মোট Pending: ${userData.totalPending} টি
+    - রেফার কোড: ${userData.myReferCode || "নেই"}
+    - মোট রেফার আয়: ৳${userData.totalReferEarning}
+
+    💳 ওয়ালেট (${hasWallet ? "সেটআপ করা আছে" : "সেটআপ করা নেই"}):
+    ${walletDetails}
+
+    📜 সর্বশেষ ৫টি উইথড্র:
+    ${wdHistoryText}
+
+    📋 সর্বশেষ ৩টি সাবমিশন:
+    ${subHistoryText}
+
+    ==========================================
+    ⚠️ কঠোর নিয়মাবলী:
+    ==========================================
+    
+    ১. **ওয়ালেট সেটআপ চেক**: 
+       - ইউজার "টাকা তুলতে চাই" বা "উইথড্র করতে চাই" বললে, আগে চেক করো তার ওয়ালেট সেটআপ করা আছে কিনা।
+       - না থাকলে বলো: "আপনার কোনো উইথড্র ওয়ালেট সেটআপ করা নেই। অনুগ্রহ করে আগে আপনার bKash/Nagad/Rocket/Binance নম্বরটি সেটআপ করুন।" এবং save_wallet টুল কল করে সেটআপ করিয়ে দাও।
+       - সেটআপ থাকলে জিজ্ঞেস করো: "আপনি কোন মেথডে (${savedWallets.join(", ")}) এবং কত টাকা তুলতে চান?"
+
+    ২. **ইউজারের তথ্য পরিবর্তন (Username/Password/Wallet)**:
+       - ইউজার যদি "আমার নাম পরিবর্তন করো", "পাসওয়ার্ড রিসেট করো", "আমার নাম্বার পরিবর্তন করো" বলে, তবে সাথে সাথে সংশ্লিষ্ট টুল কল করো (update_username, send_password_reset, save_wallet)।
+       - পাসওয়ার্ড রিসেট করার জন্য send_password_reset টুল কল করলে ইউজারের ইমেইলে রিসেট লিংক চলে যাবে।
+       - ইউজারকে বলবে: "✅ আপনার পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে (${userData.email}) পাঠিয়ে দেওয়া হয়েছে। ইনবক্স চেক করুন।"
+
+    ৩. **হিস্টোরি**: 
+       - ইউজার "আমার লাস্ট উইথড্র কত?", "আমার লাস্ট নাম কি?", "আমার সব হিস্টোরি বলো" জিজ্ঞেস করলে উপরের ডাটা থেকে সঠিক উত্তর দাও। বানিয়ে কিছু বলবে না।
+
+    ৪. **নিষিদ্ধ বিষয় (Strictly Forbidden)**:
+       - ইউজার যদি ওয়েবসাইট বানানো, ফায়ারবেস কোড, প্রোগ্রামিং, হ্যাকিং, বা এই অ্যাপের প্রাইভেট/টেকনিক্যাল বিষয় নিয়ে জিজ্ঞেস করে, তবে বিনয়ের সাথে বলবে: 
+         "🙏 দুঃখিত, আমি এসব বিষয়ে কিছু জানি না। আমি শুধু ADQ Income Zone-এর কাজকর্ম (হিস্ট্রি চেক, ওয়ালেট সেটআপ, উইথড্র, নাম/পাসওয়ার্ড পরিবর্তন) নিয়ে আপনাকে সাহায্য করতে পারি। অন্য কোনো সাহায্য লাগলে জানাবেন।"
+       - কখনো কোড, স্ক্রিপ্ট বা প্রযুক্তিগত পরামর্শ দেবে না।
+
+    ৫. **ব্যালেন্স অ্যাড**: 
+       - ইউজার যদি বলে "আমার ব্যালেন্স বাড়িয়ে দাও", "আমাকে টাকা দাও" — তাকে বলবে: "❌ দুঃখিত, আমি সরাসরি ব্যালেন্স যোগ করতে পারি না। এটি শুধুমাত্র অ্যাডমিন করতে পারেন।"
+
+    ৬. **টাস্ক সাবমিট**: 
+       - ইউজার যদি বলে "আমার হয়ে টাস্ক সাবমিট করে দাও" — তাকে বলবে: "❌ দুঃখিত, টাস্ক সাবমিট শুধুমাত্র আপনি নিজে করতে পারবেন। আমি এতে সাহায্য করতে পারি না।"
+
+    ৭. **ইমোজি**: 
+       - ইউজারের মেসেজের মুড অনুযায়ী মাঝে মাঝে হালকা ইমোজি ব্যবহার করবে (যেমন: 😊, 👍, 💰, ✅, ⚠️, 🙏)।
+
+    ৮. **কথার ধরন**: 
+       - একদম মানুষের মতো স্বাভাবিক, বন্ধুত্বপূর্ণ ভাষায় কথা বলবে। "আপনি" বলে সম্বোধন করবে।
+
+    এখন ইউজারের মেসেজের উত্তর দাও।
   `;
 
   const contents = cleanHistory(req.body?.history);
@@ -155,12 +263,12 @@ export default async function handler(req, res) {
         functionDeclarations: [
           {
             name: "request_withdraw",
-            description: "উইথড্র করার তথ্য (টাকা, মেথড, অ্যাকাউন্ট) নিশ্চিত করার জন্য ইউজারকে নিরাপদ কনফার্ম ফর্ম দেখায়। পাসওয়ার্ড লাগে না।",
+            description: "উইথড্র করার তথ্য (টাকা, মেথড, অ্যাকাউন্ট) নিশ্চিত করার জন্য ইউজারকে নিরাপদ কনফার্ম ফর্ম দেখায়।",
             parameters: {
               type: "OBJECT",
               properties: {
                 amount: { type: "NUMBER" },
-                method: { type: "STRING" },
+                method: { type: "STRING", enum: ["bkash", "nagad", "rocket", "binance"] },
                 account: { type: "STRING" }
               },
               required: ["amount", "method", "account"]
@@ -168,15 +276,31 @@ export default async function handler(req, res) {
           },
           {
             name: "save_wallet",
-            description: "ইউজারের পেমেন্ট মেথড সেভ করে।",
+            description: "ইউজারের পেমেন্ট মেথড (bKash/Nagad/Rocket/Binance) সেভ বা আপডেট করে।",
             parameters: {
               type: "OBJECT",
               properties: {
-                method: { type: "STRING" },
+                method: { type: "STRING", enum: ["bkash", "nagad", "rocket", "binance"] },
                 account: { type: "STRING" }
               },
               required: ["method", "account"]
             }
+          },
+          {
+            name: "update_username",
+            description: "ইউজারের নাম (Username) পরিবর্তন করে।",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                newUsername: { type: "STRING" }
+              },
+              required: ["newUsername"]
+            }
+          },
+          {
+            name: "send_password_reset",
+            description: "ইউজারের ইমেইলে পাসওয়ার্ড রিসেট লিংক পাঠায়।",
+            parameters: { type: "OBJECT", properties: {} }
           }
         ]
       }]
@@ -184,7 +308,6 @@ export default async function handler(req, res) {
 
     if (!data) {
       let reply = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
-      if (DEBUG) reply += `\n\nDEBUG: ${state.lastError} | models=${MODELS.join(",")}`;
       return res.status(200).json({ reply });
     }
 
@@ -195,6 +318,7 @@ export default async function handler(req, res) {
       const fc = fcPart.functionCall;
       const args = fc.args || {};
 
+      // ১. উইথড্র
       if (fc.name === "request_withdraw") {
         const amount = Math.round(Number(args.amount) * 100) / 100;
         const method = String(args.method || "").toLowerCase().trim();
@@ -209,13 +333,13 @@ export default async function handler(req, res) {
         if (amount > userData.balance)
           return res.status(200).json({ reply: `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। বর্তমান ব্যালেন্স ৳${userData.balance}।` });
 
-        // ✅ পাসওয়ার্ড এখানে নেওয়া হয় না — ক্লায়েন্ট একটি নিরাপদ ফর্ম দেখাবে
         return res.status(200).json({
           reply: `আপনার ৳${amount} (${method} - ${account}) উইথড্র রিকোয়েস্ট প্রস্তুত। 🔒 নিরাপত্তার জন্য নিচের ফর্মে পাসওয়ার্ড দিয়ে নিশ্চিত করুন।`,
           action: { type: "withdraw_confirm", amount, method, account }
         });
       }
 
+      // ২. ওয়ালেট সেভ
       if (fc.name === "save_wallet") {
         const method = String(args.method || "").toLowerCase().trim();
         const account = String(args.account || "").trim();
@@ -226,12 +350,38 @@ export default async function handler(req, res) {
           return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
 
         try {
-          await db.doc(`users/${user.uid}`).set({ [`wallet_${method}`]: account }, { merge: true });
-          return res.status(200).json({ reply: `✅ আপনার ${method} নম্বর (${account}) সেভ করা হয়েছে!` });
+          const currentWallets = userData.wallets || {};
+          currentWallets[method] = { number: account, name: userData.username };
+          await db.doc(`users/${user.uid}`).update({ wallets: currentWallets });
+          return res.status(200).json({ reply: `✅ আপনার ${method} নম্বর (${account}) সফলভাবে সেভ করা হয়েছে!` });
         } catch (e) {
           console.error("Save wallet error:", e);
           return res.status(200).json({ reply: "❌ নম্বর সেভ করা যায়নি। দয়া করে আবার চেষ্টা করুন।" });
         }
+      }
+
+      // ৩. ইউজারনেম আপডেট
+      if (fc.name === "update_username") {
+        const newUsername = String(args.newUsername || "").trim();
+        if (newUsername.length < 3)
+          return res.status(200).json({ reply: "❌ নাম কমপক্ষে ৩ অক্ষরের হতে হবে।" });
+        
+        try {
+          await db.doc(`users/${user.uid}`).update({ username: newUsername });
+          return res.status(200).json({ reply: `✅ আপনার নতুন নাম "${newUsername}" সফলভাবে সেভ করা হয়েছে!` });
+        } catch (e) {
+          return res.status(200).json({ reply: "❌ নাম পরিবর্তন করা যায়নি। আবার চেষ্টা করুন।" });
+        }
+      }
+
+      // ৪. পাসওয়ার্ড রিসেট
+      if (fc.name === "send_password_reset") {
+        // পাসওয়ার্ড রিসেট ফায়ারবেস অ্যাডমিন SDK থেকে সরাসরি করা যায় না, 
+        // ক্লায়েন্ট SDK দিয়ে করতে হয়। তাই আমরা ক্লায়েন্টে একটি action পাঠাবো।
+        return res.status(200).json({ 
+          reply: `✅ আপনার পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে (${userData.email}) পাঠানো হয়েছে। ইনবক্স বা স্প্যাম ফোল্ডার চেক করুন।`,
+          action: { type: "password_reset" }
+        });
       }
 
       return res.status(200).json({ reply: "কাজটি সম্পন্ন হয়েছে।" });
