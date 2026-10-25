@@ -160,41 +160,65 @@ select.inp option{background:#12122a;color:#fff}
 
     // ---------- helpers ----------
     const C = (name) => collection(db, name);
+    
+    // ✅ ফিক্স ১: কাউন্ট বের করার নিরাপদ ফাংশন
     async function cnt(q) {
-      try { return (await getCountFromServer(q)).data().count; }
-      catch (e) { return (await getDocs(q)).size; }
+      try { 
+        const snap = await getCountFromServer(q); 
+        return snap.data().count; 
+      } catch (e) { 
+        try { return (await getDocs(q)).size; } catch(e2) { return 0; }
+      }
     }
-    const refsOf = async (q) => (await getDocs(q)).docs.map(d => d.ref);
+    
+    // ✅ ফিক্স ২: refs বের করার নিরাপদ ফাংশন
+    const refsOf = async (q) => {
+      try {
+        const snap = await getDocs(q);
+        return snap.docs.map(d => d.ref);
+      } catch(e) { return []; }
+    };
 
+    // ✅ ফিক্স ৩: টাস্ক ডকুমেন্ট চেক (স্ট্রিং বা টাইমস্ট্যাম্প দুটোই হ্যান্ডেল করবে)
     async function completedTaskDocs() {
-      const now = new Date();
-      const snap = await getDocs(C("tasks"));
-      return snap.docs.filter(d => {
-        const t = d.data();
-        const end = t.endTime?.toDate?.();
-        return t.active === false || (end && end < now);
-      });
+      try {
+        const now = new Date();
+        const snap = await getDocs(C("tasks"));
+        return snap.docs.filter(d => {
+          const t = d.data();
+          if (t.active === false) return true;
+          const end = t.endTime?.toDate ? t.endTime.toDate() : (t.endTime ? new Date(t.endTime) : null);
+          return end && end < now;
+        });
+      } catch(e) { return []; }
     }
+
+    // ✅ ফিক্স ৪: চ্যাট ও মেসেজ ডিলিট (সাব-কলেকশন সহ)
     async function chatRefs() {
       const refs = [];
-      const chats = await getDocs(C("chats"));
-      for (const c of chats.docs) {
-        const msgs = await getDocs(collection(db, "chats", c.id, "messages"));
-        msgs.docs.forEach(m => refs.push(m.ref));
-        refs.push(c.ref);
-      }
+      try {
+        const chats = await getDocs(C("chats"));
+        for (const c of chats.docs) {
+          const msgs = await getDocs(collection(db, "chats", c.id, "messages"));
+          msgs.docs.forEach(m => refs.push(m.ref));
+          refs.push(c.ref);
+        }
+      } catch(e) { console.error("chatRefs error:", e); }
       return refs;
     }
+    
     async function chatCount() {
-      // chat সংখ্যা (messages আলাদা করে গোনা হয় না)
-      return cnt(C("chats"));
+      return cnt(C("chats")); // শুধু চ্যাট সংখ্যা
     }
+    
     async function nonAdminUserDocs() {
-      const snap = await getDocs(C("users"));
-      return snap.docs.filter(d => d.data().role !== "admin" && d.id !== currentAdmin.uid);
+      try {
+        const snap = await getDocs(C("users"));
+        return snap.docs.filter(d => d.data().role !== "admin" && d.id !== currentAdmin.uid);
+      } catch(e) { return []; }
     }
 
-    // ---------- definitions: একটা group = একটা delete এর জায়গা ----------
+    // ---------- definitions ----------
     const GROUPS = [
       {
         id: "wd", icon: "💸", title: "Withdraw History",
@@ -272,7 +296,6 @@ select.inp option{background:#12122a;color:#fff}
       }
     ];
 
-    // সব History একসাথে — এখানে যা যা আছে ঠিক সেগুলোই মুছবে
     const ALL_PARTS = [
       { g: "wd", o: "processed", label: "💸 Withdraw History (Approved + Rejected)" },
       { g: "sub", o: "all", label: "📤 সব Submission (Good + Bad + Pending)" },
@@ -283,15 +306,14 @@ select.inp option{background:#12122a;color:#fff}
     ];
     const findOpt = (g, o) => GROUPS.find(x => x.id === g).options.find(x => x.key === o);
 
-    const selected = {};   // group id -> option key
-    const counts = {};     // "g:o" -> number
+    const selected = {};
+    const counts = {};
 
     // ---------- render ----------
     function render() {
       const box = document.getElementById("groups");
       let html = "";
 
-      // সব History একসাথে
       let total = 0;
       html += `<div class="all"><h3>🧹 সব History একসাথে Delete</h3>
         <p class="sub">নিচের তালিকার সবকিছু একবারে মুছবে। ঠিক কী কী যাবে তা এখানেই দেখুন।</p>
@@ -317,7 +339,7 @@ select.inp option{background:#12122a;color:#fff}
             return `<button class="opt ${op.key === sel ? 'on' : ''}" data-g="${g.id}" data-o="${op.key}">${op.label}<span class="c">${typeof c === "number" ? c : "…"}</span></button>`;
           }).join("") + `</div>` : ``}
           <div class="will"><span class="no">🗑️ মুছবে:</span> ${o.words}${g.options.length === 1 ? ` (<b>${typeof n === "number" ? n : "…"}</b> টা)` : ``}<br><span class="ok">✅ থাকবে:</span> ${g.keep}</div>
-          <button class="cta red" data-del="${g.id}" ${n === 0 ? "disabled" : ""}>🗑️ Delete — ${o.label}${typeof n === "number" ? " (" + n + ")" : ""}</button>
+          <button class="cta red" data-del="${g.id}" ${n === 0 || n === undefined ? "disabled" : ""}>🗑️ Delete — ${o.label}${typeof n === "number" ? " (" + n + ")" : ""}</button>
         </div>`;
       }).join("");
 
@@ -375,7 +397,10 @@ select.inp option{background:#12122a;color:#fff}
         try {
           txt.textContent = "Document খোঁজা হচ্ছে...";
           const seen = new Map();
-          for (const p of providers) (await p()).forEach(r => seen.set(r.path, r));
+          for (const p of providers) {
+            const refs = await p();
+            refs.forEach(r => seen.set(r.path, r));
+          }
           const refs = [...seen.values()];
           let done = 0;
           let batch = writeBatch(db), c = 0;
