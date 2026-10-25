@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<!-- XLSX লাইব্রেরি (ফাইল পড়ার জন্য) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -102,6 +104,23 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box .ic{font-size:52px;display:block;margin-bottom:10px}
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
+
+/* ===== নতুন: ট্যাব ডিজাইন ===== */
+.tab-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{padding:12px 18px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s;flex:1;text-align:center}
+.tab-btn:hover{color:#fff}
+.tab-btn.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+
+/* ===== নতুন: ফাইল ড্রপ জোন ===== */
+.drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
+.drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
+.drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
+.drop-zone h4{margin:0 0 6px;font-size:16px;font-weight:700;color:#fff}
+.drop-zone p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+.drop-zone input[type="file"]{display:none}
+.file-info{display:none;padding:14px;border-radius:14px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:12px;font-size:13.5px;color:#6ee7b7;font-weight:600}
+.file-info.show{display:block}
 </style>
 </head>
 <body>
@@ -119,37 +138,87 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     </ul>
   </div>
 
-  <div id="singleSection" style="display:none">
-    <div class="fcard glass">
-      <h3>📝 Single Submit</h3>
-      <div id="dynamicFields"></div>
-      <div class="dup" id="singleDupWarning">⚠️ Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
-      <button class="cta green" id="singleSubmitBtn">✅ Submit Account</button>
-    </div>
-  </div>
+  <div id="submitSections" style="display:none">
 
-  <div class="fcard glass" id="bulkSection" style="display:none">
-    <h3>📋 Bulk Submit</h3>
-    <div class="bhint">
-      <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
-      Tab / Comma / Pipe / Space — সব কাজ করবে
-    </div>
-    <textarea id="bulkInput" class="inp" placeholder="Loading..."></textarea>
-
-    <div class="bcount">
-      <span>📊 Unique / Total</span>
-      <span class="num" id="bulkCountNum">0 / 0</span>
+    <!-- ট্যাব বার -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="single">📝 Single Submit</button>
+      <button class="tab-btn" data-tab="bulk">📋 All Paste (Bulk)</button>
+      <button class="tab-btn" data-tab="file">📁 Direct File</button>
     </div>
 
-    <div class="bprev" id="bulkPreview"></div>
-
-    <div class="prog" id="submitProgress">
-      <div class="t" id="spText">Submitting 0/0...</div>
-      <div class="pbar"><div class="pfill" id="spFill"></div></div>
+    <!-- ১. সিঙ্গেল সাবমিট -->
+    <div id="tab-single" class="tab-content">
+      <div class="fcard glass">
+        <h3>📝 Single Submit</h3>
+        <div id="dynamicFields"></div>
+        <div class="dup" id="singleDupWarning">⚠️ Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
+        <button class="cta green" id="singleSubmitBtn">✅ Submit Account</button>
+      </div>
     </div>
 
-    <button class="cta green" id="bulkSubmitBtn">🚀 Submit All Accounts</button>
-    <button class="cta ghost" id="clearBulkBtn">✕ Clear Data</button>
+    <!-- ২. বাল্ক / অল পেস্ট সাবমিট -->
+    <div id="tab-bulk" class="tab-content" style="display:none">
+      <div class="fcard glass">
+        <h3>📋 All Paste Submit (Bulk)</h3>
+        <div class="bhint">
+          <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
+          Tab / Comma / Pipe / Space — সব কাজ করবে
+        </div>
+        <textarea id="bulkInput" class="inp" placeholder="Loading..."></textarea>
+
+        <div class="bcount">
+          <span>📊 Unique / Total</span>
+          <span class="num" id="bulkCountNum">0 / 0</span>
+        </div>
+
+        <div class="bprev" id="bulkPreview"></div>
+
+        <div class="prog" id="submitProgress">
+          <div class="t" id="spText">Submitting 0/0...</div>
+          <div class="pbar"><div class="pfill" id="spFill"></div></div>
+        </div>
+
+        <button class="cta green" id="bulkSubmitBtn">🚀 Submit All Accounts</button>
+        <button class="cta ghost" id="clearBulkBtn">✕ Clear Data</button>
+      </div>
+    </div>
+
+    <!-- ৩. সরাসরি ফাইল সাবমিট -->
+    <div id="tab-file" class="tab-content" style="display:none">
+      <div class="fcard glass">
+        <h3>📁 Direct File Submit</h3>
+        <div class="bhint">
+          <b>ফাইল ফরম্যাট:</b> Excel (.xlsx, .xls) অথবা CSV (.csv)<br>
+          প্রথম কলাম: UID / Account, দ্বিতীয়: Password, তৃতীয়: 2FA (অথবা টাস্কে যেভাবে চাওয়া হয়েছে)
+        </div>
+
+        <div class="drop-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+          <span class="icon">📁</span>
+          <h4>ফাইল এখানে ড্রপ করুন</h4>
+          <p>অথবা ক্লিক করে আপনার ফোন/কম্পিউটার থেকে ফাইল নির্বাচন করুন<br><small>(Excel .xlsx, .xls অথবা .csv)</small></p>
+        </div>
+
+        <div class="file-info" id="fileInfo"></div>
+
+        <div class="bcount" style="display:none" id="fileCountBox">
+          <span>📊 ফাইলে Unique / Total</span>
+          <span class="num" id="fileCountNum">0 / 0</span>
+        </div>
+
+        <div class="bprev" id="filePreview"></div>
+
+        <div class="prog" id="fileSubmitProgress">
+          <div class="t" id="fspText">Submitting 0/0...</div>
+          <div class="pbar"><div class="pfill" id="fspFill"></div></div>
+        </div>
+
+        <button class="cta green" id="fileSubmitBtn" disabled>🚀 Submit File Accounts</button>
+        <button class="cta ghost" id="clearFileBtn">✕ Clear File</button>
+      </div>
+    </div>
+
   </div>
 </main>
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
@@ -164,9 +233,8 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     let task = null, currentUser = null, isOpen = false;
     let countdownInterval = null;
     let taskStartTime = null, taskEndTime = null;
-    
-    // ✅ ফিক্স: পুরো ডাটাবেস লোড না করে, শুধু বর্তমান টাস্কের ডাটা মেমোরিতে রাখব
     let existingHashes = new Set();
+    let fileItems = [];
 
     function esc(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -178,6 +246,16 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       await signOut(auth);
       location.href = "index.html";
     };
+
+    // ===== ট্যাব সুইচ =====
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+        btn.classList.add("active");
+        document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+      };
+    });
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
@@ -230,6 +308,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       document.getElementById("bulkInput").addEventListener("input", updateBulkCount);
 
       startCountdown();
+      document.getElementById("submitSections").style.display = "block";
     });
 
     function makeRowHash(item, fields) {
@@ -242,7 +321,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       return `${taskKey}||${fieldKeyList}||${valueList}`;
     }
 
-    // ✅ ফিক্স: শুধু বর্তমান টাস্কের ডাটা লোড হবে
     async function loadExistingHashes() {
       try {
         const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
@@ -254,7 +332,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const h = makeRowHash(s, fields);
           if (h.replace(/[|§]/g, "")) existingHashes.add(h);
         });
-      } catch (e) { console.error("Hash load error:", e); }
+      } catch (e) {}
     }
 
     function checkSingleDup() {
@@ -290,27 +368,26 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     function updateCountdown() {
       const now = new Date();
       const box = document.getElementById("timeStatusBox");
-      const singleSec = document.getElementById("singleSection");
-      const bulkSec = document.getElementById("bulkSection");
+      const sections = document.getElementById("submitSections");
 
       if (!taskStartTime || !taskEndTime) {
         isOpen = true;
         box.innerHTML = `<div class="ts open"><div class="ts-label">🟢 Submit Open</div></div>`;
-        singleSec.style.display = "block"; bulkSec.style.display = "block";
+        sections.style.display = "block";
         return;
       }
 
       if (now < taskStartTime) {
         isOpen = false;
         box.innerHTML = `<div class="ts upcoming"><div class="ts-label">⏳ Upcoming</div>${renderCountdown(taskStartTime - now)}</div>`;
-        singleSec.style.display = "none"; bulkSec.style.display = "none";
+        sections.style.display = "none";
         return;
       }
 
       if (now > taskEndTime) {
         isOpen = false;
         box.innerHTML = `<div class="ts closed"><div class="ts-label">🔴 Time Expired</div></div>`;
-        singleSec.style.display = "none"; bulkSec.style.display = "none";
+        sections.style.display = "none";
         if (!document.getElementById("closedOverlay")) {
           const o = document.createElement("div");
           o.id = "closedOverlay";
@@ -330,7 +407,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           ${renderCountdown(diff)}
         </div>
       `;
-      singleSec.style.display = "block"; bulkSec.style.display = "block";
+      sections.style.display = "block";
       const o = document.getElementById("closedOverlay");
       if (o) o.remove();
     }
@@ -416,6 +493,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       }
     }
 
+    // ===== ১. সিঙ্গেল সাবমিট =====
     document.getElementById("singleSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -436,7 +514,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       btn.disabled = true; btn.textContent = "Checking...";
 
       try {
-        // ✅ অত্যন্ত জরুরি ফিক্স: সাবমিট করার ঠিক আগে লাইভ চেক
         const freshQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const freshSnap = await getDocs(freshQ);
         const freshHashes = new Set();
@@ -470,6 +547,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       btn.disabled = false; btn.textContent = "✅ Submit Account";
     };
 
+    // ===== ২. বাল্ক সাবমিট =====
     document.getElementById("bulkSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -505,7 +583,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       spFill.style.width = "10%";
 
       try {
-        // ✅ লাইভ চেক
         const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const checkSnap = await getDocs(checkQ);
         checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
@@ -568,6 +645,207 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       document.getElementById("bulkInput").value = "";
       document.getElementById("bulkCountNum").textContent = "0 / 0";
       document.getElementById("bulkPreview").classList.remove("show");
+    };
+
+    // ===== ৩. ফাইল সাবমিট =====
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+    const fileInfo = document.getElementById("fileInfo");
+
+    dropZone.onclick = () => fileInput.click();
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.classList.add("dragover");
+    });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    };
+
+    function handleFile(file) {
+      const ext = file.name.split(".").pop().toLowerCase();
+      if (!["xlsx", "xls", "csv"].includes(ext)) {
+        return alert("❌ শুধুমাত্র Excel (.xlsx, .xls) বা CSV (.csv) ফাইল দিন!");
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        return alert("❌ ফাইল ৫MB এর চেয়ে ছোট হতে হবে!");
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+
+          const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
+          const items = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            if (!row || row.length === 0) continue;
+            
+            // হেডার স্কিপ (যদি প্রথম সেল UID/Account লেখা থাকে)
+            if (i === 0 && /uid|account|email|user/i.test(String(row[0] || ""))) continue;
+
+            const item = {};
+            fields.forEach((f, idx) => {
+              item[f.key] = String(row[idx] || "").trim();
+            });
+            if (item[fields[0].key]) items.push(item);
+          }
+
+          if (items.length === 0) {
+            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!");
+          }
+
+          fileItems = items;
+          fileInfo.textContent = `✅ ফাইল লোড হয়েছে: ${file.name} (${items.length} টা রো)`;
+          fileInfo.classList.add("show");
+
+          // ডুপ্লিকেট চেক ও প্রিভিউ
+          updateFilePreview();
+
+          document.getElementById("fileSubmitBtn").disabled = false;
+          document.getElementById("fileCountBox").style.display = "flex";
+        } catch (err) {
+          alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function updateFilePreview() {
+      const fields = task.fields || [{ key: "uid" }];
+      const seen = new Set();
+      const dupIndexes = new Set();
+      fileItems.forEach((item, idx) => {
+        const hash = makeRowHash(item, fields);
+        if (existingHashes.has(hash) || seen.has(hash)) dupIndexes.add(idx);
+        else seen.add(hash);
+      });
+
+      const uniqueCount = fileItems.length - dupIndexes.size;
+      document.getElementById("fileCountNum").textContent = `${uniqueCount} / ${fileItems.length}`;
+
+      const preview = document.getElementById("filePreview");
+      if (fileItems.length > 0 && fileItems.length <= 30) {
+        preview.innerHTML = fileItems.map((item, idx) => {
+          const isDup = dupIndexes.has(idx);
+          const label = fields.map(f => esc(item[f.key])).join(" | ");
+          return `<div class="row ${isDup ? 'duplicate' : 'ok'}">${idx + 1}. ${label}${isDup ? ' ❌ DUP' : ' ✓'}</div>`;
+        }).join("");
+        preview.classList.add("show");
+      } else {
+        preview.classList.remove("show");
+      }
+    }
+
+    document.getElementById("clearFileBtn").onclick = () => {
+      fileItems = [];
+      fileInput.value = "";
+      fileInfo.classList.remove("show");
+      document.getElementById("fileCountBox").style.display = "none";
+      document.getElementById("filePreview").classList.remove("show");
+      document.getElementById("fileSubmitBtn").disabled = true;
+    };
+
+    document.getElementById("fileSubmitBtn").onclick = async () => {
+      if (!verifyTime()) return;
+      if (!task) return alert("Task load হয়নি!");
+      if (fileItems.length === 0) return alert("❌ কোনো ফাইল লোড করা হয়নি!");
+
+      const fields = task.fields || [{ key: "uid" }];
+      const btn = document.getElementById("fileSubmitBtn");
+
+      const seen = new Set();
+      const uniqueItems = [];
+      const skipped = [];
+
+      fileItems.forEach(item => {
+        const hash = makeRowHash(item, fields);
+        if (existingHashes.has(hash) || seen.has(hash)) skipped.push(item);
+        else { seen.add(hash); uniqueItems.push(item); }
+      });
+
+      if (uniqueItems.length === 0) return alert(`❌ ফাইলের সব account duplicate! (${skipped.length} টা বাদ)`);
+
+      const skipMsg = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ যাবে।` : "";
+      if (!confirm(`${uniqueItems.length} টা account submit করবে?${skipMsg}`)) return;
+
+      btn.disabled = true;
+      const progress = document.getElementById("fileSubmitProgress");
+      const fspText = document.getElementById("fspText");
+      const fspFill = document.getElementById("fspFill");
+      progress.classList.add("show");
+      fspText.textContent = `Processing ${uniqueItems.length} submissions...`;
+      fspFill.style.width = "10%";
+
+      try {
+        const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        const checkSnap = await getDocs(checkQ);
+        checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
+
+        const finalItems = uniqueItems.filter(item => !existingHashes.has(makeRowHash(item, fields)));
+
+        if (finalItems.length === 0) {
+          alert("❌ সব account এইমাত্র কেউ submit করেছে!");
+          progress.classList.remove("show");
+          btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
+          return;
+        }
+
+        const BATCH_SIZE = 450;
+        let success = 0;
+        const total = finalItems.length;
+
+        for (let i = 0; i < finalItems.length; i += BATCH_SIZE) {
+          const chunk = finalItems.slice(i, i + BATCH_SIZE);
+          const batch = writeBatch(db);
+          for (const item of chunk) {
+            const subRef = doc(collection(db, "submissions"));
+            batch.set(subRef, {
+              taskId, taskTitle: task.title, taskPlatform: task.platform,
+              userId: currentUser.uid, ...item,
+              status: "pending", price: task.pricePerAccount, earned: 0,
+              submittedAt: new Date(), checkedAt: null
+            });
+          }
+          await batch.commit();
+          success += chunk.length;
+          const pct = Math.floor((success / total) * 90) + 5;
+          fspFill.style.width = pct + "%";
+          fspText.textContent = `Submitted ${success}/${total}...`;
+        }
+
+        await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
+        fspFill.style.width = "100%";
+        fspText.textContent = `✅ Done! ${success} submitted`;
+
+        finalItems.forEach(item => existingHashes.add(makeRowHash(item, fields)));
+
+        setTimeout(() => {
+          const skipMsg2 = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ গেছে।` : '';
+          alert(`✅ ${success} টা submit সফল!${skipMsg2}\n💵 Expected: ৳${success * task.pricePerAccount}`);
+          progress.classList.remove("show");
+          document.getElementById("clearFileBtn").click();
+          btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
+        }, 500);
+      } catch (e) {
+        alert("❌ " + e.message);
+        progress.classList.remove("show");
+        btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
+      }
     };
 
     window.addEventListener("beforeunload", () => {
