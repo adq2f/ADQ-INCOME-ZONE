@@ -8,64 +8,102 @@ import {
 // ==================================================
 // ⚙️ সেটিংস
 // ==================================================
-// একই Vercel সাইটে থাকলে relative path (CORS লাগে না); অন্য জায়গায় থাকলে পুরো লিংক
 const AI_URL = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
   ? "/api/ai-support"
   : "https://adq-income-zone.vercel.app/api/ai-support";
 
-// false করলে Admin Online থাকা অবস্থায় AI উত্তর দেবে না (শুধু Admin দেবে)
 const AI_WHEN_ADMIN_ONLINE = true;
 
-// 🐞 Debug (Eruda) — শুধু যখন ইচ্ছা করে চালু করবেন:  যেকোনো পেজের লিংকের শেষে ?debug=1 দিন
-// (আগের কোডে Eruda সবার ফোনে চালু হয়ে যেত — সেটা বন্ধ করা হয়েছে)
-const DEBUG = new URLSearchParams(location.search).has("debug") || localStorage.getItem("adq_debug") === "1";
-if (new URLSearchParams(location.search).get("debug") === "1") localStorage.setItem("adq_debug", "1");
-if (new URLSearchParams(location.search).get("debug") === "0") localStorage.removeItem("adq_debug");
-if (DEBUG) {
-  const s = document.createElement("script");
-  s.src = "https://cdn.jsdelivr.net/npm/eruda";
-  s.onload = () => { try { window.eruda.init(); } catch (e) {} };
-  document.head.appendChild(s);
-}
-
 // ==================================================
-// 🎨 Dark premium style (style.css এর উপরে বসে)
+// 🎨 Premium Chat UI (Dark Glassmorphism)
 // ==================================================
 function injectChatStyles() {
   if (document.getElementById("adq-chat-styles")) return;
   const s = document.createElement("style");
   s.id = "adq-chat-styles";
   s.textContent = `
-    body .chat-fab{bottom:calc(98px + env(safe-area-inset-bottom,0px));right:16px;width:58px;height:58px;font-size:25px;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);background-size:200% 200%;border:1px solid rgba(255,255,255,.3);box-shadow:0 16px 36px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.35)}
-    body .chat-fab .fab-badge{border:2px solid #06060f;background:#ef4444}
-    body .chat-panel{max-width:440px;height:86vh;height:86dvh;background:linear-gradient(180deg,#17172f,#0b0b1c);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;box-shadow:0 -24px 70px -10px rgba(0,0,0,.85);color:#f4f4ff;font-family:'Hind Siliguri','Inter',sans-serif}
-    body .chat-panel-head{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#c026d3);border-radius:28px 28px 0 0;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
-    body .chat-close{background:rgba(255,255,255,.18)}
-    body .chat-admin-avatar{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 8px 20px -4px rgba(0,0,0,.4)}
-    body .chat-online-dot{border-color:#4338ca}
-    body .chat-panel-info h4{color:#fff}
-    body .chat-panel-info p{color:rgba(255,255,255,.8)}
-    body .chat-body{background:transparent;padding:16px;gap:10px}
-    body .chat-body::-webkit-scrollbar{width:0}
-    body .chat-msg{font-size:14px;line-height:1.55;border-radius:18px}
-    body .chat-msg.user{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 10px 22px -10px rgba(139,92,246,.9)}
-    body .chat-msg.admin{background:rgba(255,255,255,.08);color:#f4f4ff;border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:5px;box-shadow:none}
-    body .chat-msg .msg-time{opacity:.65}
-    body .chat-empty{color:#9a9bb8}
-    body .chat-input-bar{background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1)}
-    body .chat-input-bar input{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);color:#fff;border-radius:999px}
-    body .chat-input-bar input::placeholder{color:#6f7090}
-    body .chat-input-bar input:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.1);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
-    body .chat-send{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.95)}
-    body .chat-send:disabled{background:rgba(255,255,255,.12);box-shadow:none}
-    body .fab-online{position:absolute;bottom:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#10b981;border:2.5px solid #06060f;animation:onlinePulse 2s infinite}
-    body .fab-pill{position:fixed;z-index:9997;bottom:calc(112px + env(safe-area-inset-bottom,0px));right:84px;align-items:center;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;color:#a7f3d0;background:rgba(18,18,40,.88);border:1px solid rgba(16,185,129,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 26px -10px rgba(16,185,129,.7);white-space:nowrap}
-    body .ai-tag{font-size:9px;font-weight:800;background:rgba(255,255,255,.18);padding:1px 7px;border-radius:8px;margin-left:6px;vertical-align:1px}
-    body .chat-typing{display:inline-flex;gap:4px;align-items:center;padding:4px 2px}
-    body .chat-typing i{width:7px;height:7px;border-radius:50%;background:#a5b4fc;animation:adqDot 1.2s infinite ease-in-out}
-    body .chat-typing i:nth-child(2){animation-delay:.18s}
-    body .chat-typing i:nth-child(3){animation-delay:.36s}
-    @keyframes adqDot{0%,80%,100%{transform:scale(.55);opacity:.4}40%{transform:scale(1);opacity:1}}
+    /* FAB Button */
+    body .chat-fab {
+      bottom: calc(98px + env(safe-area-inset-bottom, 0px));
+      right: 16px; width: 58px; height: 58px; font-size: 25px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #a855f7);
+      background-size: 200% 200%;
+      border: 1px solid rgba(255,255,255,.3);
+      box-shadow: 0 16px 36px -8px rgba(139,92,246,.9), inset 0 1px 0 rgba(255,255,255,.35);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      animation: fabFloat 3s ease-in-out infinite, fabGradient 6s ease infinite;
+    }
+    @keyframes fabFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes fabGradient { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    body .chat-fab:hover { transform: scale(1.1) rotate(-6deg); }
+    
+    /* Badges */
+    body .chat-fab .fab-badge { border: 2px solid #06060f; background: #ef4444; }
+    body .fab-online { position: absolute; bottom: 2px; right: 2px; width: 15px; height: 15px; border-radius: 50%; background: #10b981; border: 2.5px solid #06060f; animation: onlinePulse 2s infinite; }
+    body .fab-pill { position: fixed; z-index: 9997; bottom: calc(112px + env(safe-area-inset-bottom,0px)); right: 84px; align-items: center; padding: 7px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #a7f3d0; background: rgba(18,18,40,.88); border: 1px solid rgba(16,185,129,.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 12px 26px -10px rgba(16,185,129,.7); white-space: nowrap; }
+    
+    /* Panel */
+    body .chat-panel {
+      max-width: 440px; height: 86vh; height: 86dvh;
+      background: linear-gradient(180deg, #17172f, #0b0b1c);
+      border: 1px solid rgba(255,255,255,.12); border-bottom: none;
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -24px 70px -10px rgba(0,0,0,.85);
+      color: #f4f4ff; font-family: 'Hind Siliguri', 'Inter', sans-serif;
+      display: flex; flex-direction: column;
+    }
+    
+    /* Head */
+    body .chat-panel-head {
+      background: linear-gradient(135deg, #4338ca, #7c3aed 55%, #c026d3);
+      border-radius: 28px 28px 0 0; padding: 16px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.25);
+      display: flex; align-items: center; gap: 12px;
+    }
+    body .chat-admin-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, #fbbf24, #f59e0b);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; position: relative;
+      box-shadow: 0 8px 20px -4px rgba(0,0,0,.4);
+    }
+    body .chat-online-dot { position: absolute; bottom: 1px; right: 1px; width: 12px; height: 12px; border-radius: 50%; background: #10b981; border: 2px solid #4338ca; animation: onlinePulse 2s infinite; }
+    body .chat-online-dot.offline { background: #94a3b8; animation: none; }
+    @keyframes onlinePulse { 0% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); } 70% { box-shadow: 0 0 0 10px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
+    body .chat-panel-info h4 { font-size: 15px; font-weight: 700; margin: 0 0 2px; color: #fff; display: flex; align-items: center; gap: 6px; }
+    body .chat-panel-info p { font-size: 11.5px; color: rgba(255,255,255,.8); margin: 0; }
+    body .chat-close { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.18); border: none; color: white; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+    body .chat-close:hover { background: rgba(255,255,255,.32); }
+
+    /* Body */
+    body .chat-body { flex: 1; overflow-y: auto; padding: 16px; gap: 10px; display: flex; flex-direction: column; scroll-behavior: smooth; }
+    body .chat-body::-webkit-scrollbar { width: 0; }
+    
+    /* Messages */
+    body .chat-msg { max-width: 80%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.55; word-wrap: break-word; animation: msgIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both; }
+    @keyframes msgIn { from { opacity: 0; transform: translateY(8px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    body .chat-msg.user { align-self: flex-end; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border-bottom-right-radius: 5px; box-shadow: 0 10px 22px -10px rgba(139,92,246,.9); }
+    body .chat-msg.admin { align-self: flex-start; background: rgba(255,255,255,.08); color: #f4f4ff; border: 1px solid rgba(255,255,255,.1); border-bottom-left-radius: 5px; }
+    body .chat-msg .msg-time { display: block; font-size: 10px; opacity: 0.65; margin-top: 4px; }
+    body .ai-tag { font-size: 9px; font-weight: 800; background: rgba(255,255,255,.18); padding: 1px 7px; border-radius: 8px; margin-left: 6px; vertical-align: 1px; }
+    
+    /* Typing Indicator */
+    body .chat-typing { display: inline-flex; gap: 4px; align-items: center; padding: 4px 2px; }
+    body .chat-typing i { width: 7px; height: 7px; border-radius: 50%; background: #a5b4fc; animation: adqDot 1.2s infinite ease-in-out; }
+    body .chat-typing i:nth-child(2) { animation-delay: .18s; }
+    body .chat-typing i:nth-child(3) { animation-delay: .36s; }
+    @keyframes adqDot { 0%, 80%, 100% { transform: scale(.55); opacity: .4; } 40% { transform: scale(1); opacity: 1; } }
+    
+    /* Input */
+    body .chat-input-bar { padding: 12px 14px; background: rgba(255,255,255,.04); border-top: 1px solid rgba(255,255,255,.1); display: flex; gap: 8px; align-items: center; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+    body .chat-input-bar input { flex: 1; padding: 12px 16px; border: 1.5px solid rgba(255,255,255,.12); border-radius: 999px; font-size: 14px; font-family: inherit; outline: none; margin: 0; transition: 0.2s; background: rgba(255,255,255,.06); color: #fff; }
+    body .chat-input-bar input::placeholder { color: #6f7090; }
+    body .chat-input-bar input:focus { border-color: rgba(139,92,246,.9); background: rgba(139,92,246,.1); box-shadow: 0 0 0 4px rgba(139,92,246,.18); }
+    body .chat-send { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 22px -8px rgba(139,92,246,.95); transition: 0.2s; flex-shrink: 0; }
+    body .chat-send:hover { transform: scale(1.08); }
+    body .chat-send:disabled { background: rgba(255,255,255,.12); box-shadow: none; cursor: not-allowed; }
+    body .chat-empty { text-align: center; color: #9a9bb8; padding: 40px 20px; font-size: 13px; }
+    body .chat-empty .em { font-size: 48px; display: block; margin-bottom: 10px; animation: fabFloat 3s ease-in-out infinite; }
   `;
   document.head.appendChild(s);
 }
@@ -127,11 +165,10 @@ export function initChatWidget() {
   let adminOnline = false;
   let waitingAI = false;
   let sending = false;
-  let lastDocs = [];
+  let lastMsgCount = 0; // ব্লিংক বন্ধ করার জন্য
 
   const EMPTY_HTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
 
-  // ---------- Admin Online/Offline দেখানো ----------
   function paintOnline(isOnline) {
     adminOnline = !!isOnline;
     const dot = document.getElementById("chatOnlineDot");
@@ -158,39 +195,79 @@ export function initChatWidget() {
     }, () => {});
   }
 
-  // ---------- মেসেজ দেখানো ----------
+  // 🚀 স্মুথ রেন্ডারিং (শুধু নতুন মেসেজ DOM-এ যুক্ত হবে, পুরো বক্স রি-রেন্ডার হবে না)
+  function appendMessage(m) {
+    const t = m.createdAt?.toDate?.();
+    const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
+    const div = document.createElement("div");
+    div.className = `chat-msg ${m.sender === "user" ? "user" : "admin"}`;
+    div.innerHTML = `${escapeHtml(m.text)}${m.isAI ? '<span class="ai-tag">AI</span>' : ''}<span class="msg-time">${time}</span>`;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
   function render() {
-    if (!lastDocs.length && !waitingAI) { body.innerHTML = EMPTY_HTML; return; }
-    let html = lastDocs.map(d => {
-      const m = d.data();
-      const t = m.createdAt?.toDate?.();
-      const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
-      return `<div class="chat-msg ${m.sender === "user" ? "user" : "admin"}">
-        ${escapeHtml(m.text)}${m.isAI ? '<span class="ai-tag">AI</span>' : ""}
-        <span class="msg-time">${time}</span>
-      </div>`;
-    }).join("");
-    if (waitingAI) html += `<div class="chat-msg admin"><span class="chat-typing"><i></i><i></i><i></i></span></div>`;
-    body.innerHTML = html;
+    if (lastMsgCount === 0 && !waitingAI) {
+      body.innerHTML = EMPTY_HTML;
+      return;
+    }
+    body.innerHTML = "";
+    lastMsgCount = 0;
+    
+    // DOM-এ পুরনো মেসেজ রেন্ডার (একদম প্রথমবার লোড হওয়ার সময়)
+    recentMessages.forEach(msg => {
+      const t = new Date(); // ডামি টাইম, কারণ হিস্ট্রিতে আসল টাইম থাকে না
+      const div = document.createElement("div");
+      div.className = `chat-msg ${msg.role === "user" ? "user" : "admin"}`;
+      div.innerHTML = `${escapeHtml(msg.text)}<span class="msg-time"></span>`;
+      body.appendChild(div);
+      lastMsgCount++;
+    });
+    
+    if (waitingAI) {
+      const typing = document.createElement("div");
+      typing.className = "chat-msg admin";
+      typing.id = "typingIndicator";
+      typing.innerHTML = `<span class="chat-typing"><i></i><i></i><i></i></span>`;
+      body.appendChild(typing);
+    }
     body.scrollTop = body.scrollHeight;
   }
 
   function loadChatHistory() {
     if (unsubMsgs) unsubMsgs();
     const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+    
     unsubMsgs = onSnapshot(q, (snap) => {
-      lastDocs = snap.docs;
-      recentMessages = [];
-      snap.docs.forEach(d => {
-        const m = d.data();
-        if (m.sender === "user") recentMessages.push({ role: "user", text: m.text });
-        else if (m.sender === "admin") recentMessages.push({ role: "model", text: m.text });
-      });
-      recentMessages = recentMessages.slice(-8);
-      render();
+      const docs = snap.docs;
+      const currentCount = docs.length;
+      
+      // যদি নতুন মেসেজ আসে, তবে শুধু নতুনগুলো রেন্ডার করবো (ব্লিংক বন্ধ)
+      if (currentCount > lastMsgCount && lastMsgCount !== 0) {
+        for (let i = lastMsgCount; i < currentCount; i++) {
+          appendMessage(docs[i].data());
+        }
+        // আনরিড ব্যাজ আপডেট
+        updateUnreadBadge();
+      } else if (currentCount !== lastMsgCount) {
+        // পুরো হিস্ট্রি রেন্ডার (প্রথমবার)
+        body.innerHTML = "";
+        recentMessages = [];
+        docs.forEach(d => {
+          const m = d.data();
+          if (m.sender === "user") recentMessages.push({ role: "user", text: m.text });
+          else if (m.sender === "admin") recentMessages.push({ role: "model", text: m.text });
+        });
+        recentMessages = recentMessages.slice(-8);
+        
+        docs.forEach(d => appendMessage(d.data()));
+        lastMsgCount = currentCount;
+        updateUnreadBadge();
+      }
     }, (e) => console.error("chat history:", e));
+  }
 
-    // unread badge
+  function updateUnreadBadge() {
     onSnapshot(doc(db, "chats", chatId), (s) => {
       if (!s.exists()) return;
       const cnt = s.data().unreadForUser || 0;
@@ -227,10 +304,8 @@ export function initChatWidget() {
     listenAdminStatus();
   });
 
-  // ---------- AI থেকে উত্তর ----------
   function buildHistory(text) {
     const h = recentMessages.slice();
-    // এখনকার মেসেজটা ইতিমধ্যে তালিকায় থাকলে বাদ দিই (সার্ভারেও আবার চেক হয়)
     if (h.length && h[h.length - 1].role === "user" && h[h.length - 1].text === text) h.pop();
     return h.slice(-6);
   }
@@ -249,7 +324,6 @@ export function initChatWidget() {
         console.error("🔥 AI API ERROR:", res.status, data);
         return null;
       }
-      if (data && data.error) console.warn("⚠️ AI note:", data.error);
       return data;
     } catch (e) {
       console.error("🔥 AI FETCH ERROR:", e);
@@ -257,7 +331,6 @@ export function initChatWidget() {
     }
   }
 
-  // ---------- মেসেজ পাঠানো ----------
   async function sendMessage() {
     const text = input.value.trim();
     if (!text || !currentUser || sending) return;
@@ -298,18 +371,29 @@ export function initChatWidget() {
       });
     } catch (e) {
       console.error("🔥 FIRESTORE ERROR (send):", e);
-      input.value = text;           // মেসেজ হারিয়ে না যাক
+      input.value = text;
       sending = false;
       sendBtn.disabled = false;
       return;
     }
 
-    // Admin Online থাকলে আর AI বন্ধ রাখতে চাইলে এখানেই শেষ
     if (!AI_WHEN_ADMIN_ONLINE && adminOnline) { sending = false; sendBtn.disabled = false; return; }
 
-    waitingAI = true; render();
+    waitingAI = true;
+    // টাইপিং ইন্ডিকেটর দেখানো
+    const typing = document.createElement("div");
+    typing.className = "chat-msg admin";
+    typing.id = "typingIndicator";
+    typing.innerHTML = `<span class="chat-typing"><i></i><i></i><i></i></span>`;
+    body.appendChild(typing);
+    body.scrollTop = body.scrollHeight;
+
     const aiData = await getAIReply(text);
-    waitingAI = false; render();
+    
+    // টাইপিং সরানো
+    const tEl = document.getElementById("typingIndicator");
+    if (tEl) tEl.remove();
+    waitingAI = false;
 
     if (aiData && aiData.reply) {
       try {
@@ -326,7 +410,6 @@ export function initChatWidget() {
           lastMessage: aiData.reply,
           lastMessageAt: serverTimestamp(),
           lastSender: "admin",
-          // প্যানেল খোলা থাকলে unread বাড়াবো না
           unreadForUser: panel.classList.contains("open") ? 0 : increment(1)
         };
         if (aiData.needsHuman) updates.unreadForAdmin = increment(1);
@@ -334,8 +417,6 @@ export function initChatWidget() {
       } catch (e) {
         console.error("🔥 FIRESTORE ERROR (AI reply):", e);
       }
-    } else {
-      console.log("⚠️ AI থেকে উত্তর আসেনি — Admin রিপ্লাই দেবে।");
     }
 
     sending = false;
