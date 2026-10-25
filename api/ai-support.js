@@ -1,14 +1,19 @@
 import admin from "firebase-admin";
 
+// Vercel function max time (sec). Hobby plan-e limit beshi hole 10 kore din.
+export const config = { maxDuration: 30 };
+
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const FIREBASE_SERVICE_ACCOUNT = process.env.FIREBASE_SERVICE_ACCOUNT;
 const ALLOWED_METHODS = ["bkash", "nagad", "rocket"];
 const MIN_WITHDRAW = 1;
 
-// ✅ নতুন মডেল লিস্ট (২.৫ এবং ২.০ বাদ, নতুন ৩.৮ এবং ৩.৫ যোগ করা হয়েছে)
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-3.8-flash,gemini-3.5-flash-lite")
+  "gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite")
   .split(",").map(s => s.trim()).filter(Boolean);
+
+const TOTAL_BUDGET_MS = 25000;   // মোট সময়
+const PER_CALL_TIMEOUT_MS = 12000; // প্রতিটা Gemini call এর সময়
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
@@ -56,36 +61,61 @@ async function verifyPassword(email, password) {
 }
 
 // ---------- ৩. Gemini call (model fallback + retry + timeout) ----------
-async function callGemini(payload, apiKey, deadline) {
+async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
+    let body = payload;
+    let stripped = false;
+
     for (let attempt = 0; attempt < 2; attempt++) {
       const remaining = deadline - Date.now();
-      if (remaining < 1500) return null;
+      if (remaining < 2000) return null;
 
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), Math.min(6000, remaining - 500));
+      const timer = setTimeout(
+        () => ctrl.abort(),
+        Math.min(PER_CALL_TIMEOUT_MS, remaining - 500)
+      );
+
       try {
         const r = await fetch(
           `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(body),
             signal: ctrl.signal
           }
         );
-        clearTimeout(timer);
         const d = await r.json().catch(() => null);
+        clearTimeout(timer);
 
         if (r.ok && d?.candidates?.[0]?.content?.parts?.length) return d;
 
-        console.error(`Gemini error [${model}] ${r.status}`, d?.error?.message || "");
+        const msg = d?.error?.message
+          || (d?.candidates?.[0]?.finishReason ? `finishReason=${d.candidates[0].finishReason}` : "")
+          || "";
+        state.lastError = `[${model}] ${r.status} ${msg}`.slice(0, 300);
+        console.error("Gemini error", state.lastError);
 
-        if (r.status === 503 && attempt === 0) { await sleep(1000); continue; }
-        break;
+        // generationConfig/thinkingConfig সাপোর্ট না করলে ওটা বাদ দিয়ে আবার চেষ্টা
+        if (r.status === 400 && !stripped && body.generationConfig) {
+          stripped = true;
+          body = { ...payload };
+          delete body.generationConfig;
+          attempt--;
+          continue;
+        }
+
+        // সাময়িক সমস্যা হলে একবার retry
+        if ([429, 500, 503].includes(r.status) && attempt === 0) {
+          await sleep(1000);
+          continue;
+        }
+        break; // পরের model এ যাও
       } catch (e) {
         clearTimeout(timer);
-        console.error(`Gemini fetch error [${model}]`, e?.name || e);
+        state.lastError = `[${model}] ${e?.name === "AbortError" ? "timeout" : (e?.message || e)}`;
+        console.error("Gemini fetch error", state.lastError);
         break;
       }
     }
@@ -93,13 +123,23 @@ async function callGemini(payload, apiKey, deadline) {
   return null;
 }
 
-// ---------- ৪. History clean ----------
+// ---------- ৪. History clean (একই role পাশাপাশি থাকলে merge) ----------
 function cleanHistory(history) {
   const list = Array.isArray(history) ? history : [];
-  const out = list
+  const filtered = list
     .filter(m => m && (m.role === "user" || m.role === "model") && typeof m.text === "string" && m.text.trim())
     .slice(-8)
-    .map(m => ({ role: m.role, parts: [{ text: m.text.slice(0, 1000) }] }));
+    .map(m => ({ role: m.role, text: m.text.slice(0, 1000) }));
+
+  const out = [];
+  for (const m of filtered) {
+    const last = out[out.length - 1];
+    if (last && last.role === m.role) {
+      last.parts[0].text += "\n" + m.text;
+    } else {
+      out.push({ role: m.role, parts: [{ text: m.text }] });
+    }
+  }
   while (out.length && out[0].role !== "user") out.shift();
   return out;
 }
@@ -112,7 +152,9 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const deadline = Date.now() + 8500;
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  const state = { lastError: "" };
+  const DEBUG = process.env.DEBUG_AI === "1";
 
   let db;
   try {
@@ -129,6 +171,12 @@ export default async function handler(req, res) {
   if (!message) return res.status(400).json({ reply: "মেসেজ খালি।" });
 
   const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY env missing");
+    return res.status(200).json({
+      reply: DEBUG ? "DEBUG: GEMINI_API_KEY env নেই" : "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।"
+    });
+  }
 
   let userData = { balance: 0, username: "User", totalGood: 0 };
   try {
@@ -161,12 +209,19 @@ export default async function handler(req, res) {
   `;
 
   const contents = cleanHistory(req.body?.history);
-  contents.push({ role: "user", parts: [{ text: message }] });
+  // শেষ মেসেজ user হলে merge, নাহলে নতুন যোগ
+  const lastC = contents[contents.length - 1];
+  if (lastC && lastC.role === "user") {
+    lastC.parts[0].text += "\n" + message;
+  } else {
+    contents.push({ role: "user", parts: [{ text: message }] });
+  }
 
   try {
     const data = await callGemini({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents,
+      generationConfig: { thinkingConfig: { thinkingLevel: "low" } },
       tools: [{
         functionDeclarations: [
           {
@@ -197,12 +252,12 @@ export default async function handler(req, res) {
           }
         ]
       }]
-    }, apiKey, deadline);
+    }, apiKey, deadline, state);
 
     if (!data) {
-      return res.status(200).json({
-        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
-      });
+      let reply = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+      if (DEBUG) reply += `\n\nDEBUG: ${state.lastError} | models=${MODELS.join(",")}`;
+      return res.status(200).json({ reply });
     }
 
     const parts = data.candidates[0].content.parts;
@@ -264,7 +319,7 @@ export default async function handler(req, res) {
             }
           }
         }
-      } 
+      }
       else if (fc.name === "save_wallet") {
         const method = String(args.method || "").toLowerCase().trim();
         const account = String(args.account || "").trim();
@@ -287,7 +342,11 @@ export default async function handler(req, res) {
       return res.status(200).json({ reply });
     }
 
-    const textReply = parts.map(p => p.text || "").join("\n").trim();
+    const textReply = parts
+      .filter(p => !p.thought)
+      .map(p => p.text || "")
+      .join("\n")
+      .trim();
     return res.status(200).json({ reply: textReply || "আমি বুঝতে পারিনি।" });
 
   } catch (err) {
