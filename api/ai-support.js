@@ -1,4 +1,4 @@
-import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount } from "./_shared.js";
+import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount, sendResetEmail } from "./_shared.js";
 
 export const config = { maxDuration: 30 };
 
@@ -10,26 +10,6 @@ const MODELS = (process.env.GEMINI_MODELS ||
 const TOTAL_BUDGET_MS = 25000;
 const PER_CALL_TIMEOUT_MS = 12000;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-
-// ✅ পাসওয়ার্ড রিসেট (এই ফাইলেই)
-async function sendResetEmail(email) {
-  if (!email) return false;
-  try {
-    const webKey = process.env.FIREBASE_API_KEY || "AIzaSyCffmDp9xRUcLkqe5q4NiQubaT0iMIlDm4";
-    const r = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${webKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestType: "PASSWORD_RESET", email })
-      }
-    );
-    return r.ok;
-  } catch (e) {
-    console.error("sendResetEmail error:", e.message);
-    return false;
-  }
-}
 
 async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
@@ -126,7 +106,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
   }
 
-  // ইউজারের ডাটা লোড
   let userData = { 
     balance: 0, username: "User", email: user.email, totalGood: 0, totalBad: 0, totalPending: 0, 
     wallets: {}, totalReferEarning: 0, myReferCode: "",
@@ -317,7 +296,6 @@ ${subHistoryText}
         if (amount > userData.balance)
           return res.status(200).json({ reply: `❌ ব্যালেন্স পর্যাপ্ত নয়। বর্তমান ৳${userData.balance}।` });
 
-        // ✅ normalizeAccount ব্যবহার করা হলো
         const normalized = normalizeAccount(method, account);
         const savedAccount = userData.wallets[method]?.number;
         const finalAccount = savedAccount || normalized;
@@ -336,7 +314,6 @@ ${subHistoryText}
         if (!ALLOWED_METHODS.includes(method))
           return res.status(200).json({ reply: "❌ মেথড সঠিক নয়।" });
         
-        // ✅ normalizeAccount ব্যবহার করা হলো
         const normalized = normalizeAccount(method, account);
         if (!normalized)
           return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
