@@ -28,7 +28,6 @@ async function verifyUser(req) {
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!token) return null;
   try {
-    // এখানে admin.auth() ব্যবহারের আগে getDb() কল করা হয়েছে
     const decoded = await admin.auth().verifyIdToken(token);
     return { uid: decoded.uid, email: decoded.email };
   } catch (e) {
@@ -114,56 +113,58 @@ export default async function handler(req, res) {
 
   const deadline = Date.now() + 8500;
 
-  let db;
+  // 🚀 সবকিছু try-catch এর ভেতরে, যাতে এরর হলে চ্যাটে দেখায়
   try {
-    db = getDb(); // এই লাইনটি Firebase Admin ইনিশিয়ালাইজ করবে
-  } catch (e) {
-    console.error("Firebase admin init error:", e.message);
-    return res.status(500).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
-  }
-
-  const user = await verifyUser(req);
-  if (!user) return res.status(401).json({ error: "লগইন করুন।" });
-
-  const message = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 500) : "";
-  if (!message) return res.status(400).json({ reply: "মেসেজ খালি।" });
-
-  const apiKey = process.env.GEMINI_API_KEY;
-
-  let userData = { balance: 0, username: "User", totalGood: 0 };
-  try {
-    const snap = await db.doc(`users/${user.uid}`).get();
-    if (snap.exists) {
-      const d = snap.data();
-      userData = {
-        balance: Number(d.balance) || 0,
-        username: d.username || "User",
-        totalGood: Number(d.totalGood) || 0
-      };
+    let db;
+    try {
+      db = getDb();
+    } catch (e) {
+      console.error("Firebase admin init error:", e.message);
+      return res.status(500).json({ reply: "সার্ভার এরর: Firebase Admin সেটআপ হয়নি।" });
     }
-  } catch (e) {
-    console.error("Firestore read error:", e);
-  }
 
-  const SYSTEM_PROMPT = `
-    তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
-    ইউজারের বর্তমান তথ্য:
-    - নাম: ${userData.username}
-    - ব্যালেন্স: ৳${userData.balance}
-    - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
+    const user = await verifyUser(req);
+    if (!user) return res.status(401).json({ error: "লগইন করুন।" });
 
-    নিয়ম:
-    - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
-    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
-    - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
-    - save_wallet এ মেথড শুধু bkash, nagad বা rocket হতে পারবে।
-    - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
-  `;
+    const message = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 500) : "";
+    if (!message) return res.status(400).json({ reply: "মেসেজ খালি।" });
 
-  const contents = cleanHistory(req.body?.history);
-  contents.push({ role: "user", parts: [{ text: message }] });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return res.status(500).json({ reply: "সার্ভার এরর: GEMINI_API_KEY নেই।" });
 
-  try {
+    let userData = { balance: 0, username: "User", totalGood: 0 };
+    try {
+      const snap = await db.doc(`users/${user.uid}`).get();
+      if (snap.exists) {
+        const d = snap.data();
+        userData = {
+          balance: Number(d.balance) || 0,
+          username: d.username || "User",
+          totalGood: Number(d.totalGood) || 0
+        };
+      }
+    } catch (e) {
+      console.error("Firestore read error:", e);
+    }
+
+    const SYSTEM_PROMPT = `
+      তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
+      ইউজারের বর্তমান তথ্য:
+      - নাম: ${userData.username}
+      - ব্যালেন্স: ৳${userData.balance}
+      - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
+
+      নিয়ম:
+      - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
+      - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
+      - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
+      - save_wallet এ মেথড শুধু bkash, nagad বা rocket হতে পারবে।
+      - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
+    `;
+
+    const contents = cleanHistory(req.body?.history);
+    contents.push({ role: "user", parts: [{ text: message }] });
+
     const data = await callGemini({
       systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents,
@@ -291,7 +292,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: textReply || "আমি বুঝতে পারিনি।" });
 
   } catch (err) {
-    console.error("Handler Error:", err);
+    console.error("Fatal Handler Error:", err);
     return res.status(500).json({ reply: "সার্ভারে সমস্যা হচ্ছে। দয়া করে আবার চেষ্টা করুন।" });
   }
 }
