@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-<!-- XLSX লাইব্রেরি (ফাইল পড়ার জন্য) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
@@ -105,14 +104,12 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
 
-/* ===== নতুন: ট্যাব ডিজাইন ===== */
 .tab-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
 .tab-bar::-webkit-scrollbar{display:none}
 .tab-btn{padding:12px 18px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s;flex:1;text-align:center}
 .tab-btn:hover{color:#fff}
 .tab-btn.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
 
-/* ===== নতুন: ফাইল ড্রপ জোন ===== */
 .drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
 .drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
 .drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
@@ -139,15 +136,12 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
   </div>
 
   <div id="submitSections" style="display:none">
-
-    <!-- ট্যাব বার -->
     <div class="tab-bar">
       <button class="tab-btn active" data-tab="single">📝 Single Submit</button>
       <button class="tab-btn" data-tab="bulk">📋 All Paste (Bulk)</button>
       <button class="tab-btn" data-tab="file">📁 Direct File</button>
     </div>
 
-    <!-- ১. সিঙ্গেল সাবমিট -->
     <div id="tab-single" class="tab-content">
       <div class="fcard glass">
         <h3>📝 Single Submit</h3>
@@ -157,7 +151,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
-    <!-- ২. বাল্ক / অল পেস্ট সাবমিট -->
     <div id="tab-bulk" class="tab-content" style="display:none">
       <div class="fcard glass">
         <h3>📋 All Paste Submit (Bulk)</h3>
@@ -184,13 +177,12 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
-    <!-- ৩. সরাসরি ফাইল সাবমিট -->
     <div id="tab-file" class="tab-content" style="display:none">
       <div class="fcard glass">
         <h3>📁 Direct File Submit</h3>
         <div class="bhint">
           <b>ফাইল ফরম্যাট:</b> Excel (.xlsx, .xls) অথবা CSV (.csv)<br>
-          প্রথম কলাম: UID / Account, দ্বিতীয়: Password, তৃতীয়: 2FA (অথবা টাস্কে যেভাবে চাওয়া হয়েছে)
+          <b>💡 টিপস:</b> প্রথম রো-তে কলামের নাম দিলে ভালো (যেমন: UID, Password, 2FA)। কলামের ক্রম যেকোনোভাবে দিলেও চলবে। কলামের নাম না দিলে টাস্কে যেভাবে চাওয়া হয়েছে সেই ক্রমে দিন।
         </div>
 
         <div class="drop-zone" id="dropZone">
@@ -218,7 +210,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
         <button class="cta ghost" id="clearFileBtn">✕ Clear File</button>
       </div>
     </div>
-
   </div>
 </main>
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
@@ -247,7 +238,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       location.href = "index.html";
     };
 
-    // ===== ট্যাব সুইচ =====
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -493,7 +483,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       }
     }
 
-    // ===== ১. সিঙ্গেল সাবমিট =====
     document.getElementById("singleSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -547,7 +536,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       btn.disabled = false; btn.textContent = "✅ Submit Account";
     };
 
-    // ===== ২. বাল্ক সাবমিট =====
     document.getElementById("bulkSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -647,7 +635,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       document.getElementById("bulkPreview").classList.remove("show");
     };
 
-    // ===== ৩. ফাইল সাবমিট =====
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
     const fileInfo = document.getElementById("fileInfo");
@@ -688,36 +675,78 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
 
-          const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
+          const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
           const items = [];
 
-          for (let i = 0; i < rows.length; i++) {
+          let startRow = 0;
+          let headerMap = null;
+
+          if (rows.length > 0) {
+            const firstRow = rows[0].map(c => String(c || "").toLowerCase().trim());
+            const detectedMap = {};
+            let matchedCount = 0;
+            
+            fields.forEach(f => {
+              const fieldLabel = String(f.label || f.key).toLowerCase().trim();
+              const fieldKey = String(f.key).toLowerCase().trim();
+              
+              const idx = firstRow.findIndex(cell => {
+                if (!cell) return false;
+                if (cell === fieldLabel || cell === fieldKey) return true;
+                if (cell.includes(fieldLabel) || fieldLabel.includes(cell)) return true;
+                if (cell.includes(fieldKey) || fieldKey.includes(cell)) return true;
+                return false;
+              });
+              
+              if (idx !== -1) {
+                detectedMap[f.key] = idx;
+                matchedCount++;
+              }
+            });
+
+            if (matchedCount >= Math.min(2, fields.length)) {
+              startRow = 1;
+              headerMap = detectedMap;
+            }
+          }
+
+          for (let i = startRow; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
-            
-            // হেডার স্কিপ (যদি প্রথম সেল UID/Account লেখা থাকে)
-            if (i === 0 && /uid|account|email|user/i.test(String(row[0] || ""))) continue;
 
             const item = {};
-            fields.forEach((f, idx) => {
-              item[f.key] = String(row[idx] || "").trim();
-            });
+            
+            if (headerMap) {
+              fields.forEach(f => {
+                const colIdx = headerMap[f.key];
+                if (colIdx !== undefined) {
+                  item[f.key] = String(row[colIdx] || "").trim();
+                } else {
+                  item[f.key] = "";
+                }
+              });
+            } else {
+              fields.forEach((f, idx) => {
+                item[f.key] = String(row[idx] || "").trim();
+              });
+            }
+
             if (item[fields[0].key]) items.push(item);
           }
 
           if (items.length === 0) {
-            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!");
+            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!\n\n💡 ফাইলে কমপক্ষে " + fields.length + "টি কলাম থাকতে হবে এবং প্রথম ফিল্ডে (UID/Email/Username) ডাটা থাকতে হবে।");
           }
 
           fileItems = items;
           fileInfo.textContent = `✅ ফাইল লোড হয়েছে: ${file.name} (${items.length} টা রো)`;
           fileInfo.classList.add("show");
 
-          // ডুপ্লিকেট চেক ও প্রিভিউ
           updateFilePreview();
 
           document.getElementById("fileSubmitBtn").disabled = false;
           document.getElementById("fileCountBox").style.display = "flex";
+
         } catch (err) {
           alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
         }
