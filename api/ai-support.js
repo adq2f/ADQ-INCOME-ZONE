@@ -1,59 +1,117 @@
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
-const FIREBASE_PROJECT_ID = "adq-income-zone"; // আপনার ফায়ারবেস প্রজেক্ট আইডি
+// api/ai-support.js
+// Required env vars (Vercel):
+//   FIREBASE_API_KEY          -> Firebase Web API key (password verify er jonno)
+//   FIREBASE_SERVICE_ACCOUNT  -> Service account JSON (puro JSON ek line-e)
+//   GEMINI_API_KEY            -> Gemini API key
+//   GEMINI_MODELS (optional)  -> "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-latest"
 
-// ১. ইউজার ভেরিফাই
+import admin from "firebase-admin";
+
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
+const ALLOWED_METHODS = ["bkash", "nagad", "rocket"];
+const MIN_WITHDRAW = 1;
+
+const MODELS = (process.env.GEMINI_MODELS ||
+  "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-latest")
+  .split(",").map(s => s.trim()).filter(Boolean);
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// ---------- Firebase Admin init ----------
+function getDb() {
+  if (!admin.apps.length) {
+    const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT env missing");
+    const sa = JSON.parse(raw);
+    if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+    admin.initializeApp({ credential: admin.credential.cert(sa) });
+  }
+  return admin.firestore();
+}
+
+// ---------- ১. ইউজার ভেরিফাই ----------
 async function verifyUser(req) {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!token) return null;
   try {
-    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${FIREBASE_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token })
-    });
-    const d = await r.json();
-    if (r.ok && d.users && d.users[0]) {
-      return { uid: d.users[0].localId, email: d.users[0].email, token };
-    }
+    const decoded = await admin.auth().verifyIdToken(token);
+    return { uid: decoded.uid, email: decoded.email };
+  } catch (e) {
     return null;
-  } catch (e) { return null; }
-}
-
-// ২. পাসওয়ার্ড ভেরিফাই
-async function verifyPassword(email, password) {
-  try {
-    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, returnSecureToken: true })
-    });
-    return r.ok;
-  } catch (e) { return false; }
-}
-
-// ৩. ফায়ারবেস থেকে ডেটা রিড
-async function firestoreRead(path) {
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`;
-  const res = await fetch(url);
-  return res.json();
-}
-
-// ৪. ফায়ারবেসে ডেটা রাইট
-async function firestoreWrite(path, data, token) {
-  const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`;
-  const formattedData = {};
-  for (const key in data) {
-    if (typeof data[key] === "string") formattedData[key] = { stringValue: data[key] };
-    else if (typeof data[key] === "number") formattedData[key] = { doubleValue: data[key] };
   }
-  
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ fields: formattedData })
-  });
-  return res.json();
 }
 
+// ---------- ২. পাসওয়ার্ড ভেরিফাই ----------
+async function verifyPassword(email, password) {
+  if (!email || !password) return false;
+  try {
+    const r = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, returnSecureToken: true })
+      }
+    );
+    return r.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+// ---------- ৩. Gemini call (model fallback + retry + timeout) ----------
+async function callGemini(payload, apiKey, deadline) {
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const remaining = deadline - Date.now();
+      if (remaining < 1500) return null; // Vercel timeout er age bondho
+
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), Math.min(6000, remaining - 500));
+      try {
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify(payload),
+            signal: ctrl.signal
+          }
+        );
+        clearTimeout(timer);
+        const d = await r.json().catch(() => null);
+
+        if (r.ok && d?.candidates?.[0]?.content?.parts?.length) return d;
+
+        console.error(`Gemini error [${model}] ${r.status}`, d?.error?.message || "");
+
+        // 503 hole ekbar 1s por abar try, 429/onno error hole sorasori porer model
+        if (r.status === 503 && attempt === 0) { await sleep(1000); continue; }
+        break;
+      } catch (e) {
+        clearTimeout(timer);
+        console.error(`Gemini fetch error [${model}]`, e?.name || e);
+        break;
+      }
+    }
+  }
+  return null;
+}
+
+// ---------- ৪. History clean ----------
+function cleanHistory(history) {
+  const list = Array.isArray(history) ? history : [];
+  const out = list
+    .filter(m => m && (m.role === "user" || m.role === "model") && typeof m.text === "string" && m.text.trim())
+    .slice(-8)
+    .map(m => ({ role: m.role, parts: [{ text: m.text.slice(0, 1000) }] }));
+  // Gemini: conversation "user" diye shuru hote hobe
+  while (out.length && out[0].role !== "user") out.shift();
+  return out;
+}
+
+// ---------- Handler ----------
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -61,149 +119,191 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
+  const deadline = Date.now() + 8500; // Hobby plan: ~10s limit
+
+  let db;
+  try {
+    db = getDb();
+  } catch (e) {
+    console.error("Firebase admin init error:", e.message);
+    return res.status(500).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
+  }
+
   const user = await verifyUser(req);
   if (!user) return res.status(401).json({ error: "লগইন করুন।" });
 
-  const { message, history } = req.body;
+  const message = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 500) : "";
+  if (!message) return res.status(400).json({ reply: "মেসেজ খালি।" });
+
   const apiKey = process.env.GEMINI_API_KEY;
 
-  let userData = {};
+  // ইউজার ডেটা রিড
+  let userData = { balance: 0, username: "User", totalGood: 0 };
   try {
-    const docData = await firestoreRead(`users/${user.uid}`);
-    if (docData && docData.fields) {
+    const snap = await db.doc(`users/${user.uid}`).get();
+    if (snap.exists) {
+      const d = snap.data();
       userData = {
-        balance: docData.fields.balance?.doubleValue || docData.fields.balance?.integerValue || 0,
-        username: docData.fields.username?.stringValue || "User",
-        totalGood: docData.fields.totalGood?.integerValue || 0
+        balance: Number(d.balance) || 0,
+        username: d.username || "User",
+        totalGood: Number(d.totalGood) || 0
       };
     }
-  } catch (e) { console.error("Firestore read error:", e); }
+  } catch (e) {
+    console.error("Firestore read error:", e);
+  }
 
   const SYSTEM_PROMPT = `
-    তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
+    তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
     ইউজারের বর্তমান তথ্য:
     - নাম: ${userData.username}
     - ব্যালেন্স: ৳${userData.balance}
     - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
 
-    নিয়ম:
+    নিয়ম:
     - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
-    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
-    - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
+    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
+    - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
+    - save_wallet এ মেথড শুধু bkash, nagad বা rocket হতে পারবে।
     - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
   `;
 
-  const contents = (history || []).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
+  const contents = cleanHistory(req.body?.history);
   contents.push({ role: "user", parts: [{ text: message }] });
 
   try {
-    // 🚀 Smart Retry Logic (৩ বার পর্যন্ত চেষ্টা করবে)
-    let retries = 3;
-    let data = null;
-
-    while (retries > 0) {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: contents,
-          tools: [{
-            functionDeclarations: [
-              {
-                name: "request_withdraw",
-                description: "ইউজারের ব্যালেন্স থেকে টাকা উইথড্র করার রিকোয়েস্ট তৈরি করে।",
-                parameters: {
-                  type: "OBJECT",
-                  properties: {
-                    amount: { type: "NUMBER" },
-                    method: { type: "STRING" },
-                    account: { type: "STRING" },
-                    password: { type: "STRING" }
-                  },
-                  required: ["amount", "method", "account", "password"]
-                }
+    const data = await callGemini({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents,
+      tools: [{
+        functionDeclarations: [
+          {
+            name: "request_withdraw",
+            description: "ইউজারের ব্যালেন্স থেকে টাকা উইথড্র করার রিকোয়েস্ট তৈরি করে।",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                amount: { type: "NUMBER" },
+                method: { type: "STRING" },
+                account: { type: "STRING" },
+                password: { type: "STRING" }
               },
-              {
-                name: "save_wallet",
-                description: "ইউজারের পেমেন্ট মেথড সেভ করে।",
-                parameters: {
-                  type: "OBJECT",
-                  properties: {
-                    method: { type: "STRING" },
-                    account: { type: "STRING" }
-                  },
-                  required: ["method", "account"]
-                }
-              }
-            ]
-          }]
-        })
+              required: ["amount", "method", "account", "password"]
+            }
+          },
+          {
+            name: "save_wallet",
+            description: "ইউজারের পেমেন্ট মেথড সেভ করে।",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                method: { type: "STRING" },
+                account: { type: "STRING" }
+              },
+              required: ["method", "account"]
+            }
+          }
+        ]
+      }]
+    }, apiKey, deadline);
+
+    if (!data) {
+      return res.status(200).json({
+        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।"
       });
-
-      data = await response.json();
-
-      // যদি সফল (200) অথবা রেট লিমিট (429/503) না হয়, লুপ থেকে বেরিয়ে যাবে
-      if (response.ok || (response.status !== 429 && response.status !== 503)) {
-        break;
-      }
-
-      retries--;
-      if (retries > 0) {
-        console.log(`Server Busy (Status: ${response.status}). Retrying in 2s... (${retries} left)`);
-        await new Promise(resolve => setTimeout(resolve, 2000)); // ২ সেকেন্ড অপেক্ষা
-      }
-    }
-
-    if (!data || !data.candidates || !data.candidates[0]) {
-      return res.status(200).json({ reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।" });
     }
 
     const parts = data.candidates[0].content.parts;
+    const fcPart = parts.find(p => p.functionCall);
 
-    if (parts[0].functionCall) {
-      const fc = parts[0].functionCall;
-      const args = fc.args;
-      let reply = "কাজটি সম্পন্ন হয়েছে।";
+    if (fcPart) {
+      const fc = fcPart.functionCall;
+      const args = fc.args || {};
+      let reply = "কাজটি সম্পন্ন হয়েছে।";
 
+      // ---------- Withdraw ----------
       if (fc.name === "request_withdraw") {
-        if (!args.password) {
-          reply = "টাকা উইথড্র করতে হলে আপনাকে আপনার অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে।";
+        const amount = Number(args.amount);
+        const method = String(args.method || "").toLowerCase().trim();
+        const account = String(args.account || "").trim();
+        const password = String(args.password || "");
+
+        if (!password) {
+          reply = "টাকা উইথড্র করতে হলে আপনাকে আপনার অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে।";
+        } else if (!Number.isFinite(amount) || amount < MIN_WITHDRAW) {
+          reply = "❌ সঠিক টাকার পরিমাণ দিন।";
+        } else if (!ALLOWED_METHODS.includes(method)) {
+          reply = "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।";
+        } else if (!/^[0-9+\-]{6,20}$/.test(account)) {
+          reply = "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।";
         } else {
-          const isPassOk = await verifyPassword(user.email, args.password);
+          const isPassOk = await verifyPassword(user.email, password);
           if (!isPassOk) {
-            reply = "❌ পাসওয়ার্ড ভুল! দয়া করে সঠিক পাসওয়ার্ড দিন।";
+            reply = "❌ পাসওয়ার্ড ভুল! দয়া করে সঠিক পাসওয়ার্ড দিন।";
           } else {
-            if (args.amount > userData.balance) {
-              reply = `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। আপনার বর্তমান ব্যালেন্স ৳${userData.balance}।`;
-            } else {
-              await firestoreWrite("withdrawals", {
-                userId: user.uid,
-                amount: args.amount,
-                method: args.method,
-                accountNum: args.account,
-                status: "pending",
-                requestedAt: new Date().toISOString()
-              }, user.token);
-              reply = `✅ সফল! আপনার ৳${args.amount} টাকার উইথড্র রিকোয়েস্ট (${args.method}) জমা হয়েছে।`;
+            try {
+              // Transaction: balance check + minus + request create ek sathe
+              await db.runTransaction(async (t) => {
+                const ref = db.doc(`users/${user.uid}`);
+                const snap = await t.get(ref);
+                const bal = Number(snap.data()?.balance) || 0;
+                if (amount > bal) {
+                  const err = new Error("INSUFFICIENT");
+                  err.balance = bal;
+                  throw err;
+                }
+                t.update(ref, { balance: bal - amount });
+                t.set(db.collection("withdrawals").doc(), {
+                  userId: user.uid,
+                  username: userData.username,
+                  amount,
+                  method,
+                  accountNum: account,
+                  status: "pending",
+                  requestedAt: new Date().toISOString()
+                });
+              });
+              reply = `✅ সফল! আপনার ৳${amount} টাকার উইথড্র রিকোয়েস্ট (${method}) জমা হয়েছে।`;
+            } catch (e) {
+              if (e.message === "INSUFFICIENT") {
+                reply = `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। আপনার বর্তমান ব্যালেন্স ৳${e.balance}।`;
+              } else {
+                console.error("Withdraw transaction error:", e);
+                reply = "❌ উইথড্র রিকোয়েস্ট জমা হয়নি। দয়া করে আবার চেষ্টা করুন।";
+              }
             }
           }
         }
-      } 
+      }
+
+      // ---------- Save wallet ----------
       else if (fc.name === "save_wallet") {
-        await firestoreWrite(`users/${user.uid}`, {
-          [`wallet_${args.method}`]: args.account
-        }, user.token);
-        reply = `✅ আপনার ${args.method} নম্বর (${args.account}) সেভ করা হয়েছে!`;
+        const method = String(args.method || "").toLowerCase().trim();
+        const account = String(args.account || "").trim();
+
+        if (!ALLOWED_METHODS.includes(method)) {
+          reply = "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।";
+        } else if (!/^[0-9+\-]{6,20}$/.test(account)) {
+          reply = "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।";
+        } else {
+          try {
+            await db.doc(`users/${user.uid}`).set({ [`wallet_${method}`]: account }, { merge: true });
+            reply = `✅ আপনার ${method} নম্বর (${account}) সেভ করা হয়েছে!`;
+          } catch (e) {
+            console.error("Save wallet error:", e);
+            reply = "❌ নম্বর সেভ করা যায়নি। দয়া করে আবার চেষ্টা করুন।";
+          }
+        }
       }
 
       return res.status(200).json({ reply });
     }
 
-    const textReply = parts.map(p => p.text || "").join("\n");
+    const textReply = parts.map(p => p.text || "").join("\n").trim();
     return res.status(200).json({ reply: textReply || "আমি বুঝতে পারিনি।" });
 
   } catch (err) {
     console.error("Handler Error:", err);
-    return res.status(500).json({ reply: "সার্ভারে সমস্যা হচ্ছে। দয়া করে আবার চেষ্টা করুন।" });
+    return res.status(500).json({ reply: "সার্ভারে সমস্যা হচ্ছে। দয়া করে আবার চেষ্টা করুন।" });
   }
 }
