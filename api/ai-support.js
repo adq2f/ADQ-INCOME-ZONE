@@ -1,10 +1,3 @@
-// api/ai-support.js
-// Required env vars (Vercel):
-//   FIREBASE_API_KEY          -> Firebase Web API key (password verify er jonno)
-//   FIREBASE_SERVICE_ACCOUNT  -> Service account JSON (puro JSON ek line-e)
-//   GEMINI_API_KEY            -> Gemini API key
-//   GEMINI_MODELS (optional)  -> "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-latest"
-
 import admin from "firebase-admin";
 
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
@@ -12,7 +5,7 @@ const ALLOWED_METHODS = ["bkash", "nagad", "rocket"];
 const MIN_WITHDRAW = 1;
 
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-latest")
+  "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash")
   .split(",").map(s => s.trim()).filter(Boolean);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -35,9 +28,11 @@ async function verifyUser(req) {
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
   if (!token) return null;
   try {
+    // এখানে admin.auth() ব্যবহারের আগে getDb() কল করা হয়েছে
     const decoded = await admin.auth().verifyIdToken(token);
     return { uid: decoded.uid, email: decoded.email };
   } catch (e) {
+    console.error("Token verify error:", e.message);
     return null;
   }
 }
@@ -60,12 +55,12 @@ async function verifyPassword(email, password) {
   }
 }
 
-// ---------- ৩. Gemini call (model fallback + retry + timeout) ----------
+// ---------- ৩. Gemini call ----------
 async function callGemini(payload, apiKey, deadline) {
   for (const model of MODELS) {
     for (let attempt = 0; attempt < 2; attempt++) {
       const remaining = deadline - Date.now();
-      if (remaining < 1500) return null; // Vercel timeout er age bondho
+      if (remaining < 1500) return null;
 
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), Math.min(6000, remaining - 500));
@@ -86,7 +81,6 @@ async function callGemini(payload, apiKey, deadline) {
 
         console.error(`Gemini error [${model}] ${r.status}`, d?.error?.message || "");
 
-        // 503 hole ekbar 1s por abar try, 429/onno error hole sorasori porer model
         if (r.status === 503 && attempt === 0) { await sleep(1000); continue; }
         break;
       } catch (e) {
@@ -106,7 +100,6 @@ function cleanHistory(history) {
     .filter(m => m && (m.role === "user" || m.role === "model") && typeof m.text === "string" && m.text.trim())
     .slice(-8)
     .map(m => ({ role: m.role, parts: [{ text: m.text.slice(0, 1000) }] }));
-  // Gemini: conversation "user" diye shuru hote hobe
   while (out.length && out[0].role !== "user") out.shift();
   return out;
 }
@@ -119,11 +112,11 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const deadline = Date.now() + 8500; // Hobby plan: ~10s limit
+  const deadline = Date.now() + 8500;
 
   let db;
   try {
-    db = getDb();
+    db = getDb(); // এই লাইনটি Firebase Admin ইনিশিয়ালাইজ করবে
   } catch (e) {
     console.error("Firebase admin init error:", e.message);
     return res.status(500).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
@@ -137,7 +130,6 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // ইউজার ডেটা রিড
   let userData = { balance: 0, username: "User", totalGood: 0 };
   try {
     const snap = await db.doc(`users/${user.uid}`).get();
@@ -209,7 +201,7 @@ export default async function handler(req, res) {
 
     if (!data) {
       return res.status(200).json({
-        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।"
+        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
       });
     }
 
@@ -221,7 +213,6 @@ export default async function handler(req, res) {
       const args = fc.args || {};
       let reply = "কাজটি সম্পন্ন হয়েছে।";
 
-      // ---------- Withdraw ----------
       if (fc.name === "request_withdraw") {
         const amount = Number(args.amount);
         const method = String(args.method || "").toLowerCase().trim();
@@ -242,7 +233,6 @@ export default async function handler(req, res) {
             reply = "❌ পাসওয়ার্ড ভুল! দয়া করে সঠিক পাসওয়ার্ড দিন।";
           } else {
             try {
-              // Transaction: balance check + minus + request create ek sathe
               await db.runTransaction(async (t) => {
                 const ref = db.doc(`users/${user.uid}`);
                 const snap = await t.get(ref);
@@ -274,9 +264,7 @@ export default async function handler(req, res) {
             }
           }
         }
-      }
-
-      // ---------- Save wallet ----------
+      } 
       else if (fc.name === "save_wallet") {
         const method = String(args.method || "").toLowerCase().trim();
         const account = String(args.account || "").trim();
