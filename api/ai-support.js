@@ -1,18 +1,6 @@
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const FIREBASE_PROJECT_ID = "adq-income-zone"; // আপনার ফায়ারবেস প্রজেক্ট আইডি
 
-const SYSTEM_PROMPT = `
-তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
-ইউজারের ডেটা তোমার কাছে আছে। 
-
-নিয়ম:
-- ইউজার যদি জিজ্ঞেস করে "আমার ব্যালেন্স কত?", "আমার নাম কী?", "আমার ওয়ালেট কী?" ইত্যাদি, তবে তার ব্যালেন্স বা ডেটা বলে দাও।
-- ইউজার কোনো উইথড্র করতে চাইলে তাকে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর তাকে তার লগইন পাসওয়ার্ড দিতে বলো।
-- পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
-- ইউজার বললে "সালাম" বা "হ্যালো" → সুন্দর করে উত্তর দাও।
-- তুমি AI, তবে একদম মানুষের মতো সাহায্য করো।
-`;
-
 // ১. ইউজার ভেরিফাই (টোকেন ও ইমেইল বের করা)
 async function verifyUser(req) {
   const authHeader = req.headers.authorization || "";
@@ -59,7 +47,7 @@ async function firestoreWrite(path, data, token) {
   }
   
   const res = await fetch(url, {
-    method: "POST", // নতুন ডকুমেন্ট তৈরি করতে
+    method: "POST",
     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
     body: JSON.stringify({ fields: formattedData })
   });
@@ -85,21 +73,28 @@ export default async function handler(req, res) {
     const docData = await firestoreRead(`users/${user.uid}`);
     if (docData && docData.fields) {
       userData = {
-        balance: docData.fields.balance?.doubleValue || 0,
+        balance: docData.fields.balance?.doubleValue || docData.fields.balance?.integerValue || 0,
         username: docData.fields.username?.stringValue || "User",
         totalGood: docData.fields.totalGood?.integerValue || 0
       };
     }
-  } catch (e) {}
+  } catch (e) { console.error("Firestore read error:", e); }
 
-  // AI-এর কাছে পাঠানোর জন্য প্রম্পট
-  const finalPrompt = `
-    ${SYSTEM_PROMPT}
+  // AI-এর জন্য প্রম্পট তৈরি
+  const SYSTEM_PROMPT = `
+    তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
     
     ইউজারের বর্তমান তথ্য:
     - নাম: ${userData.username}
     - ব্যালেন্স: ৳${userData.balance}
     - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
+
+    নিয়ম:
+    - ইউজার যদি জিজ্ঞেস করে "আমার ব্যালেন্স কত?", তবে তাকে উপরের ব্যালেন্সটি বলে দাও।
+    - ইউজার কোনো উইথড্র করতে চাইলে তাকে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর তাকে তার লগইন পাসওয়ার্ড দিতে বলো।
+    - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
+    - ইউজার বললে "সালাম" বা "হ্যালো" → সুন্দর করে উত্তর দাও।
+    - তুমি AI, তবে একদম মানুষের মতো সাহায্য করো।
   `;
 
   const contents = (history || []).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
@@ -109,7 +104,7 @@ export default async function handler(req, res) {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: finalPrompt }] },
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: contents,
         tools: [{
           functionDeclarations: [
@@ -119,10 +114,10 @@ export default async function handler(req, res) {
               parameters: {
                 type: "OBJECT",
                 properties: {
-                  amount: { type: "NUMBER" },
-                  method: { type: "STRING" },
-                  account: { type: "STRING" },
-                  password: { type: "STRING" }
+                  amount: { type: "NUMBER", description: "কত টাকা উইথড্র করবে" },
+                  method: { type: "STRING", description: "bkash, nagad, rocket, binance" },
+                  account: { type: "STRING", description: "মোবাইল নম্বর বা ওয়ালেট অ্যাড্রেস" },
+                  password: { type: "STRING", description: "ইউজারের লগইন পাসওয়ার্ড" }
                 },
                 required: ["amount", "method", "account", "password"]
               }
@@ -133,8 +128,8 @@ export default async function handler(req, res) {
               parameters: {
                 type: "OBJECT",
                 properties: {
-                  method: { type: "STRING" },
-                  account: { type: "STRING" }
+                  method: { type: "STRING", description: "bkash, nagad, rocket, binance" },
+                  account: { type: "STRING", description: "মোবাইল নম্বর" }
                 },
                 required: ["method", "account"]
               }
@@ -164,7 +159,6 @@ export default async function handler(req, res) {
           if (!isPassOk) {
             reply = "❌ পাসওয়ার্ড ভুল! দয়া করে সঠিক পাসওয়ার্ড দিন।";
           } else {
-            // ব্যালেন্স চেক
             if (args.amount > userData.balance) {
               reply = `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। আপনার বর্তমান ব্যালেন্স ৳${userData.balance}।`;
             } else {
