@@ -5,21 +5,93 @@ import {
   updateDoc, increment, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// আপনার Vercel API লিংক
-const VERCEL_AI_URL = "https://adq-income-zone.vercel.app/api/ai-support";
+// ==================================================
+// ⚙️ সেটিংস
+// ==================================================
+// একই Vercel সাইটে থাকলে relative path (CORS লাগে না); অন্য জায়গায় থাকলে পুরো লিংক
+const AI_URL = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  ? "/api/ai-support"
+  : "https://adq-income-zone.vercel.app/api/ai-support";
+
+// false করলে Admin Online থাকা অবস্থায় AI উত্তর দেবে না (শুধু Admin দেবে)
+const AI_WHEN_ADMIN_ONLINE = true;
+
+// 🐞 Debug (Eruda) — শুধু যখন ইচ্ছা করে চালু করবেন:  যেকোনো পেজের লিংকের শেষে ?debug=1 দিন
+// (আগের কোডে Eruda সবার ফোনে চালু হয়ে যেত — সেটা বন্ধ করা হয়েছে)
+const DEBUG = new URLSearchParams(location.search).has("debug") || localStorage.getItem("adq_debug") === "1";
+if (new URLSearchParams(location.search).get("debug") === "1") localStorage.setItem("adq_debug", "1");
+if (new URLSearchParams(location.search).get("debug") === "0") localStorage.removeItem("adq_debug");
+if (DEBUG) {
+  const s = document.createElement("script");
+  s.src = "https://cdn.jsdelivr.net/npm/eruda";
+  s.onload = () => { try { window.eruda.init(); } catch (e) {} };
+  document.head.appendChild(s);
+}
+
+// ==================================================
+// 🎨 Dark premium style (style.css এর উপরে বসে)
+// ==================================================
+function injectChatStyles() {
+  if (document.getElementById("adq-chat-styles")) return;
+  const s = document.createElement("style");
+  s.id = "adq-chat-styles";
+  s.textContent = `
+    body .chat-fab{bottom:calc(98px + env(safe-area-inset-bottom,0px));right:16px;width:58px;height:58px;font-size:25px;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);background-size:200% 200%;border:1px solid rgba(255,255,255,.3);box-shadow:0 16px 36px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.35)}
+    body .chat-fab .fab-badge{border:2px solid #06060f;background:#ef4444}
+    body .chat-panel{max-width:440px;height:86vh;height:86dvh;background:linear-gradient(180deg,#17172f,#0b0b1c);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;box-shadow:0 -24px 70px -10px rgba(0,0,0,.85);color:#f4f4ff;font-family:'Hind Siliguri','Inter',sans-serif}
+    body .chat-panel-head{background:linear-gradient(135deg,#4338ca,#7c3aed 55%,#c026d3);border-radius:28px 28px 0 0;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+    body .chat-close{background:rgba(255,255,255,.18)}
+    body .chat-admin-avatar{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 8px 20px -4px rgba(0,0,0,.4)}
+    body .chat-online-dot{border-color:#4338ca}
+    body .chat-panel-info h4{color:#fff}
+    body .chat-panel-info p{color:rgba(255,255,255,.8)}
+    body .chat-body{background:transparent;padding:16px;gap:10px}
+    body .chat-body::-webkit-scrollbar{width:0}
+    body .chat-msg{font-size:14px;line-height:1.55;border-radius:18px}
+    body .chat-msg.user{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 10px 22px -10px rgba(139,92,246,.9)}
+    body .chat-msg.admin{background:rgba(255,255,255,.08);color:#f4f4ff;border:1px solid rgba(255,255,255,.1);border-bottom-left-radius:5px;box-shadow:none}
+    body .chat-msg .msg-time{opacity:.65}
+    body .chat-empty{color:#9a9bb8}
+    body .chat-input-bar{background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.1)}
+    body .chat-input-bar input{background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);color:#fff;border-radius:999px}
+    body .chat-input-bar input::placeholder{color:#6f7090}
+    body .chat-input-bar input:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.1);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+    body .chat-send{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.95)}
+    body .chat-send:disabled{background:rgba(255,255,255,.12);box-shadow:none}
+    body .fab-online{position:absolute;bottom:2px;right:2px;width:15px;height:15px;border-radius:50%;background:#10b981;border:2.5px solid #06060f;animation:onlinePulse 2s infinite}
+    body .fab-pill{position:fixed;z-index:9997;bottom:calc(112px + env(safe-area-inset-bottom,0px));right:84px;align-items:center;padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;color:#a7f3d0;background:rgba(18,18,40,.88);border:1px solid rgba(16,185,129,.5);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 12px 26px -10px rgba(16,185,129,.7);white-space:nowrap}
+    body .ai-tag{font-size:9px;font-weight:800;background:rgba(255,255,255,.18);padding:1px 7px;border-radius:8px;margin-left:6px;vertical-align:1px}
+    body .chat-typing{display:inline-flex;gap:4px;align-items:center;padding:4px 2px}
+    body .chat-typing i{width:7px;height:7px;border-radius:50%;background:#a5b4fc;animation:adqDot 1.2s infinite ease-in-out}
+    body .chat-typing i:nth-child(2){animation-delay:.18s}
+    body .chat-typing i:nth-child(3){animation-delay:.36s}
+    @keyframes adqDot{0%,80%,100%{transform:scale(.55);opacity:.4}40%{transform:scale(1);opacity:1}}
+  `;
+  document.head.appendChild(s);
+}
 
 let currentUser = null;
+let userName = "User";
 let chatId = null;
 let unsubMsgs = null;
 let recentMessages = [];
 
 export function initChatWidget() {
   if (document.getElementById("chatWidgetFab")) return;
+  injectChatStyles();
+
+  const pill = document.createElement("span");
+  pill.className = "fab-pill";
+  pill.id = "fabPill";
+  pill.style.display = "none";
+  pill.textContent = "🟢 Admin Online";
+  document.body.appendChild(pill);
 
   const fab = document.createElement("button");
   fab.id = "chatWidgetFab";
   fab.className = "chat-fab";
-  fab.innerHTML = `💬<span class="fab-badge" id="chatBadge" style="display:none">0</span>`;
+  fab.title = "Live Chat";
+  fab.innerHTML = `💬<span class="fab-online" id="fabOnline" style="display:none"></span><span class="fab-badge" id="chatBadge" style="display:none">0</span>`;
   document.body.appendChild(fab);
 
   const panel = document.createElement("div");
@@ -52,171 +124,161 @@ export function initChatWidget() {
   const sendBtn = document.getElementById("chatSendBtn");
   const badge = document.getElementById("chatBadge");
 
-  fab.onclick = () => {
-    panel.classList.add("open");
-    if (badge) badge.style.display = "none";
-    if (chatId) markChatRead();
-    checkAdminStatus();
-    body.scrollTop = body.scrollHeight;
-  };
+  let adminOnline = false;
+  let waitingAI = false;
+  let sending = false;
+  let lastDocs = [];
 
-  document.getElementById("chatCloseBtn").onclick = () => panel.classList.remove("open");
+  const EMPTY_HTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
 
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      currentUser = user;
-      chatId = user.uid;
-      loadChatHistory();
-      listenAdminStatus();
+  // ---------- Admin Online/Offline দেখানো ----------
+  function paintOnline(isOnline) {
+    adminOnline = !!isOnline;
+    const dot = document.getElementById("chatOnlineDot");
+    const txt = document.getElementById("chatOnlineText");
+    const fo = document.getElementById("fabOnline");
+    const fp = document.getElementById("fabPill");
+    if (adminOnline) {
+      dot.classList.remove("offline");
+      txt.textContent = "Admin Online";
+      txt.style.color = "#6ee7b7";
     } else {
-      currentUser = null;
-      chatId = null;
+      dot.classList.add("offline");
+      txt.textContent = "AI Assistant Available";
+      txt.style.color = "#cbd5e1";
     }
-  });
-
-  function loadChatHistory() {
-    if (unsubMsgs) unsubMsgs();
-    if (!chatId) return;
-
-    const msgsRef = collection(db, "chats", chatId, "messages");
-    const q = query(msgsRef, orderBy("createdAt", "asc"));
-    
-    unsubMsgs = onSnapshot(q, (snap) => {
-      recentMessages = [];
-      if (snap.empty) {
-        body.innerHTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
-        return;
-      }
-      
-      body.innerHTML = snap.docs.map(d => {
-        const m = d.data();
-        const t = m.createdAt?.toDate?.();
-        const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
-        
-        if (m.sender === "user") {
-          recentMessages.push({ role: "user", text: m.text });
-        } else if (m.sender === "admin") {
-          recentMessages.push({ role: "model", text: m.text });
-        }
-        
-        return `<div class="chat-msg ${m.sender}">
-          ${escapeHtml(m.text)}
-          ${m.isAI ? '<span style="font-size:9px;background:rgba(255,255,255,0.2);padding:1px 6px;border-radius:8px;margin-left:4px;">AI</span>' : ''}
-          <span class="msg-time">${time}</span>
-        </div>`;
-      }).join("");
-      
-      recentMessages = recentMessages.slice(-6);
-      body.scrollTop = body.scrollHeight;
-    }, (error) => {
-      console.error("Chat history load error:", error);
-    });
-  }
-
-  async function markChatRead() {
-    if (!chatId || !currentUser) return;
-    try {
-      const chatRef = doc(db, "chats", chatId);
-      const chatSnap = await getDoc(chatRef);
-      if (chatSnap.exists() && chatSnap.data().unreadForUser > 0) {
-        await updateDoc(chatRef, { unreadForUser: 0 });
-      }
-    } catch (e) {}
+    if (fo) fo.style.display = adminOnline ? "block" : "none";
+    if (fp) fp.style.display = adminOnline ? "inline-flex" : "none";
+    fab.title = adminOnline ? "Admin Online — Live Chat" : "Live Chat";
   }
 
   function listenAdminStatus() {
-    const statusRef = doc(db, "settings", "online_status");
-    onSnapshot(statusRef, (docSnap) => {
-      const isOnline = docSnap.exists() ? docSnap.data().adminOnline : false;
-      const dot = document.getElementById("chatOnlineDot");
-      const txt = document.getElementById("chatOnlineText");
-      if (isOnline) {
-        dot.classList.remove("offline");
-        txt.textContent = "Admin Online";
-        txt.style.color = "#6ee7b7";
-      } else {
-        dot.classList.add("offline");
-        txt.textContent = "AI Assistant Available";
-        txt.style.color = "#cbd5e1";
-      }
-    });
+    onSnapshot(doc(db, "settings", "online_status"), (snap) => {
+      paintOnline(snap.exists() ? snap.data().adminOnline === true : false);
+    }, () => {});
   }
 
-  async function checkAdminStatus() {
+  // ---------- মেসেজ দেখানো ----------
+  function render() {
+    if (!lastDocs.length && !waitingAI) { body.innerHTML = EMPTY_HTML; return; }
+    let html = lastDocs.map(d => {
+      const m = d.data();
+      const t = m.createdAt?.toDate?.();
+      const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
+      return `<div class="chat-msg ${m.sender === "user" ? "user" : "admin"}">
+        ${escapeHtml(m.text)}${m.isAI ? '<span class="ai-tag">AI</span>' : ""}
+        <span class="msg-time">${time}</span>
+      </div>`;
+    }).join("");
+    if (waitingAI) html += `<div class="chat-msg admin"><span class="chat-typing"><i></i><i></i><i></i></span></div>`;
+    body.innerHTML = html;
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function loadChatHistory() {
+    if (unsubMsgs) unsubMsgs();
+    const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"));
+    unsubMsgs = onSnapshot(q, (snap) => {
+      lastDocs = snap.docs;
+      recentMessages = [];
+      snap.docs.forEach(d => {
+        const m = d.data();
+        if (m.sender === "user") recentMessages.push({ role: "user", text: m.text });
+        else if (m.sender === "admin") recentMessages.push({ role: "model", text: m.text });
+      });
+      recentMessages = recentMessages.slice(-8);
+      render();
+    }, (e) => console.error("chat history:", e));
+
+    // unread badge
+    onSnapshot(doc(db, "chats", chatId), (s) => {
+      if (!s.exists()) return;
+      const cnt = s.data().unreadForUser || 0;
+      if (cnt > 0 && panel.classList.contains("open")) {
+        updateDoc(doc(db, "chats", chatId), { unreadForUser: 0 }).catch(() => {});
+        badge.style.display = "none";
+      } else if (cnt > 0) {
+        badge.style.display = "flex";
+        badge.textContent = cnt > 99 ? "99+" : cnt;
+      } else {
+        badge.style.display = "none";
+      }
+    }, () => {});
+  }
+
+  fab.onclick = () => {
+    panel.classList.add("open");
+    badge.style.display = "none";
+    if (chatId) updateDoc(doc(db, "chats", chatId), { unreadForUser: 0 }).catch(() => {});
+    body.scrollTop = body.scrollHeight;
+    setTimeout(() => input.focus(), 350);
+  };
+  document.getElementById("chatCloseBtn").onclick = () => panel.classList.remove("open");
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) return;
+    currentUser = user;
+    chatId = user.uid;
     try {
-      const statusRef = doc(db, "settings", "online_status");
-      const snap = await getDoc(statusRef);
-      const isOnline = snap.exists() ? snap.data().adminOnline : false;
-      const dot = document.getElementById("chatOnlineDot");
-      const txt = document.getElementById("chatOnlineText");
-      if (isOnline) {
-        dot.classList.remove("offline");
-        txt.textContent = "Admin Online";
-        txt.style.color = "#6ee7b7";
-      } else {
-        dot.classList.add("offline");
-        txt.textContent = "AI Assistant Available";
-        txt.style.color = "#cbd5e1";
-      }
+      const u = await getDoc(doc(db, "users", user.uid));
+      if (u.exists()) userName = u.data().username || user.displayName || "User";
     } catch (e) {}
+    loadChatHistory();
+    listenAdminStatus();
+  });
+
+  // ---------- AI থেকে উত্তর ----------
+  function buildHistory(text) {
+    const h = recentMessages.slice();
+    // এখনকার মেসেজটা ইতিমধ্যে তালিকায় থাকলে বাদ দিই (সার্ভারেও আবার চেক হয়)
+    if (h.length && h[h.length - 1].role === "user" && h[h.length - 1].text === text) h.pop();
+    return h.slice(-6);
   }
 
-  // 🚨 AI রিকোয়েস্ট (টোকেন যুক্ত করা হয়েছে)
   async function getAIReply(text) {
     try {
-      let token = "";
-      if (currentUser) {
-        token = await currentUser.getIdToken(); // ফায়ারবেস টোকেন নেওয়া
-      }
-
-      const res = await fetch(VERCEL_AI_URL, {
+      const token = await currentUser.getIdToken();
+      const res = await fetch(AI_URL, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // টোকেন হেডারে পাঠানো
-        },
-        body: JSON.stringify({ message: text, history: recentMessages })
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({ message: text, history: buildHistory(text) })
       });
-      
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error("🔥 VERCEL API ERROR:", res.status, errorText);
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok && !(data && data.reply)) {
+        console.error("🔥 AI API ERROR:", res.status, data);
         return null;
       }
-      
-      const data = await res.json();
-      console.log("✅ AI Success Data:", data);
+      if (data && data.error) console.warn("⚠️ AI note:", data.error);
       return data;
     } catch (e) {
-      console.error("🔥 FETCH CATCH ERROR:", e);
+      console.error("🔥 AI FETCH ERROR:", e);
       return null;
     }
   }
 
+  // ---------- মেসেজ পাঠানো ----------
   async function sendMessage() {
     const text = input.value.trim();
-    if (!text || !currentUser) {
-      if (!currentUser) alert("মেসেজ পাঠাতে দয়া করে লগইন করুন।");
-      return;
-    }
-
+    if (!text || !currentUser || sending) return;
+    sending = true;
     input.value = "";
     sendBtn.disabled = true;
 
+    const chatRef = doc(db, "chats", chatId);
     try {
-      const chatRef = doc(db, "chats", chatId);
       const chatSnap = await getDoc(chatRef);
-      
       if (!chatSnap.exists()) {
         await setDoc(chatRef, {
           userId: currentUser.uid,
-          username: currentUser.displayName || "User",
-          userEmail: currentUser.email,
+          username: userName,
+          userEmail: currentUser.email || "",
           lastMessage: text,
           lastMessageAt: serverTimestamp(),
           lastSender: "user",
           unreadForAdmin: 1,
-          unreadForUser: 0
+          unreadForUser: 0,
+          createdAt: serverTimestamp()
         });
       } else {
         await updateDoc(chatRef, {
@@ -226,18 +288,31 @@ export function initChatWidget() {
           unreadForAdmin: increment(1)
         });
       }
-
       await addDoc(collection(db, "chats", chatId, "messages"), {
         sender: "user",
-        text: text,
+        senderName: userName,
+        text,
         createdAt: serverTimestamp(),
-        readByAdmin: false
+        readByAdmin: false,
+        readByUser: true
       });
+    } catch (e) {
+      console.error("🔥 FIRESTORE ERROR (send):", e);
+      input.value = text;           // মেসেজ হারিয়ে না যাক
+      sending = false;
+      sendBtn.disabled = false;
+      return;
+    }
 
-      // এআই থেকে উত্তর নেওয়া
-      const aiData = await getAIReply(text);
+    // Admin Online থাকলে আর AI বন্ধ রাখতে চাইলে এখানেই শেষ
+    if (!AI_WHEN_ADMIN_ONLINE && adminOnline) { sending = false; sendBtn.disabled = false; return; }
 
-      if (aiData && aiData.reply) {
+    waitingAI = true; render();
+    const aiData = await getAIReply(text);
+    waitingAI = false; render();
+
+    if (aiData && aiData.reply) {
+      try {
         await addDoc(collection(db, "chats", chatId, "messages"), {
           sender: "admin",
           senderName: "ADQ Support",
@@ -245,35 +320,30 @@ export function initChatWidget() {
           isAI: true,
           createdAt: serverTimestamp(),
           readByAdmin: true,
-          readByUser: false
+          readByUser: true
         });
-
         const updates = {
           lastMessage: aiData.reply,
           lastMessageAt: serverTimestamp(),
           lastSender: "admin",
-          unreadForUser: increment(1)
+          // প্যানেল খোলা থাকলে unread বাড়াবো না
+          unreadForUser: panel.classList.contains("open") ? 0 : increment(1)
         };
-        
-        if (aiData.needsHuman) {
-          updates.unreadForAdmin = increment(1);
-        }
-
+        if (aiData.needsHuman) updates.unreadForAdmin = increment(1);
         await updateDoc(chatRef, updates);
-      } else {
-        console.log("⚠️ AI থেকে কোনো উত্তর আসেনি বা এরর হয়েছে।");
+      } catch (e) {
+        console.error("🔥 FIRESTORE ERROR (AI reply):", e);
       }
-
-    } catch (e) {
-      console.error("🔥 FIRESTORE ERROR:", e);
+    } else {
+      console.log("⚠️ AI থেকে উত্তর আসেনি — Admin রিপ্লাই দেবে।");
     }
+
+    sending = false;
     sendBtn.disabled = false;
   }
 
   sendBtn.onclick = sendMessage;
-  input.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendMessage();
-  });
+  input.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
 }
 
 function escapeHtml(s) {
