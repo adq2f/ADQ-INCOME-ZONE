@@ -5,8 +5,9 @@ const FIREBASE_SERVICE_ACCOUNT = process.env.FIREBASE_SERVICE_ACCOUNT;
 const ALLOWED_METHODS = ["bkash", "nagad", "rocket"];
 const MIN_WITHDRAW = 1;
 
+// ✅ নতুন মডেল লিস্ট (২.৫ এবং ২.০ বাদ, নতুন ৩.৮ এবং ৩.৫ যোগ করা হয়েছে)
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash")
+  "gemini-3.8-flash,gemini-3.5-flash-lite")
   .split(",").map(s => s.trim()).filter(Boolean);
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -200,7 +201,7 @@ export default async function handler(req, res) {
 
     if (!data) {
       return res.status(200).json({
-        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।"
+        reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।"
       });
     }
 
