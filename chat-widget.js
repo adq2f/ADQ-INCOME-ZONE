@@ -222,6 +222,7 @@ export function initChatWidget() {
     return h.slice(-6);
   }
 
+  // 🚀 AI থেকে উত্তর আনা এবং এরর চ্যাটে দেখানো
   async function getAIReply(text) {
     try {
       const token = await currentUser.getIdToken();
@@ -230,17 +231,20 @@ export function initChatWidget() {
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ message: text, history: buildHistory(text) })
       });
+      
       let data = null;
       try { data = await res.json(); } catch (e) {}
-      if (!res.ok && !(data && data.reply)) {
+      
+      // যদি সার্ভার থেকে এরর আসে বা রেসপন্স ঠিক না থাকে
+      if (!res.ok || !data || data.error) {
         console.error("🔥 AI API ERROR:", res.status, data);
-        return null;
+        return { reply: `⚠️ সিস্টেম এরর: ${data?.error || data?.reply || res.status}` };
       }
-      if (data && data.error) console.warn("⚠️ AI note:", data.error);
+      
       return data;
     } catch (e) {
       console.error("🔥 AI FETCH ERROR:", e);
-      return null;
+      return { reply: "⚠️ নেটওয়ার্ক সমস্যা হচ্ছে। ইন্টারনেট চেক করুন।" };
     }
   }
 
