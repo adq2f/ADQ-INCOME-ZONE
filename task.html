@@ -164,6 +164,8 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     let task = null, currentUser = null, isOpen = false;
     let countdownInterval = null;
     let taskStartTime = null, taskEndTime = null;
+    
+    // ✅ ফিক্স: পুরো ডাটাবেস লোড না করে, শুধু বর্তমান টাস্কের ডাটা মেমোরিতে রাখব
     let existingHashes = new Set();
 
     function esc(s) {
@@ -240,6 +242,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       return `${taskKey}||${fieldKeyList}||${valueList}`;
     }
 
+    // ✅ ফিক্স: শুধু বর্তমান টাস্কের ডাটা লোড হবে
     async function loadExistingHashes() {
       try {
         const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
@@ -251,7 +254,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const h = makeRowHash(s, fields);
           if (h.replace(/[|§]/g, "")) existingHashes.add(h);
         });
-      } catch (e) {}
+      } catch (e) { console.error("Hash load error:", e); }
     }
 
     function checkSingleDup() {
@@ -433,6 +436,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       btn.disabled = true; btn.textContent = "Checking...";
 
       try {
+        // ✅ অত্যন্ত জরুরি ফিক্স: সাবমিট করার ঠিক আগে লাইভ চেক
         const freshQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const freshSnap = await getDocs(freshQ);
         const freshHashes = new Set();
@@ -501,6 +505,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       spFill.style.width = "10%";
 
       try {
+        // ✅ লাইভ চেক
         const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const checkSnap = await getDocs(checkQ);
         checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
