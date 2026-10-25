@@ -183,8 +183,19 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
 <script type="module">
     import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, addDoc, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ✅ ফিক্স: সরাসরি ডাটাবেসে না লিখে, API কল করা হবে
+    const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? ""
+      : "https://adq-income-zone.vercel.app";
+    const WITHDRAW_URL = API_BASE + "/api/withdraw";
+
+    function newRequestId() {
+      if (window.crypto?.randomUUID) return crypto.randomUUID().replace(/-/g, "");
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+    }
 
     window.goBack = function() {
       if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
@@ -371,7 +382,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
           document.getElementById("accountLabel").textContent = m.accountLabel;
           document.getElementById("accountNum").placeholder = m.placeholder;
 
-          // ⚡️ wallets অবজেক্ট থেকে ডেটা অটো ফিল
           if (userData?.wallets && userData.wallets[selectedMethod]) {
             document.getElementById("accountNum").value = userData.wallets[selectedMethod].number || "";
           } else {
@@ -384,6 +394,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
       });
     }
 
+    // ✅ ফিক্স: সরাসরি addDoc না করে, নিরাপদ API তে রিকোয়েস্ট পাঠানো হচ্ছে
     document.getElementById("submitWdBtn").onclick = async () => {
       if (!selectedMethod) return alert("Payment method select করো!");
       const amount = parseFloat(document.getElementById("amount").value);
@@ -397,40 +408,37 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
       const btn = document.getElementById("submitWdBtn");
       btn.disabled = true;
-      btn.textContent = "Verifying...";
+      btn.textContent = "Verifying & Submitting...";
 
       try {
-        await signInWithEmailAndPassword(auth, currentUser.email, confirmPass);
-      } catch (e) {
-        alert("❌ Password ভুল!");
-        btn.disabled = false;
-        btn.textContent = "🚀 Submit Withdraw";
-        return;
-      }
+        const token = await currentUser.getIdToken(true);
+        const requestId = newRequestId();
 
-      btn.textContent = "Submitting...";
-
-      try {
-        await addDoc(collection(db, "withdrawals"), {
-          userId: currentUser.uid,
-          username: userData.username,
-          email: userData.email,
-          method: selectedMethod,
-          methodName: PAY_METHODS[selectedMethod].name,
-          amount: amount,
-          accountNum: accountNum,
-          status: "pending",
-          requestedAt: new Date()
+        const res = await fetch(WITHDRAW_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+          body: JSON.stringify({
+            amount,
+            method: selectedMethod,
+            account: accountNum,
+            requestId,
+            password: confirmPass
+          })
         });
 
-        await updateDoc(doc(db, "users", currentUser.uid), {
-          balance: increment(-amount)
-        });
+        let data = null;
+        try { data = await res.json(); } catch(e) {}
 
-        alert("✅ Withdraw request submitted!\n\n💰 ৳" + amount + " deducted from balance.\n⏳ Admin approve করলে টাকা পাবে।");
-        location.href = "wallet.html";
+        if (res.ok && data?.ok) {
+          alert(data.reply || "✅ Withdraw request submitted!");
+          location.href = "wallet.html";
+        } else {
+          alert(data?.reply || "❌ রিকোয়েস্ট সফল হয়নি। আবার চেষ্টা করুন।");
+          btn.disabled = false;
+          btn.textContent = "🚀 Submit Withdraw";
+        }
       } catch (e) {
-        alert("❌ " + e.message);
+        alert("⚠️ নেটওয়ার্ক সমস্যা! ইন্টারনেট চেক করে আবার চেষ্টা করুন।");
         btn.disabled = false;
         btn.textContent = "🚀 Submit Withdraw";
       }
