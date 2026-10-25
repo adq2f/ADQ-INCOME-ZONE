@@ -16,7 +16,7 @@ const WITHDRAW_URL = API_BASE + "/api/withdraw";
 
 const AI_WHEN_ADMIN_ONLINE = true;
 
-const METHOD_LABEL = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket" };
+const METHOD_LABEL = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
 
 function injectChatStyles() {
   if (document.getElementById("adq-chat-styles")) return;
@@ -233,7 +233,6 @@ export function initChatWidget() {
     wdOk.textContent = "অপেক্ষা করুন...";
 
     try {
-      // ✅ ফিক্স: getIdToken(true) করা হয়েছে, যাতে টোকেন এক্সপায়ার হলে নতুন টোকেন নেয়
       const token = await currentUser.getIdToken(true);
       const res = await fetch(WITHDRAW_URL, {
         method: "POST",
@@ -285,6 +284,7 @@ export function initChatWidget() {
     const txt = document.getElementById("chatOnlineText");
     const fo = document.getElementById("fabOnline");
     const fp = document.getElementById("fabPill");
+    
     if (adminOnline) {
       dot.classList.remove("offline");
       txt.textContent = "Admin Online";
@@ -380,7 +380,6 @@ export function initChatWidget() {
 
   async function getAIReply(text) {
     try {
-      // ✅ ফিক্স: getIdToken(true) করা হয়েছে
       const token = await currentUser.getIdToken(true);
       const res = await fetch(AI_URL, {
         method: "POST",
