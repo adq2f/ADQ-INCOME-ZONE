@@ -1,8 +1,8 @@
-import { getDb, setCors, verifyUser, ALLOWED_METHODS } from "./_shared.js";
+import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount } from "./_shared.js";
 
 export const config = { maxDuration: 30 };
 
-// ✅ সঠিক মডেলের নাম
+// ✅ সঠিক মডেল
 const MODELS = (process.env.GEMINI_MODELS ||
   "gemini-1.5-flash,gemini-1.5-pro,gemini-2.0-flash")
   .split(",").map(s => s.trim()).filter(Boolean);
@@ -11,7 +11,7 @@ const TOTAL_BUDGET_MS = 25000;
 const PER_CALL_TIMEOUT_MS = 12000;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ✅ পাসওয়ার্ড রিসেট ফাংশন সরাসরি এখানে (500 এরর এড়াতে)
+// ✅ পাসওয়ার্ড রিসেট (এই ফাইলেই)
 async function sendResetEmail(email) {
   if (!email) return false;
   try {
@@ -31,7 +31,6 @@ async function sendResetEmail(email) {
   }
 }
 
-// Gemini API call
 async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
     let body = payload;
@@ -318,8 +317,10 @@ ${subHistoryText}
         if (amount > userData.balance)
           return res.status(200).json({ reply: `❌ ব্যালেন্স পর্যাপ্ত নয়। বর্তমান ৳${userData.balance}।` });
 
+        // ✅ normalizeAccount ব্যবহার করা হলো
+        const normalized = normalizeAccount(method, account);
         const savedAccount = userData.wallets[method]?.number;
-        const finalAccount = savedAccount || account;
+        const finalAccount = savedAccount || normalized;
         if (!finalAccount)
           return res.status(200).json({ reply: `❌ আপনার ${method} ওয়ালেট সেটআপ নেই।` });
 
@@ -334,12 +335,15 @@ ${subHistoryText}
         const account = String(args.account || "").trim();
         if (!ALLOWED_METHODS.includes(method))
           return res.status(200).json({ reply: "❌ মেথড সঠিক নয়।" });
-        if (!account || account.length < 4)
+        
+        // ✅ normalizeAccount ব্যবহার করা হলো
+        const normalized = normalizeAccount(method, account);
+        if (!normalized)
           return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
 
         try {
           const currentWallets = userData.wallets || {};
-          currentWallets[method] = { number: account, name: userData.username };
+          currentWallets[method] = { number: normalized, name: userData.username };
           await db.doc(`users/${user.uid}`).update({ wallets: currentWallets });
           return res.status(200).json({ reply: `✅ আপনার ${method.toUpperCase()} নম্বর সেভ হয়েছে!` });
         } catch (e) {
