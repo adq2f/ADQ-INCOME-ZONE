@@ -322,7 +322,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="userList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- CLEANUP (সব delete এখন এক জায়গায়) -->
+  <!-- CLEANUP -->
   <div id="bulkTab" class="admin-section" style="display:none">
     <div class="cleanup-card">
       <div class="big">🧹</div>
@@ -460,7 +460,6 @@ select.inp option{background:#12122a;color:#fff}
       };
     });
 
-    // ---------- Admin Online (শুধু এক জায়গা: Dashboard) ----------
     function paintOnline(on) {
       document.getElementById("ostate").className = "ostate " + (on ? "on" : "off");
       document.getElementById("ostateText").textContent = on ? "Online — সব user আপনাকে Online দেখছে" : "Offline — user-রা Offline দেখছে";
@@ -798,7 +797,7 @@ select.inp option{background:#12122a;color:#fff}
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
-      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending-এর জন্য Bad UID list paste করো:\n(একটা line-এ একটা, খালি রাখলে সব Good)`);
+      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending-এর জন্য Bad লিস্ট পেস্ট করো:\n(UID / Password / 2FA — যেকোনো কলামের ভ্যালু দিলেই সেই রো Bad হবে)\n\nখালি রাখলে সব Good হবে।`);
       if (badText === null) return;
       if (!confirm(`${pending.length} টা process করবে?`)) return;
       processGroup(key, badText.trim());
@@ -808,8 +807,8 @@ select.inp option{background:#12122a;color:#fff}
       const items = loadedGroups[key] || [];
       const pending = items.filter(s => s.status === "pending");
       if (pending.length === 0) return alert("Pending নেই!");
+      
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-      const firstFieldKey = fields[0].key;
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const output = document.getElementById("resultOutput");
       output.innerHTML = `<div class="result-box" style="text-align:center"><div class="spinner" style="margin:0 auto 10px;width:34px;height:34px;border:3px solid rgba(255,255,255,.12);border-top-color:#8b5cf6;border-radius:50%;animation:sp 1s linear infinite"></div><div>Processing ${pending.length}...</div></div><style>@keyframes sp{to{transform:rotate(360deg)}}</style>`;
@@ -822,8 +821,15 @@ select.inp option{background:#12122a;color:#fff}
         const goodUidsByUser = {};
         
         for (const sub of pending) {
-          const matchVal = String(sub[firstFieldKey] || "").trim();
-          const isBad = badSet.has(matchVal);
+          // ✅ যেকোনো ফিল্ডের ভ্যালু badSet-এ থাকলেই সেই রো Bad
+          let isBad = false;
+          for (const f of fields) {
+            const val = String(sub[f.key] || "").trim();
+            if (val && badSet.has(val)) {
+              isBad = true;
+              break;
+            }
+          }
           
           await updateDoc(doc(db, "submissions", sub.id), {
             status: isBad ? "bad" : "good",
@@ -832,8 +838,10 @@ select.inp option{background:#12122a;color:#fff}
           });
           
           if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
-          if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
-          else {
+          if (isBad) { 
+            userUpdates[sub.userId].bad++; 
+            badCount++; 
+          } else {
             userUpdates[sub.userId].good++;
             userUpdates[sub.userId].earned += price;
             goodCount++;
@@ -844,7 +852,6 @@ select.inp option{background:#12122a;color:#fff}
         
         for (const [userId, data] of Object.entries(userUpdates)) {
           const uRef = doc(db, "users", userId);
-          // ✅ ফিক্স: increment() ব্যবহার করা হয়েছে, যাতে একসাথে ডাটা কনফ্লিক্ট না হয়
           await updateDoc(uRef, {
             balance: increment(data.earned),
             totalGood: increment(data.good),
@@ -872,7 +879,6 @@ select.inp option{background:#12122a;color:#fff}
             }
             const earned = goodAccounts * effectiveCommission;
             
-            // ✅ ফিক্স: increment() ব্যবহার করা হয়েছে
             await updateDoc(refRef, {
               balance: increment(earned),
               totalReferEarning: increment(earned)
@@ -1063,7 +1069,7 @@ select.inp option{background:#12122a;color:#fff}
       try {
         let count = 0;
         for (const uid of selectedUsers) {
-          if (uid === auth.currentUser?.uid) continue; // নিজেকে delete করা যাবে না
+          if (uid === auth.currentUser?.uid) continue;
           const subQ = query(collection(db, "submissions"), where("userId", "==", uid));
           const subSnap = await getDocs(subQ);
           let batch = writeBatch(db);
