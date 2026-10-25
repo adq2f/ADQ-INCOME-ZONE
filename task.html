@@ -182,7 +182,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
         <h3>📁 Direct File Submit</h3>
         <div class="bhint">
           <b>ফাইল ফরম্যাট:</b> Excel (.xlsx, .xls) অথবা CSV (.csv)<br>
-          <b>💡 টিপস:</b> প্রথম রো-তে কলামের নাম দিলে ভালো (যেমন: UID, Password, 2FA)। কলামের ক্রম যেকোনোভাবে দিলেও চলবে। কলামের নাম না দিলে টাস্কে যেভাবে চাওয়া হয়েছে সেই ক্রমে দিন।
+          <b>💡 টিপস:</b> ফাইলের প্রতিটি রো = একটি অ্যাকাউন্ট। প্রথম রো থেকে শুরু করে শেষ রো পর্যন্ত সব ডাটা সাবমিট হবে। কলামের ক্রম টাস্কে যেভাবে চাওয়া হয়েছে (${task?.fields?.map(f=>f.label).join(", ") || "UID, Password, 2FA"}) সেভাবে দিন।
         </div>
 
         <div class="drop-zone" id="dropZone">
@@ -658,6 +658,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       if (file) handleFile(file);
     };
 
+    // ✅ ফাইল আপলোড — কোনো রো স্কিপ হবে না, Row 1 থেকেই সব ডাটা পড়বে
     function handleFile(file) {
       const ext = file.name.split(".").pop().toLowerCase();
       if (!["xlsx", "xls", "csv"].includes(ext)) {
@@ -678,64 +679,22 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
           const items = [];
 
-          let startRow = 0;
-          let headerMap = null;
-
-          if (rows.length > 0) {
-            const firstRow = rows[0].map(c => String(c || "").toLowerCase().trim());
-            const detectedMap = {};
-            let matchedCount = 0;
-            
-            fields.forEach(f => {
-              const fieldLabel = String(f.label || f.key).toLowerCase().trim();
-              const fieldKey = String(f.key).toLowerCase().trim();
-              
-              const idx = firstRow.findIndex(cell => {
-                if (!cell) return false;
-                if (cell === fieldLabel || cell === fieldKey) return true;
-                if (cell.includes(fieldLabel) || fieldLabel.includes(cell)) return true;
-                if (cell.includes(fieldKey) || fieldKey.includes(cell)) return true;
-                return false;
-              });
-              
-              if (idx !== -1) {
-                detectedMap[f.key] = idx;
-                matchedCount++;
-              }
-            });
-
-            if (matchedCount >= Math.min(2, fields.length)) {
-              startRow = 1;
-              headerMap = detectedMap;
-            }
-          }
-
-          for (let i = startRow; i < rows.length; i++) {
+          // 🔥 কোনো রো স্কিপ হবে না — প্রথম রো (Row 1) থেকেই সব ডাটা পড়বে
+          for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
 
             const item = {};
-            
-            if (headerMap) {
-              fields.forEach(f => {
-                const colIdx = headerMap[f.key];
-                if (colIdx !== undefined) {
-                  item[f.key] = String(row[colIdx] || "").trim();
-                } else {
-                  item[f.key] = "";
-                }
-              });
-            } else {
-              fields.forEach((f, idx) => {
-                item[f.key] = String(row[idx] || "").trim();
-              });
-            }
+            fields.forEach((f, idx) => {
+              item[f.key] = String(row[idx] || "").trim();
+            });
 
+            // প্রথম ফিল্ড (UID/Email/Username) থাকলেই সাবমিট হবে
             if (item[fields[0].key]) items.push(item);
           }
 
           if (items.length === 0) {
-            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!\n\n💡 ফাইলে কমপক্ষে " + fields.length + "টি কলাম থাকতে হবে এবং প্রথম ফিল্ডে (UID/Email/Username) ডাটা থাকতে হবে।");
+            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!\n\n💡 ফাইলের প্রথম রো থেকেই ডাটা থাকতে হবে।");
           }
 
           fileItems = items;
