@@ -143,7 +143,7 @@
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import {
     doc, getDoc, setDoc, collection, query, orderBy, onSnapshot,
-    updateDoc, increment, addDoc, serverTimestamp, deleteDoc, getDocs
+    updateDoc, increment, addDoc, serverTimestamp, deleteDoc, getDocs, writeBatch
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   let currentAdmin = null;
@@ -151,7 +151,6 @@
   let unsubMsgs = null;
   let unsubInbox = null;
 
-  // স্ক্রল অ্যানিমেশন ফাংশন
   function applyScrollAnimations() {
     const elements = document.querySelectorAll('.chat-row, .otr');
     elements.forEach((el, index) => {
@@ -219,22 +218,31 @@
     });
   }
 
-  // 🗑️ চ্যাট ডিলিট করার ফাংশন (ডেটাবেস ক্লিন রাখতে)
+  // ✅ ফিক্স: চ্যাট ডিলিট করার আগে ভেতরের সব মেসেজও ডিলিট করা হচ্ছে
   window.deleteChat = async (chatId, event) => {
-    event.stopPropagation(); // যাতে চ্যাট ওপেন না হয়ে যায়
+    event.stopPropagation();
     if (!confirm("এই ইউজারের সম্পূর্ণ চ্যাট ডিলিট করবেন? (এটি আর ফেরত আসবে না)")) return;
     
     try {
-      // ১. চ্যাটের ভেতরের সব মেসেজ ডিলিট করা
       const msgsRef = collection(db, "chats", chatId, "messages");
       const msgsSnap = await getDocs(msgsRef);
-      for (const d of msgsSnap.docs) {
-        await deleteDoc(doc(db, "chats", chatId, "messages", d.id));
-      }
-      // ২. চ্যাটের মূল ডকুমেন্ট ডিলিট করা
-      await deleteDoc(doc(db, "chats", chatId));
       
-      alert("✅ চ্যাট ডিলিট হয়ে গেছে!");
+      let batch = writeBatch(db);
+      let count = 0;
+      
+      for (const d of msgsSnap.docs) {
+        batch.delete(doc(db, "chats", chatId, "messages", d.id));
+        count++;
+        if (count >= 400) {
+          await batch.commit();
+          batch = writeBatch(db);
+          count = 0;
+        }
+      }
+      if (count > 0) await batch.commit();
+
+      await deleteDoc(doc(db, "chats", chatId));
+      alert("✅ চ্যাট ও সব মেসেজ ডিলিট হয়ে গেছে!");
     } catch (e) {
       alert("❌ ডিলিট করতে সমস্যা: " + e.message);
     }
@@ -259,10 +267,7 @@
       body.innerHTML = msgs.length ? msgs.map(m => {
         const t = m.createdAt?.toDate?.();
         const time = t ? t.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" }) : "";
-        
-        // 🤖 AI ব্যাজ যোগ করা হয়েছে
         const aiBadge = m.isAI ? `<span class="ai-tag">🤖 AI</span>` : '';
-        
         return `<div class="chat-msg ${m.sender}">${escapeHtml(m.text)} ${aiBadge}<span class="msg-time">${time}</span></div>`;
       }).join("") : `<div class="empty"><div class="em">💬</div>কোনো মেসেজ নেই</div>`;
       body.scrollTop = body.scrollHeight;
