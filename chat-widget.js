@@ -317,19 +317,6 @@ export function initChatWidget() {
         if (aiData.needsHuman) updates.unreadForAdmin = increment(1);
         await updateDoc(chatRef, updates);
       } catch (e) {}
-    } else {
-      // 🚀 যদি এআই থেকে কোনো উত্তর না আসে, তবে চ্যাটে একটি সুন্দর এরর মেসেজ দেখাবে
-      try {
-        await addDoc(collection(db, "chats", chatId, "messages"), {
-          sender: "admin",
-          senderName: "ADQ Support",
-          text: "দুঃখিত, আমি এই মুহূর্তে উত্তর দিতে পারছি না। ইন্টারনেট চেক করুন বা অ্যাডমিনের সাথে কথা বলুন।",
-          isAI: true,
-          createdAt: serverTimestamp(),
-          readByAdmin: true,
-          readByUser: true
-        });
-      } catch (e) {}
     }
 
     sending = false;
