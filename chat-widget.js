@@ -142,7 +142,6 @@ export function initChatWidget() {
   `;
   document.body.appendChild(panel);
 
-  // 🔒 Secure withdraw popup (চ্যাটের বাইরে, আলাদা)
   const overlay = document.createElement("div");
   overlay.className = "adq-wd-overlay";
   overlay.id = "adqWdOverlay";
@@ -186,12 +185,11 @@ export function initChatWidget() {
   let waitingAI = false;
   let sending = false;
   let lastDocs = [];
-  let pendingWithdraw = null; // { amount, method, account, requestId }
+  let pendingWithdraw = null;
   let withdrawing = false;
 
   const EMPTY_HTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
 
-  // ---------- Withdraw popup ----------
   function openWithdrawModal(action) {
     pendingWithdraw = {
       amount: Number(action.amount),
@@ -212,7 +210,7 @@ export function initChatWidget() {
   }
 
   function closeWithdrawModal() {
-    wdPass.value = "";       // 🔒 পাসওয়ার্ড সবসময় মুছে ফেলা
+    wdPass.value = "";
     wdPass.type = "password";
     wdErr.textContent = "";
     pendingWithdraw = null;
@@ -235,7 +233,8 @@ export function initChatWidget() {
     wdOk.textContent = "অপেক্ষা করুন...";
 
     try {
-      const token = await currentUser.getIdToken();
+      // ✅ ফিক্স: getIdToken(true) করা হয়েছে, যাতে টোকেন এক্সপায়ার হলে নতুন টোকেন নেয়
+      const token = await currentUser.getIdToken(true);
       const res = await fetch(WITHDRAW_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
@@ -258,7 +257,6 @@ export function initChatWidget() {
         wdErr.textContent = data?.reply || "❌ কাজটি সম্পন্ন হয়নি। আবার চেষ্টা করুন।";
         wdPass.value = "";
         wdPass.focus();
-        // লক হয়ে গেলে ফর্ম বন্ধ করে চ্যাটে জানানো
         if (res.status === 429) {
           const msg = data?.reply || "🔒 কিছুক্ষণ পর আবার চেষ্টা করুন।";
           closeWithdrawModal();
@@ -281,7 +279,6 @@ export function initChatWidget() {
     if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); confirmWithdraw(); }
   });
 
-  // ---------- Online status ----------
   function paintOnline(isOnline) {
     adminOnline = !!isOnline;
     const dot = document.getElementById("chatOnlineDot");
@@ -308,7 +305,6 @@ export function initChatWidget() {
     }, () => {});
   }
 
-  // ---------- Render ----------
   function render() {
     if (!lastDocs.length && !waitingAI) { body.innerHTML = EMPTY_HTML; return; }
     let html = lastDocs.map(d => {
@@ -382,10 +378,10 @@ export function initChatWidget() {
     return h.slice(-6);
   }
 
-  // ---------- AI reply ----------
   async function getAIReply(text) {
     try {
-      const token = await currentUser.getIdToken();
+      // ✅ ফিক্স: getIdToken(true) করা হয়েছে
+      const token = await currentUser.getIdToken(true);
       const res = await fetch(AI_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
@@ -406,7 +402,6 @@ export function initChatWidget() {
     }
   }
 
-  // AI/সিস্টেমের মেসেজ চ্যাটে সেভ করা
   async function postAIMessage(text, needsHuman = false) {
     if (!chatId || !text) return;
     try {
@@ -430,7 +425,6 @@ export function initChatWidget() {
     } catch (e) { console.error("postAIMessage:", e); }
   }
 
-  // ---------- Send ----------
   async function sendMessage() {
     if (sending) return;
     const text = input.value.trim();
@@ -488,7 +482,6 @@ export function initChatWidget() {
       await postAIMessage(aiData.reply, !!aiData.needsHuman);
     }
 
-    // 🔒 AI তথ্য নিশ্চিত করলে সিকিউর পাসওয়ার্ড ফর্ম খোলা
     if (aiData?.action?.type === "withdraw_confirm") {
       openWithdrawModal(aiData.action);
     }
