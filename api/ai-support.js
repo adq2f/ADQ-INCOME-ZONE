@@ -1,66 +1,16 @@
-import admin from "firebase-admin";
+import { getDb, setCors, verifyUser, ALLOWED_METHODS, MIN_WITHDRAW, ACCOUNT_RE } from "./_shared.js";
 
-// Vercel function max time (sec). Hobby plan-e limit beshi hole 10 kore din.
 export const config = { maxDuration: 30 };
-
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
-const FIREBASE_SERVICE_ACCOUNT = process.env.FIREBASE_SERVICE_ACCOUNT;
-const ALLOWED_METHODS = ["bkash", "nagad", "rocket"];
-const MIN_WITHDRAW = 1;
 
 const MODELS = (process.env.GEMINI_MODELS ||
   "gemini-3.8-flash,gemini-3.5-flash,gemini-3.5-flash-lite")
   .split(",").map(s => s.trim()).filter(Boolean);
 
-const TOTAL_BUDGET_MS = 25000;   // মোট সময়
-const PER_CALL_TIMEOUT_MS = 12000; // প্রতিটা Gemini call এর সময়
-
+const TOTAL_BUDGET_MS = 25000;
+const PER_CALL_TIMEOUT_MS = 12000;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-// ---------- Firebase Admin init ----------
-function getDb() {
-  if (!admin.apps.length) {
-    if (!FIREBASE_SERVICE_ACCOUNT) throw new Error("FIREBASE_SERVICE_ACCOUNT env missing");
-    const sa = JSON.parse(FIREBASE_SERVICE_ACCOUNT);
-    if (sa.private_key) sa.private_key = sa.private_key.replace(/\\n/g, "\n");
-    admin.initializeApp({ credential: admin.credential.cert(sa) });
-  }
-  return admin.firestore();
-}
-
-// ---------- ১. ইউজার ভেরিফাই ----------
-async function verifyUser(req) {
-  const authHeader = req.headers.authorization || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
-  if (!token) return null;
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    return { uid: decoded.uid, email: decoded.email };
-  } catch (e) {
-    console.error("Token verify error:", e.message);
-    return null;
-  }
-}
-
-// ---------- ২. পাসওয়ার্ড ভেরিফাই ----------
-async function verifyPassword(email, password) {
-  if (!email || !password) return false;
-  try {
-    const r = await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, returnSecureToken: true })
-      }
-    );
-    return r.ok;
-  } catch (e) {
-    return false;
-  }
-}
-
-// ---------- ৩. Gemini call (model fallback + retry + timeout) ----------
+// ---------- Gemini call (fallback + retry + timeout) ----------
 async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
     let body = payload;
@@ -71,10 +21,7 @@ async function callGemini(payload, apiKey, deadline, state) {
       if (remaining < 2000) return null;
 
       const ctrl = new AbortController();
-      const timer = setTimeout(
-        () => ctrl.abort(),
-        Math.min(PER_CALL_TIMEOUT_MS, remaining - 500)
-      );
+      const timer = setTimeout(() => ctrl.abort(), Math.min(PER_CALL_TIMEOUT_MS, remaining - 500));
 
       try {
         const r = await fetch(
@@ -92,12 +39,10 @@ async function callGemini(payload, apiKey, deadline, state) {
         if (r.ok && d?.candidates?.[0]?.content?.parts?.length) return d;
 
         const msg = d?.error?.message
-          || (d?.candidates?.[0]?.finishReason ? `finishReason=${d.candidates[0].finishReason}` : "")
-          || "";
+          || (d?.candidates?.[0]?.finishReason ? `finishReason=${d.candidates[0].finishReason}` : "");
         state.lastError = `[${model}] ${r.status} ${msg}`.slice(0, 300);
         console.error("Gemini error", state.lastError);
 
-        // generationConfig/thinkingConfig সাপোর্ট না করলে ওটা বাদ দিয়ে আবার চেষ্টা
         if (r.status === 400 && !stripped && body.generationConfig) {
           stripped = true;
           body = { ...payload };
@@ -105,13 +50,8 @@ async function callGemini(payload, apiKey, deadline, state) {
           attempt--;
           continue;
         }
-
-        // সাময়িক সমস্যা হলে একবার retry
-        if ([429, 500, 503].includes(r.status) && attempt === 0) {
-          await sleep(1000);
-          continue;
-        }
-        break; // পরের model এ যাও
+        if ([429, 500, 503].includes(r.status) && attempt === 0) { await sleep(1000); continue; }
+        break;
       } catch (e) {
         clearTimeout(timer);
         state.lastError = `[${model}] ${e?.name === "AbortError" ? "timeout" : (e?.message || e)}`;
@@ -123,7 +63,7 @@ async function callGemini(payload, apiKey, deadline, state) {
   return null;
 }
 
-// ---------- ৪. History clean (একই role পাশাপাশি থাকলে merge) ----------
+// ---------- History clean ----------
 function cleanHistory(history) {
   const list = Array.isArray(history) ? history : [];
   const filtered = list
@@ -134,11 +74,8 @@ function cleanHistory(history) {
   const out = [];
   for (const m of filtered) {
     const last = out[out.length - 1];
-    if (last && last.role === m.role) {
-      last.parts[0].text += "\n" + m.text;
-    } else {
-      out.push({ role: m.role, parts: [{ text: m.text }] });
-    }
+    if (last && last.role === m.role) last.parts[0].text += "\n" + m.text;
+    else out.push({ role: m.role, parts: [{ text: m.text }] });
   }
   while (out.length && out[0].role !== "user") out.shift();
   return out;
@@ -146,9 +83,7 @@ function cleanHistory(history) {
 
 // ---------- Handler ----------
 export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  setCors(res);
   if (req.method === "OPTIONS") return res.status(204).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
@@ -157,9 +92,8 @@ export default async function handler(req, res) {
   const DEBUG = process.env.DEBUG_AI === "1";
 
   let db;
-  try {
-    db = getDb();
-  } catch (e) {
+  try { db = getDb(); }
+  catch (e) {
     console.error("Firebase admin init error:", e.message);
     return res.status(500).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
   }
@@ -189,9 +123,7 @@ export default async function handler(req, res) {
         totalGood: Number(d.totalGood) || 0
       };
     }
-  } catch (e) {
-    console.error("Firestore read error:", e);
-  }
+  } catch (e) { console.error("Firestore read error:", e); }
 
   const SYSTEM_PROMPT = `
     তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
@@ -202,20 +134,17 @@ export default async function handler(req, res) {
 
     নিয়ম:
     - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
-    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
-    - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
+    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। তিনটি তথ্য পেলেই request_withdraw কল করো।
+    - তুমি কখনো পাসওয়ার্ড চাইবে না। পাসওয়ার্ড সিস্টেম নিজেই একটি নিরাপদ ফর্মে নেবে।
+    - ইউজার চ্যাটে পাসওয়ার্ড লিখতে চাইলে বারণ করো এবং বলো পাসওয়ার্ড কাউকে বা চ্যাটে দেওয়া যাবে না।
     - save_wallet এ মেথড শুধু bkash, nagad বা rocket হতে পারবে।
     - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
   `;
 
   const contents = cleanHistory(req.body?.history);
-  // শেষ মেসেজ user হলে merge, নাহলে নতুন যোগ
   const lastC = contents[contents.length - 1];
-  if (lastC && lastC.role === "user") {
-    lastC.parts[0].text += "\n" + message;
-  } else {
-    contents.push({ role: "user", parts: [{ text: message }] });
-  }
+  if (lastC && lastC.role === "user") lastC.parts[0].text += "\n" + message;
+  else contents.push({ role: "user", parts: [{ text: message }] });
 
   try {
     const data = await callGemini({
@@ -226,16 +155,15 @@ export default async function handler(req, res) {
         functionDeclarations: [
           {
             name: "request_withdraw",
-            description: "ইউজারের ব্যালেন্স থেকে টাকা উইথড্র করার রিকোয়েস্ট তৈরি করে।",
+            description: "উইথড্র করার তথ্য (টাকা, মেথড, অ্যাকাউন্ট) নিশ্চিত করার জন্য ইউজারকে নিরাপদ কনফার্ম ফর্ম দেখায়। পাসওয়ার্ড লাগে না।",
             parameters: {
               type: "OBJECT",
               properties: {
                 amount: { type: "NUMBER" },
                 method: { type: "STRING" },
-                account: { type: "STRING" },
-                password: { type: "STRING" }
+                account: { type: "STRING" }
               },
-              required: ["amount", "method", "account", "password"]
+              required: ["amount", "method", "account"]
             }
           },
           {
@@ -266,87 +194,50 @@ export default async function handler(req, res) {
     if (fcPart) {
       const fc = fcPart.functionCall;
       const args = fc.args || {};
-      let reply = "কাজটি সম্পন্ন হয়েছে।";
 
       if (fc.name === "request_withdraw") {
-        const amount = Number(args.amount);
-        const method = String(args.method || "").toLowerCase().trim();
-        const account = String(args.account || "").trim();
-        const password = String(args.password || "");
-
-        if (!password) {
-          reply = "টাকা উইথড্র করতে হলে আপনাকে আপনার অ্যাকাউন্টের পাসওয়ার্ড দিতে হবে।";
-        } else if (!Number.isFinite(amount) || amount < MIN_WITHDRAW) {
-          reply = "❌ সঠিক টাকার পরিমাণ দিন।";
-        } else if (!ALLOWED_METHODS.includes(method)) {
-          reply = "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।";
-        } else if (!/^[0-9+\-]{6,20}$/.test(account)) {
-          reply = "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।";
-        } else {
-          const isPassOk = await verifyPassword(user.email, password);
-          if (!isPassOk) {
-            reply = "❌ পাসওয়ার্ড ভুল! দয়া করে সঠিক পাসওয়ার্ড দিন।";
-          } else {
-            try {
-              await db.runTransaction(async (t) => {
-                const ref = db.doc(`users/${user.uid}`);
-                const snap = await t.get(ref);
-                const bal = Number(snap.data()?.balance) || 0;
-                if (amount > bal) {
-                  const err = new Error("INSUFFICIENT");
-                  err.balance = bal;
-                  throw err;
-                }
-                t.update(ref, { balance: bal - amount });
-                t.set(db.collection("withdrawals").doc(), {
-                  userId: user.uid,
-                  username: userData.username,
-                  amount,
-                  method,
-                  accountNum: account,
-                  status: "pending",
-                  requestedAt: new Date().toISOString()
-                });
-              });
-              reply = `✅ সফল! আপনার ৳${amount} টাকার উইথড্র রিকোয়েস্ট (${method}) জমা হয়েছে।`;
-            } catch (e) {
-              if (e.message === "INSUFFICIENT") {
-                reply = `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। আপনার বর্তমান ব্যালেন্স ৳${e.balance}।`;
-              } else {
-                console.error("Withdraw transaction error:", e);
-                reply = "❌ উইথড্র রিকোয়েস্ট জমা হয়নি। দয়া করে আবার চেষ্টা করুন।";
-              }
-            }
-          }
-        }
-      }
-      else if (fc.name === "save_wallet") {
+        const amount = Math.round(Number(args.amount) * 100) / 100;
         const method = String(args.method || "").toLowerCase().trim();
         const account = String(args.account || "").trim();
 
-        if (!ALLOWED_METHODS.includes(method)) {
-          reply = "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।";
-        } else if (!/^[0-9+\-]{6,20}$/.test(account)) {
-          reply = "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।";
-        } else {
-          try {
-            await db.doc(`users/${user.uid}`).set({ [`wallet_${method}`]: account }, { merge: true });
-            reply = `✅ আপনার ${method} নম্বর (${account}) সেভ করা হয়েছে!`;
-          } catch (e) {
-            console.error("Save wallet error:", e);
-            reply = "❌ নম্বর সেভ করা যায়নি। দয়া করে আবার চেষ্টা করুন।";
-          }
+        if (!Number.isFinite(amount) || amount < MIN_WITHDRAW)
+          return res.status(200).json({ reply: "❌ সঠিক টাকার পরিমাণ দিন।" });
+        if (!ALLOWED_METHODS.includes(method))
+          return res.status(200).json({ reply: "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।" });
+        if (!ACCOUNT_RE.test(account))
+          return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
+        if (amount > userData.balance)
+          return res.status(200).json({ reply: `❌ আপনার ব্যালেন্স পর্যাপ্ত নয়। বর্তমান ব্যালেন্স ৳${userData.balance}।` });
+
+        // ✅ পাসওয়ার্ড এখানে নেওয়া হয় না — ক্লায়েন্ট একটি নিরাপদ ফর্ম দেখাবে
+        return res.status(200).json({
+          reply: `আপনার ৳${amount} (${method} - ${account}) উইথড্র রিকোয়েস্ট প্রস্তুত। 🔒 নিরাপত্তার জন্য নিচের ফর্মে পাসওয়ার্ড দিয়ে নিশ্চিত করুন।`,
+          action: { type: "withdraw_confirm", amount, method, account }
+        });
+      }
+
+      if (fc.name === "save_wallet") {
+        const method = String(args.method || "").toLowerCase().trim();
+        const account = String(args.account || "").trim();
+
+        if (!ALLOWED_METHODS.includes(method))
+          return res.status(200).json({ reply: "❌ মেথড অবশ্যই bkash, nagad অথবা rocket হতে হবে।" });
+        if (!ACCOUNT_RE.test(account))
+          return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
+
+        try {
+          await db.doc(`users/${user.uid}`).set({ [`wallet_${method}`]: account }, { merge: true });
+          return res.status(200).json({ reply: `✅ আপনার ${method} নম্বর (${account}) সেভ করা হয়েছে!` });
+        } catch (e) {
+          console.error("Save wallet error:", e);
+          return res.status(200).json({ reply: "❌ নম্বর সেভ করা যায়নি। দয়া করে আবার চেষ্টা করুন।" });
         }
       }
 
-      return res.status(200).json({ reply });
+      return res.status(200).json({ reply: "কাজটি সম্পন্ন হয়েছে।" });
     }
 
-    const textReply = parts
-      .filter(p => !p.thought)
-      .map(p => p.text || "")
-      .join("\n")
-      .trim();
+    const textReply = parts.filter(p => !p.thought).map(p => p.text || "").join("\n").trim();
     return res.status(200).json({ reply: textReply || "আমি বুঝতে পারিনি।" });
 
   } catch (err) {
