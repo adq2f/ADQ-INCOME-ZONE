@@ -1,7 +1,7 @@
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 const FIREBASE_PROJECT_ID = "adq-income-zone"; // আপনার ফায়ারবেস প্রজেক্ট আইডি
 
-// ১. ইউজার ভেরিফাই (টোকেন ও ইমেইল বের করা)
+// ১. ইউজার ভেরিফাই
 async function verifyUser(req) {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
@@ -30,14 +30,14 @@ async function verifyPassword(email, password) {
   } catch (e) { return false; }
 }
 
-// ৩. ফায়ারবেস থেকে ডেটা রিড করা (ব্যালেন্স দেখার জন্য)
+// ৩. ফায়ারবেস থেকে ডেটা রিড
 async function firestoreRead(path) {
   const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`;
   const res = await fetch(url);
   return res.json();
 }
 
-// ৪. ফায়ারবেসে ডেটা লেখা (উইথড্র বা ওয়ালেট সেভের জন্য)
+// ৪. ফায়ারবেসে ডেটা রাইট
 async function firestoreWrite(path, data, token) {
   const url = `https://firestore.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/databases/(default)/documents/${path}`;
   const formattedData = {};
@@ -67,7 +67,6 @@ export default async function handler(req, res) {
   const { message, history } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // ইউজারের বর্তমান ডেটা ফায়ারবেস থেকে নিয়ে আসা (AI-কে কনটেক্সট দিতে)
   let userData = {};
   try {
     const docData = await firestoreRead(`users/${user.uid}`);
@@ -80,68 +79,83 @@ export default async function handler(req, res) {
     }
   } catch (e) { console.error("Firestore read error:", e); }
 
-  // AI-এর জন্য প্রম্পট তৈরি
   const SYSTEM_PROMPT = `
     তুমি "ADQ Income Zone" এর স্মার্ট স্পেশাল অ্যাসিস্ট্যান্ট। ইউজারকে বাংলায় সাহায্য করো।
-    
     ইউজারের বর্তমান তথ্য:
     - নাম: ${userData.username}
     - ব্যালেন্স: ৳${userData.balance}
     - মোট Good অ্যাকাউন্ট: ${userData.totalGood}
 
     নিয়ম:
-    - ইউজার যদি জিজ্ঞেস করে "আমার ব্যালেন্স কত?", তবে তাকে উপরের ব্যালেন্সটি বলে দাও।
-    - ইউজার কোনো উইথড্র করতে চাইলে তাকে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর তাকে তার লগইন পাসওয়ার্ড দিতে বলো।
+    - "আমার ব্যালেন্স কত?" জিজ্ঞেস করলে উপরের ব্যালেন্সটি বলে দাও।
+    - উইথড্র করতে চাইলে জিজ্ঞেস করো: কত টাকা, কোন মেথড (bkash/nagad/rocket) এবং অ্যাকাউন্ট নম্বর কত। এরপর পাসওয়ার্ড চাইবে।
     - পাসওয়ার্ড ছাড়া কখনো request_withdraw কল করবে না।
-    - ইউজার বললে "সালাম" বা "হ্যালো" → সুন্দর করে উত্তর দাও।
-    - তুমি AI, তবে একদম মানুষের মতো সাহায্য করো।
+    - "সালাম" বা "হ্যালো" বললে সুন্দর করে উত্তর দাও।
   `;
 
   const contents = (history || []).map(m => ({ role: m.role, parts: [{ text: m.text }] }));
   contents.push({ role: "user", parts: [{ text: message }] });
 
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: contents,
-        tools: [{
-          functionDeclarations: [
-            {
-              name: "request_withdraw",
-              description: "ইউজারের ব্যালেন্স থেকে টাকা উইথড্র করার রিকোয়েস্ট তৈরি করে।",
-              parameters: {
-                type: "OBJECT",
-                properties: {
-                  amount: { type: "NUMBER", description: "কত টাকা উইথড্র করবে" },
-                  method: { type: "STRING", description: "bkash, nagad, rocket, binance" },
-                  account: { type: "STRING", description: "মোবাইল নম্বর বা ওয়ালেট অ্যাড্রেস" },
-                  password: { type: "STRING", description: "ইউজারের লগইন পাসওয়ার্ড" }
-                },
-                required: ["amount", "method", "account", "password"]
-              }
-            },
-            {
-              name: "save_wallet",
-              description: "ইউজারের পেমেন্ট মেথড সেভ করে।",
-              parameters: {
-                type: "OBJECT",
-                properties: {
-                  method: { type: "STRING", description: "bkash, nagad, rocket, binance" },
-                  account: { type: "STRING", description: "মোবাইল নম্বর" }
-                },
-                required: ["method", "account"]
-              }
-            }
-          ]
-        }]
-      })
-    });
+    // 🚀 Smart Retry Logic (৩ বার পর্যন্ত চেষ্টা করবে)
+    let retries = 3;
+    let data = null;
 
-    const data = await response.json();
-    if (!data.candidates || !data.candidates[0]) {
-      return res.status(200).json({ reply: "আমি বুঝতে পারিনি।" });
+    while (retries > 0) {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: contents,
+          tools: [{
+            functionDeclarations: [
+              {
+                name: "request_withdraw",
+                description: "ইউজারের ব্যালেন্স থেকে টাকা উইথড্র করার রিকোয়েস্ট তৈরি করে।",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    amount: { type: "NUMBER" },
+                    method: { type: "STRING" },
+                    account: { type: "STRING" },
+                    password: { type: "STRING" }
+                  },
+                  required: ["amount", "method", "account", "password"]
+                }
+              },
+              {
+                name: "save_wallet",
+                description: "ইউজারের পেমেন্ট মেথড সেভ করে।",
+                parameters: {
+                  type: "OBJECT",
+                  properties: {
+                    method: { type: "STRING" },
+                    account: { type: "STRING" }
+                  },
+                  required: ["method", "account"]
+                }
+              }
+            ]
+          }]
+        })
+      });
+
+      data = await response.json();
+
+      // যদি সফল (200) অথবা রেট লিমিট (429/503) না হয়, লুপ থেকে বেরিয়ে যাবে
+      if (response.ok || (response.status !== 429 && response.status !== 503)) {
+        break;
+      }
+
+      retries--;
+      if (retries > 0) {
+        console.log(`Server Busy (Status: ${response.status}). Retrying in 2s... (${retries} left)`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // ২ সেকেন্ড অপেক্ষা
+      }
+    }
+
+    if (!data || !data.candidates || !data.candidates[0]) {
+      return res.status(200).json({ reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে ১ মিনিট পর আবার চেষ্টা করুন।" });
     }
 
     const parts = data.candidates[0].content.parts;
@@ -189,7 +203,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: textReply || "আমি বুঝতে পারিনি।" });
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ reply: "সার্ভারে সমস্যা হচ্ছে।" });
+    console.error("Handler Error:", err);
+    return res.status(500).json({ reply: "সার্ভারে সমস্যা হচ্ছে। দয়া করে আবার চেষ্টা করুন।" });
   }
 }
