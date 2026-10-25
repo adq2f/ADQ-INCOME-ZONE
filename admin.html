@@ -422,7 +422,7 @@ select.inp option{background:#12122a;color:#fff}
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     
     function esc(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -813,20 +813,24 @@ select.inp option{background:#12122a;color:#fff}
       const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
       const output = document.getElementById("resultOutput");
       output.innerHTML = `<div class="result-box" style="text-align:center"><div class="spinner" style="margin:0 auto 10px;width:34px;height:34px;border:3px solid rgba(255,255,255,.12);border-top-color:#8b5cf6;border-radius:50%;animation:sp 1s linear infinite"></div><div>Processing ${pending.length}...</div></div><style>@keyframes sp{to{transform:rotate(360deg)}}</style>`;
+      
       try {
         const price = loadedTask.pricePerAccount;
         const referCommission = loadedTask.referCommission || 0;
         let goodCount = 0, badCount = 0;
         const userUpdates = {};
         const goodUidsByUser = {};
+        
         for (const sub of pending) {
           const matchVal = String(sub[firstFieldKey] || "").trim();
           const isBad = badSet.has(matchVal);
+          
           await updateDoc(doc(db, "submissions", sub.id), {
             status: isBad ? "bad" : "good",
             earned: isBad ? 0 : price,
             checkedAt: new Date()
           });
+          
           if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
           if (isBad) { userUpdates[sub.userId].bad++; badCount++; }
           else {
@@ -837,18 +841,18 @@ select.inp option{background:#12122a;color:#fff}
             goodUidsByUser[sub.userId]++;
           }
         }
+        
         for (const [userId, data] of Object.entries(userUpdates)) {
           const uRef = doc(db, "users", userId);
-          const uSnap = await getDoc(uRef);
-          if (!uSnap.exists()) continue;
-          const u = uSnap.data();
+          // ✅ ফিক্স: increment() ব্যবহার করা হয়েছে, যাতে একসাথে ডাটা কনফ্লিক্ট না হয়
           await updateDoc(uRef, {
-            balance: (u.balance || 0) + data.earned,
-            totalGood: (u.totalGood || 0) + data.good,
-            totalBad: (u.totalBad || 0) + data.bad,
-            totalPending: Math.max(0, (u.totalPending || 0) - (data.good + data.bad))
+            balance: increment(data.earned),
+            totalGood: increment(data.good),
+            totalBad: increment(data.bad),
+            totalPending: increment(-(data.good + data.bad))
           });
         }
+        
         let totalReferCommission = 0;
         let referrerCount = 0;
         if (referCommission > 0) {
@@ -867,10 +871,13 @@ select.inp option{background:#12122a;color:#fff}
               effectiveCommission = refData.customReferCommission;
             }
             const earned = goodAccounts * effectiveCommission;
+            
+            // ✅ ফিক্স: increment() ব্যবহার করা হয়েছে
             await updateDoc(refRef, {
-              balance: (refData.balance || 0) + earned,
-              totalReferEarning: (refData.totalReferEarning || 0) + earned
+              balance: increment(earned),
+              totalReferEarning: increment(earned)
             });
+            
             await addDoc(collection(db, "refer_earnings"), {
               referrerId: referrerId,
               referredUserId: userId,
@@ -886,6 +893,7 @@ select.inp option{background:#12122a;color:#fff}
             referrerCount++;
           }
         }
+        
         output.innerHTML = `
           <div class="result-box">
             <h3>✅ File Processed!</h3>
