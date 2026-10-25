@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-  <!-- style.css রাখা হয়েছে: premium-badge, chat widget ও popup এর স্টাইলের জন্য -->
   <link rel="stylesheet" href="style.css?v=35">
   <style>
     :root {
@@ -375,7 +374,7 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     import { initChatWidget } from "./chat-widget.js";
     import { initPremiumPopups } from "./premium-popup.js";
 
@@ -430,20 +429,23 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists()) { location.href = "login.html"; return; }
-      const u = snap.data();
+      
+      // ✅ ফিক্স: রিয়েল-টাইম লিসেনার দিয়ে ইউজার ডাটা লোড করা হচ্ছে
+      const unsubUser = onSnapshot(doc(db, "users", user.uid), (snap) => {
+        if (!snap.exists()) return;
+        const u = snap.data();
 
-      document.getElementById("username").textContent = u.username || "User";
-      document.getElementById("email").textContent = u.email || "";
-      document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
-      countUp(document.getElementById("balance"), u.balance || 0, 1100);
-      document.getElementById("earnedTotal").textContent = "৳" + (u.balance || 0);
+        document.getElementById("username").textContent = u.username || "User";
+        document.getElementById("email").textContent = u.email || "";
+        document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
+        countUp(document.getElementById("balance"), u.balance || 0, 1100);
+        document.getElementById("earnedTotal").textContent = "৳" + (u.balance || 0);
 
-      if (u.customBadge) {
-        const cls = getBadgeClass(u.customBadgeColor);
-        document.getElementById("dashBadge").innerHTML = `<span class="premium-badge ${cls}" title="${esc(u.customBadge)}"></span>`;
-      }
+        if (u.customBadge) {
+          const cls = getBadgeClass(u.customBadgeColor);
+          document.getElementById("dashBadge").innerHTML = `<span class="premium-badge ${cls}" title="${esc(u.customBadge)}"></span>`;
+        }
+      });
 
       loadNotice();
       loadTasks();
@@ -495,25 +497,28 @@
       const list = document.getElementById("taskList");
       try {
         const q = query(collection(db, "tasks"), where("active", "==", true));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
-          return;
-        }
-        const now = new Date();
-        const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .filter(t => {
-            const end = t.endTime?.toDate?.();
-            return !end || end > now;
-          })
-          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        
+        // ✅ ফিক্স: রিয়েল-টাইম লিসেনার ব্যবহার করা হয়েছে
+        onSnapshot(q, (snap) => {
+          if (snap.empty) {
+            list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
+            return;
+          }
+          const now = new Date();
+          const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+            .filter(t => {
+              const end = t.endTime?.toDate?.();
+              return !end || end > now;
+            })
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
 
-        if (tasks.length === 0) {
-          list.innerHTML = `<div class="d-empty"><div class="em">⏰</div>এখনো কোনো open task নেই</div>`;
-          return;
-        }
+          if (tasks.length === 0) {
+            list.innerHTML = `<div class="d-empty"><div class="em">⏰</div>এখনো কোনো open task নেই</div>`;
+            return;
+          }
 
-        list.innerHTML = tasks.map((t, i) => renderHighQualityTaskCard(t, i)).join("");
+          list.innerHTML = tasks.map((t, i) => renderHighQualityTaskCard(t, i)).join("");
+        });
       } catch (e) {
         list.innerHTML = `<div class="d-empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
@@ -572,32 +577,35 @@
       const list = document.getElementById("recentList");
       try {
         const q = query(collection(db, "submissions"), where("userId", "==", uid));
-        const snap = await getDocs(q);
-        if (snap.empty) {
-          list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো submission নেই</div>`;
-          return;
-        }
-        const subs = snap.docs.map(d => d.data())
-          .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0))
-          .slice(0, 5);
-        list.innerHTML = subs.map((s) => {
-          const st = s.status === "good" ? "good" : s.status === "bad" ? "bad" : "pending";
-          const ic = st === "good" ? "✅" : st === "bad" ? "❌" : "⏳";
-          const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
-          const time = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
-            day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-          }) || "";
-          return `
-            <div class="d-recent">
-              <div class="d-r-ic ${st}">${ic}</div>
-              <div class="d-r-info">
-                <div class="d-r-uid">${esc(s.uid || "N/A")}</div>
-                <div class="d-r-time">🕐 ${time}</div>
+        
+        // ✅ ফিক্স: রিয়েল-টাইম লিসেনার ব্যবহার করা হয়েছে
+        onSnapshot(q, (snap) => {
+          if (snap.empty) {
+            list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো submission নেই</div>`;
+            return;
+          }
+          const subs = snap.docs.map(d => d.data())
+            .sort((a, b) => (b.submittedAt?.toMillis?.() || 0) - (a.submittedAt?.toMillis?.() || 0))
+            .slice(0, 5);
+          list.innerHTML = subs.map((s) => {
+            const st = s.status === "good" ? "good" : s.status === "bad" ? "bad" : "pending";
+            const ic = st === "good" ? "✅" : st === "bad" ? "❌" : "⏳";
+            const earned = s.status === "good" ? `+৳${s.price || 0}` : (s.status === "bad" ? "৳0" : "Pending");
+            const time = s.submittedAt?.toDate?.().toLocaleString("bn-BD", {
+              day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+            }) || "";
+            return `
+              <div class="d-recent">
+                <div class="d-r-ic ${st}">${ic}</div>
+                <div class="d-r-info">
+                  <div class="d-r-uid">${esc(s.uid || "N/A")}</div>
+                  <div class="d-r-time">🕐 ${time}</div>
+                </div>
+                <span class="d-r-earn ${s.status === "good" ? "" : "zero"}">${earned}</span>
               </div>
-              <span class="d-r-earn ${s.status === "good" ? "" : "zero"}">${earned}</span>
-            </div>
-          `;
-        }).join("");
+            `;
+          }).join("");
+        });
       } catch (e) {
         list.innerHTML = `<div class="d-empty" style="color:#fca5a5">${esc(e.message)}</div>`;
       }
