@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<!-- XLSX লাইব্রেরি (ফাইল পড়ার জন্য) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
@@ -104,12 +105,53 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
 
-.tab-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px}
-.tab-bar::-webkit-scrollbar{display:none}
-.tab-btn{padding:12px 18px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13.5px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s;flex:1;text-align:center}
-.tab-btn:hover{color:#fff}
-.tab-btn.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+/* ===== নতুন: ট্যাব বার (৩টি বাটন বড় করে) ===== */
+.tab-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 4px;
+  background: rgba(255,255,255,.04);
+  border-radius: 18px;
+  border: 1px solid var(--line);
+}
+.tab-btn {
+  flex: 1;
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .25s cubic-bezier(.2,.8,.2,1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  line-height: 1.2;
+}
+.tab-btn .tab-ic {
+  font-size: 20px;
+}
+.tab-btn:hover {
+  color: #fff;
+  background: rgba(255,255,255,.06);
+}
+.tab-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  box-shadow: 0 10px 22px -8px rgba(139,92,246,.9), inset 0 1px 0 rgba(255,255,255,.3);
+}
+@media (max-width: 380px) {
+  .tab-btn { font-size: 11.5px; padding: 12px 4px; }
+  .tab-btn .tab-ic { font-size: 18px; }
+}
 
+/* ===== নতুন: ফাইল ড্রপ জোন ===== */
 .drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
 .drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
 .drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
@@ -136,12 +178,24 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
   </div>
 
   <div id="submitSections" style="display:none">
+
+    <!-- ট্যাব বার (৩টি বাটন) -->
     <div class="tab-bar">
-      <button class="tab-btn active" data-tab="single">📝 Single Submit</button>
-      <button class="tab-btn" data-tab="bulk">📋 All Paste (Bulk)</button>
-      <button class="tab-btn" data-tab="file">📁 Direct File</button>
+      <button class="tab-btn active" data-tab="single">
+        <span class="tab-ic">📝</span>
+        <span>Single</span>
+      </button>
+      <button class="tab-btn" data-tab="bulk">
+        <span class="tab-ic">📋</span>
+        <span>All Paste</span>
+      </button>
+      <button class="tab-btn" data-tab="file">
+        <span class="tab-ic">📁</span>
+        <span>File Submit</span>
+      </button>
     </div>
 
+    <!-- ১. সিঙ্গেল সাবমিট -->
     <div id="tab-single" class="tab-content">
       <div class="fcard glass">
         <h3>📝 Single Submit</h3>
@@ -151,6 +205,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
+    <!-- ২. বাল্ক / অল পেস্ট সাবমিট -->
     <div id="tab-bulk" class="tab-content" style="display:none">
       <div class="fcard glass">
         <h3>📋 All Paste Submit (Bulk)</h3>
@@ -177,12 +232,13 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
+    <!-- ৩. সরাসরি ফাইল সাবমিট -->
     <div id="tab-file" class="tab-content" style="display:none">
       <div class="fcard glass">
         <h3>📁 Direct File Submit</h3>
         <div class="bhint">
           <b>ফাইল ফরম্যাট:</b> Excel (.xlsx, .xls) অথবা CSV (.csv)<br>
-          <b>💡 টিপস:</b> ফাইলের প্রতিটি রো = একটি অ্যাকাউন্ট। প্রথম রো থেকে শুরু করে শেষ রো পর্যন্ত সব ডাটা সাবমিট হবে। কলামের ক্রম টাস্কে যেভাবে চাওয়া হয়েছে (${task?.fields?.map(f=>f.label).join(", ") || "UID, Password, 2FA"}) সেভাবে দিন।
+          <b>💡 টিপস:</b> ফাইলের প্রতিটি রো = একটি অ্যাকাউন্ট। প্রথম রো থেকে শুরু করে শেষ রো পর্যন্ত সব ডাটা সাবমিট হবে। কলামের ক্রম টাস্কে যেভাবে চাওয়া হয়েছে সেভাবে দিন।
         </div>
 
         <div class="drop-zone" id="dropZone">
@@ -210,6 +266,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
         <button class="cta ghost" id="clearFileBtn">✕ Clear File</button>
       </div>
     </div>
+
   </div>
 </main>
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
@@ -238,6 +295,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       location.href = "index.html";
     };
 
+    // ===== ট্যাব সুইচ =====
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
@@ -483,6 +541,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       }
     }
 
+    // ===== ১. সিঙ্গেল সাবমিট =====
     document.getElementById("singleSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -536,6 +595,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       btn.disabled = false; btn.textContent = "✅ Submit Account";
     };
 
+    // ===== ২. বাল্ক সাবমিট =====
     document.getElementById("bulkSubmitBtn").onclick = async () => {
       if (!verifyTime()) return;
       if (!task) return alert("Task load হয়নি!");
@@ -635,6 +695,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       document.getElementById("bulkPreview").classList.remove("show");
     };
 
+    // ===== ৩. ফাইল সাবমিট =====
     const dropZone = document.getElementById("dropZone");
     const fileInput = document.getElementById("fileInput");
     const fileInfo = document.getElementById("fileInfo");
@@ -679,7 +740,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
           const items = [];
 
-          // 🔥 কোনো রো স্কিপ হবে না — প্রথম রো (Row 1) থেকেই সব ডাটা পড়বে
+          // কোনো রো স্কিপ হবে না — প্রথম রো (Row 1) থেকেই সব ডাটা পড়বে
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
@@ -689,7 +750,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
               item[f.key] = String(row[idx] || "").trim();
             });
 
-            // প্রথম ফিল্ড (UID/Email/Username) থাকলেই সাবমিট হবে
             if (item[fields[0].key]) items.push(item);
           }
 
