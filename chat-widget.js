@@ -8,11 +8,15 @@ import {
 // ==================================================
 // ⚙️ সেটিংস
 // ==================================================
-const AI_URL = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
-  ? "/api/ai-support"
-  : "https://adq-income-zone.vercel.app/api/ai-support";
+const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
+  ? ""
+  : "https://adq-income-zone.vercel.app";
+const AI_URL = API_BASE + "/api/ai-support";
+const WITHDRAW_URL = API_BASE + "/api/withdraw";
 
 const AI_WHEN_ADMIN_ONLINE = true;
+
+const METHOD_LABEL = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket" };
 
 function injectChatStyles() {
   if (document.getElementById("adq-chat-styles")) return;
@@ -58,6 +62,28 @@ function injectChatStyles() {
     body .chat-send:disabled { background: rgba(255,255,255,.12); box-shadow: none; cursor: not-allowed; }
     body .chat-empty { text-align: center; color: #9a9bb8; padding: 40px 20px; font-size: 13px; }
     body .chat-empty .em { font-size: 48px; display: block; margin-bottom: 10px; animation: fabFloat 3s ease-in-out infinite; }
+
+    /* 🔒 Secure withdraw confirm popup */
+    .adq-wd-overlay { position: fixed; inset: 0; z-index: 10050; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(3,3,12,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); font-family: 'Hind Siliguri', 'Inter', sans-serif; }
+    .adq-wd-overlay.show { display: flex; }
+    .adq-wd-card { width: 100%; max-width: 360px; background: linear-gradient(180deg, #1b1b38, #0e0e22); border: 1px solid rgba(255,255,255,.14); border-radius: 22px; padding: 22px 20px 18px; color: #f4f4ff; box-shadow: 0 30px 80px -10px rgba(0,0,0,.9); animation: msgIn .3s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .adq-wd-card h3 { margin: 0 0 4px; font-size: 17px; font-weight: 700; }
+    .adq-wd-card .sub { margin: 0 0 14px; font-size: 12px; color: #a7f3d0; }
+    .adq-wd-rows { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; padding: 4px 14px; margin-bottom: 14px; }
+    .adq-wd-row { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; font-size: 13.5px; border-bottom: 1px dashed rgba(255,255,255,.1); }
+    .adq-wd-row:last-child { border-bottom: none; }
+    .adq-wd-row span:first-child { color: #9a9bb8; }
+    .adq-wd-row b { color: #fff; word-break: break-all; text-align: right; }
+    .adq-wd-pw { position: relative; margin-bottom: 8px; }
+    .adq-wd-pw input { width: 100%; box-sizing: border-box; padding: 12px 44px 12px 14px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,.15); background: rgba(255,255,255,.06); color: #fff; font-size: 14px; font-family: inherit; outline: none; margin: 0; }
+    .adq-wd-pw input:focus { border-color: rgba(139,92,246,.9); box-shadow: 0 0 0 4px rgba(139,92,246,.18); }
+    .adq-wd-eye { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #cbd5e1; font-size: 17px; cursor: pointer; padding: 6px 8px; }
+    .adq-wd-err { min-height: 18px; margin: 0 0 10px; font-size: 12.5px; color: #fca5a5; }
+    .adq-wd-btns { display: flex; gap: 10px; }
+    .adq-wd-btns button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: .2s; }
+    .adq-wd-cancel { background: rgba(255,255,255,.1); color: #e5e7eb; }
+    .adq-wd-ok { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 10px 22px -8px rgba(139,92,246,.95); }
+    .adq-wd-btns button:disabled { opacity: .55; cursor: not-allowed; }
   `;
   document.head.appendChild(s);
 }
@@ -67,6 +93,11 @@ let userName = "User";
 let chatId = null;
 let unsubMsgs = null;
 let recentMessages = [];
+
+function newRequestId() {
+  if (window.crypto?.randomUUID) return crypto.randomUUID().replace(/-/g, "");
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+}
 
 export function initChatWidget() {
   if (document.getElementById("chatWidgetFab")) return;
@@ -105,24 +136,152 @@ export function initChatWidget() {
       <div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>
     </div>
     <div class="chat-input-bar">
-      <input type="text" id="chatInput" placeholder="আপনার প্রশ্ন লিখুন..." maxlength="500">
+      <input type="text" id="chatInput" placeholder="আপনার প্রশ্ন লিখুন..." maxlength="500" autocomplete="off">
       <button class="chat-send" id="chatSendBtn" aria-label="Send">➤</button>
     </div>
   `;
   document.body.appendChild(panel);
+
+  // 🔒 Secure withdraw popup (চ্যাটের বাইরে, আলাদা)
+  const overlay = document.createElement("div");
+  overlay.className = "adq-wd-overlay";
+  overlay.id = "adqWdOverlay";
+  overlay.innerHTML = `
+    <div class="adq-wd-card" role="dialog" aria-modal="true" aria-labelledby="adqWdTitle">
+      <h3 id="adqWdTitle">🔒 উইথড্র নিশ্চিত করুন</h3>
+      <p class="sub">পাসওয়ার্ড চ্যাটে সেভ হয় না, সরাসরি নিরাপদ সার্ভারে যায়।</p>
+      <div class="adq-wd-rows">
+        <div class="adq-wd-row"><span>টাকা</span><b id="adqWdAmount"></b></div>
+        <div class="adq-wd-row"><span>মেথড</span><b id="adqWdMethod"></b></div>
+        <div class="adq-wd-row"><span>নম্বর</span><b id="adqWdAccount"></b></div>
+      </div>
+      <div class="adq-wd-pw">
+        <input type="password" id="adqWdPass" placeholder="আপনার অ্যাকাউন্টের পাসওয়ার্ড" autocomplete="current-password">
+        <button type="button" class="adq-wd-eye" id="adqWdEye" aria-label="Show password">👁</button>
+      </div>
+      <p class="adq-wd-err" id="adqWdErr"></p>
+      <div class="adq-wd-btns">
+        <button type="button" class="adq-wd-cancel" id="adqWdCancel">বাতিল</button>
+        <button type="button" class="adq-wd-ok" id="adqWdOk">নিশ্চিত করুন</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 
   const body = document.getElementById("chatBody");
   const input = document.getElementById("chatInput");
   const sendBtn = document.getElementById("chatSendBtn");
   const badge = document.getElementById("chatBadge");
 
+  const wdAmount = document.getElementById("adqWdAmount");
+  const wdMethod = document.getElementById("adqWdMethod");
+  const wdAccount = document.getElementById("adqWdAccount");
+  const wdPass = document.getElementById("adqWdPass");
+  const wdErr = document.getElementById("adqWdErr");
+  const wdOk = document.getElementById("adqWdOk");
+  const wdCancel = document.getElementById("adqWdCancel");
+  const wdEye = document.getElementById("adqWdEye");
+
   let adminOnline = false;
   let waitingAI = false;
   let sending = false;
   let lastDocs = [];
+  let pendingWithdraw = null; // { amount, method, account, requestId }
+  let withdrawing = false;
 
   const EMPTY_HTML = `<div class="chat-empty"><span class="em">👋</span>স্বাগতম! আমাদের এআই অ্যাসিস্ট্যান্ট আপনাকে সাহায্য করতে প্রস্তুত।</div>`;
 
+  // ---------- Withdraw popup ----------
+  function openWithdrawModal(action) {
+    pendingWithdraw = {
+      amount: Number(action.amount),
+      method: String(action.method || ""),
+      account: String(action.account || ""),
+      requestId: newRequestId()
+    };
+    wdAmount.textContent = "৳" + pendingWithdraw.amount;
+    wdMethod.textContent = METHOD_LABEL[pendingWithdraw.method] || pendingWithdraw.method;
+    wdAccount.textContent = pendingWithdraw.account;
+    wdPass.value = "";
+    wdPass.type = "password";
+    wdErr.textContent = "";
+    wdOk.disabled = false;
+    wdCancel.disabled = false;
+    overlay.classList.add("show");
+    setTimeout(() => wdPass.focus(), 150);
+  }
+
+  function closeWithdrawModal() {
+    wdPass.value = "";       // 🔒 পাসওয়ার্ড সবসময় মুছে ফেলা
+    wdPass.type = "password";
+    wdErr.textContent = "";
+    pendingWithdraw = null;
+    withdrawing = false;
+    overlay.classList.remove("show");
+  }
+
+  wdEye.onclick = () => { wdPass.type = wdPass.type === "password" ? "text" : "password"; };
+  wdCancel.onclick = () => { if (!withdrawing) closeWithdrawModal(); };
+
+  async function confirmWithdraw() {
+    if (withdrawing || !pendingWithdraw || !currentUser) return;
+    const password = wdPass.value;
+    if (!password) { wdErr.textContent = "পাসওয়ার্ড দিন।"; return; }
+
+    withdrawing = true;
+    wdOk.disabled = true;
+    wdCancel.disabled = true;
+    wdErr.textContent = "";
+    wdOk.textContent = "অপেক্ষা করুন...";
+
+    try {
+      const token = await currentUser.getIdToken();
+      const res = await fetch(WITHDRAW_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+        body: JSON.stringify({
+          amount: pendingWithdraw.amount,
+          method: pendingWithdraw.method,
+          account: pendingWithdraw.account,
+          requestId: pendingWithdraw.requestId,
+          password
+        })
+      });
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+
+      if (data?.ok) {
+        const reply = data.reply || "✅ উইথড্র রিকোয়েস্ট জমা হয়েছে।";
+        closeWithdrawModal();
+        await postAIMessage(reply);
+      } else {
+        wdErr.textContent = data?.reply || "❌ কাজটি সম্পন্ন হয়নি। আবার চেষ্টা করুন।";
+        wdPass.value = "";
+        wdPass.focus();
+        // লক হয়ে গেলে ফর্ম বন্ধ করে চ্যাটে জানানো
+        if (res.status === 429) {
+          const msg = data?.reply || "🔒 কিছুক্ষণ পর আবার চেষ্টা করুন।";
+          closeWithdrawModal();
+          await postAIMessage(msg);
+        }
+      }
+    } catch (e) {
+      console.error("withdraw error:", e);
+      wdErr.textContent = "⚠️ নেটওয়ার্ক সমস্যা। ইন্টারনেট চেক করে আবার চেষ্টা করুন।";
+    } finally {
+      withdrawing = false;
+      wdOk.disabled = false;
+      wdCancel.disabled = false;
+      wdOk.textContent = "নিশ্চিত করুন";
+    }
+  }
+
+  wdOk.onclick = confirmWithdraw;
+  wdPass.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); confirmWithdraw(); }
+  });
+
+  // ---------- Online status ----------
   function paintOnline(isOnline) {
     adminOnline = !!isOnline;
     const dot = document.getElementById("chatOnlineDot");
@@ -149,6 +308,7 @@ export function initChatWidget() {
     }, () => {});
   }
 
+  // ---------- Render ----------
   function render() {
     if (!lastDocs.length && !waitingAI) { body.innerHTML = EMPTY_HTML; return; }
     let html = lastDocs.map(d => {
@@ -222,7 +382,7 @@ export function initChatWidget() {
     return h.slice(-6);
   }
 
-  // 🚀 AI থেকে উত্তর আনা এবং এরর চ্যাটে দেখানো
+  // ---------- AI reply ----------
   async function getAIReply(text) {
     try {
       const token = await currentUser.getIdToken();
@@ -231,28 +391,51 @@ export function initChatWidget() {
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
         body: JSON.stringify({ message: text, history: buildHistory(text) })
       });
-      
+
       let data = null;
       try { data = await res.json(); } catch (e) {}
-      
-      // যদি সার্ভার থেকে এরর আসে বা রেসপন্স ঠিক না থাকে
+
       if (!res.ok || !data || data.error) {
         console.error("🔥 AI API ERROR:", res.status, data);
         return { reply: `⚠️ সিস্টেম এরর: ${data?.error || data?.reply || res.status}` };
       }
-      
       return data;
     } catch (e) {
       console.error("🔥 AI FETCH ERROR:", e);
-      return { reply: "⚠️ নেটওয়ার্ক সমস্যা হচ্ছে। ইন্টারনেট চেক করুন।" };
+      return { reply: "⚠️ নেটওয়ার্ক সমস্যা হচ্ছে। ইন্টারনেট চেক করুন।" };
     }
   }
 
+  // AI/সিস্টেমের মেসেজ চ্যাটে সেভ করা
+  async function postAIMessage(text, needsHuman = false) {
+    if (!chatId || !text) return;
+    try {
+      await addDoc(collection(db, "chats", chatId, "messages"), {
+        sender: "admin",
+        senderName: "ADQ Support",
+        text,
+        isAI: true,
+        createdAt: serverTimestamp(),
+        readByAdmin: true,
+        readByUser: true
+      });
+      const updates = {
+        lastMessage: text,
+        lastMessageAt: serverTimestamp(),
+        lastSender: "admin",
+        unreadForUser: panel.classList.contains("open") ? 0 : increment(1)
+      };
+      if (needsHuman) updates.unreadForAdmin = increment(1);
+      await updateDoc(doc(db, "chats", chatId), updates);
+    } catch (e) { console.error("postAIMessage:", e); }
+  }
+
+  // ---------- Send ----------
   async function sendMessage() {
-    if (sending) return; 
+    if (sending) return;
     const text = input.value.trim();
     if (!text || !currentUser) return;
-    
+
     sending = true;
     input.value = "";
     sendBtn.disabled = true;
@@ -302,33 +485,23 @@ export function initChatWidget() {
     waitingAI = false; render();
 
     if (aiData && aiData.reply) {
-      try {
-        await addDoc(collection(db, "chats", chatId, "messages"), {
-          sender: "admin",
-          senderName: "ADQ Support",
-          text: aiData.reply,
-          isAI: true,
-          createdAt: serverTimestamp(),
-          readByAdmin: true,
-          readByUser: true
-        });
-        const updates = {
-          lastMessage: aiData.reply,
-          lastMessageAt: serverTimestamp(),
-          lastSender: "admin",
-          unreadForUser: panel.classList.contains("open") ? 0 : increment(1)
-        };
-        if (aiData.needsHuman) updates.unreadForAdmin = increment(1);
-        await updateDoc(chatRef, updates);
-      } catch (e) {}
+      await postAIMessage(aiData.reply, !!aiData.needsHuman);
+    }
+
+    // 🔒 AI তথ্য নিশ্চিত করলে সিকিউর পাসওয়ার্ড ফর্ম খোলা
+    if (aiData?.action?.type === "withdraw_confirm") {
+      openWithdrawModal(aiData.action);
     }
 
     sending = false;
     sendBtn.disabled = false;
+    if (panel.classList.contains("open") && !overlay.classList.contains("show")) input.focus();
   }
 
   sendBtn.onclick = sendMessage;
-  input.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); sendMessage(); }
+  });
 }
 
 function escapeHtml(s) {
