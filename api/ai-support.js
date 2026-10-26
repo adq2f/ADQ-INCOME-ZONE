@@ -2,8 +2,10 @@ import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount, sendRese
 
 export const config = { maxDuration: 30 };
 
-// ✅ বর্তমান মডেল (Oct 2026)। 1.5 / 2.0 / 2.5 বন্ধ বা বন্ধ হওয়ার পথে।
-// Vercel এ GEMINI_MODELS env দিলে সেটাই চলবে — না দিলে নিচেরটা।
+// 🐞 DEBUG default ON. পরে বন্ধ করতে Vercel এ DEBUG_AI=0 দিন।
+const DEBUG = process.env.DEBUG_AI !== "0";
+
+// ✅ বর্তমান মডেল (Oct 2026)। Vercel এ GEMINI_MODELS env দিলে সেটাই চলবে।
 const MODELS = (process.env.GEMINI_MODELS ||
   "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite,gemini-flash-latest")
   .split(",").map(s => s.trim()).filter(Boolean);
@@ -12,6 +14,9 @@ const TOTAL_BUDGET_MS = 25000;
 const PER_CALL_TIMEOUT_MS = 12000;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+const BUSY_MSG = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+const withDebug = (msg, info) => (DEBUG && info ? `${msg}\n\n🐞 DEBUG:\n${info}` : msg);
+
 async function callGemini(payload, apiKey, deadline, state) {
   for (const model of MODELS) {
     let body = payload;
@@ -19,7 +24,10 @@ async function callGemini(payload, apiKey, deadline, state) {
 
     for (let attempt = 0; attempt < 2; attempt++) {
       const remaining = deadline - Date.now();
-      if (remaining < 2000) return null;
+      if (remaining < 2000) {
+        state.errors.push("time budget শেষ");
+        return null;
+      }
 
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), Math.min(PER_CALL_TIMEOUT_MS, remaining - 500));
@@ -39,9 +47,12 @@ async function callGemini(payload, apiKey, deadline, state) {
 
         if (r.ok && d?.candidates?.[0]?.content?.parts?.length) return d;
 
-        const msg = d?.error?.message || "";
-        state.lastError = `[${model}] ${r.status} ${msg}`.slice(0, 300);
-        console.error("Gemini error", state.lastError);
+        // 200 কিন্তু খালি রেসপন্স (safety block ইত্যাদি)
+        const finish = d?.candidates?.[0]?.finishReason || d?.promptFeedback?.blockReason || "";
+        const msg = d?.error?.message || (r.ok ? `empty response ${finish}` : "");
+        const line = `[${model}] ${r.status} ${msg}`.slice(0, 300);
+        state.errors.push(line);
+        console.error("Gemini error", line);
 
         // মডেল নেই / বন্ধ / key সমস্যা → সরাসরি পরের মডেলে
         if ([401, 403, 404].includes(r.status)) break;
@@ -57,8 +68,9 @@ async function callGemini(payload, apiKey, deadline, state) {
         break;
       } catch (e) {
         clearTimeout(timer);
-        state.lastError = `[${model}] ${e?.name === "AbortError" ? "timeout" : (e?.message || e)}`;
-        console.error("Gemini fetch error", state.lastError);
+        const line = `[${model}] ${e?.name === "AbortError" ? "timeout" : (e?.message || e)}`;
+        state.errors.push(line);
+        console.error("Gemini fetch error", line);
         break;
       }
     }
@@ -89,25 +101,28 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const deadline = Date.now() + TOTAL_BUDGET_MS;
-  const state = { lastError: "" };
-  const DEBUG = process.env.DEBUG_AI === "1";
+  const state = { errors: [] };
 
   let db;
   try { db = getDb(); }
   catch (e) {
     console.error("Firebase admin init error:", e.message);
-    return res.status(500).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
+    return res.status(500).json({
+      reply: withDebug("সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।", `Firebase init: ${e.message}`)
+    });
   }
 
   const user = await verifyUser(req);
-  if (!user) return res.status(401).json({ error: "লগইন করুন।" });
+  if (!user) return res.status(401).json({ error: "লগইন করুন।", reply: "লগইন করুন।" });
 
   const message = typeof req.body?.message === "string" ? req.body.message.trim().slice(0, 500) : "";
   if (!message) return res.status(400).json({ reply: "মেসেজ খালি।" });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.status(200).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
+    return res.status(200).json({
+      reply: withDebug("সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।", "GEMINI_API_KEY env পাওয়া যায়নি (Vercel এ যোগ করে Redeploy করুন)")
+    });
   }
 
   let userData = {
@@ -115,6 +130,7 @@ export default async function handler(req, res) {
     wallets: {}, totalReferEarning: 0, myReferCode: "",
     recentWithdrawals: [], recentSubmissions: []
   };
+  const dbWarnings = [];
 
   try {
     const snap = await db.doc(`users/${user.uid}`).get();
@@ -146,7 +162,10 @@ export default async function handler(req, res) {
           date: w.requestedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
         });
       });
-    } catch (e) { console.error("wd history:", e.message); }
+    } catch (e) {
+      console.error("wd history:", e.message);
+      dbWarnings.push(`withdrawals query: ${e.message}`);
+    }
 
     try {
       const subSnap = await db.collection("submissions")
@@ -163,10 +182,14 @@ export default async function handler(req, res) {
           date: s.submittedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
         });
       });
-    } catch (e) { console.error("sub history:", e.message); }
+    } catch (e) {
+      console.error("sub history:", e.message);
+      dbWarnings.push(`submissions query: ${e.message}`);
+    }
 
   } catch (e) {
     console.error("Firestore read error:", e);
+    dbWarnings.push(`user read: ${e.message}`);
   }
 
   const savedWallets = Object.keys(userData.wallets).filter(k => userData.wallets[k]?.number);
@@ -276,9 +299,12 @@ ${subHistoryText}
     }, apiKey, deadline, state);
 
     if (!data) {
-      let reply = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
-      if (DEBUG) reply += `\n\nDEBUG: ${state.lastError}`;
-      return res.status(200).json({ reply });
+      const info = [
+        `Models: ${MODELS.join(", ")}`,
+        ...state.errors,
+        ...dbWarnings.map(w => `DB: ${w}`)
+      ].join("\n");
+      return res.status(200).json({ reply: withDebug(BUSY_MSG, info) });
     }
 
     const parts = data.candidates[0].content.parts;
@@ -328,7 +354,8 @@ ${subHistoryText}
           await db.doc(`users/${user.uid}`).update({ wallets: currentWallets });
           return res.status(200).json({ reply: `✅ আপনার ${method.toUpperCase()} নম্বর সেভ হয়েছে!` });
         } catch (e) {
-          return res.status(200).json({ reply: "❌ সেভ করা যায়নি।" });
+          console.error("save_wallet:", e);
+          return res.status(200).json({ reply: withDebug("❌ সেভ করা যায়নি।", `save_wallet: ${e.message}`) });
         }
       }
 
@@ -340,7 +367,8 @@ ${subHistoryText}
           await db.doc(`users/${user.uid}`).update({ username: newUsername });
           return res.status(200).json({ reply: `✅ আপনার নতুন নাম "${newUsername}" সেভ হয়েছে!` });
         } catch (e) {
-          return res.status(200).json({ reply: "❌ নাম পরিবর্তন করা যায়নি।" });
+          console.error("update_username:", e);
+          return res.status(200).json({ reply: withDebug("❌ নাম পরিবর্তন করা যায়নি।", `update_username: ${e.message}`) });
         }
       }
 
@@ -352,7 +380,7 @@ ${subHistoryText}
           });
         } else {
           return res.status(200).json({
-            reply: "❌ রিসেট লিংক পাঠানো যায়নি। আবার চেষ্টা করুন।"
+            reply: withDebug("❌ রিসেট লিংক পাঠানো যায়নি। আবার চেষ্টা করুন।", "sendResetEmail false (Vercel logs দেখুন)")
           });
         }
       }
@@ -365,8 +393,6 @@ ${subHistoryText}
 
   } catch (err) {
     console.error("Handler Error:", err);
-    let reply = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
-    if (DEBUG) reply += `\n\nDEBUG: ${err?.message || err}`;
-    return res.status(500).json({ reply });
+    return res.status(500).json({ reply: withDebug(BUSY_MSG, `Handler: ${err?.message || err}`) });
   }
 }
