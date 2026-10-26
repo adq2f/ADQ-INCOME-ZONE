@@ -66,6 +66,13 @@ select.inp option{background:#12122a;color:#fff}
 .acard h3{margin:0 0 6px;font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px}
 .acard .hi{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(99,102,241,.22)}
 .acard .sub{margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+
+/* ===== বাটন (.cta) — এই পেজে আগে base style ছিল না ===== */
+.cta{display:block;width:100%;border:none;cursor:pointer;border-radius:16px;padding:16px;color:#fff;font-size:16px;font-weight:700;text-align:center;transition:.25s}
+.cta:hover:not(:disabled){transform:translateY(-2px)}
+.cta:disabled{opacity:.6;cursor:not-allowed}
+.cta.green{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 16px 32px -12px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+.cta.purple{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 16px 32px -12px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.3)}
 .cta.red{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 16px 32px -12px rgba(239,68,68,.9),inset 0 1px 0 rgba(255,255,255,.3)}
 .cta.amber{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);box-shadow:0 16px 34px -10px rgba(245,158,11,.9),inset 0 1px 0 rgba(255,255,255,.4);color:#2a1700}
 .cta.outline{background:rgba(255,255,255,.05);border:1.5px solid rgba(139,92,246,.55);color:#c4b5fd;box-shadow:none}
@@ -195,6 +202,16 @@ select.inp option{background:#12122a;color:#fff}
 .cleanup-list li{padding:9px 12px;border-radius:12px;background:rgba(0,0,0,.22);margin-bottom:6px;font-size:13px;font-weight:600}
 .cleanup-list li.ok{background:rgba(16,185,129,.1);color:#a7f3d0}
 .cleanup-card a.cta{display:block}
+
+/* ===== Result Process modal ===== */
+.mbk{position:fixed;inset:0;z-index:120;background:rgba(3,3,10,.8);display:none;align-items:center;justify-content:center;padding:12px}
+.mbk.show{display:flex}
+.mbx{width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:26px;padding:20px;background:#12122a;border:1px solid rgba(255,255,255,.14)}
+.mbx h3{margin:0 0 6px;font-size:18px}
+.mbx .sub{margin:0 0 12px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.pv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.pv div{padding:12px;border-radius:16px;text-align:center;background:rgba(255,255,255,.05);font-size:12px;color:var(--muted)}
+.pv b{display:block;font-family:Inter;font-size:24px;color:#fff}
 </style>
 </head>
 <body>
@@ -413,6 +430,17 @@ select.inp option{background:#12122a;color:#fff}
   </div>
 </main>
 
+<!-- Result Process modal (Bad list paste) -->
+<div class="mbk" id="badModal"><div class="mbx">
+  <h3>✅ Result Process</h3>
+  <p class="sub" id="badModalInfo"></p>
+  <textarea id="badText" class="inp ta" style="min-height:170px" placeholder="Bad UID / Password / 2FA paste koro (jekono format)"></textarea>
+  <div class="pv"><div>❌ Bad<b id="pvBad">0</b></div><div>✅ Good<b id="pvGood">0</b></div></div>
+  <p class="sub" id="pvMiss"></p>
+  <button class="cta green" id="badConfirm">✅ Process</button>
+  <button class="cta outline" id="badCancel">Cancel</button>
+</div></div>
+
 <div class="admin-action-bar" id="actionBar">
   <span class="count" id="selectedCount">0 selected</span>
   <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
@@ -423,7 +451,9 @@ select.inp option{background:#12122a;color:#fff}
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    
+
+    const $ = (id) => document.getElementById(id);
+
     function esc(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -777,6 +807,8 @@ select.inp option{background:#12122a;color:#fff}
           }
           row[f.label] = (v === undefined || v === null) ? "" : String(v);
         });
+        // ফাইলে বাড়তি কলাম থাকলে সেগুলোও এক্সপোর্টে থাকবে
+        (Array.isArray(s.allCells) ? s.allCells.slice(fields.length) : []).forEach((v, i) => { row["Extra " + (i + 1)] = v; });
         row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) || "";
         row["Status"] = s.status || "pending";
         return row;
@@ -793,127 +825,168 @@ select.inp option{background:#12122a;color:#fff}
       XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`);
     };
 
-    window.openProcessFor = function(key) {
-      const items = loadedGroups[key] || [];
-      const pending = items.filter(s => s.status === "pending");
-      if (pending.length === 0) return alert("এই file-এ কোনো pending নেই!");
-      const badText = prompt(`📁 File: ${key}\n\n${pending.length} টা pending-এর জন্য Bad লিস্ট পেস্ট করো:\n(UID / Password / 2FA — যেকোনো কলামের ভ্যালু দিলেই সেই রো Bad হবে)\n\nখালি রাখলে সব Good হবে।`);
-      if (badText === null) return;
-      if (!confirm(`${pending.length} টা process করবে?`)) return;
-      processGroup(key, badText.trim());
+    /* =====================================================================
+       RESULT PROCESS
+       Bad লিস্টের যেকোনো একটি শব্দও ইউজারের যেকোনো ফিল্ডের সাথে মিললে রো Bad,
+       বাকি সব রো Good। (লাইন / tab / | / comma / space — সব ভেঙে মেলানো হয়)
+       ===================================================================== */
+    let modalKey = null, processing = false;
+
+    function parseBad(text) {
+      const set = new Set();
+      const lines = String(text || "").split(/\r\n|\r|\n/).map(x => x.trim()).filter(Boolean);
+      lines.forEach(l => {
+        set.add(l.toLowerCase());
+        l.split(/[\t|,;\s]+/).filter(Boolean).forEach(t => set.add(t.toLowerCase()));
+      });
+      return { set, lines };
+    }
+
+    function matchBad(sub, fields, set) {
+      for (const f of fields) {
+        const v = String(sub[f.key] ?? "").trim().toLowerCase();
+        if (v && set.has(v)) return v;
+      }
+      return "";
+    }
+
+    function previewBad() {
+      if (!loadedTask || !modalKey) return;
+      const items = (loadedGroups[modalKey] || []).filter(s => s.status === "pending");
+      const fields = loadedTask.fields || [{ key: "uid" }];
+      const { set, lines } = parseBad($("badText").value);
+      const hits = new Set();
+      let bad = 0;
+      items.forEach(s => { const m = matchBad(s, fields, set); if (m) { bad++; hits.add(m); } });
+      $("pvBad").textContent = bad;
+      $("pvGood").textContent = items.length - bad;
+      const miss = lines.filter(l => !hits.has(l.toLowerCase()) && !l.split(/[\t|,;\s]+/).some(t => hits.has(t.toLowerCase()))).length;
+      $("pvMiss").textContent = lines.length ? `⚠️ ${miss} লাইন কোনো রো-তে মেলেনি` : "খালি রাখলে সব Good হবে";
+    }
+
+    $("badText").oninput = previewBad;
+    $("badCancel").onclick = () => $("badModal").classList.remove("show");
+
+    window.openProcessFor = (key) => {
+      const n = (loadedGroups[key] || []).filter(s => s.status === "pending").length;
+      if (!n) return alert("এই file-এ কোনো pending নেই!");
+      modalKey = key;
+      $("badText").value = "";
+      $("badModalInfo").textContent = `📁 ${key} • ${n} টা pending`;
+      previewBad();
+      $("badModal").classList.add("show");
+    };
+
+    $("badConfirm").onclick = () => {
+      const bad = +$("pvBad").textContent, good = +$("pvGood").textContent;
+      if (!confirm(`❌ Bad ${bad} • ✅ Good ${good}\nProcess করবে?`)) return;
+      $("badModal").classList.remove("show");
+      processGroup(modalKey, $("badText").value);
     };
 
     async function processGroup(key, badText) {
-      const items = loadedGroups[key] || [];
-      const pending = items.filter(s => s.status === "pending");
-      if (pending.length === 0) return alert("Pending নেই!");
-      
-      const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
-      const badSet = new Set(badText.split("\n").map(x => x.trim()).filter(Boolean));
-      const output = document.getElementById("resultOutput");
-      output.innerHTML = `<div class="result-box" style="text-align:center"><div class="spinner" style="margin:0 auto 10px;width:34px;height:34px;border:3px solid rgba(255,255,255,.12);border-top-color:#8b5cf6;border-radius:50%;animation:sp 1s linear infinite"></div><div>Processing ${pending.length}...</div></div><style>@keyframes sp{to{transform:rotate(360deg)}}</style>`;
-      
+      if (processing) return;
+      processing = true;
+      const out = $("resultOutput");
       try {
-        const price = loadedTask.pricePerAccount;
-        const referCommission = loadedTask.referCommission || 0;
-        let goodCount = 0, badCount = 0;
-        const userUpdates = {};
-        const goodUidsByUser = {};
-        
-        for (const sub of pending) {
-          // ✅ যেকোনো ফিল্ডের ভ্যালু badSet-এ থাকলেই সেই রো Bad
-          let isBad = false;
-          for (const f of fields) {
-            const val = String(sub[f.key] || "").trim();
-            if (val && badSet.has(val)) {
-              isBad = true;
-              break;
+        const fields = loadedTask.fields || [{ key: "uid" }];
+        const { set } = parseBad(badText);
+        const ids = new Set((loadedGroups[key] || []).map(s => s.id));
+
+        // ফ্রেশ ডাটা: যেগুলো এখনো pending শুধু সেগুলোই (আবার process দিলে ডাবল টাকা যাবে না)
+        const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", loadedTask.id)));
+        const pending = snap.docs
+          .filter(d => ids.has(d.id) && d.data().status === "pending")
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => String(a.userId).localeCompare(String(b.userId)));
+        if (!pending.length) { out.innerHTML = `<div class="empty"><div class="em">📭</div>Pending নেই</div>`; return; }
+
+        const price = Number(loadedTask.pricePerAccount) || 0;
+        const rc = Number(loadedTask.referCommission) || 0;
+        const cache = new Map();
+        const getU = async (uid) => {
+          if (!uid) return null;
+          if (!cache.has(uid)) {
+            let u = null;
+            try { const s = await getDoc(doc(db, "users", uid)); u = s.exists() ? s.data() : null; } catch (e) {}
+            cache.set(uid, u);
+          }
+          return cache.get(uid);
+        };
+
+        let good = 0, bad = 0, refTotal = 0, done = 0;
+        const BATCH = 100;   // ১০০ submission + user + refer update = ৫০০-এর অনেক নিচে
+
+        for (let i = 0; i < pending.length; i += BATCH) {
+          const chunk = pending.slice(i, i + BATCH);
+          const batch = writeBatch(db);
+          const per = {};
+          const refAdd = {};
+
+          for (const s of chunk) {
+            const isBad = !!matchBad(s, fields, set);
+            batch.update(doc(db, "submissions", s.id), {
+              status: isBad ? "bad" : "good",
+              earned: isBad ? 0 : price,
+              checkedAt: new Date()
+            });
+            const p = per[s.userId] || (per[s.userId] = { g: 0, b: 0 });
+            if (isBad) { p.b++; bad++; } else { p.g++; good++; }
+          }
+
+          for (const [uid, p] of Object.entries(per)) {
+            const u = await getU(uid);
+            if (!u) continue;   // user মুছে গেলে শুধু submission আপডেট হবে
+            batch.update(doc(db, "users", uid), {
+              balance: increment(p.g * price),
+              totalGood: increment(p.g),
+              totalBad: increment(p.b),
+              totalPending: increment(-(p.g + p.b))
+            });
+
+            const rid = u.referredBy;
+            if (rc > 0 && p.g > 0 && rid && rid !== uid) {
+              const r = await getU(rid);
+              if (!r) continue;
+              let c = rc;
+              if (r.customReferCommission !== null && r.customReferCommission !== undefined && !isNaN(r.customReferCommission)) c = Number(r.customReferCommission);
+              const earned = +(p.g * c).toFixed(4);
+              if (earned > 0) {
+                refAdd[rid] = (refAdd[rid] || 0) + earned;
+                refTotal += earned;
+                batch.set(doc(collection(db, "refer_earnings")), {
+                  referrerId: rid, referredUserId: uid, referredUsername: u.username || "User",
+                  taskId: loadedTask.id, taskTitle: loadedTask.title,
+                  goodAccounts: p.g, commissionPerAccount: c, totalEarned: earned, createdAt: new Date()
+                });
+              }
             }
           }
-          
-          await updateDoc(doc(db, "submissions", sub.id), {
-            status: isBad ? "bad" : "good",
-            earned: isBad ? 0 : price,
-            checkedAt: new Date()
-          });
-          
-          if (!userUpdates[sub.userId]) userUpdates[sub.userId] = { good: 0, bad: 0, earned: 0 };
-          if (isBad) { 
-            userUpdates[sub.userId].bad++; 
-            badCount++; 
-          } else {
-            userUpdates[sub.userId].good++;
-            userUpdates[sub.userId].earned += price;
-            goodCount++;
-            if (!goodUidsByUser[sub.userId]) goodUidsByUser[sub.userId] = 0;
-            goodUidsByUser[sub.userId]++;
+          for (const [rid, amt] of Object.entries(refAdd)) {
+            batch.update(doc(db, "users", rid), { balance: increment(amt), totalReferEarning: increment(amt) });
           }
+
+          await batch.commit();
+          done += chunk.length;
+          out.innerHTML = `<div class="result-box"><h3>⏳ Processing ${done}/${pending.length}...</h3></div>`;
         }
-        
-        for (const [userId, data] of Object.entries(userUpdates)) {
-          const uRef = doc(db, "users", userId);
-          await updateDoc(uRef, {
-            balance: increment(data.earned),
-            totalGood: increment(data.good),
-            totalBad: increment(data.bad),
-            totalPending: increment(-(data.good + data.bad))
-          });
-        }
-        
-        let totalReferCommission = 0;
-        let referrerCount = 0;
-        if (referCommission > 0) {
-          for (const [userId, goodAccounts] of Object.entries(goodUidsByUser)) {
-            const uSnap = await getDoc(doc(db, "users", userId));
-            if (!uSnap.exists()) continue;
-            const u = uSnap.data();
-            const referrerId = u.referredBy;
-            if (!referrerId) continue;
-            const refRef = doc(db, "users", referrerId);
-            const refSnap = await getDoc(refRef);
-            if (!refSnap.exists()) continue;
-            const refData = refSnap.data();
-            let effectiveCommission = referCommission;
-            if (refData.customReferCommission !== null && refData.customReferCommission !== undefined && !isNaN(refData.customReferCommission)) {
-              effectiveCommission = refData.customReferCommission;
-            }
-            const earned = goodAccounts * effectiveCommission;
-            
-            await updateDoc(refRef, {
-              balance: increment(earned),
-              totalReferEarning: increment(earned)
-            });
-            
-            await addDoc(collection(db, "refer_earnings"), {
-              referrerId: referrerId,
-              referredUserId: userId,
-              referredUsername: u.username || "User",
-              taskId: loadedTask.id,
-              taskTitle: loadedTask.title,
-              goodAccounts: goodAccounts,
-              commissionPerAccount: effectiveCommission,
-              totalEarned: earned,
-              createdAt: new Date()
-            });
-            totalReferCommission += earned;
-            referrerCount++;
-          }
-        }
-        
-        output.innerHTML = `
+
+        out.innerHTML = `
           <div class="result-box">
             <h3>✅ File Processed!</h3>
             <p><b>📁 ${esc(key)}</b></p>
             <p>Total: <b>${pending.length}</b></p>
-            <p>✅ Good: <span class="big" style="color:#34d399">${goodCount}</span></p>
-            <p>❌ Bad: <span class="big" style="color:#f87171">${badCount}</span></p>
-            <p>💰 User Added: <span class="big" style="color:#fbbf24">৳${goodCount * price}</span></p>
-            ${referCommission > 0 ? `<p style="margin-top:10px">🎁 Refer Commission: <span class="big" style="color:#c4b5fd">৳${totalReferCommission.toFixed(2)}</span></p><p style="font-size:13px">${referrerCount} referrer-এ split হয়েছে</p>` : ''}
+            <p>✅ Good: <span class="big" style="color:#34d399">${good}</span></p>
+            <p>❌ Bad: <span class="big" style="color:#f87171">${bad}</span></p>
+            <p>💰 User Added: <span class="big" style="color:#fbbf24">৳${good * price}</span></p>
+            ${rc > 0 ? `<p style="margin-top:10px">🎁 Refer Commission: <span class="big" style="color:#c4b5fd">৳${refTotal.toFixed(2)}</span></p>` : ""}
           </div>`;
-        setTimeout(() => document.getElementById("loadBtn").click(), 800);
+        setTimeout(() => $("loadBtn").click(), 800);
         loadStats();
       } catch (e) {
-        output.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`;
+        out.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}<br>আবার Process দিলে শুধু বাকি Pending গুলো হবে।</div>`;
+      } finally {
+        processing = false;
       }
     }
 
@@ -931,6 +1004,12 @@ select.inp option{background:#12122a;color:#fff}
           if (c >= 400) { await batch.commit(); batch = writeBatch(db); c = 0; }
         }
         if (c > 0) await batch.commit();
+
+        // pending submission মুছলে user-এর totalPending ও কমবে
+        const pend = {};
+        items.filter(s => s.status === "pending").forEach(s => { pend[s.userId] = (pend[s.userId] || 0) + 1; });
+        await Promise.allSettled(Object.entries(pend).map(([u, n]) => updateDoc(doc(db, "users", u), { totalPending: increment(-n) })));
+
         alert(`✅ ${items.length} টা delete!`);
         document.getElementById("loadBtn").click();
         loadStats();
@@ -1062,43 +1141,61 @@ select.inp option{background:#12122a;color:#fff}
       renderUsers(); updateActionBar();
     };
 
-    document.getElementById("deleteSelectedBtn").onclick = async () => {
-      if (selectedUsers.size === 0) return;
-      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete? (account + submissions + withdrawals)`)) return;
-      if (!confirm("💀 সত্যিই?")) return;
-      try {
-        let count = 0;
-        for (const uid of selectedUsers) {
-          if (uid === auth.currentUser?.uid) continue;
-          const subQ = query(collection(db, "submissions"), where("userId", "==", uid));
-          const subSnap = await getDocs(subQ);
-          let batch = writeBatch(db);
-          let bc = 0;
-          for (const d of subSnap.docs) {
-            batch.delete(d.ref);
-            bc++;
-            if (bc >= 400) { await batch.commit(); batch = writeBatch(db); bc = 0; }
-          }
-          if (bc > 0) await batch.commit();
+    /* =====================================================================
+       USER DELETE (Admin Cleanup) — কোনো orphan data থাকবে না
+       ⚠️ collection / field নাম আপনার ডাটাবেস অনুযায়ী মিলিয়ে নিন
+       ===================================================================== */
+    const USER_DATA = [
+      ["submissions", "userId"],
+      ["withdrawals", "userId"],
+      ["completed_tasks", "userId"],
+      ["reports", "userId"],
+      ["refer_earnings", "referrerId"],
+      ["refer_earnings", "referredUserId"]
+    ];
+    const CHAT_COL = "chats", CHAT_SUB = "messages";
 
-          const wdQ = query(collection(db, "withdrawals"), where("userId", "==", uid));
-          const wdSnap = await getDocs(wdQ);
-          let batch2 = writeBatch(db);
-          let c2 = 0;
-          for (const d of wdSnap.docs) {
-            batch2.delete(d.ref);
-            c2++;
-            if (c2 >= 400) { await batch2.commit(); batch2 = writeBatch(db); c2 = 0; }
+    async function delDocs(docs) {
+      let b = writeBatch(db), n = 0;
+      for (const d of docs) {
+        b.delete(d.ref);
+        if (++n % 400 === 0) { await b.commit(); b = writeBatch(db); }
+      }
+      if (n % 400) await b.commit();
+    }
+    const delSub = async (ref) => delDocs((await getDocs(collection(ref, CHAT_SUB))).docs);
+
+    document.getElementById("deleteSelectedBtn").onclick = async () => {
+      if (!selectedUsers.size) return;
+      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete? (account + submissions + withdrawals + chat + refer + reports)`)) return;
+      if (prompt("নিশ্চিত করতে DELETE লিখুন") !== "DELETE") return;
+      let count = 0;
+      const warns = new Set();
+      try {
+        for (const uid of selectedUsers) {
+          const u = allUsers.find(x => x.id === uid);
+          if (uid === auth.currentUser?.uid || u?.role === "admin") continue;
+
+          for (const [col, field] of USER_DATA) {
+            try { await delDocs((await getDocs(query(collection(db, col), where(field, "==", uid)))).docs); }
+            catch (e) { warns.add(col); }
           }
-          if (c2 > 0) await batch2.commit();
+
+          try {
+            const ref = doc(db, CHAT_COL, uid);
+            await delSub(ref);
+            await deleteDoc(ref);
+            const q = await getDocs(query(collection(db, CHAT_COL), where("userId", "==", uid)));
+            for (const d of q.docs) { await delSub(d.ref); await deleteDoc(d.ref); }
+          } catch (e) { warns.add("chat"); }
 
           await deleteDoc(doc(db, "users", uid));
           count++;
         }
-        alert(`✅ ${count} user delete!`);
-        selectedUsers.clear();
-        loadUsers(); updateActionBar(); loadStats();
       } catch (e) { alert("❌ " + e.message); }
+      alert(`✅ ${count} user delete!` + (warns.size ? `\n⚠️ এগুলো পুরো মোছা যায়নি: ${[...warns].join(", ")}` : ""));
+      selectedUsers.clear();
+      loadUsers(); updateActionBar(); loadStats();
     };
 
     window.editUser = (uid) => {
@@ -1396,6 +1493,10 @@ select.inp option{background:#12122a;color:#fff}
       loadReferrals();
       loadBadgeUsers();
       loadBadgedUsers();
+    });
+
+    window.addEventListener("beforeunload", (e) => {
+      if (processing) { e.preventDefault(); e.returnValue = ""; }
     });
   </script>
 
