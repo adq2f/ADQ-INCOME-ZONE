@@ -2,9 +2,10 @@ import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount, sendRese
 
 export const config = { maxDuration: 30 };
 
-// ✅ বর্তমান মডেল (1.5 / 2.0 বন্ধ হয়ে গেছে)। Vercel এ GEMINI_MODELS দিয়ে বদলানো যাবে।
+// ✅ বর্তমান মডেল (Oct 2026)। 1.5 / 2.0 / 2.5 বন্ধ বা বন্ধ হওয়ার পথে।
+// Vercel এ GEMINI_MODELS env দিলে সেটাই চলবে — না দিলে নিচেরটা।
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash")
+  "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite,gemini-flash-latest")
   .split(",").map(s => s.trim()).filter(Boolean);
 
 const TOTAL_BUDGET_MS = 25000;
@@ -42,7 +43,7 @@ async function callGemini(payload, apiKey, deadline, state) {
         state.lastError = `[${model}] ${r.status} ${msg}`.slice(0, 300);
         console.error("Gemini error", state.lastError);
 
-        // মডেল নেই / বন্ধ হয়ে গেছে / key-র সমস্যা → সরাসরি পরের মডেলে
+        // মডেল নেই / বন্ধ / key সমস্যা → সরাসরি পরের মডেলে
         if ([401, 403, 404].includes(r.status)) break;
 
         if (r.status === 400 && !stripped && body.generationConfig) {
@@ -130,17 +131,17 @@ export default async function handler(req, res) {
     }
 
     try {
-      const wdQuery = db.collection("withdrawals")
+      const wdSnap = await db.collection("withdrawals")
         .where("userId", "==", user.uid)
         .orderBy("requestedAt", "desc")
-        .limit(5);
-      const wdSnap = await wdQuery.get();
+        .limit(5)
+        .get();
       wdSnap.forEach(doc => {
         const w = doc.data();
         userData.recentWithdrawals.push({
           amount: w.amount,
           method: w.method || "",
-          account: w.accountNum || w.account,
+          account: w.accountNum || w.account || "",
           status: w.status,
           date: w.requestedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
         });
@@ -148,11 +149,11 @@ export default async function handler(req, res) {
     } catch (e) { console.error("wd history:", e.message); }
 
     try {
-      const subQuery = db.collection("submissions")
+      const subSnap = await db.collection("submissions")
         .where("userId", "==", user.uid)
         .orderBy("submittedAt", "desc")
-        .limit(3);
-      const subSnap = await subQuery.get();
+        .limit(3)
+        .get();
       subSnap.forEach(doc => {
         const s = doc.data();
         userData.recentSubmissions.push({
@@ -364,6 +365,8 @@ ${subHistoryText}
 
   } catch (err) {
     console.error("Handler Error:", err);
-    return res.status(500).json({ reply: "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।" });
+    let reply = "আমি এই মুহূর্তে একটু ব্যস্ত আছি, দয়া করে কিছুক্ষণ পর আবার চেষ্টা করুন।";
+    if (DEBUG) reply += `\n\nDEBUG: ${err?.message || err}`;
+    return res.status(500).json({ reply });
   }
 }
