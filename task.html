@@ -141,7 +141,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     <ul>
       <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
       <li>২এফএ (2FA) কোড সঠিক না হলে অ্যাকাউন্ট বাদ পড়বে।</li>
-      <li>একই পুরো রো (সব কলামের তথ্য হুবহু এক) আগে সাবমিট হয়ে থাকলে সেটা ডুপ্লিকেট ধরা হবে। শুধু একটা UID/পাসওয়ার্ড মিললে ডুপ্লিকেট না।</li>
+      <li>পুরো রো (UID + Password + 2FA + বাড়তি কলাম) হুবহু আগের কোনো সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট। শুধু UID বা শুধু Password মিললে ডুপ্লিকেট না।</li>
     </ul>
   </div>
 
@@ -204,7 +204,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
         <div class="bhint">
           <b>ফাইল:</b> Excel (.xlsx, .xls), CSV (.csv) অথবা TXT (.txt, .tsv)<br>
           <b>কলাম ক্রম:</b> <span id="fileFormatHint">—</span><br>
-          প্রতিটি রো = একটি অ্যাকাউন্ট। হেডার রো থাকলে নিজে থেকে বাদ যাবে। বাড়তি কলাম থাকলেও ডুপ্লিকেট চেকে ধরা হবে।
+          একদম প্রথম রো থেকে শেষ রো পর্যন্ত প্রতিটি রো = একটি অ্যাকাউন্ট (হেডার আলাদা করা হয় না, কোনো রো স্কিপ হয় না)। বাড়তি কলাম থাকলেও ডুপ্লিকেট চেকে ধরা হবে।
         </div>
 
         <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
@@ -363,16 +363,22 @@ function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1
    (একটা UID / Password / Username মিললে ডুপ্লিকেট না, সব কলাম মিলতে হবে)
    task.dupKeys = ["uid","twoFA"] দিলে শুধু ওই ফিল্ডগুলোর কম্বিনেশন চেক হবে
    ===================================================================== */
-function rowKey(item) {
-  const keys = (Array.isArray(task.dupKeys) && task.dupKeys.length) ? task.dupKeys : getFields().map(f => f.key);
-  const vals = keys.map(k => norm(item?.[k]));
+function rowKey(item, cells) {
+  if (Array.isArray(task.dupKeys) && task.dupKeys.length) {
+    const v = task.dupKeys.map(k => norm(item?.[k]));
+    return v.some(Boolean) ? v.join("\u00a7") : "";
+  }
+  // পুরো রো: টাস্কের ফিল্ড + বাড়তি কলাম, সব হুবহু মিলতে হবে
+  const arr = (Array.isArray(cells) && cells.length) ? cells : getFields().map(f => item?.[f.key]);
+  const vals = arr.map(norm);
+  while (vals.length && !vals[vals.length - 1]) vals.pop();
   return vals.some(Boolean) ? vals.join("\u00a7") : "";
 }
 
 async function loadExisting() {
   const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", taskId)));
   const set = new Set();
-  snap.forEach(d => { const k = rowKey(d.data()); if (k) set.add(k); });
+  snap.forEach(d => { const x = d.data(); const k = rowKey(x, x.allCells); if (k) set.add(k); });
   existingValues = set;
 }
 
@@ -380,7 +386,7 @@ async function loadExisting() {
 function analyze(rows) {
   const seen = new Map();   // পুরো রো key → প্রথম যে রো-তে এসেছে
   return rows.map(r => {
-    const key = rowKey(r.item);
+    const key = rowKey(r.item, r.cells);
     let status = "ok", dupOf = "";
     if (key && existingValues.has(key)) status = "dup-old";
     else if (key && seen.has(key)) { status = "dup-file"; dupOf = seen.get(key); }
@@ -491,7 +497,7 @@ function splitLine(line) {
 }
 
 // cells[i] → fields[i] (পজিশন অনুযায়ী)। বাড়তি cell থাকলে allCells-এ থাকবে
-function buildRow(cells, label) {
+function buildRow(cells, label, strict = true) {
   cells = cells.map(c => String(c ?? "").trim());
   const fields = getFields();
   const item = {};
@@ -500,8 +506,9 @@ function buildRow(cells, label) {
     item[f.key] = cells[i] || "";
     if (!item[f.key] && !f.optional) missing.push(f.label || f.key);
   });
-  if (missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
-  const clean = cells.filter(Boolean).slice(0, 40).map(c => c.slice(0, 300));
+  if (strict && missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
+  while (cells.length && !cells[cells.length - 1]) cells.pop();
+  const clean = cells.slice(0, 40).map(c => c.slice(0, 300));   // বাড়তি কলামসহ পুরো রো (পজিশন ঠিক রেখে)
   return { ok: true, row: { label: String(label), item, cells: clean } };
 }
 
@@ -558,7 +565,7 @@ async function commitRows(rows, source, onProgress) {
       batch.update(userRef, { totalPending: increment(chunk.length) });   // একই batch — count কখনো mismatch হবে না
       await batch.commit();
       success += chunk.length;
-      chunk.forEach(r => { const k = rowKey(r.item); if (k) existingValues.add(k); });
+      chunk.forEach(r => { const k = rowKey(r.item, r.cells); if (k) existingValues.add(k); });
       onProgress(success, rows.length);
     }
     return { success, error: null };
@@ -645,7 +652,7 @@ function readSingle() {
 }
 
 function singleRow(item) {
-  return { label: "1", item, cells: getFields().map(f => item[f.key]).filter(Boolean) };
+  return { label: "1", item, cells: getFields().map(f => item[f.key] || "") };
 }
 
 function checkSingleDup() {
@@ -805,46 +812,23 @@ function readFileSheets(file, ext) {
   });
 }
 
-function headerWords(fields) {
-  const s = new Set(["uid", "password", "pass", "2fa", "twofa", "2fakey", "email", "username", "id", "mail", "cookie", "cookies", "token"]);
-  fields.forEach(f => { if (f.key) s.add(hnorm(f.key)); if (f.label) s.add(hnorm(f.label)); });
-  return s;
-}
-
 function matrixToRows(sheetName, matrix, out, multi) {
   const fields = getFields(), fc = fields.length;
-  const hdr = headerWords(fields);
   const conv = matrix.map(r => Array.isArray(r) ? r.map(cellToStr) : []);
 
-  // শুরুর ফাঁকা কলাম (A, B খালি থাকলে) বাদ দেওয়ার জন্য — পুরো sheet-এর সবচেয়ে বাঁয়ের ডাটা কলাম
-  let minCol = Infinity;
-  conv.forEach(cells => {
-    const nonEmpty = cells.filter(Boolean);
-    if (!nonEmpty.length || (nonEmpty.length === 1 && fc > 1)) return;
-    const first = cells.findIndex(c => c !== "");
-    if (first >= 0) minCol = Math.min(minCol, first);
-  });
-  if (!isFinite(minCol)) minCol = 0;
-
-  let firstSeen = false;
   conv.forEach((cells0, idx) => {
     const nonEmpty = cells0.filter(Boolean);
     if (!nonEmpty.length) return;
 
     let cells;
     if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0]);   // এক cell-এ সব দেওয়া থাকলে
-    else cells = cells0.slice(minCol);
+    else cells = cells0;
 
     const label = multi ? `${sheetName}:${idx + 1}` : String(idx + 1);
 
-    if (!firstSeen) {
-      firstSeen = true;
-      const head = cells.filter(Boolean).slice(0, fc);
-      if (head.length && head.every(c => hdr.has(hnorm(c)))) { out.headers++; return; }
-    }
     if (out.rows.length + out.incomplete.length >= MAX_ROWS) { out.truncated = true; return; }
 
-    const r = buildRow(cells, label);
+    const r = buildRow(cells, label, false);   // ফাইলে কোনো রো স্কিপ হবে না
     if (r.ok) out.rows.push(r.row);
     else out.incomplete.push({ label, reason: r.reason });
   });
@@ -880,7 +864,7 @@ async function handleFile(file) {
       $("fileCountBox").style.display = "none";
       renderPreview($("filePreview"), [], out.incomplete);
       $("fileSubmitBtn").disabled = true;
-      return alert("❌ ফাইলে কোনো সম্পূর্ণ রো পাওয়া যায়নি!\n\n💡 প্রতিটি রো-তে task-এর সব কলাম পূরণ থাকতে হবে।\nকলাম ক্রম: " + $("fileFormatHint").textContent);
+      return alert("❌ ফাইলে কোনো রো পাওয়া যায়নি!\n\n💡 কলাম ক্রম: " + $("fileFormatHint").textContent);
     }
 
     fileRows = out.rows;
