@@ -10,6 +10,10 @@ export const ALLOWED_METHODS = ["bkash", "nagad", "rocket", "binance"];
 export const DEFAULT_MIN_WITHDRAW = 100;
 export const DEFAULT_MAX_WITHDRAW = 50000;
 
+// পুরনো ফাইলের সাথে compatibility (এগুলো না থাকলে পুরনো import ভেঙে যায়)
+export const MIN_WITHDRAW = DEFAULT_MIN_WITHDRAW;
+export const ACCOUNT_RE = /^(?:\+?88)?01[3-9]\d{8}$/;
+
 const SITE = "https://adq-income-zone.vercel.app";
 // এটা Firebase-এর public web key (firebase.js এ যেটা আছে) — গোপন কিছু না
 const webKey = () => process.env.FIREBASE_API_KEY || "AIzaSyCffmDp9xRUcLkqe5q4NiQubaT0iMIlDm4";
