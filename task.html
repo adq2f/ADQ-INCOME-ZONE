@@ -37,7 +37,6 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
 .skel.big{height:170px;border-radius:28px}
 @keyframes shim{to{background-position:-200% 0}}
-@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
 .dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
@@ -45,8 +44,8 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .dock a:hover{color:#fff}
 .dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
 .dock a.active svg{transform:translateY(-1px) scale(1.08)}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
+a:focus-visible,button:focus-visible,input:focus-visible,.drop-zone:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel,.drop-zone .icon{animation:none}}
 
 .th{position:relative;overflow:hidden;border-radius:28px;padding:24px 20px;margin-bottom:14px;text-align:center;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -22px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
 .th::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 62%);pointer-events:none}
@@ -78,16 +77,18 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .inp::placeholder{color:#6f7090;font-weight:400}
 .inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
 textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5px;line-height:1.6;resize:vertical}
-.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:12px;border-radius:14px;margin-bottom:14px;font-size:13px;font-weight:700}
+.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:12px;border-radius:14px;margin-bottom:14px;font-size:13px;font-weight:700;word-break:break-word}
 .bhint{padding:12px 14px;border-radius:14px;margin-bottom:12px;font-size:12.5px;line-height:1.65;color:var(--muted);background:rgba(255,255,255,.04);border-left:3px solid #6366f1}
 .bhint b{color:#c4b5fd}
 .bcount{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:14px;margin:12px 0;font-weight:700;font-size:14px;color:#c4b5fd;background:rgba(99,102,241,.12);border:1px dashed rgba(139,92,246,.5)}
 .bcount .num{font-family:'Inter';background:rgba(255,255,255,.1);padding:4px 14px;border-radius:999px;color:#fff}
-.bprev{display:none;max-height:240px;overflow-y:auto;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6;margin-bottom:12px}
+.bprev{display:none;max-height:320px;overflow-y:auto;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6;margin-bottom:12px}
 .bprev.show{display:block}
 .bprev .row{padding:5px 9px;border-radius:8px;margin-bottom:3px;word-break:break-all}
 .bprev .row.ok{background:rgba(16,185,129,.14);color:#6ee7b7}
-.bprev .row.duplicate{background:rgba(239,68,68,.14);color:#fca5a5;text-decoration:line-through;opacity:.8}
+.bprev .row.duplicate{background:rgba(239,68,68,.14);color:#fca5a5}
+.bprev .row.warn{background:rgba(245,158,11,.14);color:#fcd34d}
+.bprev .row.more{background:rgba(255,255,255,.06);color:var(--muted);text-align:center}
 .prog{display:none;padding:14px;border-radius:16px;margin:12px 0;background:rgba(255,255,255,.05);border:1px solid var(--line)}
 .prog.show{display:block}
 .prog .t{font-size:14px;font-weight:700;color:#c4b5fd}
@@ -104,50 +105,17 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
 
-/* ===== ট্যাব বার (৩টি বাটন) ===== */
-.tab-bar {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 4px;
-  background: rgba(255,255,255,.04);
-  border-radius: 18px;
-  border: 1px solid var(--line);
-}
-.tab-btn {
-  flex: 1;
-  padding: 14px 8px;
-  border-radius: 14px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all .25s cubic-bezier(.2,.8,.2,1);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  line-height: 1.2;
-}
-.tab-btn .tab-ic { font-size: 20px; }
-.tab-btn:hover { color: #fff; background: rgba(255,255,255,.06); }
-.tab-btn.active {
-  color: #fff;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  box-shadow: 0 10px 22px -8px rgba(139,92,246,.9), inset 0 1px 0 rgba(255,255,255,.3);
-}
-@media (max-width: 380px) {
-  .tab-btn { font-size: 11.5px; padding: 12px 4px; }
-  .tab-btn .tab-ic { font-size: 18px; }
-}
-
-/* ✅ ট্যাব কনটেন্ট লুকানো থাকবে, শুধু অ্যাক্টিভ ট্যাব দেখাবে */
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+/* ===== ট্যাব বার (৩টি বাটন — সবসময় দেখাবে) ===== */
+.tab-bar{display:flex;gap:8px;margin-bottom:16px;padding:4px;background:rgba(255,255,255,.04);border-radius:18px;border:1px solid var(--line)}
+.tab-btn{flex:1;min-width:0;padding:14px 6px;border-radius:14px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .25s cubic-bezier(.2,.8,.2,1);text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.2}
+.tab-btn .tab-ic{font-size:20px}
+.tab-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
+.tab-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.3)}
+@media (max-width:380px){.tab-btn{font-size:11.5px;padding:12px 2px}.tab-btn .tab-ic{font-size:18px}}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* সময় না হলে / শেষ হলে শুধু ফর্ম লক, ট্যাব বার খোলা থাকে */
+.locked .tab-content{opacity:.45;pointer-events:none;filter:grayscale(.4)}
 
 /* ===== ফাইল ড্রপ জোন ===== */
 .drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
@@ -156,12 +124,14 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .drop-zone h4{margin:0 0 6px;font-size:16px;font-weight:700;color:#fff}
 .drop-zone p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
 .drop-zone input[type="file"]{display:none}
-.file-info{display:none;padding:14px;border-radius:14px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:12px;font-size:13.5px;color:#6ee7b7;font-weight:600}
+.file-info{display:none;white-space:pre-line;padding:14px;border-radius:14px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:12px;font-size:13.5px;line-height:1.6;color:#6ee7b7;font-weight:600}
 .file-info.show{display:block}
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="history.back()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Submit Task</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+<header class="top"><div class="top-in"><button class="ibtn" onclick="history.back()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Submit Task</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+
 <main class="page">
   <div id="taskInfo"><div class="skel big"></div></div>
   <div id="timeStatusBox"></div>
@@ -171,25 +141,22 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     <ul>
       <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
       <li>২এফএ (2FA) কোড সঠিক না হলে অ্যাকাউন্ট বাদ পড়বে।</li>
-      <li>একই অ্যাকাউন্ট দুইবার সাবমিট করলে ডুপ্লিকেট হিসেবে গণ্য হবে।</li>
+      <li>একই পুরো রো (সব কলামের তথ্য হুবহু এক) আগে সাবমিট হয়ে থাকলে সেটা ডুপ্লিকেট ধরা হবে। শুধু একটা UID/পাসওয়ার্ড মিললে ডুপ্লিকেট না।</li>
     </ul>
   </div>
 
-  <div id="submitSections" style="display:none">
+  <!-- ✅ ৩টি ট্যাব সবসময় দেখাবে (লক থাকলেও) -->
+  <div id="submitSections" class="locked">
 
-    <!-- ট্যাব বার (৩টি বাটন) -->
-    <div class="tab-bar">
-      <button class="tab-btn active" data-tab="single">
-        <span class="tab-ic">📝</span>
-        <span>Single</span>
+    <div class="tab-bar" role="tablist">
+      <button type="button" class="tab-btn active" data-tab="single" role="tab" aria-selected="true">
+        <span class="tab-ic">📝</span><span>Single</span>
       </button>
-      <button class="tab-btn" data-tab="bulk">
-        <span class="tab-ic">📋</span>
-        <span>All Paste</span>
+      <button type="button" class="tab-btn" data-tab="bulk" role="tab" aria-selected="false">
+        <span class="tab-ic">📋</span><span>All Paste</span>
       </button>
-      <button class="tab-btn" data-tab="file">
-        <span class="tab-ic">📁</span>
-        <span>File Submit</span>
+      <button type="button" class="tab-btn" data-tab="file" role="tab" aria-selected="false">
+        <span class="tab-ic">📁</span><span>File Submit</span>
       </button>
     </div>
 
@@ -203,7 +170,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
-    <!-- ২. বাল্ক / অল পেস্ট সাবমিট -->
+    <!-- ২. বাল্ক / অল পেস্ট -->
     <div id="tab-bulk" class="tab-content">
       <div class="fcard glass">
         <h3>📋 All Paste Submit (Bulk)</h3>
@@ -230,20 +197,21 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       </div>
     </div>
 
-    <!-- ৩. সরাসরি ফাইল সাবমিট -->
+    <!-- ৩. ফাইল সাবমিট -->
     <div id="tab-file" class="tab-content">
       <div class="fcard glass">
         <h3>📁 Direct File Submit</h3>
         <div class="bhint">
-          <b>ফাইল ফরম্যাট:</b> Excel (.xlsx, .xls) অথবা CSV (.csv)<br>
-          <b>💡 টিপস:</b> ফাইলের প্রতিটি রো = একটি অ্যাকাউন্ট। প্রথম রো থেকে শুরু করে শেষ রো পর্যন্ত সব ডাটা সাবমিট হবে। কলামের ক্রম টাস্কে যেভাবে চাওয়া হয়েছে সেভাবে দিন।
+          <b>ফাইল:</b> Excel (.xlsx, .xls), CSV (.csv) অথবা TXT (.txt, .tsv)<br>
+          <b>কলাম ক্রম:</b> <span id="fileFormatHint">—</span><br>
+          প্রতিটি রো = একটি অ্যাকাউন্ট। হেডার রো থাকলে নিজে থেকে বাদ যাবে। বাড়তি কলাম থাকলেও ডুপ্লিকেট চেকে ধরা হবে।
         </div>
 
-        <div class="drop-zone" id="dropZone">
-          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+        <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt,.tsv">
           <span class="icon">📁</span>
           <h4>ফাইল এখানে ড্রপ করুন</h4>
-          <p>অথবা ক্লিক করে আপনার ফোন/কম্পিউটার থেকে ফাইল নির্বাচন করুন<br><small>(Excel .xlsx, .xls অথবা .csv)</small></p>
+          <p>অথবা ক্লিক করে ফোন/কম্পিউটার থেকে ফাইল নির্বাচন করুন<br><small>(.xlsx, .xls, .csv, .txt, .tsv)</small></p>
         </div>
 
         <div class="file-info" id="fileInfo"></div>
@@ -267,635 +235,716 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 
   </div>
 </main>
+
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
+<!-- ✅ ট্যাব সুইচ আলাদা সাধারণ script — Firebase/module fail করলেও ট্যাব কাজ করবে -->
+<script>
+(function () {
+  var btns = document.querySelectorAll(".tab-btn");
+  var panels = document.querySelectorAll(".tab-content");
+  function show(name) {
+    btns.forEach(function (b) {
+      var on = b.getAttribute("data-tab") === name;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    panels.forEach(function (p) { p.classList.toggle("active", p.id === "tab-" + name); });
+  }
+  btns.forEach(function (b) {
+    b.addEventListener("click", function () { show(b.getAttribute("data-tab")); });
+  });
+  show("single");
+})();
+</script>
+
 <script type="module">
-    import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, query, where, getDocs, writeBatch, increment, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc, collection, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    const params = new URLSearchParams(location.search);
-    const taskId = params.get("id");
-    let task = null, currentUser = null, isOpen = false;
-    let countdownInterval = null;
-    let taskStartTime = null, taskEndTime = null;
-    let existingHashes = new Set();
-    let fileItems = [];
+const $ = (id) => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+const taskId = params.get("id");
 
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const DEFAULT_FIELDS = [
+  { key: "uid", label: "UID" },
+  { key: "password", label: "Password" },
+  { key: "twoFA", label: "2FA Key" }
+];
+const MAX_ROWS = 5000;     // এক ফাইল / এক পেস্টে সর্বোচ্চ রো
+const BATCH_SIZE = 450;    // Firestore batch limit 500, তাই 450 + user update
+
+let task = null, currentUser = null, isOpen = false, busy = false;
+let countdownInterval = null, taskStartTime = null, taskEndTime = null;
+let existingValues = new Set();   // এই task-এ আগে submit হওয়া সব মান (normalized)
+let fileRows = [], fileMeta = null;
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+const getFields = () => (task && Array.isArray(task.fields) && task.fields.length) ? task.fields : DEFAULT_FIELDS;
+const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+const hnorm = (v) => String(v ?? "").toLowerCase().replace(/[\s_\-]+/g, "");
+const short = (v) => v.length > 26 ? v.slice(0, 12) + "…" + v.slice(-8) : v;
+
+$("logoutBtn").onclick = async () => {
+  if (!confirm("লগআউট?")) return;
+  if (countdownInterval) clearInterval(countdownInterval);
+  await signOut(auth);
+  location.href = "index.html";
+};
+
+/* =====================================================================
+   AUTH + TASK LOAD
+   ===================================================================== */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = "login.html"; return; }
+  currentUser = user;
+  if (!taskId) { $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task ID নেই</div>`; return; }
+
+  try {
+    const snap = await getDoc(doc(db, "tasks", taskId));
+    if (!snap.exists()) { $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task পাওয়া যায়নি</div>`; return; }
+    task = snap.data();
+  } catch (e) {
+    $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task load হয়নি: ${esc(e.message)}</div>`;
+    return;
+  }
+
+  taskStartTime = task.startTime?.toDate?.() || null;
+  taskEndTime = task.endTime?.toDate?.() || null;
+
+  try { await loadExisting(); } catch (e) { console.warn("existing load failed", e); }
+
+  const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
+  const pIcon = icons[task.platform] || "🔗";
+  const fmt = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
+  const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", fmt) : "";
+  const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", fmt) : "";
+
+  $("taskInfo").innerHTML = `
+    <div class="th">
+      <div class="th-tag">${pIcon} ${esc(task.platform || "Task")}</div>
+      <h2 class="th-title">${esc(task.title)}</h2>
+      <div class="th-price">৳${esc(task.pricePerAccount)} <span>/ account</span></div>
+      ${taskStartTime && taskEndTime ? `<div class="th-time">⏰ ${startStr} → ${endStr}</div>` : ""}
+    </div>
+    ${task.rules ? `<div class="note rules"><b>📋 Rules:</b><br>${esc(task.rules).replace(/\n/g, "<br>")}</div>` : ""}
+  `;
+  $("tipsBox").style.display = "block";
+
+  const fields = getFields();
+  $("dynamicFields").innerHTML = fields.map(f => `
+    <input type="text" id="dyn_${esc(f.key)}" class="inp" placeholder="${esc(f.label || f.key)}${f.optional ? " (ঐচ্ছিক)" : ""}" autocomplete="off">
+  `).join("");
+
+  let singleTimer = null;
+  fields.forEach(f => {
+    const el = $("dyn_" + f.key);
+    if (!el) return;
+    el.addEventListener("blur", checkSingleDup);
+    el.addEventListener("input", () => { clearTimeout(singleTimer); singleTimer = setTimeout(checkSingleDup, 350); });
+  });
+
+  const labels = fields.map(f => f.label || f.key);
+  $("bulkFormatHint").textContent = labels.join(" | ");
+  $("bulkInput").placeholder = labels.join("\t");
+  $("bulkInput").addEventListener("input", updateBulkCount);
+  $("fileFormatHint").textContent = labels.map((l, i) => `${colName(i)} = ${l}`).join("  |  ");
+
+  startCountdown();
+});
+
+function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1); }
+
+/* =====================================================================
+   DUPLICATE ENGINE — শুধু পুরো রো হুবহু এক হলে ডুপ্লিকেট
+   (একটা UID / Password / Username মিললে ডুপ্লিকেট না, সব কলাম মিলতে হবে)
+   task.dupKeys = ["uid","twoFA"] দিলে শুধু ওই ফিল্ডগুলোর কম্বিনেশন চেক হবে
+   ===================================================================== */
+function rowKey(item) {
+  const keys = (Array.isArray(task.dupKeys) && task.dupKeys.length) ? task.dupKeys : getFields().map(f => f.key);
+  const vals = keys.map(k => norm(item?.[k]));
+  return vals.some(Boolean) ? vals.join("\u00a7") : "";
+}
+
+async function loadExisting() {
+  const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", taskId)));
+  const set = new Set();
+  snap.forEach(d => { const k = rowKey(d.data()); if (k) set.add(k); });
+  existingValues = set;
+}
+
+// rows: [{label, item, cells}] → প্রতিটি রো-র status: ok | dup-old | dup-file
+function analyze(rows) {
+  const seen = new Map();   // পুরো রো key → প্রথম যে রো-তে এসেছে
+  return rows.map(r => {
+    const key = rowKey(r.item);
+    let status = "ok", dupOf = "";
+    if (key && existingValues.has(key)) status = "dup-old";
+    else if (key && seen.has(key)) { status = "dup-file"; dupOf = seen.get(key); }
+    else if (key) seen.set(key, r.label);
+    return { ...r, status, dupOf };
+  });
+}
+
+function dupText(r) {
+  return r.status === "dup-old"
+    ? "পুরো রো আগেই submit হয়েছে"
+    : `রো ${r.dupOf}-এর সাথে পুরো একই`;
+}
+
+/* =====================================================================
+   COUNTDOWN / TIME LOCK
+   ===================================================================== */
+function startCountdown() {
+  updateCountdown();
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
+  const now = new Date();
+  const box = $("timeStatusBox");
+  const sections = $("submitSections");
+
+  if (!taskStartTime || !taskEndTime) {
+    isOpen = true;
+    box.innerHTML = `<div class="ts open"><div class="ts-label">🟢 Submit Open</div></div>`;
+    sections.classList.remove("locked");
+    return;
+  }
+  if (now < taskStartTime) {
+    isOpen = false;
+    box.innerHTML = `<div class="ts upcoming"><div class="ts-label">⏳ Upcoming</div>${renderCountdown(taskStartTime - now)}</div>`;
+    sections.classList.add("locked");
+    return;
+  }
+  if (now > taskEndTime) {
+    isOpen = false;
+    box.innerHTML = `<div class="ts closed"><div class="ts-label">🔴 Time Expired</div></div>`;
+    sections.classList.add("locked");
+    if (!$("closedOverlay")) {
+      const o = document.createElement("div");
+      o.id = "closedOverlay";
+      o.className = "closed-box";
+      o.innerHTML = `<span class="ic">🔒</span><h3>Submission Closed</h3><p>সময় শেষ। পরের Task-এর জন্য অপেক্ষা করো।</p>`;
+      document.querySelector(".page").appendChild(o);
+    }
+    return;
+  }
+
+  isOpen = true;
+  const diff = taskEndTime - now;
+  const isDanger = diff < 5 * 60 * 1000;
+  box.innerHTML = `
+    <div class="ts ${isDanger ? "upcoming" : "open"}">
+      <div class="ts-label">${isDanger ? "⚠️ সময় প্রায় শেষ!" : "🟢 Submit Open"}</div>
+      ${renderCountdown(diff)}
+    </div>`;
+  sections.classList.remove("locked");
+  const o = $("closedOverlay");
+  if (o) o.remove();
+}
+
+function renderCountdown(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const p = n => String(n).padStart(2, "0");
+  if (days > 0) {
+    return `<div class="cd">
+      <div class="cd-box"><span class="cd-num">${days}</span><span class="cd-lbl">দিন</span></div>
+      <div class="cd-box"><span class="cd-num">${p(hours)}</span><span class="cd-lbl">ঘণ্টা</span></div>
+      <div class="cd-box"><span class="cd-num">${p(mins)}</span><span class="cd-lbl">মিনিট</span></div>
+    </div>`;
+  }
+  return `<div class="cd">
+    <div class="cd-box"><span class="cd-num">${p(hours)}</span><span class="cd-lbl">ঘণ্টা</span></div>
+    <div class="cd-box"><span class="cd-num">${p(mins)}</span><span class="cd-lbl">মিনিট</span></div>
+    <div class="cd-box"><span class="cd-num">${p(secs)}</span><span class="cd-lbl">সেকেন্ড</span></div>
+  </div>`;
+}
+
+function verifyTime() {
+  if (!task) { alert("Task এখনো load হয়নি!"); return false; }
+  const now = new Date();
+  if (taskStartTime && now < taskStartTime) { alert("⏳ এখনো শুরু হয়নি!"); return false; }
+  if (taskEndTime && now > taskEndTime) { alert("🔴 সময় শেষ!"); updateCountdown(); return false; }
+  return true;
+}
+
+/* =====================================================================
+   ROW BUILDING (Bulk ও File দুটোই এটা ব্যবহার করে)
+   ===================================================================== */
+function splitLine(line) {
+  let parts;
+  if (line.includes("\t")) parts = line.split("\t");
+  else if (line.includes("|")) parts = line.split("|");
+  else if (line.includes(",")) parts = line.split(",");
+  else if (/\s{2,}/.test(line)) parts = line.split(/\s{2,}/);
+  else parts = line.split(/\s+/);
+  return parts.map(p => p.trim()).filter(Boolean);
+}
+
+// cells[i] → fields[i] (পজিশন অনুযায়ী)। বাড়তি cell থাকলে allCells-এ থাকবে
+function buildRow(cells, label) {
+  cells = cells.map(c => String(c ?? "").trim());
+  const fields = getFields();
+  const item = {};
+  const missing = [];
+  fields.forEach((f, i) => {
+    item[f.key] = cells[i] || "";
+    if (!item[f.key] && !f.optional) missing.push(f.label || f.key);
+  });
+  if (missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
+  const clean = cells.filter(Boolean).slice(0, 40).map(c => c.slice(0, 300));
+  return { ok: true, row: { label: String(label), item, cells: clean } };
+}
+
+/* =====================================================================
+   PREVIEW (Bulk ও File)
+   ===================================================================== */
+function renderPreview(el, analyzed, incomplete) {
+  if (!analyzed.length && !incomplete.length) { el.classList.remove("show"); el.innerHTML = ""; return; }
+  const fields = getFields();
+  const LIM = 200;
+  let html = "";
+  analyzed.slice(0, LIM).forEach(r => {
+    const lbl = fields.map(f => esc(r.item[f.key])).join(" | ");
+    const bad = r.status !== "ok";
+    html += `<div class="row ${bad ? "duplicate" : "ok"}">${esc(r.label)}. ${lbl}${bad ? ` ❌ ${esc(dupText(r))}` : " ✓"}</div>`;
+  });
+  if (analyzed.length > LIM) html += `<div class="row more">… আরও ${analyzed.length - LIM} টা রো (দেখানো হয়নি, তবে সাবমিটে ধরা হবে)</div>`;
+  incomplete.slice(0, 25).forEach(x => {
+    html += `<div class="row warn">${esc(x.label)}. ⚠️ ${esc(x.reason)} — বাদ</div>`;
+  });
+  if (incomplete.length > 25) html += `<div class="row more">… আরও ${incomplete.length - 25} টা অসম্পূর্ণ রো</div>`;
+  el.innerHTML = html;
+  el.classList.add("show");
+}
+
+/* =====================================================================
+   COMMIT (Single / Bulk / File সবার জন্য এক জায়গা)
+   ===================================================================== */
+function buildPayload(r, source) {
+  return {
+    ...r.item,
+    allCells: r.cells,
+    taskId,
+    taskTitle: task.title ?? "",
+    taskPlatform: task.platform ?? "",
+    userId: currentUser.uid,
+    source,
+    status: "pending",
+    price: task.pricePerAccount ?? 0,
+    earned: 0,
+    submittedAt: new Date(),
+    checkedAt: null
+  };
+}
+
+async function commitRows(rows, source, onProgress) {
+  const userRef = doc(db, "users", currentUser.uid);
+  let success = 0;
+  try {
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      const chunk = rows.slice(i, i + BATCH_SIZE);
+      const batch = writeBatch(db);
+      chunk.forEach(r => batch.set(doc(collection(db, "submissions")), buildPayload(r, source)));
+      batch.update(userRef, { totalPending: increment(chunk.length) });   // একই batch — count কখনো mismatch হবে না
+      await batch.commit();
+      success += chunk.length;
+      chunk.forEach(r => { const k = rowKey(r.item); if (k) existingValues.add(k); });
+      onProgress(success, rows.length);
+    }
+    return { success, error: null };
+  } catch (error) {
+    return { success, error };
+  }
+}
+
+async function runSubmit(rows, source, ui) {
+  if (busy) return;
+  if (!verifyTime()) return;
+  if (!rows.length) return alert("❌ কোনো account নেই!");
+
+  busy = true;
+  ui.btn.disabled = true;
+  try {
+    ui.prog.classList.add("show");
+    ui.text.textContent = "Duplicate চেক হচ্ছে...";
+    ui.fill.style.width = "8%";
+
+    try { await loadExisting(); }
+    catch (e) {
+      alert("❌ Duplicate চেক করা যায়নি: " + e.message + "\nইন্টারনেট চেক করে আবার চেষ্টা করো।");
+      ui.prog.classList.remove("show");
+      return;
     }
 
-    document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট?")) return;
-      if (countdownInterval) clearInterval(countdownInterval);
-      await signOut(auth);
-      location.href = "index.html";
-    };
+    const res = analyze(rows);
+    const ok = res.filter(r => r.status === "ok");
+    const bad = res.length - ok.length;
+    ui.refresh();
 
-    // ===== ট্যাব সুইচ =====
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+    if (!ok.length) {
+      alert(`❌ সব account duplicate! (${bad} টা বাদ)`);
+      ui.prog.classList.remove("show");
+      return;
+    }
+    const skipMsg = bad ? `\n⚠️ ${bad} টা duplicate বাদ যাবে।` : "";
+    if (!confirm(`${ok.length} টা account submit করবে?${skipMsg}`)) {
+      ui.prog.classList.remove("show");
+      return;
+    }
+
+    ui.text.textContent = `Processing ${ok.length} submissions...`;
+    ui.fill.style.width = "10%";
+
+    const { success, error } = await commitRows(ok, source, (s, t) => {
+      ui.fill.style.width = (5 + Math.floor((s / t) * 90)) + "%";
+      ui.text.textContent = `Submitted ${s}/${t}...`;
+    });
+
+    if (error) {
+      alert(`⚠️ ${success} টা submit হয়েছে, তারপর সমস্যা হয়েছে:\n${error.message}\n\nবাকিগুলো আবার submit করতে পারো (যেগুলো হয়েছে সেগুলো duplicate হিসেবে বাদ যাবে)।`);
+      ui.prog.classList.remove("show");
+      ui.refresh();
+      return;
+    }
+
+    ui.fill.style.width = "100%";
+    ui.text.textContent = `✅ Done! ${success} submitted`;
+    await new Promise(r => setTimeout(r, 400));
+    alert(`✅ ${success} টা submit সফল!${bad ? `\n⚠️ ${bad} টা duplicate বাদ গেছে।` : ""}\n💵 Expected: ৳${success * (Number(task.pricePerAccount) || 0)}`);
+    ui.prog.classList.remove("show");
+    ui.reset();
+  } finally {
+    busy = false;
+    ui.btn.disabled = false;
+    ui.idle();
+  }
+}
+
+/* =====================================================================
+   ১. SINGLE SUBMIT
+   ===================================================================== */
+function readSingle() {
+  const item = {};
+  const missing = [];
+  getFields().forEach(f => {
+    const v = ($("dyn_" + f.key)?.value || "").trim();
+    item[f.key] = v;
+    if (!v && !f.optional) missing.push(f.label || f.key);
+  });
+  return { item, missing };
+}
+
+function singleRow(item) {
+  return { label: "1", item, cells: getFields().map(f => item[f.key]).filter(Boolean) };
+}
+
+function checkSingleDup() {
+  if (!task) return;
+  const { item } = readSingle();
+  const warn = $("singleDupWarning");
+  if (!Object.values(item).some(Boolean)) { warn.style.display = "none"; return; }
+  const res = analyze([singleRow(item)])[0];
+  if (res.status !== "ok") {
+    warn.style.display = "block";
+    $("singleDupMsg").textContent = "এই তথ্য " + dupText(res);
+  } else {
+    warn.style.display = "none";
+  }
+}
+
+$("singleSubmitBtn").onclick = async () => {
+  if (busy) return;
+  if (!verifyTime()) return;
+  const { item, missing } = readSingle();
+  if (missing.length) return alert(`${missing[0]} দাও!`);
+
+  const btn = $("singleSubmitBtn");
+  busy = true;
+  btn.disabled = true;
+  btn.textContent = "Checking...";
+  try {
+    await loadExisting();
+    const row = singleRow(item);
+    const res = analyze([row])[0];
+    if (res.status !== "ok") {
+      checkSingleDup();
+      alert("❌ Duplicate!\n" + dupText(res));
+      return;
+    }
+    btn.textContent = "Submitting...";
+    const { error } = await commitRows([row], "single", () => {});
+    if (error) throw error;
+    alert("✅ Submit সফল! Status: ⏳ Pending");
+    getFields().forEach(f => { const el = $("dyn_" + f.key); if (el) el.value = ""; });
+    $("singleDupWarning").style.display = "none";
+  } catch (e) {
+    alert("❌ " + e.message);
+  } finally {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = "✅ Submit Account";
+  }
+};
+
+/* =====================================================================
+   ২. BULK / ALL PASTE
+   ===================================================================== */
+function parseBulk(text) {
+  const rows = [], incomplete = [];
+  if (!task) return { rows, incomplete };
+  const lines = text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (rows.length + incomplete.length >= MAX_ROWS) break;
+    const r = buildRow(splitLine(line), i + 1);
+    if (r.ok) rows.push(r.row);
+    else incomplete.push({ label: String(i + 1), reason: r.reason });
+  }
+  return { rows, incomplete };
+}
+
+function updateBulkCount() {
+  const { rows, incomplete } = parseBulk($("bulkInput").value);
+  const analyzed = analyze(rows);
+  const unique = analyzed.filter(r => r.status === "ok").length;
+  $("bulkCountNum").textContent = `${unique} / ${analyzed.length}`;
+  renderPreview($("bulkPreview"), analyzed, incomplete);
+}
+
+function resetBulk() {
+  $("bulkInput").value = "";
+  $("bulkCountNum").textContent = "0 / 0";
+  $("bulkPreview").classList.remove("show");
+  $("bulkPreview").innerHTML = "";
+}
+
+$("bulkSubmitBtn").onclick = () => {
+  const { rows } = parseBulk($("bulkInput").value);
+  if (!rows.length) return alert("❌ কোনো সম্পূর্ণ account detect হয়নি!");
+  runSubmit(rows, "bulk", {
+    btn: $("bulkSubmitBtn"), prog: $("submitProgress"), text: $("spText"), fill: $("spFill"),
+    refresh: updateBulkCount, reset: resetBulk, idle: () => {}
+  });
+};
+$("clearBulkBtn").onclick = resetBulk;
+
+/* =====================================================================
+   ৩. FILE SUBMIT — যেকোনো sheet format, কলামের পজিশন = task-এর ফিল্ড ক্রম
+   ===================================================================== */
+const dropZone = $("dropZone");
+const fileInput = $("fileInput");
+const fileInfo = $("fileInfo");
+
+dropZone.onclick = () => fileInput.click();
+fileInput.addEventListener("click", e => e.stopPropagation());
+dropZone.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+dropZone.addEventListener("dragover", e => { e.preventDefault(); dropZone.classList.add("dragover"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+fileInput.onchange = e => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+};
+
+// Excel-এর বড় সংখ্যা (UID) যেন 1.0001E+14 না হয়ে যায়
+function cellToStr(c) {
+  if (c === null || c === undefined) return "";
+  if (typeof c === "number") {
+    if (Number.isInteger(c) && Math.abs(c) < 1e21) return BigInt(c).toString();
+    return String(c);
+  }
+  return String(c).trim();
+}
+
+function sheetsFromWorkbook(wb) {
+  return wb.SheetNames.map(n => ({
+    name: n,
+    matrix: XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: "", raw: true, blankrows: true })
+  }));
+}
+
+function readFileSheets(file, ext) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error("ফাইল পড়া যায়নি"));
+    if (ext === "xlsx" || ext === "xls") {
+      fr.onload = e => {
+        try { resolve(sheetsFromWorkbook(XLSX.read(new Uint8Array(e.target.result), { type: "array" }))); }
+        catch (err) { reject(err); }
       };
-    });
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "login.html"; return; }
-      currentUser = user;
-      if (!taskId) { document.getElementById("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task ID নেই</div>`; return; }
-
-      const snap = await getDoc(doc(db, "tasks", taskId));
-      if (!snap.exists()) { document.getElementById("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task পাওয়া যায়নি</div>`; return; }
-      task = snap.data();
-
-      taskStartTime = task.startTime?.toDate?.() || null;
-      taskEndTime = task.endTime?.toDate?.() || null;
-
-      await loadExistingHashes();
-
-      const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
-      const pIcon = icons[task.platform] || "🔗";
-      const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-      const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-
-      document.getElementById("taskInfo").innerHTML = `
-        <div class="th">
-          <div class="th-tag">${pIcon} ${task.platform || "Task"}</div>
-          <h2 class="th-title">${task.title}</h2>
-          <div class="th-price">৳${task.pricePerAccount} <span>/ account</span></div>
-          ${taskStartTime && taskEndTime ? `<div class="th-time">⏰ ${startStr} → ${endStr}</div>` : ''}
-        </div>
-        ${task.rules ? `<div class="note rules"><b>📋 Rules:</b><br>${task.rules}</div>` : ''}
-      `;
-
-      document.getElementById("tipsBox").style.display = "block";
-
-      const fields = task.fields || [
-        { key: "uid", label: "UID" },
-        { key: "password", label: "Password" },
-        { key: "twoFA", label: "2FA Key" }
-      ];
-
-      document.getElementById("dynamicFields").innerHTML = fields.map(f => `
-        <input type="text" id="dyn_${f.key}" class="inp" placeholder="${esc(f.label)}" autocomplete="off">
-      `).join("");
-
-      fields.forEach(f => {
-        const el = document.getElementById("dyn_" + f.key);
-        if (el) el.addEventListener("blur", checkSingleDup);
-      });
-
-      document.getElementById("bulkFormatHint").textContent = fields.map(f => f.label).join(" | ");
-      document.getElementById("bulkInput").placeholder = fields.map(f => f.label).join("\t");
-      document.getElementById("bulkInput").addEventListener("input", updateBulkCount);
-
-      startCountdown();
-      document.getElementById("submitSections").style.display = "block";
-    });
-
-    function makeRowHash(item, fields) {
-      const taskKey = taskId || "unknown";
-      const fieldKeyList = fields.map(f => f.key).join(",");
-      const valueList = fields.map(f => {
-        const v = (item[f.key] || "").toString().trim().toLowerCase();
-        return v.replace(/\s+/g, " ");
-      }).join("§");
-      return `${taskKey}||${fieldKeyList}||${valueList}`;
-    }
-
-    async function loadExistingHashes() {
-      try {
-        const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
-        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
-        const snap = await getDocs(q);
-        existingHashes.clear();
-        snap.forEach(d => {
-          const s = d.data();
-          const h = makeRowHash(s, fields);
-          if (h.replace(/[|§]/g, "")) existingHashes.add(h);
-        });
-      } catch (e) {}
-    }
-
-    function checkSingleDup() {
-      const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
-      const item = {};
-      let allFilled = true;
-      fields.forEach(f => {
-        const v = (document.getElementById("dyn_" + f.key)?.value || "").trim();
-        if (!v) allFilled = false;
-        item[f.key] = v;
-      });
-
-      const warn = document.getElementById("singleDupWarning");
-      const msg = document.getElementById("singleDupMsg");
-
-      if (!allFilled) { warn.style.display = "none"; return; }
-
-      const hash = makeRowHash(item, fields);
-      if (existingHashes.has(hash)) {
-        warn.style.display = "block";
-        msg.textContent = "এই account-এর সব তথ্য আগেই submit করা হয়েছে!";
-      } else {
-        warn.style.display = "none";
-      }
-    }
-
-    function startCountdown() {
-      updateCountdown();
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = setInterval(updateCountdown, 1000);
-    }
-
-    function updateCountdown() {
-      const now = new Date();
-      const box = document.getElementById("timeStatusBox");
-      const sections = document.getElementById("submitSections");
-
-      if (!taskStartTime || !taskEndTime) {
-        isOpen = true;
-        box.innerHTML = `<div class="ts open"><div class="ts-label">🟢 Submit Open</div></div>`;
-        sections.style.display = "block";
-        return;
-      }
-
-      if (now < taskStartTime) {
-        isOpen = false;
-        box.innerHTML = `<div class="ts upcoming"><div class="ts-label">⏳ Upcoming</div>${renderCountdown(taskStartTime - now)}</div>`;
-        sections.style.display = "none";
-        return;
-      }
-
-      if (now > taskEndTime) {
-        isOpen = false;
-        box.innerHTML = `<div class="ts closed"><div class="ts-label">🔴 Time Expired</div></div>`;
-        sections.style.display = "none";
-        if (!document.getElementById("closedOverlay")) {
-          const o = document.createElement("div");
-          o.id = "closedOverlay";
-          o.className = "closed-box";
-          o.innerHTML = `<span class="ic">🔒</span><h3>Submission Closed</h3><p>সময় শেষ। পরের Task-এর জন্য অপেক্ষা করো।</p>`;
-          document.querySelector(".page").appendChild(o);
-        }
-        return;
-      }
-
-      isOpen = true;
-      const diff = taskEndTime - now;
-      const isDanger = diff < 5 * 60 * 1000;
-      box.innerHTML = `
-        <div class="ts ${isDanger ? 'upcoming' : 'open'}">
-          <div class="ts-label">${isDanger ? '⚠️ সময় প্রায় শেষ!' : '🟢 Submit Open'}</div>
-          ${renderCountdown(diff)}
-        </div>
-      `;
-      sections.style.display = "block";
-      const o = document.getElementById("closedOverlay");
-      if (o) o.remove();
-    }
-
-    function renderCountdown(ms) {
-      const totalSec = Math.floor(ms / 1000);
-      const days = Math.floor(totalSec / 86400);
-      const hours = Math.floor((totalSec % 86400) / 3600);
-      const mins = Math.floor((totalSec % 3600) / 60);
-      const secs = totalSec % 60;
-      if (days > 0) {
-        return `<div class="cd">
-          <div class="cd-box"><span class="cd-num">${days}</span><span class="cd-lbl">দিন</span></div>
-          <div class="cd-box"><span class="cd-num">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">ঘণ্টা</span></div>
-          <div class="cd-box"><span class="cd-num">${String(mins).padStart(2,'0')}</span><span class="cd-lbl">মিনিট</span></div>
-        </div>`;
-      }
-      return `<div class="cd">
-        <div class="cd-box"><span class="cd-num">${String(hours).padStart(2,'0')}</span><span class="cd-lbl">ঘণ্টা</span></div>
-        <div class="cd-box"><span class="cd-num">${String(mins).padStart(2,'0')}</span><span class="cd-lbl">মিনিট</span></div>
-        <div class="cd-box"><span class="cd-num">${String(secs).padStart(2,'0')}</span><span class="cd-lbl">সেকেন্ড</span></div>
-      </div>`;
-    }
-
-    function verifyTime() {
-      const now = new Date();
-      if (taskStartTime && now < taskStartTime) { alert("⏳ এখনো শুরু হয়নি!"); return false; }
-      if (taskEndTime && now > taskEndTime) { alert("🔴 সময় শেষ!"); updateCountdown(); return false; }
-      return true;
-    }
-
-    function parseBulk(text) {
-      if (!task) return [];
-      const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
-      const fc = fields.length;
-      let norm = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-      let lines = norm.split("\n").map(l => l.trim()).filter(Boolean);
-      const result = [];
-      for (const line of lines) {
-        if (!line) continue;
-        let parts = [];
-        if (line.includes("\t")) parts = line.split("\t");
-        else if (line.includes("|")) parts = line.split("|");
-        else if (line.includes(",")) parts = line.split(",");
-        else if (/\s{2,}/.test(line)) parts = line.split(/\s{2,}/);
-        else parts = line.split(/\s+/);
-        parts = parts.map(p => p.trim()).filter(p => p.length > 0);
-        if (parts.length >= fc) {
-          const item = {};
-          fields.forEach((f, i) => { item[f.key] = parts[i] || ""; });
-          if (item[fields[0].key]) result.push(item);
-        }
-      }
-      return result;
-    }
-
-    function updateBulkCount() {
-      const text = document.getElementById("bulkInput").value;
-      const items = parseBulk(text);
-      const fields = task?.fields || [{ key: "uid" }];
-
-      const seen = new Set();
-      const dupIndexes = new Set();
-      items.forEach((item, idx) => {
-        const hash = makeRowHash(item, fields);
-        if (existingHashes.has(hash) || seen.has(hash)) dupIndexes.add(idx);
-        else seen.add(hash);
-      });
-
-      const uniqueCount = items.length - dupIndexes.size;
-      document.getElementById("bulkCountNum").textContent = `${uniqueCount} / ${items.length}`;
-
-      const preview = document.getElementById("bulkPreview");
-      if (items.length > 0 && items.length <= 30) {
-        preview.innerHTML = items.map((item, idx) => {
-          const isDup = dupIndexes.has(idx);
-          const label = fields.map(f => esc(item[f.key])).join(" | ");
-          return `<div class="row ${isDup ? 'duplicate' : 'ok'}">${idx + 1}. ${label}${isDup ? ' ❌ DUP' : ' ✓'}</div>`;
-        }).join("");
-        preview.classList.add("show");
-      } else {
-        preview.classList.remove("show");
-      }
-    }
-
-    // ===== ১. সিঙ্গেল সাবমিট =====
-    document.getElementById("singleSubmitBtn").onclick = async () => {
-      if (!verifyTime()) return;
-      if (!task) return alert("Task load হয়নি!");
-      const fields = task.fields || [{ key: "uid" }, { key: "password" }, { key: "twoFA" }];
-      const submission = {};
-      for (const f of fields) {
-        const val = document.getElementById(`dyn_${f.key}`).value.trim();
-        if (!val) return alert(`${f.label || f.key} দাও!`);
-        submission[f.key] = val;
-      }
-
-      const hash = makeRowHash(submission, fields);
-      if (existingHashes.has(hash)) {
-        return alert("❌ এই account-এর সব তথ্য আগেই submit করা হয়েছে!\n(Duplicate)");
-      }
-
-      const btn = document.getElementById("singleSubmitBtn");
-      btn.disabled = true; btn.textContent = "Checking...";
-
-      try {
-        const freshQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
-        const freshSnap = await getDocs(freshQ);
-        const freshHashes = new Set();
-        freshSnap.forEach(d => freshHashes.add(makeRowHash(d.data(), fields)));
-
-        if (freshHashes.has(hash)) {
-          existingHashes = freshHashes;
-          alert("❌ এই account এইমাত্র কেউ submit করেছে! (Duplicate)");
-          btn.disabled = false; btn.textContent = "✅ Submit Account";
-          return;
-        }
-
-        btn.textContent = "Submitting...";
-        const batch = writeBatch(db);
-        const subRef = doc(collection(db, "submissions"));
-        batch.set(subRef, {
-          taskId, taskTitle: task.title, taskPlatform: task.platform,
-          userId: currentUser.uid, ...submission,
-          status: "pending", price: task.pricePerAccount, earned: 0,
-          submittedAt: new Date(), checkedAt: null
-        });
-        const userRef = doc(db, "users", currentUser.uid);
-        batch.update(userRef, { totalPending: increment(1) });
-        await batch.commit();
-
-        existingHashes.add(hash);
-        alert("✅ Submit সফল! Status: ⏳ Pending");
-        fields.forEach(f => { document.getElementById(`dyn_${f.key}`).value = ""; });
-        document.getElementById("singleDupWarning").style.display = "none";
-      } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "✅ Submit Account";
-    };
-
-    // ===== ২. বাল্ক সাবমিট =====
-    document.getElementById("bulkSubmitBtn").onclick = async () => {
-      if (!verifyTime()) return;
-      if (!task) return alert("Task load হয়নি!");
-      const text = document.getElementById("bulkInput").value;
-      let items = parseBulk(text);
-      const btn = document.getElementById("bulkSubmitBtn");
-
-      if (items.length === 0) return alert("❌ কোনো account detect হয়নি!");
-
-      const fields = task.fields || [{ key: "uid" }];
-
-      const seen = new Set();
-      const uniqueItems = [];
-      const skipped = [];
-
-      items.forEach(item => {
-        const hash = makeRowHash(item, fields);
-        if (existingHashes.has(hash) || seen.has(hash)) skipped.push(item);
-        else { seen.add(hash); uniqueItems.push(item); }
-      });
-
-      if (uniqueItems.length === 0) return alert(`❌ সব account duplicate! (${skipped.length} টা বাদ)`);
-
-      const skipMsg = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ যাবে।` : "";
-      if (!confirm(`${uniqueItems.length} টা account submit করবে?${skipMsg}`)) return;
-
-      btn.disabled = true;
-      const progress = document.getElementById("submitProgress");
-      const spText = document.getElementById("spText");
-      const spFill = document.getElementById("spFill");
-      progress.classList.add("show");
-      spText.textContent = `Processing ${uniqueItems.length} submissions...`;
-      spFill.style.width = "10%";
-
-      try {
-        const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
-        const checkSnap = await getDocs(checkQ);
-        checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
-
-        const finalItems = uniqueItems.filter(item => !existingHashes.has(makeRowHash(item, fields)));
-
-        if (finalItems.length === 0) {
-          alert("❌ সব account এইমাত্র কেউ submit করেছে!");
-          progress.classList.remove("show");
-          btn.disabled = false; btn.textContent = "🚀 Submit All Accounts";
-          return;
-        }
-
-        const BATCH_SIZE = 450;
-        let success = 0;
-        const total = finalItems.length;
-
-        for (let i = 0; i < finalItems.length; i += BATCH_SIZE) {
-          const chunk = finalItems.slice(i, i + BATCH_SIZE);
-          const batch = writeBatch(db);
-          for (const item of chunk) {
-            const subRef = doc(collection(db, "submissions"));
-            batch.set(subRef, {
-              taskId, taskTitle: task.title, taskPlatform: task.platform,
-              userId: currentUser.uid, ...item,
-              status: "pending", price: task.pricePerAccount, earned: 0,
-              submittedAt: new Date(), checkedAt: null
-            });
-          }
-          await batch.commit();
-          success += chunk.length;
-          const pct = Math.floor((success / total) * 90) + 5;
-          spFill.style.width = pct + "%";
-          spText.textContent = `Submitted ${success}/${total}...`;
-        }
-
-        await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
-        spFill.style.width = "100%";
-        spText.textContent = `✅ Done! ${success} submitted`;
-
-        finalItems.forEach(item => existingHashes.add(makeRowHash(item, fields)));
-
-        setTimeout(() => {
-          const skipMsg2 = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ গেছে।` : '';
-          alert(`✅ ${success} টা submit সফল!${skipMsg2}\n💵 Expected: ৳${success * task.pricePerAccount}`);
-          progress.classList.remove("show");
-          document.getElementById("bulkInput").value = "";
-          document.getElementById("bulkCountNum").textContent = "0 / 0";
-          document.getElementById("bulkPreview").classList.remove("show");
-          btn.disabled = false; btn.textContent = "🚀 Submit All Accounts";
-        }, 500);
-      } catch (e) {
-        alert("❌ " + e.message);
-        progress.classList.remove("show");
-        btn.disabled = false; btn.textContent = "🚀 Submit All Accounts";
-      }
-    };
-
-    document.getElementById("clearBulkBtn").onclick = () => {
-      document.getElementById("bulkInput").value = "";
-      document.getElementById("bulkCountNum").textContent = "0 / 0";
-      document.getElementById("bulkPreview").classList.remove("show");
-    };
-
-    // ===== ৩. ফাইল সাবমিট =====
-    const dropZone = document.getElementById("dropZone");
-    const fileInput = document.getElementById("fileInput");
-    const fileInfo = document.getElementById("fileInfo");
-
-    dropZone.onclick = () => fileInput.click();
-
-    dropZone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropZone.classList.add("dragover");
-    });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-    dropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
-      const file = e.dataTransfer.files[0];
-      if (file) handleFile(file);
-    });
-
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) handleFile(file);
-    };
-
-    function handleFile(file) {
-      const ext = file.name.split(".").pop().toLowerCase();
-      if (!["xlsx", "xls", "csv"].includes(ext)) {
-        return alert("❌ শুধুমাত্র Excel (.xlsx, .xls) বা CSV (.csv) ফাইল দিন!");
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        return alert("❌ ফাইল ৫MB এর চেয়ে ছোট হতে হবে!");
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      fr.readAsArrayBuffer(file);
+    } else {
+      fr.onload = e => {
         try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
-
-          const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
-          const items = [];
-
-          for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length === 0) continue;
-
-            const item = {};
-            fields.forEach((f, idx) => {
-              item[f.key] = String(row[idx] || "").trim();
-            });
-
-            if (item[fields[0].key]) items.push(item);
+          const text = String(e.target.result || "").replace(/^\uFEFF/, "");
+          if (ext === "csv") {
+            resolve(sheetsFromWorkbook(XLSX.read(text, { type: "string", raw: true })));
+          } else {
+            resolve([{ name: "txt", matrix: text.split(/\r\n|\r|\n/).map(l => l.trim() ? [l.trim()] : []) }]);
           }
-
-          if (items.length === 0) {
-            return alert("❌ ফাইলে কোনো সঠিক ডাটা পাওয়া যায়নি!\n\n💡 ফাইলের প্রথম রো থেকেই ডাটা থাকতে হবে।");
-          }
-
-          fileItems = items;
-          fileInfo.textContent = `✅ ফাইল লোড হয়েছে: ${file.name} (${items.length} টা রো)`;
-          fileInfo.classList.add("show");
-
-          updateFilePreview();
-
-          document.getElementById("fileSubmitBtn").disabled = false;
-          document.getElementById("fileCountBox").style.display = "flex";
-
-        } catch (err) {
-          alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
-        }
+        } catch (err) { reject(err); }
       };
-      reader.readAsArrayBuffer(file);
+      fr.readAsText(file, "utf-8");
     }
+  });
+}
 
-    function updateFilePreview() {
-      const fields = task.fields || [{ key: "uid" }];
-      const seen = new Set();
-      const dupIndexes = new Set();
-      fileItems.forEach((item, idx) => {
-        const hash = makeRowHash(item, fields);
-        if (existingHashes.has(hash) || seen.has(hash)) dupIndexes.add(idx);
-        else seen.add(hash);
-      });
+function headerWords(fields) {
+  const s = new Set(["uid", "password", "pass", "2fa", "twofa", "2fakey", "email", "username", "id", "mail", "cookie", "cookies", "token"]);
+  fields.forEach(f => { if (f.key) s.add(hnorm(f.key)); if (f.label) s.add(hnorm(f.label)); });
+  return s;
+}
 
-      const uniqueCount = fileItems.length - dupIndexes.size;
-      document.getElementById("fileCountNum").textContent = `${uniqueCount} / ${fileItems.length}`;
+function matrixToRows(sheetName, matrix, out, multi) {
+  const fields = getFields(), fc = fields.length;
+  const hdr = headerWords(fields);
+  const conv = matrix.map(r => Array.isArray(r) ? r.map(cellToStr) : []);
 
-      const preview = document.getElementById("filePreview");
-      if (fileItems.length > 0 && fileItems.length <= 30) {
-        preview.innerHTML = fileItems.map((item, idx) => {
-          const isDup = dupIndexes.has(idx);
-          const label = fields.map(f => esc(item[f.key])).join(" | ");
-          return `<div class="row ${isDup ? 'duplicate' : 'ok'}">${idx + 1}. ${label}${isDup ? ' ❌ DUP' : ' ✓'}</div>`;
-        }).join("");
-        preview.classList.add("show");
-      } else {
-        preview.classList.remove("show");
-      }
+  // শুরুর ফাঁকা কলাম (A, B খালি থাকলে) বাদ দেওয়ার জন্য — পুরো sheet-এর সবচেয়ে বাঁয়ের ডাটা কলাম
+  let minCol = Infinity;
+  conv.forEach(cells => {
+    const nonEmpty = cells.filter(Boolean);
+    if (!nonEmpty.length || (nonEmpty.length === 1 && fc > 1)) return;
+    const first = cells.findIndex(c => c !== "");
+    if (first >= 0) minCol = Math.min(minCol, first);
+  });
+  if (!isFinite(minCol)) minCol = 0;
+
+  let firstSeen = false;
+  conv.forEach((cells0, idx) => {
+    const nonEmpty = cells0.filter(Boolean);
+    if (!nonEmpty.length) return;
+
+    let cells;
+    if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0]);   // এক cell-এ সব দেওয়া থাকলে
+    else cells = cells0.slice(minCol);
+
+    const label = multi ? `${sheetName}:${idx + 1}` : String(idx + 1);
+
+    if (!firstSeen) {
+      firstSeen = true;
+      const head = cells.filter(Boolean).slice(0, fc);
+      if (head.length && head.every(c => hdr.has(hnorm(c)))) { out.headers++; return; }
     }
+    if (out.rows.length + out.incomplete.length >= MAX_ROWS) { out.truncated = true; return; }
 
-    document.getElementById("clearFileBtn").onclick = () => {
-      fileItems = [];
-      fileInput.value = "";
+    const r = buildRow(cells, label);
+    if (r.ok) out.rows.push(r.row);
+    else out.incomplete.push({ label, reason: r.reason });
+  });
+}
+
+async function handleFile(file) {
+  if (!task) return alert("Task এখনো load হয়নি, একটু অপেক্ষা করো!");
+  const ext = file.name.split(".").pop().toLowerCase();
+  if (!["xlsx", "xls", "csv", "txt", "tsv"].includes(ext)) {
+    fileInput.value = "";
+    return alert("❌ শুধুমাত্র Excel (.xlsx, .xls), CSV (.csv) বা TXT (.txt, .tsv) ফাইল দিন!");
+  }
+  if (file.size > 5 * 1024 * 1024) { fileInput.value = ""; return alert("❌ ফাইল ৫MB এর চেয়ে ছোট হতে হবে!"); }
+  if (ext !== "txt" && ext !== "tsv" && typeof XLSX === "undefined") {
+    fileInput.value = "";
+    return alert("❌ Excel library load হয়নি। ইন্টারনেট চেক করে পেজ রিফ্রেশ দাও।");
+  }
+
+  fileInfo.textContent = "⏳ ফাইল পড়া হচ্ছে...";
+  fileInfo.classList.add("show");
+
+  try {
+    const sheets = await readFileSheets(file, ext);
+    try { await loadExisting(); } catch (e) { /* submit-এর সময় আবার চেক হবে */ }
+
+    const out = { rows: [], incomplete: [], headers: 0, truncated: false };
+    const multi = sheets.filter(s => s.matrix.some(r => Array.isArray(r) && r.some(c => cellToStr(c) !== ""))).length > 1;
+    sheets.forEach(s => matrixToRows(s.name, s.matrix, out, multi));
+
+    if (!out.rows.length) {
+      fileRows = []; fileMeta = null;
       fileInfo.classList.remove("show");
-      document.getElementById("fileCountBox").style.display = "none";
-      document.getElementById("filePreview").classList.remove("show");
-      document.getElementById("fileSubmitBtn").disabled = true;
-    };
+      $("fileCountBox").style.display = "none";
+      renderPreview($("filePreview"), [], out.incomplete);
+      $("fileSubmitBtn").disabled = true;
+      return alert("❌ ফাইলে কোনো সম্পূর্ণ রো পাওয়া যায়নি!\n\n💡 প্রতিটি রো-তে task-এর সব কলাম পূরণ থাকতে হবে।\nকলাম ক্রম: " + $("fileFormatHint").textContent);
+    }
 
-    document.getElementById("fileSubmitBtn").onclick = async () => {
-      if (!verifyTime()) return;
-      if (!task) return alert("Task load হয়নি!");
-      if (fileItems.length === 0) return alert("❌ কোনো ফাইল লোড করা হয়নি!");
+    fileRows = out.rows;
+    fileMeta = { name: file.name, incomplete: out.incomplete, headers: out.headers, truncated: out.truncated, sheets: sheets.length };
+    $("fileCountBox").style.display = "flex";
+    updateFilePreview();
+  } catch (err) {
+    fileInfo.classList.remove("show");
+    alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
+  } finally {
+    fileInput.value = "";   // একই ফাইল আবার select করা যাবে
+  }
+}
 
-      const fields = task.fields || [{ key: "uid" }];
-      const btn = document.getElementById("fileSubmitBtn");
+function updateFilePreview() {
+  if (!fileMeta) return;
+  const analyzed = analyze(fileRows);
+  const unique = analyzed.filter(r => r.status === "ok").length;
+  const dupOld = analyzed.filter(r => r.status === "dup-old").length;
+  const dupFile = analyzed.filter(r => r.status === "dup-file").length;
 
-      const seen = new Set();
-      const uniqueItems = [];
-      const skipped = [];
+  $("fileCountNum").textContent = `${unique} / ${analyzed.length}`;
+  renderPreview($("filePreview"), analyzed, fileMeta.incomplete);
 
-      fileItems.forEach(item => {
-        const hash = makeRowHash(item, fields);
-        if (existingHashes.has(hash) || seen.has(hash)) skipped.push(item);
-        else { seen.add(hash); uniqueItems.push(item); }
-      });
+  let msg = `✅ ফাইল লোড হয়েছে: ${fileMeta.name} (${analyzed.length} টা রো)`;
+  if (fileMeta.headers) msg += `\n📌 হেডার রো বাদ দেওয়া হয়েছে`;
+  if (fileMeta.incomplete.length) msg += `\n⚠️ ${fileMeta.incomplete.length} টা অসম্পূর্ণ রো বাদ`;
+  if (dupOld) msg += `\n❌ ${dupOld} টা আগেই submit করা (বাদ যাবে)`;
+  if (dupFile) msg += `\n❌ ${dupFile} টা ফাইলের ভেতরেই ডুপ্লিকেট (বাদ যাবে)`;
+  if (fileMeta.truncated) msg += `\n⚠️ সর্বোচ্চ ${MAX_ROWS} টা রো নেওয়া হয়েছে`;
+  fileInfo.textContent = msg;
+  fileInfo.classList.add("show");
 
-      if (uniqueItems.length === 0) return alert(`❌ ফাইলের সব account duplicate! (${skipped.length} টা বাদ)`);
+  $("fileSubmitBtn").disabled = busy || unique === 0;
+}
 
-      const skipMsg = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ যাবে।` : "";
-      if (!confirm(`${uniqueItems.length} টা account submit করবে?${skipMsg}`)) return;
+function resetFile() {
+  fileRows = [];
+  fileMeta = null;
+  fileInput.value = "";
+  fileInfo.classList.remove("show");
+  fileInfo.textContent = "";
+  $("fileCountBox").style.display = "none";
+  $("fileCountNum").textContent = "0 / 0";
+  $("filePreview").classList.remove("show");
+  $("filePreview").innerHTML = "";
+  $("fileSubmitBtn").disabled = true;
+}
 
-      btn.disabled = true;
-      const progress = document.getElementById("fileSubmitProgress");
-      const fspText = document.getElementById("fspText");
-      const fspFill = document.getElementById("fspFill");
-      progress.classList.add("show");
-      fspText.textContent = `Processing ${uniqueItems.length} submissions...`;
-      fspFill.style.width = "10%";
+$("clearFileBtn").onclick = resetFile;
 
-      try {
-        const checkQ = query(collection(db, "submissions"), where("taskId", "==", taskId));
-        const checkSnap = await getDocs(checkQ);
-        checkSnap.forEach(d => existingHashes.add(makeRowHash(d.data(), fields)));
+$("fileSubmitBtn").onclick = () => {
+  if (!fileRows.length) return alert("❌ কোনো ফাইল লোড করা হয়নি!");
+  runSubmit(fileRows, "file", {
+    btn: $("fileSubmitBtn"), prog: $("fileSubmitProgress"), text: $("fspText"), fill: $("fspFill"),
+    refresh: updateFilePreview, reset: resetFile,
+    idle: () => { $("fileSubmitBtn").disabled = !fileRows.length; }
+  });
+};
 
-        const finalItems = uniqueItems.filter(item => !existingHashes.has(makeRowHash(item, fields)));
-
-        if (finalItems.length === 0) {
-          alert("❌ সব account এইমাত্র কেউ submit করেছে!");
-          progress.classList.remove("show");
-          btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
-          return;
-        }
-
-        const BATCH_SIZE = 450;
-        let success = 0;
-        const total = finalItems.length;
-
-        for (let i = 0; i < finalItems.length; i += BATCH_SIZE) {
-          const chunk = finalItems.slice(i, i + BATCH_SIZE);
-          const batch = writeBatch(db);
-          for (const item of chunk) {
-            const subRef = doc(collection(db, "submissions"));
-            batch.set(subRef, {
-              taskId, taskTitle: task.title, taskPlatform: task.platform,
-              userId: currentUser.uid, ...item,
-              status: "pending", price: task.pricePerAccount, earned: 0,
-              submittedAt: new Date(), checkedAt: null
-            });
-          }
-          await batch.commit();
-          success += chunk.length;
-          const pct = Math.floor((success / total) * 90) + 5;
-          fspFill.style.width = pct + "%";
-          fspText.textContent = `Submitted ${success}/${total}...`;
-        }
-
-        await updateDoc(doc(db, "users", currentUser.uid), { totalPending: increment(success) });
-        fspFill.style.width = "100%";
-        fspText.textContent = `✅ Done! ${success} submitted`;
-
-        finalItems.forEach(item => existingHashes.add(makeRowHash(item, fields)));
-
-        setTimeout(() => {
-          const skipMsg2 = skipped.length > 0 ? `\n⚠️ ${skipped.length} টা duplicate বাদ গেছে।` : '';
-          alert(`✅ ${success} টা submit সফল!${skipMsg2}\n💵 Expected: ৳${success * task.pricePerAccount}`);
-          progress.classList.remove("show");
-          document.getElementById("clearFileBtn").click();
-          btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
-        }, 500);
-      } catch (e) {
-        alert("❌ " + e.message);
-        progress.classList.remove("show");
-        btn.disabled = false; btn.textContent = "🚀 Submit File Accounts";
-      }
-    };
-
-    window.addEventListener("beforeunload", () => {
-      if (countdownInterval) clearInterval(countdownInterval);
-    });
-  </script>
-
+window.addEventListener("beforeunload", (e) => {
+  if (countdownInterval) clearInterval(countdownInterval);
+  if (busy) { e.preventDefault(); e.returnValue = ""; }
+});
+</script>
 </body>
 </html>
