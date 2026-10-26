@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-<!-- XLSX লাইব্রেরি (ফাইল পড়ার জন্য) -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
@@ -105,7 +104,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
 
-/* ===== নতুন: ট্যাব বার (৩টি বাটন বড় করে) ===== */
+/* ===== ট্যাব বার (৩টি বাটন) ===== */
 .tab-bar {
   display: flex;
   gap: 8px;
@@ -134,13 +133,8 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
   gap: 4px;
   line-height: 1.2;
 }
-.tab-btn .tab-ic {
-  font-size: 20px;
-}
-.tab-btn:hover {
-  color: #fff;
-  background: rgba(255,255,255,.06);
-}
+.tab-btn .tab-ic { font-size: 20px; }
+.tab-btn:hover { color: #fff; background: rgba(255,255,255,.06); }
 .tab-btn.active {
   color: #fff;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
@@ -151,7 +145,11 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
   .tab-btn .tab-ic { font-size: 18px; }
 }
 
-/* ===== নতুন: ফাইল ড্রপ জোন ===== */
+/* ✅ ট্যাব কনটেন্ট লুকানো থাকবে, শুধু অ্যাক্টিভ ট্যাব দেখাবে */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ===== ফাইল ড্রপ জোন ===== */
 .drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
 .drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
 .drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
@@ -196,7 +194,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     </div>
 
     <!-- ১. সিঙ্গেল সাবমিট -->
-    <div id="tab-single" class="tab-content">
+    <div id="tab-single" class="tab-content active">
       <div class="fcard glass">
         <h3>📝 Single Submit</h3>
         <div id="dynamicFields"></div>
@@ -206,7 +204,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     </div>
 
     <!-- ২. বাল্ক / অল পেস্ট সাবমিট -->
-    <div id="tab-bulk" class="tab-content" style="display:none">
+    <div id="tab-bulk" class="tab-content">
       <div class="fcard glass">
         <h3>📋 All Paste Submit (Bulk)</h3>
         <div class="bhint">
@@ -233,7 +231,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     </div>
 
     <!-- ৩. সরাসরি ফাইল সাবমিট -->
-    <div id="tab-file" class="tab-content" style="display:none">
+    <div id="tab-file" class="tab-content">
       <div class="fcard glass">
         <h3>📁 Direct File Submit</h3>
         <div class="bhint">
@@ -299,9 +297,9 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
         btn.classList.add("active");
-        document.getElementById("tab-" + btn.dataset.tab).style.display = "block";
+        document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
       };
     });
 
@@ -719,7 +717,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
       if (file) handleFile(file);
     };
 
-    // ✅ ফাইল আপলোড — কোনো রো স্কিপ হবে না, Row 1 থেকেই সব ডাটা পড়বে
     function handleFile(file) {
       const ext = file.name.split(".").pop().toLowerCase();
       if (!["xlsx", "xls", "csv"].includes(ext)) {
@@ -740,7 +737,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
           const fields = task.fields || [{ key: "uid", label: "UID" }, { key: "password", label: "Password" }, { key: "twoFA", label: "2FA" }];
           const items = [];
 
-          // কোনো রো স্কিপ হবে না — প্রথম রো (Row 1) থেকেই সব ডাটা পড়বে
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
