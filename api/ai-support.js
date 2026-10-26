@@ -2,9 +2,9 @@ import { getDb, setCors, verifyUser, ALLOWED_METHODS, normalizeAccount, sendRese
 
 export const config = { maxDuration: 30 };
 
-// ✅ সঠিক মডেল
+// ✅ বর্তমান মডেল (1.5 / 2.0 বন্ধ হয়ে গেছে)। Vercel এ GEMINI_MODELS দিয়ে বদলানো যাবে।
 const MODELS = (process.env.GEMINI_MODELS ||
-  "gemini-1.5-flash,gemini-1.5-pro,gemini-2.0-flash")
+  "gemini-3.5-flash,gemini-3.5-flash-lite,gemini-2.5-flash")
   .split(",").map(s => s.trim()).filter(Boolean);
 
 const TOTAL_BUDGET_MS = 25000;
@@ -41,6 +41,9 @@ async function callGemini(payload, apiKey, deadline, state) {
         const msg = d?.error?.message || "";
         state.lastError = `[${model}] ${r.status} ${msg}`.slice(0, 300);
         console.error("Gemini error", state.lastError);
+
+        // মডেল নেই / বন্ধ হয়ে গেছে / key-র সমস্যা → সরাসরি পরের মডেলে
+        if ([401, 403, 404].includes(r.status)) break;
 
         if (r.status === 400 && !stripped && body.generationConfig) {
           stripped = true;
@@ -106,8 +109,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ reply: "সার্ভার কনফিগারেশনে সমস্যা আছে। অ্যাডমিনকে জানান।" });
   }
 
-  let userData = { 
-    balance: 0, username: "User", email: user.email, totalGood: 0, totalBad: 0, totalPending: 0, 
+  let userData = {
+    balance: 0, username: "User", email: user.email, totalGood: 0, totalBad: 0, totalPending: 0,
     wallets: {}, totalReferEarning: 0, myReferCode: "",
     recentWithdrawals: [], recentSubmissions: []
   };
@@ -136,13 +139,13 @@ export default async function handler(req, res) {
         const w = doc.data();
         userData.recentWithdrawals.push({
           amount: w.amount,
-          method: w.method,
+          method: w.method || "",
           account: w.accountNum || w.account,
           status: w.status,
           date: w.requestedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
         });
       });
-    } catch(e) { console.error("wd history:", e.message); }
+    } catch (e) { console.error("wd history:", e.message); }
 
     try {
       const subQuery = db.collection("submissions")
@@ -159,15 +162,15 @@ export default async function handler(req, res) {
           date: s.submittedAt?.toDate?.()?.toLocaleString("bn-BD") || "N/A"
         });
       });
-    } catch(e) { console.error("sub history:", e.message); }
+    } catch (e) { console.error("sub history:", e.message); }
 
-  } catch (e) { 
-    console.error("Firestore read error:", e); 
+  } catch (e) {
+    console.error("Firestore read error:", e);
   }
 
   const savedWallets = Object.keys(userData.wallets).filter(k => userData.wallets[k]?.number);
   const hasWallet = savedWallets.length > 0;
-  
+
   let walletDetails = "কোনো ওয়ালেট সেভ করা নেই।";
   if (hasWallet) {
     walletDetails = savedWallets.map(k => `- ${k.toUpperCase()}: ${userData.wallets[k].number}`).join("\n");
@@ -175,14 +178,14 @@ export default async function handler(req, res) {
 
   let wdHistoryText = "কোনো উইথড্র হিস্টোরি নেই।";
   if (userData.recentWithdrawals.length > 0) {
-    wdHistoryText = userData.recentWithdrawals.map(w => 
-      `- ৳${w.amount} (${w.method.toUpperCase()}) → ${w.account} → ${w.status} → ${w.date}`
+    wdHistoryText = userData.recentWithdrawals.map(w =>
+      `- ৳${w.amount} (${String(w.method).toUpperCase()}) → ${w.account} → ${w.status} → ${w.date}`
     ).join("\n");
   }
 
   let subHistoryText = "কোনো সাবমিশন নেই।";
   if (userData.recentSubmissions.length > 0) {
-    subHistoryText = userData.recentSubmissions.map(s => 
+    subHistoryText = userData.recentSubmissions.map(s =>
       `- ${s.taskTitle} → ${s.status} → ৳${s.price} → ${s.date}`
     ).join("\n");
   }
@@ -313,7 +316,7 @@ ${subHistoryText}
         const account = String(args.account || "").trim();
         if (!ALLOWED_METHODS.includes(method))
           return res.status(200).json({ reply: "❌ মেথড সঠিক নয়।" });
-        
+
         const normalized = normalizeAccount(method, account);
         if (!normalized)
           return res.status(200).json({ reply: "❌ অ্যাকাউন্ট নম্বর সঠিক নয়।" });
@@ -343,12 +346,12 @@ ${subHistoryText}
       if (fc.name === "send_password_reset") {
         const ok = await sendResetEmail(userData.email);
         if (ok) {
-          return res.status(200).json({ 
+          return res.status(200).json({
             reply: `✅ পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে (${userData.email}) পাঠানো হয়েছে।`
           });
         } else {
-          return res.status(200).json({ 
-            reply: "❌ রিসেট লিংক পাঠানো যায়নি। আবার চেষ্টা করুন।" 
+          return res.status(200).json({
+            reply: "❌ রিসেট লিংক পাঠানো যায়নি। আবার চেষ্টা করুন।"
           });
         }
       }
