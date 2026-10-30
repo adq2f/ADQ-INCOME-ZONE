@@ -240,7 +240,7 @@ select.inp option{background:#12122a;color:#fff}
     <div class="stats-grid">
       <div class="stat-box"><div class="num" id="statTasks">0</div><div class="label">Active Tasks</div></div>
       <div class="stat-box"><div class="num" id="statUsers">0</div><div class="label">Total Users</div></div>
-      <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Submissions</div></div>
+      <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Pending Submissions</div></div>
       <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
     </div>
 
@@ -295,7 +295,7 @@ select.inp option{background:#12122a;color:#fff}
   <div id="resultTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📥 Result Process (পেন্ডিং সাবমিশন)</h3>
-      <p class="sub">টাস্ক সিলেক্ট করুন → পেন্ডিং ফাইল লোড করে প্রসেস করুন। প্রসেস করার পর ফাইলটি স্বয়ংক্রিয়ভাবে <b>Published Results</b> ট্যাবে সংরক্ষিত থাকবে।</p>
+      <p class="sub">টাস্ক সিলেক্ট করুন → পেন্ডিং ফাইল লোড করে প্রসেস করুন। প্রসেস করার পর ফাইলটি স্বয়ংক্রিয়ভাবে <b>Published Results</b> ট্যাবে সংরক্ষিত থাকবে।</p>
       <select id="resultTask" class="inp"></select>
       <button class="cta purple" id="loadBtn">🔍 Load Pending Submissions</button>
     </div>
@@ -467,6 +467,10 @@ select.inp option{background:#12122a;color:#fff}
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
+    // ✅ প্রসেসড status তালিকা — Result Process ও Dashboard count দুই জায়গাতেই এটা ব্যবহার হয়
+    const DONE_STATUSES = new Set(["good", "bad", "processed", "completed", "approved", "success", "done", "accepted", "rejected"]);
+    const isPendingSub = (s) => !DONE_STATUSES.has(String(s.status || "").toLowerCase().trim());
+
     const SESSION_DURATION = 12 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime) {
@@ -494,6 +498,7 @@ select.inp option{background:#12122a;color:#fff}
         document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
         tab.classList.add("active");
         document.getElementById(tab.dataset.tab).style.display = "block";
+        if (tab.dataset.tab === "dashboardTab") loadStats();
         if (tab.dataset.tab === "publishedTab") loadPublishedResults();
         if (tab.dataset.tab === "referralsTab") loadReferrals();
         if (tab.dataset.tab === "badgesTab") { loadBadgeUsers(); loadBadgedUsers(); }
@@ -737,12 +742,7 @@ select.inp option{background:#12122a;color:#fff}
         const snap = await getDocs(q);
         const allDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
 
-        // ✅ প্রসেসড status lowercase list
-        const DONE = new Set(["good", "bad", "processed", "completed", "approved", "success", "done", "accepted", "rejected"]);
-        let subs = allDocs.filter(s => {
-          const st = String(s.status || "").toLowerCase().trim();
-          return !DONE.has(st);
-        });
+        let subs = allDocs.filter(isPendingSub);
 
         // ✅ submittedAt না থাকলে fallback: doc snapshot-এর metadata.time
         subs = subs.map(s => {
@@ -1035,19 +1035,9 @@ select.inp option{background:#12122a;color:#fff}
           </div>`;
 
         delete pendingGroups[key];
-        // ✅ FIX: প্রসেস শেষে Firestore থেকে আবার pending যাচাই করে নিশ্চিত করা
-        try {
-          const verifyQ = query(collection(db, "submissions"), where("taskId", "==", loadedTask.id));
-          const verifySnap = await getDocs(verifyQ);
-          verifySnap.docs.forEach(d => {
-            const st = d.data().status;
-            if (st !== "good" && st !== "bad" && st !== "processed") {
-              // কোনো কারণে pending রয়ে গেলে সেটাও মেমরি থেকে বাদ দেওয়ার দরকার নেই;
-              // এগুলো পরবর্তী লোডে আবার দেখাবে, তাই এখানে শুধু লগ
-            }
-          });
-        } catch (e) {}
         renderPendingGroups();
+
+        // ✅ প্রসেস শেষে Dashboard-এর Pending Submissions সংখ্যা সঙ্গে সঙ্গে আপডেট
         loadStats();
       } catch (e) {
         out.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`;
@@ -1072,7 +1062,7 @@ select.inp option{background:#12122a;color:#fff}
 
         const snap = await getDocs(q);
         if (snap.empty) {
-          container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট পাওয়া যায়নি।</div>`;
+          container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট পাওয়া যায়নি।</div>`;
           return;
         }
 
@@ -1174,11 +1164,12 @@ select.inp option{background:#12122a;color:#fff}
         }
         if (count > 0) await batch.commit();
 
-        alert(`✅ ${items.length} টি প্রকাশিত সাবমিশন সফলভাবে ডিলিট হয়েছে।`);
+        alert(`✅ ${items.length} টি প্রকাশিত সাবমিশন সফলভাবে ডিলিট হয়েছে।`);
         delete allPublishedGroups[key];
         renderPublishedGroups();
+        loadStats();
       } catch (e) {
-        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
+        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
       }
     };
 
@@ -1190,7 +1181,7 @@ select.inp option{background:#12122a;color:#fff}
       keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
 
       if (!confirm(`🚨 মারাত্মক সতর্কবার্তা:\nমোট ${totalCount} টি প্রকাশিত রেজাল্ট মুছে ফেলা হবে!\nইউজাররা আর পূর্বের রেজাল্ট হিস্টোরি দেখতে পাবে না।\n\nআপনি কি নিশ্চিতভাবে সব মুছতে চান?`)) return;
-      if (prompt("নিশ্চিত করতে নিচে বড় হাতের অক্ষরে DELETE লিখুন:") !== "DELETE") return alert("বাতিল করা হয়েছে।");
+      if (prompt("নিশ্চিত করতে নিচে বড় হাতের অক্ষরে DELETE লিখুন:") !== "DELETE") return alert("বাতিল করা হয়েছে।");
 
       try {
         let batch = writeBatch(db);
@@ -1205,11 +1196,12 @@ select.inp option{background:#12122a;color:#fff}
         }
         if (count > 0) await batch.commit();
 
-        alert(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
+        alert(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
         allPublishedGroups = {};
         renderPublishedGroups();
+        loadStats();
       } catch (e) {
-        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
+        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
       }
     };
 
@@ -1657,6 +1649,8 @@ select.inp option{background:#12122a;color:#fff}
       setTimeout(() => out.innerHTML = "", 3000);
     }
 
+    // ✅ FIX: Dashboard-এ শুধু PENDING (এখনো প্রসেস হয়নি) সাবমিশন গণনা হবে।
+    // Good/Bad হয়ে গেলে (Result publish-এর পর) আর এখানে গণনায় আসবে না।
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
@@ -1665,7 +1659,8 @@ select.inp option{background:#12122a;color:#fff}
         const userSnap = await getDocs(collection(db, "users"));
         document.getElementById("statUsers").textContent = userSnap.size;
         const subSnap = await getDocs(collection(db, "submissions"));
-        document.getElementById("statSubs").textContent = subSnap.size;
+        const pendingCount = subSnap.docs.filter(d => isPendingSub(d.data())).length;
+        document.getElementById("statSubs").textContent = pendingCount;
         const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
         const wdSnap = await getDocs(wdQ);
         document.getElementById("statWithdrawals").textContent = wdSnap.size;
