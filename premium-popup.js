@@ -23,11 +23,34 @@ function injectPopupStyles() {
     body #welcomeSplash .ws-loader{background:rgba(255,255,255,.12)}
     body #welcomeSplash .ws-loader-fill{background:linear-gradient(90deg,#6366f1,#22d3ee)}
 
-    body .notice-popup-overlay{background:rgba(3,3,10,.78)}
-    body .notice-popup-card{background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.14);border-radius:28px;color:#f4f4ff;box-shadow:0 30px 80px -10px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.1)}
-    body .notice-popup-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#fbbf24,#f59e0b,#a855f7)}
-    body .notice-popup-card .np-close{background:rgba(255,255,255,.08);color:#9a9bb8;border:1px solid rgba(255,255,255,.1)}
-    body .notice-popup-card .np-close:hover{background:rgba(255,255,255,.16);color:#fff}
+    body .notice-popup-overlay{background:rgba(3,3,10,.78);padding:16px;display:flex;align-items:center;justify-content:center}
+    body .notice-popup-card{
+      background:linear-gradient(180deg,#17172f,#0d0d1f);
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:28px;
+      color:#f4f4ff;
+      box-shadow:0 30px 80px -10px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.1);
+      display:flex;
+      flex-direction:column;
+      max-height:min(85vh,85dvh);
+      max-height:min(85vh,85dvh);
+      width:100%;
+      max-width:400px;
+      position:relative;
+      overflow:hidden;
+      padding:0;
+    }
+    body .notice-popup-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#fbbf24,#f59e0b,#a855f7);z-index:2}
+    body .notice-popup-card .np-close{
+      position:absolute;top:14px;right:14px;
+      width:34px;height:34px;border-radius:50%;
+      background:rgba(255,255,255,.08);color:#9a9bb8;
+      border:1px solid rgba(255,255,255,.1);
+      cursor:pointer;font-size:15px;
+      display:flex;align-items:center;justify-content:center;
+      transition:.2s;z-index:10;
+    }
+    body .notice-popup-card .np-close:hover{background:rgba(255,255,255,.16);color:#fff;transform:rotate(90deg)}
     body .notice-popup-card .np-bell{background:linear-gradient(135deg,#fbbf24,#f59e0b);box-shadow:0 10px 24px -6px rgba(245,158,11,.7)}
     body .notice-popup-card .np-label{color:#fcd34d}
     body .notice-popup-card .np-title{color:#fff}
@@ -35,8 +58,54 @@ function injectPopupStyles() {
     body .notice-popup-card .np-time{color:#9a9bb8}
     body .notice-popup-card .np-btn-apk{background:linear-gradient(135deg,#10b981,#0d9488)}
     body .notice-popup-card .np-btn-link{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
-    body .notice-popup-footer{background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.1)}
     body .notice-popup-card .np-dismiss{background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#a855f7);box-shadow:0 14px 30px -10px rgba(139,92,246,.9)}
+
+    /* === ফিক্স: header + scrollable body + footer === */
+    body .notice-popup-card .np-head{
+      display:flex;align-items:flex-start;gap:14px;
+      padding:24px 56px 14px 20px;
+      flex-shrink:0;
+    }
+    body .notice-popup-card .np-bell{
+      width:48px;height:48px;border-radius:15px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:24px;flex-shrink:0;
+      animation:npBellRing 2.5s ease-in-out infinite;
+    }
+    @keyframes npBellRing{0%,80%,100%{transform:rotate(0)}83%{transform:rotate(15deg)}86%{transform:rotate(-15deg)}89%{transform:rotate(10deg)}92%{transform:rotate(-10deg)}}
+    body .notice-popup-card .np-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+    body .notice-popup-card .np-title{font-size:17px;font-weight:700;margin:0;line-height:1.3}
+    body .notice-popup-scrollable{
+      padding:0 20px 14px;
+      overflow-y:auto;
+      flex:1 1 auto;
+      min-height:0;
+      -webkit-overflow-scrolling:touch;
+      overscroll-behavior:contain;
+    }
+    body .notice-popup-card .np-msg{font-size:13.5px;line-height:1.65;margin-bottom:14px;word-break:break-word}
+    body .notice-popup-card .np-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    body .notice-popup-card .np-btn{
+      flex:1;min-width:120px;
+      display:inline-flex;align-items:center;justify-content:center;gap:6px;
+      padding:12px 14px;border-radius:14px;
+      font-size:13px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;
+    }
+    body .notice-popup-card .np-btn:hover{transform:translateY(-2px)}
+    body .notice-popup-card .np-time{font-size:11.5px;font-weight:600}
+    body .notice-popup-footer{
+      padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));
+      background:rgba(255,255,255,.03);
+      border-top:1px solid rgba(255,255,255,.1);
+      flex-shrink:0;
+    }
+    body .notice-popup-card .np-dismiss{
+      width:100%;padding:14px;border-radius:16px;
+      color:#fff;border:none;
+      font-size:14.5px;font-weight:700;
+      cursor:pointer;transition:.2s;
+    }
+    body .notice-popup-card .np-dismiss:hover{transform:translateY(-2px)}
   `;
   document.head.appendChild(s);
 }
@@ -95,19 +164,20 @@ export async function showNoticePopup() {
     el.id = "noticePopup";
     el.className = "notice-popup-overlay";
 
-    // HTML স্ট্রাকচার (Scrollable Body + Fixed Footer)
+    // ✅ ফিক্স: header + scrollable body + fixed footer
     el.innerHTML = `
       <div class="notice-popup-card">
-        <button class="np-close" id="npClose">✕</button>
+        <button class="np-close" id="npClose" aria-label="Close">✕</button>
+
+        <div class="np-head">
+          <div class="np-bell">🔔</div>
+          <div>
+            <div class="np-label">📢 নতুন নোটিশ</div>
+            <h2 class="np-title">${escapeHtml(latest.title)}</h2>
+          </div>
+        </div>
 
         <div class="notice-popup-scrollable">
-          <div class="np-head">
-            <div class="np-bell">🔔</div>
-            <div>
-              <div class="np-label">📢 নতুন নোটিশ</div>
-              <h2 class="np-title">${escapeHtml(latest.title)}</h2>
-            </div>
-          </div>
           <div class="np-msg">${escapeHtml(latest.message)}</div>
           ${(apkBtn || linkBtn) ? `<div class="np-actions">${apkBtn}${linkBtn}</div>` : ""}
           <div class="np-time">🕐 ${timeStr}</div>
@@ -116,7 +186,6 @@ export async function showNoticePopup() {
         <div class="notice-popup-footer">
           <button class="np-dismiss" id="npDismiss">বুঝেছি ✓</button>
         </div>
-
       </div>
     `;
     document.body.appendChild(el);
