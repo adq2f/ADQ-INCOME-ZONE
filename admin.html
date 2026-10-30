@@ -29,7 +29,7 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
 .ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.page{position:relative;z-index:1;max-width:720px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
 .sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
 .glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
 .empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
@@ -38,15 +38,6 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .skel.big{height:170px;border-radius:28px}
 @keyframes shim{to{background-position:-200% 0}}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
-.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
-.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
-.dock a:hover{color:#fff}
-.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
-.dock a.active svg{transform:translateY(-1px) scale(1.08)}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
 .atag{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.8px;color:#2a1700;background:linear-gradient(135deg,#fde68a,#f59e0b);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
 .top .mark{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);color:#2a1700;box-shadow:0 8px 20px -6px rgba(245,158,11,.8),inset 0 1px 0 rgba(255,255,255,.4)}
@@ -59,7 +50,6 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 .inp{display:block;width:100%;padding:15px 16px;margin:0 0 12px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:15px;font-weight:500;outline:none;transition:.25s;color-scheme:dark}
 .inp::placeholder{color:#6f7090;font-weight:400}
 .inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
-.inp:disabled{opacity:.55;cursor:not-allowed}
 select.inp option{background:#12122a;color:#fff}
 .lab{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:2px 2px 7px}
 .acard{border-radius:26px;padding:20px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
@@ -67,7 +57,6 @@ select.inp option{background:#12122a;color:#fff}
 .acard .hi{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;background:rgba(99,102,241,.22)}
 .acard .sub{margin:0 0 16px;font-size:12.5px;line-height:1.6;color:var(--muted)}
 
-/* ===== বাটন (.cta) — এই পেজে আগে base style ছিল না ===== */
 .cta{display:block;width:100%;border:none;cursor:pointer;border-radius:16px;padding:16px;color:#fff;font-size:16px;font-weight:700;text-align:center;transition:.25s}
 .cta:hover:not(:disabled){transform:translateY(-2px)}
 .cta:disabled{opacity:.6;cursor:not-allowed}
@@ -77,19 +66,13 @@ select.inp option{background:#12122a;color:#fff}
 .cta.amber{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);box-shadow:0 16px 34px -10px rgba(245,158,11,.9),inset 0 1px 0 rgba(255,255,255,.4);color:#2a1700}
 .cta.outline{background:rgba(255,255,255,.05);border:1.5px solid rgba(139,92,246,.55);color:#c4b5fd;box-shadow:none}
 .cta+.cta{margin-top:10px}
-.tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
-.tabs2::-webkit-scrollbar{display:none}
-.tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
-.tabs2 button:hover{color:#fff}
-.tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
-.page{max-width:640px}
 
-.page{max-width:720px}
 .admin-tab-bar{display:flex;gap:8px;overflow-x:auto;padding:2px 0 14px;margin-bottom:4px}
 .admin-tab-bar::-webkit-scrollbar{display:none}
 .admin-tab{padding:10px 17px;border-radius:999px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--line);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;transition:.25s}
 .admin-tab:hover{color:#fff}
 .admin-tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border-color:transparent;box-shadow:0 12px 24px -8px rgba(139,92,246,.95)}
+
 .ahero{position:relative;overflow:hidden;text-align:center;border-radius:28px;padding:24px 20px;margin-bottom:14px;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
 .ahero::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
 .ahero>*{position:relative}
@@ -100,25 +83,28 @@ select.inp option{background:#12122a;color:#fff}
 .otr p{margin:0;font-size:12px;color:var(--muted);line-height:1.5}
 .ostate{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;margin-top:9px;padding:5px 12px;border-radius:999px}
 .ostate i{width:8px;height:8px;border-radius:50%;background:currentColor}
-.ostate.on{background:rgba(16,185,129,.16);color:#6ee7b7}.ostate.on i{animation:op 2s infinite}
+.ostate.on{background:rgba(16,185,129,.16);color:#6ee7b7}
 .ostate.off{background:rgba(255,255,255,.07);color:var(--muted)}
-@keyframes op{0%{box-shadow:0 0 0 0 rgba(16,185,129,.8)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:6px}
 .stat-box{position:relative;overflow:hidden;padding:18px 10px 14px;border-radius:22px;text-align:center;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
 .stat-box::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c,#818cf8);box-shadow:0 0 14px var(--c,#818cf8)}
 .stat-box .num{font-family:'Inter';font-size:28px;font-weight:900;color:var(--c,#a5b4fc);line-height:1.15}
 .stat-box .label{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px}
 .stat-box.good{--c:#34d399}.stat-box.pending{--c:#fbbf24}
+
 .qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .qa a{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 6px 13px;border-radius:22px;text-align:center;transition:.25s}
 .qa a:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.22)}
 .qa i{font-style:normal;width:48px;height:48px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:23px;box-shadow:0 12px 24px -8px var(--g);background:var(--g2)}
 .qa span{font-size:12.5px;font-weight:700;color:#dcdcf2}
+
 .pickrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
 .pickrow::-webkit-scrollbar{display:none}
 .platform-opt{padding:10px 15px;border-radius:999px;background:rgba(255,255,255,.05);color:var(--muted);border:1px solid var(--line);cursor:pointer;white-space:nowrap;font-size:12.5px;font-weight:700;transition:.25s}
 .platform-opt:hover{color:#fff}
 .platform-opt.active{border-color:rgba(139,92,246,.9);background:linear-gradient(135deg,rgba(99,102,241,.3),rgba(139,92,246,.18));color:#fff;box-shadow:0 10px 22px -10px rgba(139,92,246,.95)}
+
 .field-builder{padding:14px;margin-bottom:14px;border-radius:20px;background:rgba(255,255,255,.03);border:1.5px dashed rgba(255,255,255,.18)}
 .field-builder-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12.5px;font-weight:700;color:var(--muted)}
 .add-field-btn{padding:6px 13px;border:none;border-radius:999px;cursor:pointer;color:#fff;font-size:11.5px;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 20px -8px rgba(139,92,246,.9)}
@@ -126,6 +112,7 @@ select.inp option{background:#12122a;color:#fff}
 .field-row input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:#8b5cf6}
 .field-row input[type=text]{flex:1;min-width:0;padding:8px 11px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:#fff;font-family:inherit;font-size:13px;outline:none;margin:0}
 .field-remove{width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;background:rgba(239,68,68,.18);color:#fca5a5;font-weight:800}
+
 .time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
 .inp.ta{min-height:96px;resize:vertical}
 .tk{display:flex;gap:14px;padding:16px;margin-bottom:12px;border-radius:24px;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
@@ -143,6 +130,7 @@ select.inp option{background:#12122a;color:#fff}
 .mini:hover{transform:translateY(-2px)}
 .mini.p{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 20px -8px rgba(139,92,246,.9)}
 .mini.r{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 10px 20px -8px rgba(239,68,68,.9)}
+
 .time-group-card{padding:18px;margin-bottom:14px;border-radius:24px;border-left:4px solid #6366f1;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
 .time-group-card.processed{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(255,255,255,.025) 45%)}
 .tgh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px}
@@ -160,10 +148,12 @@ select.inp option{background:#12122a;color:#fff}
 .tga .dl{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 12px 24px -10px rgba(16,185,129,.9)}
 .tga .pr{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 12px 24px -10px rgba(139,92,246,.9)}
 .tga .dx{background:rgba(239,68,68,.18);color:#fca5a5;flex:0 0 56px;min-width:56px}
+
 .result-box{padding:18px;margin-top:14px;border-radius:22px;background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(34,211,238,.06));border:1px solid rgba(16,185,129,.45);border-left:4px solid #10b981}
 .result-box h3{margin:0 0 10px;font-size:16px;color:#6ee7b7}.result-box p{margin:0 0 6px;font-size:14px;color:#d1fae5}.result-box .big{font-family:'Inter';font-size:22px;font-weight:900;color:#fff}
 .nrow{padding:16px;margin-bottom:10px;border-radius:22px;border-left:4px solid #f59e0b;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(255,255,255,.025))}
 .nrow h3{margin:0 0 6px;font-size:15px;color:#fde68a}.nrow p{margin:0;font-size:13px;line-height:1.6;color:#e7e5f4;word-break:break-word}.nrow a{color:#c4b5fd;font-weight:700}
+
 .user-card{display:flex;align-items:center;gap:12px;padding:13px;border-radius:20px;margin-bottom:9px;transition:.25s}
 .user-card:hover{border-color:rgba(139,92,246,.45)}
 .user-checkbox{width:24px;height:24px;flex:0 0 24px;border-radius:8px;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
@@ -175,10 +165,12 @@ select.inp option{background:#12122a;color:#fff}
 .user-info h4{margin:0 0 2px;font-size:14.5px;font-weight:700;word-break:break-word}.user-info p{margin:0 0 4px;font-size:11.5px;color:var(--muted);word-break:break-all}
 .user-info .badges{font-size:11.5px;color:var(--muted)}
 .bdg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:9.5px;font-weight:800;text-transform:uppercase;color:#fff;margin-left:4px;vertical-align:1px}
+
 .admin-action-bar{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:688px;display:none;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#dc2626,#9f1239);border:1px solid rgba(255,255,255,.22);box-shadow:0 18px 40px -10px rgba(220,38,38,.8);z-index:55}
 .admin-action-bar.show{display:flex}
 .admin-action-bar .count{font-weight:700;font-size:14px}
 .admin-action-bar button{background:#fff;color:#b91c1c;border:none;padding:9px 15px;border-radius:12px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+
 .rf{padding:16px;margin-bottom:12px;border-radius:24px}
 .rf-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
 .rf-l{display:flex;align-items:center;gap:10px;min-width:0}
@@ -186,6 +178,7 @@ select.inp option{background:#12122a;color:#fff}
 .rf-sub{font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px}
 .rf-u{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;margin-bottom:6px;border-radius:12px;font-size:13px;background:rgba(255,255,255,.05)}
 .rf-u span:last-child{color:var(--muted);font-size:11px;word-break:break-all}
+
 .sw-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .badge-color-btn{width:38px;height:38px;border-radius:12px;border:3px solid transparent;cursor:pointer;transition:.2s;box-shadow:0 8px 16px -6px rgba(0,0,0,.6)}
 .badge-color-btn:hover{transform:scale(1.1)}
@@ -195,6 +188,7 @@ select.inp option{background:#12122a;color:#fff}
 .bsel{display:none;padding:14px;border-radius:18px;margin-bottom:14px;background:rgba(99,102,241,.14);border-left:4px solid #6366f1}
 .bsel small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
 .bsel b{font-size:15px}.bsel span{display:block;font-size:12px;color:var(--muted)}
+
 .cleanup-card{padding:22px 20px;border-radius:28px;text-align:center;border:1.5px solid rgba(239,68,68,.5);background:linear-gradient(135deg,rgba(239,68,68,.16),rgba(190,24,93,.08))}
 .cleanup-card .big{font-size:46px;margin-bottom:6px}.cleanup-card h3{margin:0 0 6px;font-size:20px;color:#fecaca}
 .cleanup-card p{margin:0 0 14px;font-size:13px;line-height:1.7;color:#fecaca}
@@ -203,7 +197,6 @@ select.inp option{background:#12122a;color:#fff}
 .cleanup-list li.ok{background:rgba(16,185,129,.1);color:#a7f3d0}
 .cleanup-card a.cta{display:block}
 
-/* ===== Result Process modal ===== */
 .mbk{position:fixed;inset:0;z-index:120;background:rgba(3,3,10,.8);display:none;align-items:center;justify-content:center;padding:12px}
 .mbk.show{display:flex}
 .mbx{width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:26px;padding:20px;background:#12122a;border:1px solid rgba(255,255,255,.14)}
@@ -216,11 +209,13 @@ select.inp option{background:#12122a;color:#fff}
 </head>
 <body>
 <div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">⚡</div><span>Admin Panel<em class="atag">ADMIN</em></span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+
 <main class="page">
   <div class="admin-tab-bar">
     <button class="admin-tab active" data-tab="dashboardTab">🏠 Dashboard</button>
     <button class="admin-tab" data-tab="taskTab">📋 Tasks</button>
-    <button class="admin-tab" data-tab="resultTab">✅ Result</button>
+    <button class="admin-tab" data-tab="resultTab">📥 Result Process</button>
+    <button class="admin-tab" data-tab="publishedTab">📊 Published Results</button>
     <button class="admin-tab" data-tab="noticeTab">📢 Notice</button>
     <button class="admin-tab" data-tab="usersTab">👥 Users</button>
     <button class="admin-tab" data-tab="bulkTab">🧹 Cleanup</button>
@@ -257,7 +252,7 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- TASK -->
+  <!-- TASK TAB -->
   <div id="taskTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3 id="taskFormTitle">➕ নতুন Task</h3>
@@ -296,19 +291,32 @@ select.inp option{background:#12122a;color:#fff}
     <div id="taskList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- RESULT -->
+  <!-- RESULT PROCESS TAB (শুধুমাত্র পেন্ডিং প্রসেস হবে — কোনো অনিচ্ছাকৃত ডিলিট অপশন থাকবে না) -->
   <div id="resultTab" class="admin-section" style="display:none">
     <div class="acard glass">
-      <h3>📥 Result Process</h3>
-      <p class="sub">Task select → সময় অনুযায়ী আলাদা file → process</p>
+      <h3>📥 Result Process (পেন্ডিং সাবমিশন)</h3>
+      <p class="sub">টাস্ক সিলেক্ট করুন → পেন্ডিং ফাইল লোড করে প্রসেস করুন। প্রসেস করার পর ফাইলটি স্বয়ংক্রিয়ভাবে <b>Published Results</b> ট্যাবে সংরক্ষিত থাকবে।</p>
       <select id="resultTask" class="inp"></select>
-      <button class="cta purple" id="loadBtn">🔍 Load Submissions</button>
+      <button class="cta purple" id="loadBtn">🔍 Load Pending Submissions</button>
     </div>
     <div id="taskGroups"></div>
     <div id="resultOutput"></div>
   </div>
 
-  <!-- NOTICE -->
+  <!-- PUBLISHED RESULTS TAB (প্রকাশিত ফলাফল হিস্টোরি ও ডিলিট অপশন) -->
+  <div id="publishedTab" class="admin-section" style="display:none">
+    <div class="acard glass">
+      <h3>📊 Published Results (প্রকাশিত ফলাফল)</h3>
+      <p class="sub">যেসব টাস্কের রেজাল্ট আপনি পাবলিশ করেছেন সেগুলো এখানে সংরক্ষিত আছে। ইউজাররা তাদের হিস্টোরিতে এই রেজাল্ট দেখতে পারছে।</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <select id="publishedFilterTask" class="inp" style="flex:1;min-width:200px;margin-bottom:0"></select>
+        <button class="cta red" id="btnDeleteAllPublished" style="width:auto;padding:14px 20px;font-size:13.5px">🧹 Delete All Published</button>
+      </div>
+    </div>
+    <div id="publishedGroups"><div class="skel"></div></div>
+  </div>
+
+  <!-- NOTICE TAB -->
   <div id="noticeTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📢 Global Notice</h3>
@@ -325,7 +333,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="noticeList"><div class="skel"></div></div>
   </div>
 
-  <!-- USERS -->
+  <!-- USERS TAB -->
   <div id="usersTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>👥 সব Members</h3>
@@ -339,7 +347,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="userList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- CLEANUP -->
+  <!-- CLEANUP TAB -->
   <div id="bulkTab" class="admin-section" style="display:none">
     <div class="cleanup-card">
       <div class="big">🧹</div>
@@ -357,7 +365,7 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- REFERRALS -->
+  <!-- REFERRALS TAB -->
   <div id="referralsTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>🎁 Refer System Overview</h3>
@@ -370,7 +378,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="referralsList"><div class="skel"></div></div>
   </div>
 
-  <!-- BADGES -->
+  <!-- BADGES TAB -->
   <div id="badgesTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>🎖️ Quick Badge Assign</h3>
@@ -401,7 +409,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="badgedUsersList"><div class="skel"></div></div>
   </div>
 
-  <!-- SETTINGS -->
+  <!-- SETTINGS TAB -->
   <div id="settingsTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3><span class="hi" style="background:rgba(16,185,129,.22)">💰</span>Withdraw Settings</h3>
@@ -430,14 +438,14 @@ select.inp option{background:#12122a;color:#fff}
   </div>
 </main>
 
-<!-- Result Process modal (Bad list paste) -->
+<!-- Result Process Modal -->
 <div class="mbk" id="badModal"><div class="mbx">
   <h3>✅ Result Process</h3>
   <p class="sub" id="badModalInfo"></p>
   <textarea id="badText" class="inp ta" style="min-height:170px" placeholder="Bad UID / Password / 2FA paste koro (jekono format)"></textarea>
   <div class="pv"><div>❌ Bad<b id="pvBad">0</b></div><div>✅ Good<b id="pvGood">0</b></div></div>
   <p class="sub" id="pvMiss"></p>
-  <button class="cta green" id="badConfirm">✅ Process</button>
+  <button class="cta green" id="badConfirm">✅ Process &amp; Publish</button>
   <button class="cta outline" id="badCancel">Cancel</button>
 </div></div>
 
@@ -445,6 +453,7 @@ select.inp option{background:#12122a;color:#fff}
   <span class="count" id="selectedCount">0 selected</span>
   <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
 </div>
+
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
 <script type="module">
@@ -485,6 +494,7 @@ select.inp option{background:#12122a;color:#fff}
         document.querySelectorAll(".admin-section").forEach(s => s.style.display = "none");
         tab.classList.add("active");
         document.getElementById(tab.dataset.tab).style.display = "block";
+        if (tab.dataset.tab === "publishedTab") loadPublishedResults();
         if (tab.dataset.tab === "referralsTab") loadReferrals();
         if (tab.dataset.tab === "badgesTab") { loadBadgeUsers(); loadBadgedUsers(); }
       };
@@ -694,16 +704,24 @@ select.inp option{background:#12122a;color:#fff}
     };
 
     let loadedTask = null;
-    let loadedGroups = {};
+    let pendingGroups = {};
+    let allPublishedGroups = {};
 
     async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
       const snap = await getDocs(q);
-      document.getElementById("resultTask").innerHTML =
-        '<option value="">-- Task Select --</option>' +
+      const opts = '<option value="">-- Task Select --</option>' +
         snap.docs.map(d => `<option value="${d.id}">${esc(d.data().title)}</option>`).join("");
+      document.getElementById("resultTask").innerHTML = opts;
+      document.getElementById("publishedFilterTask").innerHTML = '<option value="all">-- All Tasks --</option>' + snap.docs.map(d => `<option value="${d.id}">${esc(d.data().title)}</option>`).join("");
     }
 
+    function formatGroupKey(date) {
+      const pad = n => String(n).padStart(2, "0");
+      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    }
+
+    // রেজাল্ট প্রসেস ট্যাবে শুধুমাত্র Pending সাবমিশন লোড হবে
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       if (!taskId) return alert("Task select করো!");
@@ -712,88 +730,65 @@ select.inp option{background:#12122a;color:#fff}
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
         loadedTask = { id: taskId, ...taskSnap.data() };
-        const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
+        
+        // শুধু Pending সাবমিশন লোড হচ্ছে
+        const q = query(collection(db, "submissions"), where("taskId", "==", taskId), where("status", "==", "pending"));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
-        loadedGroups = {};
+
+        pendingGroups = {};
         const GAP_MINUTES = 1;
-        let currentKey = null;
-        let currentEnd = null;
+        let currentKey = null, currentEnd = null;
+
         subs.forEach(s => {
           const t = s.submittedAt?.toDate?.();
           if (!t) return;
           const ts = t.getTime();
-          let newGroup = false;
-          if (currentEnd === null) newGroup = true;
-          else if ((ts - currentEnd) / 60000 >= GAP_MINUTES) newGroup = true;
-          if (newGroup) {
+          if (currentEnd === null || (ts - currentEnd) / 60000 >= GAP_MINUTES) {
             currentKey = formatGroupKey(t);
-            loadedGroups[currentKey] = [];
+            pendingGroups[currentKey] = [];
           }
-          loadedGroups[currentKey].push(s);
+          pendingGroups[currentKey].push(s);
           currentEnd = ts;
         });
-        renderGroups();
+
+        renderPendingGroups();
       } catch (e) { alert("❌ " + e.message); }
-      btn.disabled = false; btn.textContent = "🔍 Load Submissions";
+      btn.disabled = false; btn.textContent = "🔍 Load Pending Submissions";
     };
 
-    function formatGroupKey(date) {
-      const pad = n => String(n).padStart(2, "0");
-      return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    }
-
-    function renderGroups() {
+    function renderPendingGroups() {
       const gDiv = document.getElementById("taskGroups");
-      const keys = Object.keys(loadedGroups).sort().reverse();
+      const keys = Object.keys(pendingGroups).sort().reverse();
+
       if (keys.length === 0) {
-        gDiv.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো submission নেই</div>`;
+        gDiv.innerHTML = `<div class="empty"><div class="em">🎉</div>কোনো pending submission নেই! সব প্রসেস করা হয়েছে।</div>`;
         return;
       }
+
       gDiv.innerHTML = keys.map((key, idx) => {
-        const items = loadedGroups[key];
-        const good = items.filter(i => i.status === "good").length;
-        const bad = items.filter(i => i.status === "bad").length;
-        const pending = items.filter(i => i.status === "pending").length;
-        const isProcessed = pending === 0 && items.length > 0;
-        const [datePart, timePart] = key.split(" ");
-        const [y, mo, d] = datePart.split("-");
-        const [hh, mm, ss] = timePart.split(":");
-        const lastItem = items[items.length - 1];
-        const lastT = lastItem.submittedAt?.toDate?.();
-        const lastTimeStr = lastT ? `${String(lastT.getHours()).padStart(2,'0')}:${String(lastT.getMinutes()).padStart(2,'0')}:${String(lastT.getSeconds()).padStart(2,'0')}` : "";
-        const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-        const niceDate = `${parseInt(d)} ${monthNames[parseInt(mo)-1]} ${y}`;
-        const niceTimeRange = `${hh}:${mm}:${ss} → ${lastTimeStr}`;
+        const items = pendingGroups[key];
         return `
-          <div class="time-group-card glass ${isProcessed ? 'processed' : ''}">
+          <div class="time-group-card glass">
             <div class="tgh">
               <div>
-                <div class="tgt ${isProcessed ? 'done' : ''}">${isProcessed ? '✅ PROCESSED' : '⏰ File ' + (keys.length - idx)}</div>
-                <div class="tgd">📅 ${niceDate}<br>🕐 ${niceTimeRange}</div>
+                <div class="tgt">⏳ File ${keys.length - idx} (Pending)</div>
+                <div class="tgd">📅 ${key}</div>
               </div>
               <div class="tgn"><b>${items.length}</b><span>Submissions</span></div>
             </div>
-            <div class="tgs">
-              <div class="tg-stat good"><div class="v">${good}</div><div class="l">Good</div></div>
-              <div class="tg-stat bad"><div class="v">${bad}</div><div class="l">Bad</div></div>
-              <div class="tg-stat pending ${pending === 0 ? 'zero' : ''}"><div class="v">${pending}</div><div class="l">Pending</div></div>
-            </div>
             <div class="tga">
-              <button class="dl" onclick="downloadGroupXLSX('${key}')">📊 Download XLSX</button>
-              ${isProcessed ? '' : `<button class="pr" onclick="openProcessFor('${key}')">✅ Process</button>`}
-              <button class="dx" onclick="deleteGroup('${key}')" title="Delete">🗑️</button>
+              <button class="dl" onclick="downloadPendingXLSX('${key}')">📊 Download XLSX</button>
+              <button class="pr" onclick="openProcessFor('${key}')">✅ Process &amp; Publish</button>
             </div>
           </div>`;
       }).join("");
     }
 
-    window.downloadGroupXLSX = function(key) {
-      const items = loadedGroups[key] || [];
-      if (items.length === 0) return alert("No data");
-      if (!loadedTask) return alert("Task load হয়নি!");
-      if (typeof XLSX === "undefined") return alert("❌ XLSX library load হয়নি!");
+    window.downloadPendingXLSX = function(key) {
+      const items = pendingGroups[key] || [];
+      if (!items.length || !loadedTask) return alert("No data");
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const sheetData = items.map((s, idx) => {
         const row = { "#": idx + 1 };
@@ -807,29 +802,17 @@ select.inp option{background:#12122a;color:#fff}
           }
           row[f.label] = (v === undefined || v === null) ? "" : String(v);
         });
-        // ফাইলে বাড়তি কলাম থাকলে সেগুলোও এক্সপোর্টে থাকবে
         (Array.isArray(s.allCells) ? s.allCells.slice(fields.length) : []).forEach((v, i) => { row["Extra " + (i + 1)] = v; });
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" }) || "";
-        row["Status"] = s.status || "pending";
+        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
+        row["Status"] = "pending";
         return row;
       });
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Submissions");
-      const colWidths = [{ wch: 5 }];
-      fields.forEach(f => colWidths.push({ wch: Math.max(12, f.label.length + 2) }));
-      colWidths.push({ wch: 22 });
-      colWidths.push({ wch: 12 });
-      ws["!cols"] = colWidths;
-      const dateStr = key.replace(/[: ]/g, "-");
-      XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${dateStr}.xlsx`);
+      XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${key.replace(/[: ]/g, "-")}.xlsx`);
     };
 
-    /* =====================================================================
-       RESULT PROCESS
-       Bad লিস্টের যেকোনো একটি শব্দও ইউজারের যেকোনো ফিল্ডের সাথে মিললে রো Bad,
-       বাকি সব রো Good। (লাইন / tab / | / comma / space — সব ভেঙে মেলানো হয়)
-       ===================================================================== */
     let modalKey = null, processing = false;
 
     function parseBad(text) {
@@ -852,7 +835,7 @@ select.inp option{background:#12122a;color:#fff}
 
     function previewBad() {
       if (!loadedTask || !modalKey) return;
-      const items = (loadedGroups[modalKey] || []).filter(s => s.status === "pending");
+      const items = pendingGroups[modalKey] || [];
       const fields = loadedTask.fields || [{ key: "uid" }];
       const { set, lines } = parseBad($("badText").value);
       const hits = new Set();
@@ -868,11 +851,9 @@ select.inp option{background:#12122a;color:#fff}
     $("badCancel").onclick = () => $("badModal").classList.remove("show");
 
     window.openProcessFor = (key) => {
-      const n = (loadedGroups[key] || []).filter(s => s.status === "pending").length;
-      if (!n) return alert("এই file-এ কোনো pending নেই!");
       modalKey = key;
       $("badText").value = "";
-      $("badModalInfo").textContent = `📁 ${key} • ${n} টা pending`;
+      $("badModalInfo").textContent = `📁 ${key} • ${(pendingGroups[key]||[]).length} টা pending`;
       previewBad();
       $("badModal").classList.add("show");
     };
@@ -891,14 +872,7 @@ select.inp option{background:#12122a;color:#fff}
       try {
         const fields = loadedTask.fields || [{ key: "uid" }];
         const { set } = parseBad(badText);
-        const ids = new Set((loadedGroups[key] || []).map(s => s.id));
-
-        // ফ্রেশ ডাটা: যেগুলো এখনো pending শুধু সেগুলোই (আবার process দিলে ডাবল টাকা যাবে না)
-        const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", loadedTask.id)));
-        const pending = snap.docs
-          .filter(d => ids.has(d.id) && d.data().status === "pending")
-          .map(d => ({ id: d.id, ...d.data() }))
-          .sort((a, b) => String(a.userId).localeCompare(String(b.userId)));
+        const pending = pendingGroups[key] || [];
         if (!pending.length) { out.innerHTML = `<div class="empty"><div class="em">📭</div>Pending নেই</div>`; return; }
 
         const price = Number(loadedTask.pricePerAccount) || 0;
@@ -915,7 +889,7 @@ select.inp option{background:#12122a;color:#fff}
         };
 
         let good = 0, bad = 0, refTotal = 0, done = 0;
-        const BATCH = 100;   // ১০০ submission + user + refer update = ৫০০-এর অনেক নিচে
+        const BATCH = 100;
 
         for (let i = 0; i < pending.length; i += BATCH) {
           const chunk = pending.slice(i, i + BATCH);
@@ -936,7 +910,7 @@ select.inp option{background:#12122a;color:#fff}
 
           for (const [uid, p] of Object.entries(per)) {
             const u = await getU(uid);
-            if (!u) continue;   // user মুছে গেলে শুধু submission আপডেট হবে
+            if (!u) continue;
             batch.update(doc(db, "users", uid), {
               balance: increment(p.g * price),
               totalGood: increment(p.g),
@@ -971,9 +945,25 @@ select.inp option{background:#12122a;color:#fff}
           out.innerHTML = `<div class="result-box"><h3>⏳ Processing ${done}/${pending.length}...</h3></div>`;
         }
 
+        // Daily Reports কালেকশনে সেভ
+        try {
+          await addDoc(collection(db, "reports"), {
+            taskId: loadedTask.id,
+            taskTitle: loadedTask.title,
+            platform: loadedTask.platform || "Other",
+            pricePerAccount: price,
+            goodCount: good,
+            badCount: bad,
+            pendingCount: 0,
+            totalEarned: good * price,
+            date: new Date().toISOString(),
+            publishedAt: new Date()
+          });
+        } catch (e) {}
+
         out.innerHTML = `
           <div class="result-box">
-            <h3>✅ File Processed!</h3>
+            <h3>✅ File Processed &amp; Published!</h3>
             <p><b>📁 ${esc(key)}</b></p>
             <p>Total: <b>${pending.length}</b></p>
             <p>✅ Good: <span class="big" style="color:#34d399">${good}</span></p>
@@ -981,39 +971,172 @@ select.inp option{background:#12122a;color:#fff}
             <p>💰 User Added: <span class="big" style="color:#fbbf24">৳${good * price}</span></p>
             ${rc > 0 ? `<p style="margin-top:10px">🎁 Refer Commission: <span class="big" style="color:#c4b5fd">৳${refTotal.toFixed(2)}</span></p>` : ""}
           </div>`;
-        setTimeout(() => $("loadBtn").click(), 800);
+
+        delete pendingGroups[key];
+        renderPendingGroups();
         loadStats();
       } catch (e) {
-        out.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}<br>আবার Process দিলে শুধু বাকি Pending গুলো হবে।</div>`;
+        out.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`;
       } finally {
         processing = false;
       }
     }
 
-    window.deleteGroup = async function(key) {
-      const items = loadedGroups[key] || [];
-      if (items.length === 0) return;
-      if (!confirm(`📁 ${key}\n\n${items.length} টা delete?`)) return;
-      if (!confirm("💀 সত্যিই?")) return;
+    // ==========================================
+    // 📊 PUBLISHED RESULTS TAB LOGIC
+    // ==========================================
+    async function loadPublishedResults() {
+      const container = document.getElementById("publishedGroups");
+      container.innerHTML = `<div class="skel"></div><div class="skel"></div>`;
+
+      try {
+        const selectedTaskId = document.getElementById("publishedFilterTask").value;
+        let q = query(collection(db, "submissions"), where("status", "in", ["good", "bad"]));
+        if (selectedTaskId && selectedTaskId !== "all") {
+          q = query(collection(db, "submissions"), where("taskId", "==", selectedTaskId), where("status", "in", ["good", "bad"]));
+        }
+
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট পাওয়া যায়নি।</div>`;
+          return;
+        }
+
+        let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        subs.sort((a, b) => (b.checkedAt?.toMillis?.() || 0) - (a.checkedAt?.toMillis?.() || 0));
+
+        allPublishedGroups = {};
+        const GAP_MINUTES = 2;
+        let currentKey = null, currentEnd = null;
+
+        subs.forEach(s => {
+          const t = s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.();
+          if (!t) return;
+          const ts = t.getTime();
+          if (currentEnd === null || Math.abs(ts - currentEnd) / 60000 >= GAP_MINUTES) {
+            currentKey = (s.taskTitle || "Task") + " — " + formatGroupKey(t);
+            allPublishedGroups[currentKey] = [];
+          }
+          allPublishedGroups[currentKey].push(s);
+          currentEnd = ts;
+        });
+
+        renderPublishedGroups();
+      } catch (e) {
+        container.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`;
+      }
+    }
+
+    document.getElementById("publishedFilterTask").onchange = loadPublishedResults;
+
+    function renderPublishedGroups() {
+      const container = document.getElementById("publishedGroups");
+      const keys = Object.keys(allPublishedGroups);
+
+      if (keys.length === 0) {
+        container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট নেই।</div>`;
+        return;
+      }
+
+      container.innerHTML = keys.map((key) => {
+        const items = allPublishedGroups[key];
+        const good = items.filter(i => i.status === "good").length;
+        const bad = items.filter(i => i.status === "bad").length;
+        const earned = items.reduce((sum, i) => sum + (Number(i.earned) || 0), 0);
+
+        return `
+          <div class="time-group-card glass processed">
+            <div class="tgh">
+              <div>
+                <div class="tgt done">✅ PUBLISHED</div>
+                <div class="tgd" style="font-weight:700;color:#fff">${esc(key)}</div>
+              </div>
+              <div class="tgn"><b style="color:#34d399">৳${earned}</b><span>Total Payout</span></div>
+            </div>
+            <div class="tgs">
+              <div class="tg-stat good"><div class="v">${good}</div><div class="l">Good</div></div>
+              <div class="tg-stat bad"><div class="v">${bad}</div><div class="l">Bad</div></div>
+              <div class="tg-stat"><div class="v">${items.length}</div><div class="l">Total</div></div>
+            </div>
+            <div class="tga">
+              <button class="dl" onclick="downloadPublishedXLSX('${key}')">📊 Download XLSX</button>
+              <button class="dx" onclick="deletePublishedGroup('${key}')" title="Delete">🗑️ Delete</button>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    window.downloadPublishedXLSX = function(key) {
+      const items = allPublishedGroups[key] || [];
+      if (!items.length) return alert("No data");
+      const sheetData = items.map((s, idx) => ({
+        "#": idx + 1,
+        "UID": s.uid || "",
+        "Task": s.taskTitle || "",
+        "Status": s.status || "",
+        "Earned": "৳" + (s.earned || 0),
+        "Processed At": s.checkedAt?.toDate?.().toLocaleString("en-GB") || ""
+      }));
+      const ws = XLSX.utils.json_to_sheet(sheetData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Published Result");
+      XLSX.writeFile(wb, `${key.replace(/[: ]/g, "_")}.xlsx`);
+    };
+
+    window.deletePublishedGroup = async function(key) {
+      const items = allPublishedGroups[key] || [];
+      if (!items.length) return;
+
+      const confirmMsg = `⚠️ সতর্কবার্তা:\nআপনি এই ফাইলের ${items.length} টি প্রকাশিত সাবমিশন ডিলিট করতে যাচ্ছেন।\nএটি ডিলিট করলে ইউজার প্যানেল থেকেও রেজাল্ট মুছে যাবে এবং ইউজাররা হিস্টোরি দেখতে পারবে না।\n\nআপনি কি নিশ্চিত?`;
+      if (!confirm(confirmMsg)) return;
+
       try {
         let batch = writeBatch(db);
-        let c = 0;
+        let count = 0;
         for (const s of items) {
           batch.delete(doc(db, "submissions", s.id));
-          c++;
-          if (c >= 400) { await batch.commit(); batch = writeBatch(db); c = 0; }
+          count++;
+          if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
         }
-        if (c > 0) await batch.commit();
+        if (count > 0) await batch.commit();
 
-        // pending submission মুছলে user-এর totalPending ও কমবে
-        const pend = {};
-        items.filter(s => s.status === "pending").forEach(s => { pend[s.userId] = (pend[s.userId] || 0) + 1; });
-        await Promise.allSettled(Object.entries(pend).map(([u, n]) => updateDoc(doc(db, "users", u), { totalPending: increment(-n) })));
+        alert(`✅ ${items.length} টি প্রকাশিত সাবমিশন সফলভাবে ডিলিট হয়েছে।`);
+        delete allPublishedGroups[key];
+        renderPublishedGroups();
+      } catch (e) {
+        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
+      }
+    };
 
-        alert(`✅ ${items.length} টা delete!`);
-        document.getElementById("loadBtn").click();
-        loadStats();
-      } catch (e) { alert("❌ " + e.message); }
+    document.getElementById("btnDeleteAllPublished").onclick = async () => {
+      const keys = Object.keys(allPublishedGroups);
+      if (!keys.length) return alert("মুছার মতো কোনো প্রকাশিত রেজাল্ট নেই!");
+
+      let totalCount = 0;
+      keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
+
+      if (!confirm(`🚨 মারাত্মক সতর্কবার্তা:\nমোট ${totalCount} টি প্রকাশিত রেজাল্ট মুছে ফেলা হবে!\nইউজাররা আর পূর্বের রেজাল্ট হিস্টোরি দেখতে পাবে না।\n\nআপনি কি নিশ্চিতভাবে সব মুছতে চান?`)) return;
+      if (prompt("নিশ্চিত করতে নিচে বড় হাতের অক্ষরে DELETE লিখুন:") !== "DELETE") return alert("বাতিল করা হয়েছে।");
+
+      try {
+        let batch = writeBatch(db);
+        let count = 0;
+
+        for (const k of keys) {
+          for (const s of allPublishedGroups[k]) {
+            batch.delete(doc(db, "submissions", s.id));
+            count++;
+            if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
+          }
+        }
+        if (count > 0) await batch.commit();
+
+        alert(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
+        allPublishedGroups = {};
+        renderPublishedGroups();
+      } catch (e) {
+        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
+      }
     };
 
     document.getElementById("addNoticeBtn").onclick = async () => {
@@ -1141,10 +1264,6 @@ select.inp option{background:#12122a;color:#fff}
       renderUsers(); updateActionBar();
     };
 
-    /* =====================================================================
-       USER DELETE (Admin Cleanup) — কোনো orphan data থাকবে না
-       ⚠️ collection / field নাম আপনার ডাটাবেস অনুযায়ী মিলিয়ে নিন
-       ===================================================================== */
     const USER_DATA = [
       ["submissions", "userId"],
       ["withdrawals", "userId"],
@@ -1499,6 +1618,5 @@ select.inp option{background:#12122a;color:#fff}
       if (processing) { e.preventDefault(); e.returnValue = ""; }
     });
   </script>
-
 </body>
 </html>
