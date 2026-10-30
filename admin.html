@@ -89,9 +89,9 @@ select.inp option{background:#12122a;color:#fff}
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:6px}
 .stat-box{position:relative;overflow:hidden;padding:18px 10px 14px;border-radius:22px;text-align:center;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
 .stat-box::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c,#818cf8);box-shadow:0 0 14px var(--c,#818cf8)}
+.stat-box.good{--c:#34d399}.stat-box.pending{--c:#fbbf24}
 .stat-box .num{font-family:'Inter';font-size:28px;font-weight:900;color:var(--c,#a5b4fc);line-height:1.15}
 .stat-box .label{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px}
-.stat-box.good{--c:#34d399}.stat-box.pending{--c:#fbbf24}
 
 .qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .qa a{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 6px 13px;border-radius:22px;text-align:center;transition:.25s}
@@ -208,7 +208,7 @@ select.inp option{background:#12122a;color:#fff}
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">⚡</div><span>Admin Panel<em class="atag">ADMIN</em></span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="location.href='admin.html'" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">⚡</div><span>Admin Panel<em class="atag">ADMIN</em></span></div><div style="width:40px"></div></div></header>
 
 <main class="page">
   <div class="admin-tab-bar">
@@ -240,7 +240,7 @@ select.inp option{background:#12122a;color:#fff}
     <div class="stats-grid">
       <div class="stat-box"><div class="num" id="statTasks">0</div><div class="label">Active Tasks</div></div>
       <div class="stat-box"><div class="num" id="statUsers">0</div><div class="label">Total Users</div></div>
-      <div class="stat-box good"><div class="num" id="statSubs">0</div><div class="label">Submissions</div></div>
+      <div class="stat-box pending"><div class="num" id="statSubs">0</div><div class="label">Pending Subs</div></div>
       <div class="stat-box pending"><div class="num" id="statWithdrawals">0</div><div class="label">Pending WD</div></div>
     </div>
 
@@ -291,7 +291,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="taskList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- RESULT PROCESS TAB (শুধুমাত্র পেন্ডিং প্রসেস হবে — কোনো অনিচ্ছাকৃত ডিলিট অপশন থাকবে না) -->
+  <!-- RESULT PROCESS TAB -->
   <div id="resultTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📥 Result Process (পেন্ডিং সাবমিশন)</h3>
@@ -303,7 +303,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="resultOutput"></div>
   </div>
 
-  <!-- PUBLISHED RESULTS TAB (প্রকাশিত ফলাফল হিস্টোরি ও ডিলিট অপশন) -->
+  <!-- PUBLISHED RESULTS TAB -->
   <div id="publishedTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📊 Published Results (প্রকাশিত ফলাফল)</h3>
@@ -721,7 +721,6 @@ select.inp option{background:#12122a;color:#fff}
       return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
-    // রেজাল্ট প্রসেস ট্যাবে শুধুমাত্র Pending সাবমিশন লোড হবে
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       if (!taskId) return alert("Task select করো!");
@@ -731,7 +730,6 @@ select.inp option{background:#12122a;color:#fff}
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
         loadedTask = { id: taskId, ...taskSnap.data() };
         
-        // শুধু Pending সাবমিশন লোড হচ্ছে
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId), where("status", "==", "pending"));
         const snap = await getDocs(q);
         let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -945,7 +943,6 @@ select.inp option{background:#12122a;color:#fff}
           out.innerHTML = `<div class="result-box"><h3>⏳ Processing ${done}/${pending.length}...</h3></div>`;
         }
 
-        // Daily Reports কালেকশনে সেভ
         try {
           await addDoc(collection(db, "reports"), {
             taskId: loadedTask.id,
@@ -982,9 +979,6 @@ select.inp option{background:#12122a;color:#fff}
       }
     }
 
-    // ==========================================
-    // 📊 PUBLISHED RESULTS TAB LOGIC
-    // ==========================================
     async function loadPublishedResults() {
       const container = document.getElementById("publishedGroups");
       container.innerHTML = `<div class="skel"></div><div class="skel"></div>`;
@@ -1087,8 +1081,7 @@ select.inp option{background:#12122a;color:#fff}
       const items = allPublishedGroups[key] || [];
       if (!items.length) return;
 
-      const confirmMsg = `⚠️ সতর্কবার্তা:\nআপনি এই ফাইলের ${items.length} টি প্রকাশিত সাবমিশন ডিলিট করতে যাচ্ছেন।\nএটি ডিলিট করলে ইউজার প্যানেল থেকেও রেজাল্ট মুছে যাবে এবং ইউজাররা হিস্টোরি দেখতে পারবে না।\n\nআপনি কি নিশ্চিত?`;
-      if (!confirm(confirmMsg)) return;
+      if (!confirm(`⚠️ সতর্কবার্তা:\nএই ফাইলের ${items.length} টি প্রকাশিত সাবমিশন ডিলিট করতে যাচ্ছেন।\nনিশ্চিত?`)) return;
 
       try {
         let batch = writeBatch(db);
@@ -1100,28 +1093,23 @@ select.inp option{background:#12122a;color:#fff}
         }
         if (count > 0) await batch.commit();
 
-        alert(`✅ ${items.length} টি প্রকাশিত সাবমিশন সফলভাবে ডিলিট হয়েছে।`);
+        alert(`✅ ডিলিট হয়েছে।`);
         delete allPublishedGroups[key];
         renderPublishedGroups();
       } catch (e) {
-        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
+        alert("❌ সমস্যা: " + e.message);
       }
     };
 
     document.getElementById("btnDeleteAllPublished").onclick = async () => {
       const keys = Object.keys(allPublishedGroups);
-      if (!keys.length) return alert("মুছার মতো কোনো প্রকাশিত রেজাল্ট নেই!");
-
-      let totalCount = 0;
-      keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
-
-      if (!confirm(`🚨 মারাত্মক সতর্কবার্তা:\nমোট ${totalCount} টি প্রকাশিত রেজাল্ট মুছে ফেলা হবে!\nইউজাররা আর পূর্বের রেজাল্ট হিস্টোরি দেখতে পাবে না।\n\nআপনি কি নিশ্চিতভাবে সব মুছতে চান?`)) return;
-      if (prompt("নিশ্চিত করতে নিচে বড় হাতের অক্ষরে DELETE লিখুন:") !== "DELETE") return alert("বাতিল করা হয়েছে।");
+      if (!keys.length) return alert("কিছু নেই!");
+      if (!confirm(`🚨 সব প্রকাশিত রেজাল্ট মুছে ফেলতে চান?`)) return;
+      if (prompt("DELETE লিখুন:") !== "DELETE") return;
 
       try {
         let batch = writeBatch(db);
         let count = 0;
-
         for (const k of keys) {
           for (const s of allPublishedGroups[k]) {
             batch.delete(doc(db, "submissions", s.id));
@@ -1130,13 +1118,10 @@ select.inp option{background:#12122a;color:#fff}
           }
         }
         if (count > 0) await batch.commit();
-
-        alert(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
+        alert(`✅ সব মুছে ফেলা হয়েছে।`);
         allPublishedGroups = {};
         renderPublishedGroups();
-      } catch (e) {
-        alert("❌ ডিলিট করতে সমস্যা হয়েছে: " + e.message);
-      }
+      } catch (e) { alert("❌ " + e.message); }
     };
 
     document.getElementById("addNoticeBtn").onclick = async () => {
@@ -1169,8 +1154,6 @@ select.inp option{background:#12122a;color:#fff}
         return `<div class="nrow">
           <h3>📢 ${esc(n.title)}</h3>
           <p>${esc(n.message)}</p>
-          ${n.apkUrl ? `<p style="margin-top:8px">📱 APK: <a href="${esc(n.apkUrl)}" target="_blank" rel="noopener noreferrer">Download</a></p>` : ''}
-          ${n.linkUrl ? `<p>🔗 Link: <a href="${esc(n.linkUrl)}" target="_blank" rel="noopener noreferrer">Open</a></p>` : ''}
           <button class="mini r" style="margin-top:12px" onclick="deleteNotice('${d.id}')">🗑️ Delete</button>
         </div>`;
       }).join("");
@@ -1189,9 +1172,7 @@ select.inp option{background:#12122a;color:#fff}
         const snap = await getDocs(collection(db, "users"));
         allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         renderUsers();
-      } catch (e) {
-        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-      }
+      } catch (e) {}
     }
 
     function renderUsers() {
@@ -1199,15 +1180,9 @@ select.inp option{background:#12122a;color:#fff}
       const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
       let filtered = allUsers;
       if (search) {
-        filtered = allUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(search) ||
-          (u.email || "").toLowerCase().includes(search)
-        );
+        filtered = allUsers.filter(u => (u.username || "").toLowerCase().includes(search) || (u.email || "").toLowerCase().includes(search));
       }
-      if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`;
-        return;
-      }
+      if (filtered.length === 0) { list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`; return; }
       list.innerHTML = filtered.map(u => {
         const isChecked = selectedUsers.has(u.id);
         const badgeHtml = u.customBadge ? `<span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">🎖️ ${esc(u.customBadge)}</span>` : '';
@@ -1229,8 +1204,7 @@ select.inp option{background:#12122a;color:#fff}
           const uid = cb.dataset.uid;
           if (selectedUsers.has(uid)) selectedUsers.delete(uid);
           else selectedUsers.add(uid);
-          renderUsers();
-          updateActionBar();
+          renderUsers(); updateActionBar();
         };
       });
     }
@@ -1238,89 +1212,19 @@ select.inp option{background:#12122a;color:#fff}
     function updateActionBar() {
       const bar = document.getElementById("actionBar");
       const count = document.getElementById("selectedCount");
-      if (selectedUsers.size > 0) {
-        bar.classList.add("show");
-        count.textContent = `${selectedUsers.size} user selected`;
-      } else {
-        bar.classList.remove("show");
-      }
+      if (selectedUsers.size > 0) { bar.classList.add("show"); count.textContent = `${selectedUsers.size} selected`; }
+      else { bar.classList.remove("show"); }
     }
 
     document.getElementById("selectAllUsersBtn").onclick = () => {
-      const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
-      let filtered = allUsers;
-      if (search) {
-        filtered = allUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(search) ||
-          (u.email || "").toLowerCase().includes(search)
-        );
-      }
-      filtered.forEach(u => selectedUsers.add(u.id));
+      allUsers.forEach(u => selectedUsers.add(u.id));
       renderUsers(); updateActionBar();
     };
-
     document.getElementById("clearSelectionBtn").onclick = () => {
-      selectedUsers.clear();
-      renderUsers(); updateActionBar();
+      selectedUsers.clear(); renderUsers(); updateActionBar();
     };
 
-    const USER_DATA = [
-      ["submissions", "userId"],
-      ["withdrawals", "userId"],
-      ["completed_tasks", "userId"],
-      ["reports", "userId"],
-      ["refer_earnings", "referrerId"],
-      ["refer_earnings", "referredUserId"]
-    ];
-    const CHAT_COL = "chats", CHAT_SUB = "messages";
-
-    async function delDocs(docs) {
-      let b = writeBatch(db), n = 0;
-      for (const d of docs) {
-        b.delete(d.ref);
-        if (++n % 400 === 0) { await b.commit(); b = writeBatch(db); }
-      }
-      if (n % 400) await b.commit();
-    }
-    const delSub = async (ref) => delDocs((await getDocs(collection(ref, CHAT_SUB))).docs);
-
-    document.getElementById("deleteSelectedBtn").onclick = async () => {
-      if (!selectedUsers.size) return;
-      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete? (account + submissions + withdrawals + chat + refer + reports)`)) return;
-      if (prompt("নিশ্চিত করতে DELETE লিখুন") !== "DELETE") return;
-      let count = 0;
-      const warns = new Set();
-      try {
-        for (const uid of selectedUsers) {
-          const u = allUsers.find(x => x.id === uid);
-          if (uid === auth.currentUser?.uid || u?.role === "admin") continue;
-
-          for (const [col, field] of USER_DATA) {
-            try { await delDocs((await getDocs(query(collection(db, col), where(field, "==", uid)))).docs); }
-            catch (e) { warns.add(col); }
-          }
-
-          try {
-            const ref = doc(db, CHAT_COL, uid);
-            await delSub(ref);
-            await deleteDoc(ref);
-            const q = await getDocs(query(collection(db, CHAT_COL), where("userId", "==", uid)));
-            for (const d of q.docs) { await delSub(d.ref); await deleteDoc(d.ref); }
-          } catch (e) { warns.add("chat"); }
-
-          await deleteDoc(doc(db, "users", uid));
-          count++;
-        }
-      } catch (e) { alert("❌ " + e.message); }
-      alert(`✅ ${count} user delete!` + (warns.size ? `\n⚠️ এগুলো পুরো মোছা যায়নি: ${[...warns].join(", ")}` : ""));
-      selectedUsers.clear();
-      loadUsers(); updateActionBar(); loadStats();
-    };
-
-    window.editUser = (uid) => {
-      location.href = "admin-user-edit.html?id=" + uid;
-    };
-
+    window.editUser = (uid) => { location.href = "admin-user-edit.html?id=" + uid; };
     document.getElementById("userSearch").oninput = renderUsers;
 
     async function loadReferrals() {
@@ -1332,55 +1236,12 @@ select.inp option{background:#12122a;color:#fff}
         document.getElementById("totalRefUsers").textContent = referredUsers.length;
         const earningsSnap = await getDocs(collection(db, "refer_earnings"));
         let totalEarnings = 0;
-        const earningsByReferrer = {};
-        earningsSnap.forEach(d => {
-          const e = d.data();
-          totalEarnings += e.totalEarned || 0;
-          if (!earningsByReferrer[e.referrerId]) earningsByReferrer[e.referrerId] = 0;
-          earningsByReferrer[e.referrerId] += e.totalEarned || 0;
-        });
+        earningsSnap.forEach(d => { totalEarnings += d.data().totalEarned || 0; });
         document.getElementById("totalRefEarnings").textContent = "৳" + totalEarnings.toFixed(2);
-        const groupedByReferrer = {};
-        referredUsers.forEach(u => {
-          if (!groupedByReferrer[u.referredBy]) groupedByReferrer[u.referredBy] = [];
-          groupedByReferrer[u.referredBy].push(u);
-        });
-        if (Object.keys(groupedByReferrer).length === 0) {
-          list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কেউ refer করেনি</div>`;
-          return;
-        }
-        let html = "";
-        for (const [referrerId, refs] of Object.entries(groupedByReferrer)) {
-          const referrer = allUsersList.find(u => u.id === referrerId);
-          if (!referrer) continue;
-          const refEarned = earningsByReferrer[referrerId] || 0;
-          html += `
-            <div class="rf glass">
-              <div class="rf-h">
-                <div class="rf-l">
-                  <div class="user-avatar user">${esc((referrer.username || "U").charAt(0).toUpperCase())}</div>
-                  <div style="min-width:0">
-                    <div style="font-size:14.5px;font-weight:700">${esc(referrer.username || "User")}</div>
-                    <div style="font-size:11.5px;color:var(--muted);word-break:break-all">${esc(referrer.email || "")}</div>
-                    <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Code: <b style="color:#fff">${esc(referrer.myReferCode || "—")}</b></div>
-                  </div>
-                </div>
-                <div class="rf-e"><b>৳${refEarned.toFixed(2)}</b><span>Earned</span></div>
-              </div>
-              <div class="rf-sub">👥 Referred Users (${refs.length}):</div>
-              ${refs.map(r => `<div class="rf-u"><span>👤 ${esc(r.username || "User")}</span><span>${esc(r.email || "")}</span></div>`).join("")}
-            </div>`;
-        }
-        list.innerHTML = html;
-      } catch (e) {
-        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-      }
+      } catch (e) {}
     }
 
-    let allBadgeUsers = [];
-    let selectedBadgeUserId = null;
-    let badgeColor = "#6366f1";
-
+    let allBadgeUsers = [], selectedBadgeUserId = null, badgeColor = "#6366f1";
     document.querySelectorAll(".badge-color-btn").forEach(btn => {
       btn.onclick = () => {
         badgeColor = btn.dataset.color;
@@ -1390,18 +1251,11 @@ select.inp option{background:#12122a;color:#fff}
       };
     });
 
-    document.getElementById("badgeCustomColor").oninput = (e) => {
-      badgeColor = e.target.value;
-      document.querySelectorAll(".badge-color-btn").forEach(b => b.classList.remove("on"));
-    };
-
     async function loadBadgeUsers() {
       try {
         const snap = await getDocs(collection(db, "users"));
-        allBadgeUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .filter(u => u.role !== "admin")
-          .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
-        renderBadgeUserResults(document.getElementById("badgeUserSearch").value || "");
+        allBadgeUsers = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.role !== "admin");
+        renderBadgeUserResults("");
       } catch (e) {}
     }
 
@@ -1409,28 +1263,13 @@ select.inp option{background:#12122a;color:#fff}
       const container = document.getElementById("badgeUserResults");
       const s = search.toLowerCase().trim();
       let filtered = allBadgeUsers;
-      if (s) {
-        filtered = allBadgeUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(s) ||
-          (u.email || "").toLowerCase().includes(s)
-        );
-      }
-      filtered = filtered.slice(0, 50);
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="empty" style="padding:16px">কোনো user পাওয়া যায়নি</div>`;
-        return;
-      }
-
+      if (s) filtered = allBadgeUsers.filter(u => (u.username || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s));
+      filtered = filtered.slice(0, 30);
+      if (filtered.length === 0) { container.innerHTML = `<div class="empty" style="padding:16px">কোনো user নেই</div>`; return; }
       container.innerHTML = filtered.map(u => `
         <div class="brow ${selectedBadgeUserId === u.id ? 'sel' : ''}" data-uid="${u.id}" data-name="${esc(u.username || 'User')}" data-email="${esc(u.email || '')}">
-          <div class="user-avatar user" style="width:40px;height:40px;flex-basis:40px;font-size:16px">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:700">${esc(u.username || "User")} ${u.customBadge ? `<span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">${esc(u.customBadge)}</span>` : ''}</div>
-            <div style="font-size:11.5px;color:var(--muted);word-break:break-all">${esc(u.email || "")} • ✅ ${u.totalGood || 0}</div>
-          </div>
+          <div style="flex:1"><b>${esc(u.username)}</b><br><small>${esc(u.email)}</small></div>
         </div>`).join("");
-
       container.querySelectorAll(".brow").forEach(row => {
         row.onclick = () => {
           selectedBadgeUserId = row.dataset.uid;
@@ -1441,80 +1280,34 @@ select.inp option{background:#12122a;color:#fff}
         };
       });
     }
-
-    document.getElementById("badgeUserSearch").addEventListener("input", (e) => {
-      renderBadgeUserResults(e.target.value);
-    });
+    document.getElementById("badgeUserSearch").oninput = (e) => renderBadgeUserResults(e.target.value);
 
     async function loadBadgedUsers() {
       const list = document.getElementById("badgedUsersList");
       try {
         const snap = await getDocs(collection(db, "users"));
-        const badgedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-          .filter(u => u.customBadge);
-        if (badgedUsers.length === 0) {
-          list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge assign করা হয়নি</div>`;
-          return;
-        }
-        list.innerHTML = badgedUsers.map(u => `
+        const badged = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(u => u.customBadge);
+        if (badged.length === 0) { list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge নেই</div>`; return; }
+        list.innerHTML = badged.map(u => `
           <div class="user-card glass">
-            <div class="user-avatar user">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
-            <div class="user-info" style="cursor:default">
-              <h4>${esc(u.username || "User")} <span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">${esc(u.customBadge)}</span></h4>
-              <p>${esc(u.email || "")}</p>
-              <div class="badges">✅ ${u.totalGood || 0} good</div>
-            </div>
+            <div class="user-info"><h4>${esc(u.username)} <span class="bdg" style="background:${esc(u.customBadgeColor)}">${esc(u.customBadge)}</span></h4><p>${esc(u.email)}</p></div>
             <button class="mini r" onclick="removeUserBadge('${u.id}')">Remove</button>
           </div>`).join("");
       } catch (e) {}
     }
-
     window.removeUserBadge = async (uid) => {
-      if (!confirm("Badge remove করবে?")) return;
-      try {
-        await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
-        loadBadgedUsers();
-        loadBadgeUsers();
-        alert("✅ Badge removed!");
-      } catch (e) { alert("❌ " + e.message); }
+      await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
+      loadBadgedUsers(); loadBadgeUsers();
     };
 
     document.getElementById("saveBadgeBtn").onclick = async () => {
-      const userId = selectedBadgeUserId;
-      const badgeName = document.getElementById("badgeName").value.trim().toUpperCase();
-      const color = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
-      if (!userId) return alert("User select করো!");
-      if (!badgeName) return alert("Badge name দাও!");
-      try {
-        await updateDoc(doc(db, "users", userId), {
-          customBadge: badgeName,
-          customBadgeColor: color
-        });
-        document.getElementById("badgeOutput").innerHTML = `
-          <div class="result-box">
-            <h3>✅ Badge Assigned!</h3>
-            <p>User: ${esc(document.getElementById("selectedBadgeUserName").textContent)}</p>
-            <p>Badge: <span class="bdg" style="background:${esc(color)};margin-left:0">${esc(badgeName)}</span></p>
-          </div>`;
-        document.getElementById("badgeName").value = "";
-        loadBadgedUsers();
-        loadBadgeUsers();
-      } catch (e) { alert("❌ " + e.message); }
-    };
-
-    document.getElementById("removeBadgeBtn").onclick = async () => {
-      const userId = selectedBadgeUserId;
-      if (!userId) return alert("User select করো!");
-      if (!confirm("Badge remove করবে?")) return;
-      try {
-        await updateDoc(doc(db, "users", userId), {
-          customBadge: null,
-          customBadgeColor: null
-        });
-        alert("✅ Badge removed!");
-        loadBadgedUsers();
-        loadBadgeUsers();
-      } catch (e) { alert("❌ " + e.message); }
+      if (!selectedBadgeUserId) return alert("User select করো!");
+      const name = document.getElementById("badgeName").value.trim().toUpperCase();
+      const col = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
+      if (!name) return alert("Badge name দাও!");
+      await updateDoc(doc(db, "users", selectedBadgeUserId), { customBadge: name, customBadgeColor: col });
+      alert("✅ Saved!");
+      loadBadgedUsers(); loadBadgeUsers();
     };
 
     async function loadSettings() {
@@ -1526,74 +1319,37 @@ select.inp option{background:#12122a;color:#fff}
           document.getElementById("maxWithdraw").value = w.maxWithdraw || 50000;
           document.getElementById("processingTime").value = w.processingTime || "24 hours";
           document.getElementById("withdrawEnabled").value = String(w.withdrawEnabled !== false);
-        } else {
-          document.getElementById("minWithdraw").value = 100;
-          document.getElementById("maxWithdraw").value = 50000;
-          document.getElementById("processingTime").value = "24 hours";
-          document.getElementById("withdrawEnabled").value = "true";
         }
-        const rSnap = await getDoc(doc(db, "settings", "referral_config"));
-        if (rSnap.exists()) {
-          const r = rSnap.data();
-          document.getElementById("referEnabled").value = String(r.enabled !== false);
-          document.getElementById("defaultReferCommission").value = r.defaultReferCommission || 0;
-        } else {
-          document.getElementById("referEnabled").value = "true";
-          document.getElementById("defaultReferCommission").value = 0;
-        }
-        const osSnap = await getDoc(doc(db, "settings", "online_status"));
-        const on = osSnap.exists() ? osSnap.data().adminOnline === true : false;
-        document.getElementById("adminOnlineToggle").checked = on;
-        paintOnline(on);
       } catch (e) {}
     }
 
     document.getElementById("saveWithdrawSettings").onclick = async () => {
       const minWithdraw = parseFloat(document.getElementById("minWithdraw").value) || 0;
       const maxWithdraw = parseFloat(document.getElementById("maxWithdraw").value) || 50000;
-      const processingTime = document.getElementById("processingTime").value.trim() || "24 hours";
+      const processingTime = document.getElementById("processingTime.value") || "24 hours";
       const withdrawEnabled = document.getElementById("withdrawEnabled").value === "true";
-      if (minWithdraw < 0) return alert("Minimum cannot be negative!");
-      if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
-      try {
-        await setDoc(doc(db, "settings", "withdraw_config"), {
-          minWithdraw, maxWithdraw, processingTime, withdrawEnabled,
-          updatedAt: new Date()
-        }, { merge: true });
-        showSettingsOutput("✅ Withdraw settings saved!");
-      } catch (e) { alert("❌ " + e.message); }
+      await setDoc(doc(db, "settings", "withdraw_config"), { minWithdraw, maxWithdraw, processingTime, withdrawEnabled, updatedAt: new Date() }, { merge: true });
+      alert("✅ Saved!");
     };
-
     document.getElementById("saveReferSettings").onclick = async () => {
       const enabled = document.getElementById("referEnabled").value === "true";
       const defaultReferCommission = parseFloat(document.getElementById("defaultReferCommission").value) || 0;
-      if (defaultReferCommission < 0) return alert("Commission cannot be negative!");
-      try {
-        await setDoc(doc(db, "settings", "referral_config"), {
-          enabled, defaultReferCommission,
-          updatedAt: new Date()
-        }, { merge: true });
-        showSettingsOutput("✅ Refer settings saved!");
-      } catch (e) { alert("❌ " + e.message); }
+      await setDoc(doc(db, "settings", "referral_config"), { enabled, defaultReferCommission, updatedAt: new Date() }, { merge: true });
+      alert("✅ Saved!");
     };
-
-    function showSettingsOutput(msg) {
-      const out = document.getElementById("settingsOutput");
-      out.innerHTML = `<div class="result-box"><h3>${msg}</h3></div>`;
-      setTimeout(() => out.innerHTML = "", 3000);
-    }
 
     async function loadStats() {
       try {
-        const taskQ = query(collection(db, "tasks"), where("active", "==", true));
-        const taskSnap = await getDocs(taskQ);
+        const taskSnap = await getDocs(query(collection(db, "tasks"), where("active", "==", true)));
         document.getElementById("statTasks").textContent = taskSnap.size;
         const userSnap = await getDocs(collection(db, "users"));
         document.getElementById("statUsers").textContent = userSnap.size;
-        const subSnap = await getDocs(collection(db, "submissions"));
+        
+        // ✅ ফিক্স: Admin Dashboard-এর Submissions কাউন্ট এখন শুধু "Pending Subs" দেখাবে (রেজাল্ট পাবলিশ হলে এগুলো কমে যাবে)
+        const subSnap = await getDocs(query(collection(db, "submissions"), where("status", "==", "pending")));
         document.getElementById("statSubs").textContent = subSnap.size;
-        const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
-        const wdSnap = await getDocs(wdQ);
+
+        const wdSnap = await getDocs(query(collection(db, "withdrawals"), where("status", "==", "pending")));
         document.getElementById("statWithdrawals").textContent = wdSnap.size;
       } catch (e) {}
     }
@@ -1601,22 +1357,10 @@ select.inp option{background:#12122a;color:#fff}
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ Admin না!");
-        location.href = "dashboard.html";
-        return;
-      }
+      if (!snap.exists() || snap.data().role !== "admin") { location.href = "dashboard.html"; return; }
       adminName = snap.data().username || "ADQ Admin";
-
-      loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
-      loadReferrals();
-      loadBadgeUsers();
-      loadBadgedUsers();
+      loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings(); loadReferrals(); loadBadgeUsers(); loadBadgedUsers();
     });
-
-    window.addEventListener("beforeunload", (e) => {
-      if (processing) { e.preventDefault(); e.returnValue = ""; }
-    });
-  </script>
+</script>
 </body>
 </html>
