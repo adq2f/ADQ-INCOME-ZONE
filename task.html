@@ -45,7 +45,6 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
 .dock a.active svg{transform:translateY(-1px) scale(1.08)}
 a:focus-visible,button:focus-visible,input:focus-visible,.drop-zone:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel,.drop-zone .icon{animation:none}}
 
 .th{position:relative;overflow:hidden;border-radius:28px;padding:24px 20px;margin-bottom:14px;text-align:center;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -22px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
 .th::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 62%);pointer-events:none}
@@ -105,7 +104,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 .closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
 .closed-box p{margin:0;font-size:14px;color:var(--muted)}
 
-/* ===== ট্যাব বার (৩টি বাটন — সবসময় দেখাবে) ===== */
 .tab-bar{display:flex;gap:8px;margin-bottom:16px;padding:4px;background:rgba(255,255,255,.04);border-radius:18px;border:1px solid var(--line)}
 .tab-btn{flex:1;min-width:0;padding:14px 6px;border-radius:14px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .25s cubic-bezier(.2,.8,.2,1);text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.2}
 .tab-btn .tab-ic{font-size:20px}
@@ -114,10 +112,8 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 @media (max-width:380px){.tab-btn{font-size:11.5px;padding:12px 2px}.tab-btn .tab-ic{font-size:18px}}
 .tab-content{display:none}
 .tab-content.active{display:block}
-/* সময় না হলে / শেষ হলে শুধু ফর্ম লক, ট্যাব বার খোলা থাকে */
 .locked .tab-content{opacity:.45;pointer-events:none;filter:grayscale(.4)}
 
-/* ===== ফাইল ড্রপ জোন ===== */
 .drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
 .drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
 .drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
@@ -141,11 +137,10 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
     <ul>
       <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
       <li>২এফএ (2FA) কোড সঠিক না হলে অ্যাকাউন্ট বাদ পড়বে।</li>
-      <li>পুরো রো (UID + Password + 2FA + বাড়তি কলাম) হুবহু আগের কোনো সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট। শুধু UID বা শুধু Password মিললে ডুপ্লিকেট না।</li>
+      <li>পুরো রো হুবহু আগের কোনো সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট হিসেবে গণ্য হবে।</li>
     </ul>
   </div>
 
-  <!-- ✅ ৩টি ট্যাব সবসময় দেখাবে (লক থাকলেও) -->
   <div id="submitSections" class="locked">
 
     <div class="tab-bar" role="tablist">
@@ -204,7 +199,7 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
         <div class="bhint">
           <b>ফাইল:</b> Excel (.xlsx, .xls), CSV (.csv) অথবা TXT (.txt, .tsv)<br>
           <b>কলাম ক্রম:</b> <span id="fileFormatHint">—</span><br>
-          একদম প্রথম রো থেকে শেষ রো পর্যন্ত প্রতিটি রো = একটি অ্যাকাউন্ট (হেডার আলাদা করা হয় না, কোনো রো স্কিপ হয় না)। বাড়তি কলাম থাকলেও ডুপ্লিকেট চেকে ধরা হবে।
+          একদম প্রথম রো থেকে শেষ রো পর্যন্ত প্রতিটি রো = একটি অ্যাকাউন্ট (কোনো রো স্কিপ হবে না)।
         </div>
 
         <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
@@ -238,7 +233,6 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 
 <nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
-<!-- ✅ ট্যাব সুইচ আলাদা সাধারণ script — Firebase/module fail করলেও ট্যাব কাজ করবে -->
 <script>
 (function () {
   var btns = document.querySelectorAll(".tab-btn");
@@ -272,12 +266,12 @@ const DEFAULT_FIELDS = [
   { key: "password", label: "Password" },
   { key: "twoFA", label: "2FA Key" }
 ];
-const MAX_ROWS = 5000;     // এক ফাইল / এক পেস্টে সর্বোচ্চ রো
-const BATCH_SIZE = 450;    // Firestore batch limit 500, তাই 450 + user update
+const MAX_ROWS = 5000;
+const BATCH_SIZE = 450;
 
 let task = null, currentUser = null, isOpen = false, busy = false;
 let countdownInterval = null, taskStartTime = null, taskEndTime = null;
-let existingValues = new Set();   // এই task-এ আগে submit হওয়া সব মান (normalized)
+let existingValues = new Set();
 let fileRows = [], fileMeta = null;
 
 function esc(s) {
@@ -285,8 +279,6 @@ function esc(s) {
 }
 const getFields = () => (task && Array.isArray(task.fields) && task.fields.length) ? task.fields : DEFAULT_FIELDS;
 const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
-const hnorm = (v) => String(v ?? "").toLowerCase().replace(/[\s_\-]+/g, "");
-const short = (v) => v.length > 26 ? v.slice(0, 12) + "…" + v.slice(-8) : v;
 
 $("logoutBtn").onclick = async () => {
   if (!confirm("লগআউট?")) return;
@@ -295,9 +287,6 @@ $("logoutBtn").onclick = async () => {
   location.href = "index.html";
 };
 
-/* =====================================================================
-   AUTH + TASK LOAD
-   ===================================================================== */
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = "login.html"; return; }
   currentUser = user;
@@ -359,16 +348,13 @@ onAuthStateChanged(auth, async (user) => {
 function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1); }
 
 /* =====================================================================
-   DUPLICATE ENGINE — শুধু পুরো রো হুবহু এক হলে ডুপ্লিকেট
-   (একটা UID / Password / Username মিললে ডুপ্লিকেট না, সব কলাম মিলতে হবে)
-   task.dupKeys = ["uid","twoFA"] দিলে শুধু ওই ফিল্ডগুলোর কম্বিনেশন চেক হবে
+   ডুপ্লিকেট চেক: পুরো রো হুবহু মিললে তবেই ডুপ্লিকেট
    ===================================================================== */
 function rowKey(item, cells) {
-  if (Array.isArray(task.dupKeys) && task.dupKeys.length) {
+  if (Array.isArray(task?.dupKeys) && task.dupKeys.length) {
     const v = task.dupKeys.map(k => norm(item?.[k]));
     return v.some(Boolean) ? v.join("\u00a7") : "";
   }
-  // পুরো রো: টাস্কের ফিল্ড + বাড়তি কলাম, সব হুবহু মিলতে হবে
   const arr = (Array.isArray(cells) && cells.length) ? cells : getFields().map(f => item?.[f.key]);
   const vals = arr.map(norm);
   while (vals.length && !vals[vals.length - 1]) vals.pop();
@@ -382,9 +368,8 @@ async function loadExisting() {
   existingValues = set;
 }
 
-// rows: [{label, item, cells}] → প্রতিটি রো-র status: ok | dup-old | dup-file
 function analyze(rows) {
-  const seen = new Map();   // পুরো রো key → প্রথম যে রো-তে এসেছে
+  const seen = new Map();
   return rows.map(r => {
     const key = rowKey(r.item, r.cells);
     let status = "ok", dupOf = "";
@@ -401,9 +386,6 @@ function dupText(r) {
     : `রো ${r.dupOf}-এর সাথে পুরো একই`;
 }
 
-/* =====================================================================
-   COUNTDOWN / TIME LOCK
-   ===================================================================== */
 function startCountdown() {
   updateCountdown();
   if (countdownInterval) clearInterval(countdownInterval);
@@ -483,9 +465,6 @@ function verifyTime() {
   return true;
 }
 
-/* =====================================================================
-   ROW BUILDING (Bulk ও File দুটোই এটা ব্যবহার করে)
-   ===================================================================== */
 function splitLine(line) {
   let parts;
   if (line.includes("\t")) parts = line.split("\t");
@@ -496,7 +475,6 @@ function splitLine(line) {
   return parts.map(p => p.trim()).filter(Boolean);
 }
 
-// cells[i] → fields[i] (পজিশন অনুযায়ী)। বাড়তি cell থাকলে allCells-এ থাকবে
 function buildRow(cells, label, strict = true) {
   cells = cells.map(c => String(c ?? "").trim());
   const fields = getFields();
@@ -508,13 +486,10 @@ function buildRow(cells, label, strict = true) {
   });
   if (strict && missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
   while (cells.length && !cells[cells.length - 1]) cells.pop();
-  const clean = cells.slice(0, 40).map(c => c.slice(0, 300));   // বাড়তি কলামসহ পুরো রো (পজিশন ঠিক রেখে)
+  const clean = cells.slice(0, 40).map(c => c.slice(0, 300));
   return { ok: true, row: { label: String(label), item, cells: clean } };
 }
 
-/* =====================================================================
-   PREVIEW (Bulk ও File)
-   ===================================================================== */
 function renderPreview(el, analyzed, incomplete) {
   if (!analyzed.length && !incomplete.length) { el.classList.remove("show"); el.innerHTML = ""; return; }
   const fields = getFields();
@@ -525,21 +500,20 @@ function renderPreview(el, analyzed, incomplete) {
     const bad = r.status !== "ok";
     html += `<div class="row ${bad ? "duplicate" : "ok"}">${esc(r.label)}. ${lbl}${bad ? ` ❌ ${esc(dupText(r))}` : " ✓"}</div>`;
   });
-  if (analyzed.length > LIM) html += `<div class="row more">… আরও ${analyzed.length - LIM} টা রো (দেখানো হয়নি, তবে সাবমিটে ধরা হবে)</div>`;
+  if (analyzed.length > LIM) html += `<div class="row more">… আরও ${analyzed.length - LIM} টা রো</div>`;
   incomplete.slice(0, 25).forEach(x => {
     html += `<div class="row warn">${esc(x.label)}. ⚠️ ${esc(x.reason)} — বাদ</div>`;
   });
-  if (incomplete.length > 25) html += `<div class="row more">… আরও ${incomplete.length - 25} টা অসম্পূর্ণ রো</div>`;
   el.innerHTML = html;
   el.classList.add("show");
 }
 
-/* =====================================================================
-   COMMIT (Single / Bulk / File সবার জন্য এক জায়গা)
-   ===================================================================== */
 function buildPayload(r, source) {
+  // নিশ্চিত করা হচ্ছে যাতে uid সবসময় সঠিক থাকে
+  const fallbackUid = r.item.uid || r.item[Object.keys(r.item)[0]] || (r.cells && r.cells[0]) || "";
   return {
     ...r.item,
+    uid: fallbackUid,
     allCells: r.cells,
     taskId,
     taskTitle: task.title ?? "",
@@ -562,7 +536,7 @@ async function commitRows(rows, source, onProgress) {
       const chunk = rows.slice(i, i + BATCH_SIZE);
       const batch = writeBatch(db);
       chunk.forEach(r => batch.set(doc(collection(db, "submissions")), buildPayload(r, source)));
-      batch.update(userRef, { totalPending: increment(chunk.length) });   // একই batch — count কখনো mismatch হবে না
+      batch.update(userRef, { totalPending: increment(chunk.length) });
       await batch.commit();
       success += chunk.length;
       chunk.forEach(r => { const k = rowKey(r.item, r.cells); if (k) existingValues.add(k); });
@@ -618,7 +592,7 @@ async function runSubmit(rows, source, ui) {
     });
 
     if (error) {
-      alert(`⚠️ ${success} টা submit হয়েছে, তারপর সমস্যা হয়েছে:\n${error.message}\n\nবাকিগুলো আবার submit করতে পারো (যেগুলো হয়েছে সেগুলো duplicate হিসেবে বাদ যাবে)।`);
+      alert(`⚠️ ${success} টা submit হয়েছে, সমস্যা:\n${error.message}`);
       ui.prog.classList.remove("show");
       ui.refresh();
       return;
@@ -637,9 +611,6 @@ async function runSubmit(rows, source, ui) {
   }
 }
 
-/* =====================================================================
-   ১. SINGLE SUBMIT
-   ===================================================================== */
 function readSingle() {
   const item = {};
   const missing = [];
@@ -703,9 +674,6 @@ $("singleSubmitBtn").onclick = async () => {
   }
 };
 
-/* =====================================================================
-   ২. BULK / ALL PASTE
-   ===================================================================== */
 function parseBulk(text) {
   const rows = [], incomplete = [];
   if (!task) return { rows, incomplete };
@@ -746,9 +714,6 @@ $("bulkSubmitBtn").onclick = () => {
 };
 $("clearBulkBtn").onclick = resetBulk;
 
-/* =====================================================================
-   ৩. FILE SUBMIT — যেকোনো sheet format, কলামের পজিশন = task-এর ফিল্ড ক্রম
-   ===================================================================== */
 const dropZone = $("dropZone");
 const fileInput = $("fileInput");
 const fileInfo = $("fileInfo");
@@ -769,7 +734,6 @@ fileInput.onchange = e => {
   if (file) handleFile(file);
 };
 
-// Excel-এর বড় সংখ্যা (UID) যেন 1.0001E+14 না হয়ে যায়
 function cellToStr(c) {
   if (c === null || c === undefined) return "";
   if (typeof c === "number") {
@@ -812,6 +776,7 @@ function readFileSheets(file, ext) {
   });
 }
 
+// ✅ কোনো রো স্কিপ হবে না: Row 1 থেকেই সব অ্যাকাউন্ট হিসেবে পড়া হবে
 function matrixToRows(sheetName, matrix, out, multi) {
   const fields = getFields(), fc = fields.length;
   const conv = matrix.map(r => Array.isArray(r) ? r.map(cellToStr) : []);
@@ -821,14 +786,13 @@ function matrixToRows(sheetName, matrix, out, multi) {
     if (!nonEmpty.length) return;
 
     let cells;
-    if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0]);   // এক cell-এ সব দেওয়া থাকলে
+    if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0]);
     else cells = cells0;
 
     const label = multi ? `${sheetName}:${idx + 1}` : String(idx + 1);
-
     if (out.rows.length + out.incomplete.length >= MAX_ROWS) { out.truncated = true; return; }
 
-    const r = buildRow(cells, label, false);   // ফাইলে কোনো রো স্কিপ হবে না
+    const r = buildRow(cells, label, false);
     if (r.ok) out.rows.push(r.row);
     else out.incomplete.push({ label, reason: r.reason });
   });
@@ -852,7 +816,7 @@ async function handleFile(file) {
 
   try {
     const sheets = await readFileSheets(file, ext);
-    try { await loadExisting(); } catch (e) { /* submit-এর সময় আবার চেক হবে */ }
+    try { await loadExisting(); } catch (e) {}
 
     const out = { rows: [], incomplete: [], headers: 0, truncated: false };
     const multi = sheets.filter(s => s.matrix.some(r => Array.isArray(r) && r.some(c => cellToStr(c) !== ""))).length > 1;
@@ -864,18 +828,18 @@ async function handleFile(file) {
       $("fileCountBox").style.display = "none";
       renderPreview($("filePreview"), [], out.incomplete);
       $("fileSubmitBtn").disabled = true;
-      return alert("❌ ফাইলে কোনো রো পাওয়া যায়নি!\n\n💡 কলাম ক্রম: " + $("fileFormatHint").textContent);
+      return alert("❌ ফাইলে কোনো ডাটা পাওয়া যায়নি!");
     }
 
     fileRows = out.rows;
-    fileMeta = { name: file.name, incomplete: out.incomplete, headers: out.headers, truncated: out.truncated, sheets: sheets.length };
+    fileMeta = { name: file.name, incomplete: out.incomplete, headers: 0, truncated: out.truncated, sheets: sheets.length };
     $("fileCountBox").style.display = "flex";
     updateFilePreview();
   } catch (err) {
     fileInfo.classList.remove("show");
     alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
   } finally {
-    fileInput.value = "";   // একই ফাইল আবার select করা যাবে
+    fileInput.value = "";
   }
 }
 
@@ -889,12 +853,10 @@ function updateFilePreview() {
   $("fileCountNum").textContent = `${unique} / ${analyzed.length}`;
   renderPreview($("filePreview"), analyzed, fileMeta.incomplete);
 
-  let msg = `✅ ফাইল লোড হয়েছে: ${fileMeta.name} (${analyzed.length} টা রো)`;
-  if (fileMeta.headers) msg += `\n📌 হেডার রো বাদ দেওয়া হয়েছে`;
+  let msg = `✅ ফাইল লোড হয়েছে: ${fileMeta.name} (${analyzed.length} টা ডাটা)`;
   if (fileMeta.incomplete.length) msg += `\n⚠️ ${fileMeta.incomplete.length} টা অসম্পূর্ণ রো বাদ`;
   if (dupOld) msg += `\n❌ ${dupOld} টা আগেই submit করা (বাদ যাবে)`;
   if (dupFile) msg += `\n❌ ${dupFile} টা ফাইলের ভেতরেই ডুপ্লিকেট (বাদ যাবে)`;
-  if (fileMeta.truncated) msg += `\n⚠️ সর্বোচ্চ ${MAX_ROWS} টা রো নেওয়া হয়েছে`;
   fileInfo.textContent = msg;
   fileInfo.classList.add("show");
 
