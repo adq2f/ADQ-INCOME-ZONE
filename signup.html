@@ -261,7 +261,13 @@
   <script type="module">
     import { auth, db } from "./firebase.js";
     import { createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ✅ Refer code এখন সার্ভার API দিয়ে যাচাই হয় (login ছাড়াই কাজ করে)
+    const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
+      ? ""
+      : "https://adq-income-zone.vercel.app";
+    const REFER_URL = API_BASE + "/api/refer";
 
     const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
     const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
@@ -293,14 +299,18 @@
       return code;
     }
 
+    const referInput = document.getElementById("referCode");
+    const referInfo = document.getElementById("referInfo");
+    const referBadge = document.getElementById("referBadge");
+
     // URL থেকে রেফার কোড নেওয়া
     const urlRef = new URLSearchParams(location.search).get("ref");
     if (urlRef) {
       const clean = urlRef.toUpperCase().trim();
-      document.getElementById("referCode").value = clean;
-      document.getElementById("referBadge").style.display = "block";
-      document.getElementById("referInfo").style.display = "block";
-      document.getElementById("referInfo").innerHTML = "🎁 Refer code applied: <b>" + esc(clean) + "</b>";
+      referInput.value = clean;
+      referBadge.style.display = "block";
+      referInfo.style.display = "block";
+      referInfo.innerHTML = "🎁 Refer code applied: <b>" + esc(clean) + "</b>";
     }
 
     // পাসওয়ার্ড শক্তি মিটার
@@ -343,11 +353,9 @@
     pwInput.addEventListener("input", () => { checkStrength(); checkMatch(); });
     cpInput.addEventListener("input", checkMatch);
 
-    const referInput = document.getElementById("referCode");
-    const referInfo = document.getElementById("referInfo");
     let referTimer = null;
 
-    // রেফার কোড টাইপ করার সময় ভ্যালিডেশন
+    // রেফার কোড টাইপ করার সময় সার্ভার API দিয়ে যাচাই
     referInput.addEventListener("input", () => {
       clearTimeout(referTimer);
       const code = referInput.value.trim().toUpperCase();
@@ -355,33 +363,39 @@
 
       if (!code || code.length < 3) {
         referInfo.style.display = "none";
+        referBadge.style.display = "none";
         return;
       }
 
       referTimer = setTimeout(async () => {
         try {
-          const q = query(collection(db, "users"), where("myReferCode", "==", code));
-          const snap = await getDocs(q);
-          if (snap.empty) {
-            referInfo.style.display = "none";
-            flashField(referInput, "err");
-          } else {
+          const res = await fetch(REFER_URL + "?code=" + encodeURIComponent(code));
+          const data = await res.json().catch(() => null);
+          if (data?.valid) {
             flashField(referInput, "ok");
+            referBadge.style.display = "block";
             referInfo.style.display = "block";
-            referInfo.innerHTML = "✅ Valid! <b>" + esc(snap.docs[0].data().username) + "</b> referred you";
+            referInfo.innerHTML = "✅ Valid! <b>" + esc(data.username) + "</b> referred you";
+          } else if (res.ok) {
+            referInfo.style.display = "none";
+            referBadge.style.display = "none";
+            flashField(referInput, "err");
           }
-        } catch (e) { 
-          console.log("Refer check error:", e); 
+        } catch (e) {
+          console.log("Refer check error:", e);
         }
       }, 500);
     });
+
+    // URL এর কোড থাকলে সাথে সাথে যাচাই করা
+    if (urlRef) referInput.dispatchEvent(new Event("input"));
 
     document.getElementById("signupBtn").onclick = async () => {
       const username = document.getElementById("username").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const confirmPassword = document.getElementById("confirmPassword").value;
-      const referCode = document.getElementById("referCode").value.trim().toUpperCase();
+      const referCode = referInput.value.trim().toUpperCase();
       const btn = document.getElementById("signupBtn");
 
       if (!username || !email || !password || !confirmPassword) return alert("সব ঘর পূরণ করুন!");
@@ -392,47 +406,51 @@
       btn.textContent = "তৈরি হচ্ছে...";
 
       try {
-        let referrerId = null;
-        
-        // ১. রেফার কোড চেক করা (সাইনআপের আগে)
-        if (referCode) {
-          const rq = query(collection(db, "users"), where("myReferCode", "==", referCode));
-          const rs = await getDocs(rq);
-          if (!rs.empty) referrerId = rs.docs[0].id;
-        }
-
-        // ২. নতুন ইউজার অ্যাকাউন্ট তৈরি
+        // ১. নতুন ইউজার অ্যাকাউন্ট তৈরি
         const cred = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // ৩. ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা (খুবই জরুরি)
+
+        // ২. ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা
         await new Promise(r => setTimeout(r, 1000));
 
         const myCode = generateReferCode();
 
-        // ৪. ফায়ারস্টোরে ডেটা সেভ (শুধু নিজের ডকুমেন্ট)
+        // ৩. ফায়ারস্টোরে ডেটা সেভ (referredBy এখানে null — সার্ভার পরে বসাবে)
         await setDoc(doc(db, "users", cred.user.uid), {
-          username, 
-          email, 
+          username,
+          email,
           role: "user",
-          balance: 0, 
-          totalGood: 0, 
-          totalBad: 0, 
+          balance: 0,
+          totalGood: 0,
+          totalBad: 0,
           totalPending: 0,
           myReferCode: myCode,
-          referredBy: referrerId || null,
+          referredBy: null,
           referCount: 0,
           totalReferEarning: 0,
           createdAt: new Date()
         });
 
-        // ৫. সাইনআপ শেষে লগআউট করে দেওয়া (যাতে পরিষ্কারভাবে লগইন পেজে যায়)
+        // ৪. Refer code থাকলে সার্ভারে apply (ব্যর্থ হলেও signup আটকাবে না)
+        if (referCode) {
+          try {
+            const token = await cred.user.getIdToken();
+            await fetch(REFER_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({ action: "apply", code: referCode })
+            });
+          } catch (e) {
+            console.error("Refer apply error:", e);
+          }
+        }
+
+        // ৫. সাইনআপ শেষে লগআউট করে লগইন পেজে পাঠানো
         await signOut(auth);
 
         document.getElementById("successBox").style.display = "flex";
         setTimeout(() => location.href = "login.html?registered=1", 1500);
-        
+
       } catch (e) {
-        // আসল এররটা কনসোলে দেখানোর জন্য
         console.error("Signup Error:", e);
 
         let msg = e.message;
@@ -440,7 +458,7 @@
         else if (e.code === "auth/invalid-email") msg = "ইমেইল ফরম্যাট সঠিক নয়!";
         else if (e.code === "auth/weak-password") msg = "পাসওয়ার্ড দুর্বল!";
         else if (e.code === "permission-denied") msg = "ডেটাবেস পারমিশন সমস্যা। ফায়ারবেস রুলস চেক করুন।";
-        
+
         alert("❌ " + msg);
         btn.disabled = false;
         btn.textContent = "রেজিস্ট্রেশন সম্পন্ন করুন";
