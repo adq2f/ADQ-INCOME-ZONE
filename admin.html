@@ -721,7 +721,7 @@ select.inp option{background:#12122a;color:#fff}
       return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
     }
 
-    // রেজাল্ট প্রসেস ট্যাবে শুধুমাত্র Pending সাবমিশন লোড হবে
+// রেজাল্ট প্রসেস ট্যাবে শুধুমাত্র Pending সাবমিশন লোড হবে
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
       if (!taskId) return alert("Task select করো!");
@@ -729,33 +729,43 @@ select.inp option{background:#12122a;color:#fff}
       btn.disabled = true; btn.textContent = "Loading...";
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
+        if (!taskSnap.exists()) { alert("Task পাওয়া যায়নি!"); btn.disabled = false; btn.textContent = "🔍 Load Pending Submissions"; return; }
         loadedTask = { id: taskId, ...taskSnap.data() };
-        
-        // শুধু Pending সাবমিশন লোড হচ্ছে
-        // ✅ FIX: status=="pending" ছাড়াও যেসব ডকুমেন্টে status ফিল্ড নেই সেগুলোকেও pending ধরা হবে
+
+        // ✅ সব সাবমিশন লোড — status দিয়ে filter করা হবে
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
-        let subs = snap.docs
-          .map(d => ({ id: d.id, ...d.data() }))
-          .filter(s => {
-            const st = String(s.status || "").toLowerCase();
-            // good / bad / processed / completed হলে বাদ — pending বা status অনুপস্থিত হলে রাখ
-            if (st === "good" || st === "bad" || st === "processed" || st === "completed" || st === "approved") return false;
-            // case-insensitive matched
-            return true;
-          });
-        subs.sort((a, b) => (a.submittedAt?.toMillis?.() || 0) - (b.submittedAt?.toMillis?.() || 0));
+        const allDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+
+        // ✅ প্রসেসড status lowercase list
+        const DONE = new Set(["good", "bad", "processed", "completed", "approved", "success", "done", "accepted", "rejected"]);
+        let subs = allDocs.filter(s => {
+          const st = String(s.status || "").toLowerCase().trim();
+          return !DONE.has(st);
+        });
+
+        // ✅ submittedAt না থাকলে fallback: doc snapshot-এর metadata.time
+        subs = subs.map(s => {
+          let t = s.submittedAt?.toDate?.() || null;
+          if (!t) {
+            // Firestore serverTimestamp pending হলে null — fallback চেষ্টা
+            if (s.createdAt?.toDate) t = s.createdAt.toDate();
+            else if (s.time?.toDate) t = s.time.toDate();
+            else t = new Date(); // শেষ fallback: এখন
+          }
+          return { ...s, __dt: t };
+        });
+
+        subs.sort((a, b) => a.__dt.getTime() - b.__dt.getTime());
 
         pendingGroups = {};
         const GAP_MINUTES = 1;
         let currentKey = null, currentEnd = null;
 
         subs.forEach(s => {
-          const t = s.submittedAt?.toDate?.();
-          if (!t) return;
-          const ts = t.getTime();
+          const ts = s.__dt.getTime();
           if (currentEnd === null || (ts - currentEnd) / 60000 >= GAP_MINUTES) {
-            currentKey = formatGroupKey(t);
+            currentKey = formatGroupKey(s.__dt);
             pendingGroups[currentKey] = [];
           }
           pendingGroups[currentKey].push(s);
@@ -774,7 +784,7 @@ select.inp option{background:#12122a;color:#fff}
         .sort().reverse();
 
       if (keys.length === 0) {
-        gDiv.innerHTML = `<div class="empty"><div class="em">🎉</div>কোনো pending submission নেই! সব প্রসেস করা হয়েছে।</div>`;
+        gDiv.innerHTML = `<div class="empty"><div class="em">🎉</div>কোনো pending submission নেই! সব প্রসেস করা হয়েছে।</div>`;
         return;
       }
 
@@ -1066,7 +1076,7 @@ select.inp option{background:#12122a;color:#fff}
           return;
         }
 
-        let subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        let subs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         subs.sort((a, b) => (b.checkedAt?.toMillis?.() || 0) - (a.checkedAt?.toMillis?.() || 0));
 
         allPublishedGroups = {};
@@ -1251,7 +1261,7 @@ select.inp option{background:#12122a;color:#fff}
       const list = document.getElementById("userList");
       try {
         const snap = await getDocs(collection(db, "users"));
-        allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        allUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         renderUsers();
       } catch (e) {
         list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
@@ -1391,7 +1401,7 @@ select.inp option{background:#12122a;color:#fff}
       const list = document.getElementById("referralsList");
       try {
         const allUsersSnap = await getDocs(collection(db, "users"));
-        const allUsersList = allUsersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const allUsersList = allUsersSnap.docs.map(d => ({ ...d.data(), id: d.id }));
         const referredUsers = allUsersList.filter(u => u.referredBy);
         document.getElementById("totalRefUsers").textContent = referredUsers.length;
         const earningsSnap = await getDocs(collection(db, "refer_earnings"));
@@ -1462,7 +1472,7 @@ select.inp option{background:#12122a;color:#fff}
     async function loadBadgeUsers() {
       try {
         const snap = await getDocs(collection(db, "users"));
-        allBadgeUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        allBadgeUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }))
           .filter(u => u.role !== "admin")
           .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
         renderBadgeUserResults(document.getElementById("badgeUserSearch").value || "");
@@ -1514,7 +1524,7 @@ select.inp option{background:#12122a;color:#fff}
       const list = document.getElementById("badgedUsersList");
       try {
         const snap = await getDocs(collection(db, "users"));
-        const badgedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        const badgedUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }))
           .filter(u => u.customBadge);
         if (badgedUsers.length === 0) {
           list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge assign করা হয়নি</div>`;
