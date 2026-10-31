@@ -529,14 +529,107 @@ function verifyTime() {
   return true;
 }
 
-function splitLine(line) {
-  let parts;
-  if (line.includes("\t")) parts = line.split("\t");
-  else if (line.includes("|")) parts = line.split("|");
-  else if (line.includes(",")) parts = line.split(",");
-  else if (/\s{2,}/.test(line)) parts = line.split(/\s{2,}/);
-  else parts = line.split(/\s+/);
-  return parts.map(p => p.trim()).filter(Boolean);
+/* ============================================================
+   ✅ IMPROVED: Field name দেখে space-prone detect করে
+   Detect করে:
+   - 2FA variants: 2fa, 2FA, 2Fa, twofa, two-factor, 2-factor,
+                   totp, authenticator, otp, 2-step
+   - Token variants: fulltoken, access_token, refresh_token, token
+   - Cookie, Session, Backup Code
+   Detect করে না (correct):
+   - UID, Password, Email, Gmail, Tempmail, ProfileLink, ProfitLink
+   ============================================================ */
+function isSpaceProneField(field) {
+  const key = String(field?.key || "").toLowerCase();
+  const label = String(field?.label || "").toLowerCase();
+  const raw = key + " " + label;
+  const compact = raw.replace(/[\s_\-.:]+/g, "");
+
+  // ---- 2FA family ----
+  if (!/2fast|2face/.test(compact)) {
+    if (compact.includes("2fa")) return true;
+    if (compact.includes("twofa")) return true;
+    if (compact.includes("twofactor")) return true;
+    if (compact.includes("2factor")) return true;
+    if (compact.includes("2step") || compact.includes("twostep")) return true;
+    if (compact.includes("totp")) return true;
+    if (compact.includes("authenticator")) return true;
+    if (compact.includes("otp")) return true;
+    if (/2f$/.test(compact)) return true; // truncated "2fa"
+  }
+
+  // ---- Token family ----
+  if (compact.includes("token")) return true; // fulltoken, accesstoken, refresh_token...
+
+  // ---- Cookie / Session ----
+  if (compact.includes("cookie")) return true;
+  if (compact.includes("session")) return true;
+
+  // ---- Backup codes ----
+  if (compact.includes("backupcode")) return true;
+
+  return false;
+}
+
+/* ============================================================
+   Extra parts → space-prone field এ merge (delimiter preserve)
+   ============================================================ */
+function mergeParts(parts, fields, joinChar) {
+  const cols = fields.length;
+  if (cols < 1 || parts.length <= cols) return parts;
+
+  const spaceProneIdxs = [];
+  fields.forEach((f, i) => { if (isSpaceProneField(f)) spaceProneIdxs.push(i); });
+
+  let targetIdx = spaceProneIdxs.length > 0
+    ? spaceProneIdxs[spaceProneIdxs.length - 1]
+    : cols - 1;
+
+  if (targetIdx >= cols) targetIdx = cols - 1;
+
+  const beforeCount = targetIdx;
+  const afterCount = cols - 1 - targetIdx;
+
+  if (afterCount === 0) {
+    const head = parts.slice(0, beforeCount);
+    const tail = parts.slice(beforeCount).join(joinChar);
+    return [...head, tail];
+  }
+
+  const before = parts.slice(0, beforeCount);
+  const after = parts.slice(parts.length - afterCount);
+  const middle = parts.slice(beforeCount, parts.length - afterCount).join(joinChar);
+  return [...before, middle, ...after];
+}
+
+/* ============================================================
+   Field-aware smart split
+   Priority: Tab > Pipe > Comma > Multi-space > Single-space
+   ============================================================ */
+function splitLine(line, expectedCols) {
+  const cols = Math.max(1, expectedCols || (getFields().length || 3));
+  const fields = getFields();
+
+  let delim, type;
+  if (line.includes("\t"))        { delim = "\t";    type = "strong"; }
+  else if (line.includes("|"))    { delim = "|";     type = "strong"; }
+  else if (line.includes(","))    { delim = ",";     type = "strong"; }
+  else if (/\s{2,}/.test(line))   { delim = /\s{2,}/; type = "multi-space"; }
+  else                            { delim = /\s+/;   type = "single-space"; }
+
+  let parts = line.split(delim).map(p => String(p ?? "").trim());
+
+  if (type === "multi-space" && parts.length < cols) {
+    parts = line.trim().split(/\s+/).map(p => String(p ?? "").trim());
+    type = "single-space";
+  }
+
+  if (parts.length > cols) {
+    const joinChar = (type === "strong") ? String(delim) : " ";
+    parts = mergeParts(parts, fields, joinChar);
+  }
+
+  return parts;
 }
 
 function buildRow(cells, label, strict = true) {
@@ -747,7 +840,7 @@ function parseBulk(text) {
     const line = lines[i].trim();
     if (!line) continue;
     if (rows.length + incomplete.length >= MAX_ROWS) break;
-    const r = buildRow(splitLine(line), i + 1);
+    const r = buildRow(splitLine(line, getFields().length), i + 1);
     if (r.ok) rows.push(r.row);
     else incomplete.push({ label: String(i + 1), reason: r.reason });
   }
@@ -853,6 +946,10 @@ function readFileSheets(file, ext) {
   });
 }
 
+/* ============================================================
+   ✅ File submit — multi-cell = as-is (আগের মতোই)
+   শুধু single-cell হলে smart split হয়
+   ============================================================ */
 function matrixToRows(sheetName, matrix, out, multi) {
   const fields = getFields(), fc = fields.length;
   const conv = matrix.map(r => Array.isArray(r) ? r.map(cellToStr) : []);
@@ -862,8 +959,13 @@ function matrixToRows(sheetName, matrix, out, multi) {
     if (!nonEmpty.length) return;
 
     let cells;
-    if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0]);
-    else cells = cells0;
+    if (nonEmpty.length === 1 && fc > 1) {
+      // Single cell (TXT / one-column CSV) → smart split
+      cells = splitLine(nonEmpty[0], fc);
+    } else {
+      // Multi-cell (proper Excel/CSV) → cells0 ব্যবহার করি, unchanged
+      cells = cells0;
+    }
 
     const label = multi ? `${sheetName}:${idx + 1}` : String(idx + 1);
     if (out.rows.length + out.incomplete.length >= MAX_ROWS) { out.truncated = true; return; }
