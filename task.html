@@ -14,143 +14,139 @@
 html,body{background:var(--bg)!important}
 body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
 a{text-decoration:none;color:inherit}button{font-family:inherit}
+svg{display:block}
 .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
 .orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
 .orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
 .orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes shim{to{background-position:-200% 0}}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
-.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 8px;background:rgba(6,6,15,.7);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
 .top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
-.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
-.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
+.mark{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:14px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 36px}
 .ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
-.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(150px + env(safe-area-inset-bottom,0px))}
-.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+.ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:12px 14px calc(165px + env(safe-area-inset-bottom,0px))}
 .glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
-.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
-.empty .em{font-size:30px;margin-bottom:6px}
-.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
-.skel.big{height:170px;border-radius:28px}
-@keyframes shim{to{background-position:-200% 0}}
-@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
-.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
-.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
+.empty{text-align:center;padding:26px 16px;border-radius:20px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
+.skel{height:76px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
+.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px;background:rgba(18,18,40,.82);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
+.dock a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 5px;border-radius:16px;color:var(--dim);font-size:10px;font-weight:600;transition:.25s}
+.dock a svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dock a:hover{color:#fff}
-.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
-.dock a.active svg{transform:translateY(-1px) scale(1.08)}
-a:focus-visible,button:focus-visible,input:focus-visible,.drop-zone:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,.drop-zone:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-.th{position:relative;overflow:hidden;border-radius:28px;padding:24px 20px;margin-bottom:14px;text-align:center;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -22px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
-.th::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 62%);pointer-events:none}
-.th::after{content:'';position:absolute;right:-70px;bottom:-90px;width:230px;height:230px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 26px rgba(255,255,255,.05),0 0 0 54px rgba(255,255,255,.03);pointer-events:none}
-.th>*{position:relative;z-index:1}
-.th-tag{display:inline-flex;gap:6px;padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:700;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);margin-bottom:12px}
-.th-title{font-size:22px;font-weight:700;line-height:1.3;margin:0 0 8px;word-break:break-word}
-.th-price{font-family:'Inter';font-size:36px;font-weight:900;color:#fde68a;letter-spacing:-1px;text-shadow:0 6px 18px rgba(0,0,0,.3)}
-.th-price span{font-family:'Hind Siliguri';font-size:14px;color:rgba(255,255,255,.8);font-weight:600;margin-left:4px;letter-spacing:0}
-.th-time{margin-top:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.24);padding:8px 14px;border-radius:12px;font-size:12.5px;font-weight:600}
-.note{border-radius:20px;padding:15px 16px;margin-bottom:14px;font-size:13.5px;line-height:1.65;word-break:break-word}
-.note.rules{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.04));border:1px solid rgba(251,191,36,.38);border-left:4px solid #fbbf24;color:#fde9a8}
-.note.rules b{color:#fde68a}
-.note.tips{background:linear-gradient(135deg,rgba(56,189,248,.14),rgba(56,189,248,.04));border:1px solid rgba(56,189,248,.35);border-left:4px solid #38bdf8;color:#bae6fd}
-.note.tips b{display:block;color:#e0f2fe;margin-bottom:6px;font-size:14px}
-.note ul{padding-left:18px;margin:0}
-.ts{border-radius:24px;padding:18px;text-align:center;margin-bottom:14px;border:1px solid var(--line)}
-.ts.open{background:linear-gradient(160deg,rgba(16,185,129,.18),rgba(16,185,129,.05));border-color:rgba(16,185,129,.45);color:#6ee7b7}
-.ts.upcoming{background:linear-gradient(160deg,rgba(245,158,11,.18),rgba(245,158,11,.05));border-color:rgba(245,158,11,.45);color:#fcd34d}
-.ts.closed{background:linear-gradient(160deg,rgba(239,68,68,.18),rgba(239,68,68,.05));border-color:rgba(239,68,68,.45);color:#fca5a5}
-.ts-label{font-size:15.5px;font-weight:700}
-.cd{display:flex;justify-content:center;gap:10px;margin-top:12px}
-.cd-box{min-width:68px;padding:11px 8px;border-radius:16px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1)}
-.cd-num{display:block;font-family:'Inter';font-size:26px;font-weight:900;line-height:1;color:#fff}
-.cd-lbl{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-top:5px}
-.fcard{border-radius:26px;padding:20px;margin-bottom:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.fcard h3{margin:0 0 14px;font-size:17px;font-weight:700}
-.inp{display:block;width:100%;padding:15px 16px;margin:0 0 12px;border-radius:16px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:15px;font-weight:500;outline:none;transition:.25s}
-.inp::placeholder{color:#6f7090;font-weight:400}
-.inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
-textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5px;line-height:1.6;resize:vertical}
-.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:12px;border-radius:14px;margin-bottom:14px;font-size:13px;font-weight:700;word-break:break-word}
-.bhint{padding:12px 14px;border-radius:14px;margin-bottom:12px;font-size:12.5px;line-height:1.65;color:var(--muted);background:rgba(255,255,255,.04);border-left:3px solid #6366f1}
-.bhint b{color:#c4b5fd}
-.bcount{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:14px;margin:12px 0;font-weight:700;font-size:14px;color:#c4b5fd;background:rgba(99,102,241,.12);border:1px dashed rgba(139,92,246,.5)}
-.bcount .num{font-family:'Inter';background:rgba(255,255,255,.1);padding:4px 14px;border-radius:999px;color:#fff}
-.bprev{display:none;max-height:260px;overflow-y:auto;padding:10px;border-radius:16px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.6;margin-bottom:12px}
-.bprev.show{display:block}
-.bprev .row{padding:5px 9px;border-radius:8px;margin-bottom:3px;word-break:break-all}
-.bprev .row.ok{background:rgba(16,185,129,.14);color:#6ee7b7}
-.bprev .row.duplicate{background:rgba(239,68,68,.14);color:#fca5a5}
-.bprev .row.warn{background:rgba(245,158,11,.14);color:#fcd34d}
-.bprev .row.more{background:rgba(255,255,255,.06);color:var(--muted);text-align:center}
-.prog{display:none;padding:14px;border-radius:16px;margin:12px 0;background:rgba(255,255,255,.05);border:1px solid var(--line)}
-.prog.show{display:block}
-.prog .t{font-size:14px;font-weight:700;color:#c4b5fd}
-.pbar{height:10px;border-radius:10px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:10px}
-.pfill{height:100%;width:0;border-radius:10px;background:linear-gradient(90deg,#6366f1,#22d3ee);transition:width .3s}
-.cta{position:relative;overflow:hidden;display:block;width:100%;border:none;cursor:pointer;border-radius:16px;padding:16px;color:#fff;font-size:16px;font-weight:700;transition:.25s}
-.cta.green{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 16px 32px -12px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3)}
-.cta.green:hover:not(:disabled){transform:translateY(-2px)}
-.cta.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);margin-top:10px}
-.cta.ghost:hover{color:#fff;background:rgba(255,255,255,.1)}
-.cta:disabled{filter:saturate(.5) brightness(.85);cursor:not-allowed}
-.closed-box{border-radius:26px;padding:30px 20px;text-align:center;border:1.5px dashed rgba(239,68,68,.5);background:rgba(239,68,68,.08);margin-bottom:14px}
-.closed-box .ic{font-size:52px;display:block;margin-bottom:10px}
-.closed-box h3{margin:0 0 6px;font-size:20px;color:#fca5a5}
-.closed-box p{margin:0;font-size:14px;color:var(--muted)}
+/* ===== Compact header ===== */
+.hd{display:flex;align-items:center;gap:12px;padding:12px;border-radius:22px;margin-bottom:10px;background:linear-gradient(135deg,rgba(67,56,202,.55),rgba(124,58,237,.4) 55%,rgba(192,38,211,.3));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px -20px rgba(124,58,237,.9),inset 0 1px 0 rgba(255,255,255,.2)}
+.hd-logo{width:46px;height:46px;flex:0 0 46px;border-radius:15px;padding:10px;box-shadow:0 10px 22px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.3)}
+.hd-logo svg{width:100%;height:100%}
+.hd-main{flex:1;min-width:0}
+.hd-title{font-size:15px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hd-sub{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.pr{font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a}
+.pr small{font-family:'Hind Siliguri';font-weight:600;font-size:11px;color:rgba(255,255,255,.75);margin-left:2px}
+.pl{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff}
+.hd-time{flex:0 0 auto;text-align:center;padding:7px 10px;border-radius:14px;min-width:78px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12)}
+.hd-time .t{font-family:'Inter';font-size:15px;font-weight:900;line-height:1.1;color:#6ee7b7;white-space:nowrap}
+.hd-time .l{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px}
+.hd-time.upcoming .t{color:#fcd34d}
+.hd-time.closed .t{color:#fca5a5}
+.hd-time.open{border-color:rgba(16,185,129,.4)}
+.hd-time.upcoming{border-color:rgba(245,158,11,.45)}
+.hd-time.closed{border-color:rgba(239,68,68,.45)}
 
-.tab-bar{display:flex;gap:8px;margin-bottom:16px;padding:4px;background:rgba(255,255,255,.04);border-radius:18px;border:1px solid var(--line)}
-.tab-btn{flex:1;min-width:0;padding:14px 6px;border-radius:14px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:all .25s cubic-bezier(.2,.8,.2,1);text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;line-height:1.2}
-.tab-btn .tab-ic{font-size:20px}
+/* ===== Rules accordion ===== */
+.acc{border-radius:18px;margin-bottom:10px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.03));border:1px solid rgba(251,191,36,.32)}
+.acc summary{list-style:none;display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;font-size:13.5px;font-weight:700;color:#fde68a;user-select:none}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 17px}
+.acc summary .sm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc summary .hint{font-size:11px;font-weight:600;color:rgba(253,230,138,.7);margin-left:auto}
+.acc summary .chev{width:8px;height:8px;border-right:2px solid #fde68a;border-bottom:2px solid #fde68a;transform:rotate(45deg);transition:.25s;flex:0 0 8px;margin:-3px 2px 0 4px}
+.acc[open] summary .chev{transform:rotate(-135deg);margin-top:3px}
+.acc-body{padding:0 13px 12px;font-size:13px;line-height:1.65;color:#fde9a8;word-break:break-word}
+.acc-body .rl{margin-bottom:8px}
+.acc-body ul{margin:0;padding-left:18px;color:#bae6fd}
+.acc-body .tm{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.acc-body .tm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ===== Tabs ===== */
+.tab-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
+.tab-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 4px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.25s;white-space:nowrap}
+.tab-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 16px}
 .tab-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
 .tab-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.3)}
-@media (max-width:380px){.tab-btn{font-size:11.5px;padding:12px 2px}.tab-btn .tab-ic{font-size:18px}}
+@media(max-width:360px){.tab-btn{font-size:11.5px;gap:5px}.tab-btn svg{display:none}}
 .tab-content{display:none}
 .tab-content.active{display:block}
 .locked .tab-content{opacity:.45;pointer-events:none;filter:grayscale(.4)}
 
-.drop-zone{border:2px dashed rgba(139,92,246,.5);border-radius:20px;padding:36px 20px;text-align:center;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:14px}
-.drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15);transform:translateY(-2px)}
-.drop-zone .icon{font-size:48px;margin-bottom:12px;display:block;animation:flt 2s ease-in-out infinite}
-.drop-zone h4{margin:0 0 6px;font-size:16px;font-weight:700;color:#fff}
-.drop-zone p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+/* ===== Form card ===== */
+.fc{border-radius:22px;padding:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.fc-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--muted)}
+.fc-h b{color:#fff;font-size:14px}
+.fmt{font-size:11px;font-weight:700;color:#c4b5fd;background:rgba(99,102,241,.18);padding:3px 9px;border-radius:999px;max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inp{display:block;width:100%;padding:12px 14px;margin:0 0 8px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:14.5px;font-weight:500;outline:none;transition:.25s}
+.inp::placeholder{color:#6f7090;font-weight:400}
+.inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
+textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;font-size:13px;line-height:1.55;resize:vertical;margin-bottom:6px}
+.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:12px;margin-bottom:6px;font-size:12.5px;font-weight:700;word-break:break-word}
+
+.statrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.chip.g{background:rgba(16,185,129,.16);color:#6ee7b7}
+.chip.r{background:rgba(239,68,68,.16);color:#fca5a5}
+.chip.y{background:rgba(245,158,11,.16);color:#fcd34d}
+.chip.n{background:rgba(255,255,255,.07);color:var(--muted)}
+.lnks{display:flex;gap:6px;flex:0 0 auto}
+.lnk{border:1px solid var(--line);background:rgba(255,255,255,.05);color:#c4b5fd;padding:5px 11px;border-radius:10px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.2s}
+.lnk:hover{background:rgba(255,255,255,.1);color:#fff}
+.lnk.red{color:#fca5a5}
+.bprev{display:none;max-height:150px;overflow-y:auto;padding:8px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.55;margin-top:8px}
+.bprev.open{display:block}
+.bprev .row{padding:4px 8px;border-radius:8px;margin-bottom:3px;word-break:break-all}
+.bprev .row.ok{background:rgba(16,185,129,.14);color:#6ee7b7}
+.bprev .row.duplicate{background:rgba(239,68,68,.14);color:#fca5a5}
+.bprev .row.warn{background:rgba(245,158,11,.14);color:#fcd34d}
+.bprev .row.more{background:rgba(255,255,255,.06);color:var(--muted);text-align:center}
+.prog{display:none;padding:10px 12px;border-radius:14px;margin-top:8px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.prog.show{display:block}
+.prog .t{font-size:13px;font-weight:700;color:#c4b5fd}
+.pbar{height:8px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}
+.pfill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#6366f1,#22d3ee);transition:width .3s}
+.hidden-btn{display:none!important}
+
+/* ===== File drop ===== */
+.drop-zone{display:flex;align-items:center;gap:12px;border:2px dashed rgba(139,92,246,.5);border-radius:16px;padding:14px;text-align:left;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:8px}
+.drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15)}
+.drop-zone .dz-ic{width:44px;height:44px;flex:0 0 44px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.drop-zone .dz-ic svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.drop-zone h4{margin:0 0 2px;font-size:14px;font-weight:700;color:#fff}
+.drop-zone p{margin:0;font-size:11.5px;color:var(--muted);line-height:1.5}
 .drop-zone input[type="file"]{display:none}
-.file-info{display:none;white-space:pre-line;padding:14px;border-radius:14px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:12px;font-size:13.5px;line-height:1.6;color:#6ee7b7;font-weight:600}
+.file-info{display:none;white-space:pre-line;padding:9px 12px;border-radius:12px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:8px;font-size:12.5px;line-height:1.55;color:#6ee7b7;font-weight:600;word-break:break-word}
 .file-info.show{display:block}
 
-/* ===== Sticky / Floating Action Bar for Bulk & File Submit ===== */
-.sticky-submit-bar {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);
-  width: calc(100% - 24px);
-  max-width: 490px;
-  background: rgba(18, 18, 42, 0.92);
-  backdrop-filter: blur(24px) saturate(170%);
-  -webkit-backdrop-filter: blur(24px) saturate(170%);
-  border: 1.5px solid rgba(139, 92, 246, 0.6);
-  border-radius: 22px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  box-shadow: 0 20px 50px -10px rgba(0,0,0,.85), 0 0 25px rgba(139,92,246,.35);
-  z-index: 58;
-  display: none;
-}
-.sticky-submit-bar.show { display: flex; animation: rise .35s cubic-bezier(.2,.8,.2,1); }
-.ssb-info { font-size: 13px; font-weight: 700; color: #c4b5fd; white-space: nowrap; }
-.ssb-info span { color: #fff; font-family: 'Inter'; background: rgba(255,255,255,.1); padding: 3px 10px; border-radius: 999px; margin-left: 6px; }
-.ssb-btn { padding: 11px 20px; border-radius: 14px; border: none; font-size: 14px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #10b981, #0d9488); cursor: pointer; box-shadow: 0 10px 24px -8px rgba(16,185,129,.9); transition: .2s; }
-.ssb-btn:hover { transform: translateY(-2px); }
-.ssb-btn:disabled { filter: saturate(0.5); cursor: not-allowed; }
+/* ===== Sticky action bar (always visible) ===== */
+.sbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 74px);width:calc(100% - 24px);max-width:496px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px 9px 16px;background:rgba(18,18,42,.94);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1.5px solid rgba(139,92,246,.6);border-radius:20px;box-shadow:0 20px 50px -10px rgba(0,0,0,.85),0 0 25px rgba(139,92,246,.3);z-index:58}
+.sb-info{font-size:12.5px;font-weight:700;color:var(--muted);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-info b{font-family:'Inter';font-size:15px;color:#fff;margin:0 3px}
+.sb-btn{display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:14px;border:none;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#0d9488);cursor:pointer;box-shadow:0 10px 24px -8px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3);transition:.2s;white-space:nowrap}
+.sb-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sb-btn:hover:not(:disabled){transform:translateY(-2px)}
+.sb-btn:disabled{background:rgba(255,255,255,.1);color:var(--dim);box-shadow:none;cursor:not-allowed}
+
+.closed-box{border-radius:20px;padding:16px;text-align:center;border:1.5px dashed rgba(239,68,68,.5);background:rgba(239,68,68,.08);margin-top:10px}
+.closed-box h3{margin:0 0 3px;font-size:16px;color:#fca5a5}
+.closed-box p{margin:0;font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -158,160 +154,88 @@ textarea.inp{min-height:170px;font-family:'Courier New',monospace;font-size:13.5
 <header class="top"><div class="top-in"><button class="ibtn" onclick="history.back()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Submit Task</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
 
 <main class="page">
-  <div id="taskInfo"><div class="skel big"></div></div>
-  <div id="timeStatusBox"></div>
-
-  <div class="note tips" id="tipsBox" style="display:none;">
-    <b>💡 সাবমিট করার আগে খেয়াল রাখুন:</b>
-    <ul>
-      <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
-      <li>২এফএ (2FA) কোড সঠিক না হলে অ্যাকাউন্ট বাদ পড়বে।</li>
-      <li>পুরো রো হুবহু আগের কোনো সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট হিসেবে গণ্য হবে।</li>
-    </ul>
-  </div>
+  <div id="taskInfo"><div class="skel"></div></div>
+  <div id="rulesWrap"></div>
 
   <div id="submitSections" class="locked">
-
     <div class="tab-bar" role="tablist">
       <button type="button" class="tab-btn active" data-tab="single" role="tab" aria-selected="true">
-        <span class="tab-ic">📝</span><span>Single</span>
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Single</span>
       </button>
       <button type="button" class="tab-btn" data-tab="bulk" role="tab" aria-selected="false">
-        <span class="tab-ic">📋</span><span>All Paste</span>
+        <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><span>All Paste</span>
       </button>
       <button type="button" class="tab-btn" data-tab="file" role="tab" aria-selected="false">
-        <span class="tab-ic">📁</span><span>File Submit</span>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>File</span>
       </button>
     </div>
 
-    <!-- ১. সিঙ্গেল সাবমিট -->
+    <!-- Single -->
     <div id="tab-single" class="tab-content active">
-      <div class="fcard glass">
-        <h3>📝 Single Submit</h3>
+      <div class="fc glass">
+        <div class="fc-h"><b>Single Submit</b><span class="fmt" id="singleFmt"></span></div>
         <div id="dynamicFields"></div>
-        <div class="dup" id="singleDupWarning">⚠️ Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
-        <button class="cta green" id="singleSubmitBtn">✅ Submit Account</button>
+        <div class="dup" id="singleDupWarning">Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
+        <button class="hidden-btn" id="singleSubmitBtn">Submit</button>
       </div>
     </div>
 
-    <!-- ২. বাল্ক / অল পেস্ট -->
+    <!-- Bulk -->
     <div id="tab-bulk" class="tab-content">
-      <div class="fcard glass">
-        <h3>📋 All Paste Submit (Bulk)</h3>
-        <div class="bhint">
-          <b>Format:</b> <span id="bulkFormatHint">UID | Password | 2FA</span><br>
-          Tab / Comma / Pipe / Space — সব কাজ করবে
+      <div class="fc glass">
+        <div class="fc-h"><b>All Paste</b><span class="fmt" id="bulkFormatHint">UID | Password | 2FA</span></div>
+        <textarea id="bulkInput" class="inp" placeholder="এখানে সব অ্যাকাউন্ট paste করুন (প্রতি লাইনে ১টি)"></textarea>
+        <div class="statrow">
+          <div class="chips" id="bulkChips"><span class="chip n">Paste করলে এখানে দেখাবে</span></div>
+          <div class="lnks">
+            <button type="button" class="lnk" id="togglePrevBulk">বিস্তারিত</button>
+            <button type="button" class="lnk red" id="clearBulkBtn">মুছুন</button>
+          </div>
         </div>
-        <textarea id="bulkInput" class="inp" placeholder="Loading..."></textarea>
-
-        <div class="bcount">
-          <span>📊 Unique / Total</span>
-          <span class="num" id="bulkCountNum">0 / 0</span>
-        </div>
-
         <div class="bprev" id="bulkPreview"></div>
-
         <div class="prog" id="submitProgress">
           <div class="t" id="spText">Submitting 0/0...</div>
           <div class="pbar"><div class="pfill" id="spFill"></div></div>
         </div>
-
-        <button class="cta green" id="bulkSubmitBtn">🚀 Submit All Accounts</button>
-        <button class="cta ghost" id="clearBulkBtn">✕ Clear Data</button>
+        <button class="hidden-btn" id="bulkSubmitBtn">Submit</button>
       </div>
     </div>
 
-    <!-- ৩. ফাইল সাবমিট -->
+    <!-- File -->
     <div id="tab-file" class="tab-content">
-      <div class="fcard glass">
-        <h3>📁 Direct File Submit</h3>
-        <div class="bhint">
-          <b>ফাইল:</b> Excel (.xlsx, .xls), CSV (.csv) অথবা TXT (.txt, .tsv)<br>
-          <b>কলাম ক্রম:</b> <span id="fileFormatHint">—</span><br>
-          একদম প্রথম রো থেকে শেষ রো পর্যন্ত প্রতিটি রো = একটি অ্যাকাউন্ট (কোনো রো স্কিপ হবে না)।
-        </div>
-
+      <div class="fc glass">
+        <div class="fc-h"><b>File Submit</b><span class="fmt" id="fileFormatHint">—</span></div>
         <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
           <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt,.tsv">
-          <span class="icon">📁</span>
-          <h4>ফাইল এখানে ড্রপ করুন</h4>
-          <p>অথবা ক্লিক করে ফোন/কম্পিউটার থেকে ফাইল নির্বাচন করুন<br><small>(.xlsx, .xls, .csv, .txt, .tsv)</small></p>
+          <div class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <div><h4>ফাইল সিলেক্ট বা ড্রপ করুন</h4><p>.xlsx .xls .csv .txt .tsv — প্রতি রো = ১টি অ্যাকাউন্ট</p></div>
         </div>
-
         <div class="file-info" id="fileInfo"></div>
-
-        <div class="bcount" style="display:none" id="fileCountBox">
-          <span>📊 ফাইলে Unique / Total</span>
-          <span class="num" id="fileCountNum">0 / 0</span>
+        <div class="statrow">
+          <div class="chips" id="fileChips"></div>
+          <div class="lnks">
+            <button type="button" class="lnk" id="togglePrevFile">বিস্তারিত</button>
+            <button type="button" class="lnk red" id="clearFileBtn">মুছুন</button>
+          </div>
         </div>
-
         <div class="bprev" id="filePreview"></div>
-
         <div class="prog" id="fileSubmitProgress">
           <div class="t" id="fspText">Submitting 0/0...</div>
           <div class="pbar"><div class="pfill" id="fspFill"></div></div>
         </div>
-
-        <button class="cta green" id="fileSubmitBtn" disabled>🚀 Submit File Accounts</button>
-        <button class="cta ghost" id="clearFileBtn">✕ Clear File</button>
+        <button class="hidden-btn" id="fileSubmitBtn" disabled>Submit</button>
       </div>
     </div>
-
   </div>
 </main>
 
-<!-- Sticky Floating Action Bar so users never have to scroll down -->
-<div class="sticky-submit-bar" id="stickySubmitBar">
-  <div class="ssb-info">Ready to Submit: <span id="ssbCount">0</span></div>
-  <button class="ssb-btn" id="stickyActionBtn">🚀 Submit Now</button>
+<!-- Always-visible action bar: scroll ছাড়াই submit -->
+<div class="sbar" id="sbar">
+  <div class="sb-info" id="sbInfo">—</div>
+  <button class="sb-btn" id="sbBtn" disabled><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Submit</span></button>
 </div>
 
-<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
-
-<script>
-(function () {
-  var btns = document.querySelectorAll(".tab-btn");
-  var panels = document.querySelectorAll(".tab-content");
-  var ssb = document.getElementById("stickySubmitBar");
-
-  function show(name) {
-    btns.forEach(function (b) {
-      var on = b.getAttribute("data-tab") === name;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-selected", on ? "true" : "false");
-    });
-    panels.forEach(function (p) { p.classList.toggle("active", p.id === "tab-" + name); });
-    updateStickyBarVisibility(name);
-  }
-
-  function updateStickyBarVisibility(tabName) {
-    if (tabName === "bulk") {
-      var countTxt = document.getElementById("bulkCountNum").textContent;
-      var parts = countTxt.split("/");
-      var unique = parseInt(parts[0]) || 0;
-      ssb.classList.toggle("show", unique > 0);
-      document.getElementById("ssbCount").textContent = unique + " accounts";
-    } else if (tabName === "file") {
-      var countTxt = document.getElementById("fileCountNum").textContent;
-      var parts = countTxt.split("/");
-      var unique = parseInt(parts[0]) || 0;
-      ssb.classList.toggle("show", unique > 0);
-      document.getElementById("ssbCount").textContent = unique + " accounts";
-    } else {
-      ssb.classList.remove("show");
-    }
-  }
-
-  btns.forEach(function (b) {
-    b.addEventListener("click", function () {
-      var tab = b.getAttribute("data-tab");
-      show(tab);
-    });
-  });
-  show("single");
-  window.updateStickyBarVisibility = updateStickyBarVisibility;
-})();
-</script>
+<nav class="dock"><a href="dashboard.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
@@ -321,6 +245,21 @@ import { doc, getDoc, collection, query, where, getDocs, writeBatch, increment }
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const taskId = params.get("id");
+
+/* ===== Real platform icons (SVG) ===== */
+const PLATFORM_ICONS = {
+  Facebook: { color: "#1877F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
+  Twitter: { color: "#1DA1F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>` },
+  Instagram: { color: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>` },
+  LinkedIn: { color: "#0A66C2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>` },
+  TikTok: { color: "#000", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>` },
+  Gmail: { color: "#EA4335", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>` },
+  WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
+  Other: { color: "linear-gradient(135deg,#64748b,#475569)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>` }
+};
+const ICON_BOOK = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+const ICON_CLOCK = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const ICON_CHECK = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
 
 const DEFAULT_FIELDS = [
   { key: "uid", label: "UID" },
@@ -334,6 +273,7 @@ let task = null, currentUser = null, isOpen = false, busy = false;
 let countdownInterval = null, taskStartTime = null, taskEndTime = null;
 let existingValues = new Set();
 let fileRows = [], fileMeta = null;
+let activeTab = "single", bulkUnique = 0, fileUnique = 0;
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -348,17 +288,46 @@ $("logoutBtn").onclick = async () => {
   location.href = "index.html";
 };
 
+/* ============ Tabs + always-visible action bar ============ */
+function showTab(name) {
+  activeTab = name;
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    const on = b.dataset.tab === name;
+    b.classList.toggle("active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  document.querySelectorAll(".tab-content").forEach(p => p.classList.toggle("active", p.id === "tab-" + name));
+  syncBar();
+}
+document.querySelectorAll(".tab-btn").forEach(b => { b.onclick = () => showTab(b.dataset.tab); });
+
+function syncBar() {
+  const info = $("sbInfo"), btn = $("sbBtn");
+  let n = 1;
+  if (activeTab === "single") info.innerHTML = `সিঙ্গেল সাবমিট`;
+  else if (activeTab === "bulk") { n = bulkUnique; info.innerHTML = `Ready<b>${n}</b>টি অ্যাকাউন্ট`; }
+  else { n = fileUnique; info.innerHTML = `Ready<b>${n}</b>টি অ্যাকাউন্ট`; }
+  btn.disabled = busy || !isOpen || n === 0;
+  btn.querySelector("span").textContent = busy ? "অপেক্ষা করুন..." : (isOpen || !task ? "Submit" : "বন্ধ");
+}
+$("sbBtn").onclick = () => {
+  if (activeTab === "single") $("singleSubmitBtn").click();
+  else if (activeTab === "bulk") triggerBulkSubmit();
+  else $("fileSubmitBtn").click();
+};
+setInterval(syncBar, 400);
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = "login.html"; return; }
   currentUser = user;
-  if (!taskId) { $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task ID নেই</div>`; return; }
+  if (!taskId) { $("taskInfo").innerHTML = `<div class="empty">Task ID নেই</div>`; return; }
 
   try {
     const snap = await getDoc(doc(db, "tasks", taskId));
-    if (!snap.exists()) { $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task পাওয়া যায়নি</div>`; return; }
+    if (!snap.exists()) { $("taskInfo").innerHTML = `<div class="empty">Task পাওয়া যায়নি</div>`; return; }
     task = snap.data();
   } catch (e) {
-    $("taskInfo").innerHTML = `<div class="empty"><div class="em">❌</div>Task load হয়নি: ${esc(e.message)}</div>`;
+    $("taskInfo").innerHTML = `<div class="empty">Task load হয়নি: ${esc(e.message)}</div>`;
     return;
   }
 
@@ -367,27 +336,42 @@ onAuthStateChanged(auth, async (user) => {
 
   try { await loadExisting(); } catch (e) { console.warn("existing load failed", e); }
 
-  const icons = { Facebook: "📘", Twitter: "🐦", Instagram: "📷", LinkedIn: "💼", TikTok: "🎵", Gmail: "📧", WhatsApp: "💬", Other: "🔗" };
-  const pIcon = icons[task.platform] || "🔗";
+  const plat = PLATFORM_ICONS[task.platform] || PLATFORM_ICONS.Other;
   const fmt = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
   const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", fmt) : "";
   const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", fmt) : "";
 
   $("taskInfo").innerHTML = `
-    <div class="th">
-      <div class="th-tag">${pIcon} ${esc(task.platform || "Task")}</div>
-      <h2 class="th-title">${esc(task.title)}</h2>
-      <div class="th-price">৳${esc(task.pricePerAccount)} <span>/ account</span></div>
-      ${taskStartTime && taskEndTime ? `<div class="th-time">⏰ ${startStr} → ${endStr}</div>` : ""}
-    </div>
-    ${task.rules ? `<div class="note rules"><b>📋 Rules:</b><br>${esc(task.rules).replace(/\n/g, "<br>")}</div>` : ""}
-  `;
-  $("tipsBox").style.display = "block";
+    <div class="hd">
+      <div class="hd-logo" style="background:${plat.color}">${plat.svg}</div>
+      <div class="hd-main">
+        <div class="hd-title">${esc(task.title)}</div>
+        <div class="hd-sub"><span class="pr">৳${esc(task.pricePerAccount)}<small>/ account</small></span><span class="pl">${esc(task.platform || "Task")}</span></div>
+      </div>
+      <div class="hd-time open" id="hdTime"><div class="t" id="hdT">--:--</div><div class="l" id="hdL">...</div></div>
+    </div>`;
+
+  const rulesHtml = task.rules ? `<div class="rl">${esc(task.rules).replace(/\n/g, "<br>")}</div>` : "";
+  $("rulesWrap").innerHTML = `
+    <details class="acc">
+      <summary>${ICON_BOOK}<span class="sm">Rules ও নিয়ম</span><span class="hint">খুলুন</span><i class="chev"></i></summary>
+      <div class="acc-body">
+        ${taskStartTime && taskEndTime ? `<div class="tm">${ICON_CLOCK}<span>${startStr} → ${endStr}</span></div>` : ""}
+        ${rulesHtml}
+        <ul>
+          <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
+          <li>2FA কোড ভুল হলে অ্যাকাউন্ট বাদ পড়বে।</li>
+          <li>পুরো রো হুবহু আগের সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট।</li>
+        </ul>
+      </div>
+    </details>`;
 
   const fields = getFields();
+  const labels = fields.map(f => f.label || f.key);
   $("dynamicFields").innerHTML = fields.map(f => `
     <input type="text" id="dyn_${esc(f.key)}" class="inp" placeholder="${esc(f.label || f.key)}${f.optional ? " (ঐচ্ছিক)" : ""}" autocomplete="off">
   `).join("");
+  $("singleFmt").textContent = `${fields.length} ফিল্ড`;
 
   let singleTimer = null;
   fields.forEach(f => {
@@ -397,7 +381,6 @@ onAuthStateChanged(auth, async (user) => {
     el.addEventListener("input", () => { clearTimeout(singleTimer); singleTimer = setTimeout(checkSingleDup, 350); });
   });
 
-  const labels = fields.map(f => f.label || f.key);
   $("bulkFormatHint").textContent = labels.join(" | ");
   $("bulkInput").placeholder = labels.join("\t");
 
@@ -407,9 +390,10 @@ onAuthStateChanged(auth, async (user) => {
     bulkDebounce = setTimeout(updateBulkCount, 400);
   });
 
-  $("fileFormatHint").textContent = labels.map((l, i) => `${colName(i)} = ${l}`).join("  |  ");
+  $("fileFormatHint").textContent = labels.map((l, i) => `${colName(i)}=${l}`).join(" | ");
 
   startCountdown();
+  syncBar();
 });
 
 function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1); }
@@ -450,38 +434,57 @@ function dupText(r) {
     : `রো ${r.dupOf}-এর সাথে পুরো একই`;
 }
 
+/* ============ Compact countdown (header chip) ============ */
 function startCountdown() {
   updateCountdown();
   if (countdownInterval) clearInterval(countdownInterval);
   countdownInterval = setInterval(updateCountdown, 1000);
 }
 
+function fmtMs(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const p = n => String(n).padStart(2, "0");
+  if (d > 0) return `${d}d ${p(h)}h`;
+  return `${p(h)}:${p(m)}:${p(s)}`;
+}
+
+function setTime(cls, t, l) {
+  const box = $("hdTime");
+  if (!box) return;
+  box.className = "hd-time " + cls;
+  $("hdT").textContent = t;
+  $("hdL").textContent = l;
+}
+
 function updateCountdown() {
   const now = new Date();
-  const box = $("timeStatusBox");
   const sections = $("submitSections");
 
   if (!taskStartTime || !taskEndTime) {
     isOpen = true;
-    box.innerHTML = `<div class="ts open"><div class="ts-label">🟢 Submit Open</div></div>`;
+    setTime("open", "Open", "খোলা আছে");
     sections.classList.remove("locked");
     return;
   }
   if (now < taskStartTime) {
     isOpen = false;
-    box.innerHTML = `<div class="ts upcoming"><div class="ts-label">⏳ Upcoming</div>${renderCountdown(taskStartTime - now)}</div>`;
+    setTime("upcoming", fmtMs(taskStartTime - now), "শুরু হতে");
     sections.classList.add("locked");
     return;
   }
   if (now > taskEndTime) {
     isOpen = false;
-    box.innerHTML = `<div class="ts closed"><div class="ts-label">🔴 Time Expired</div></div>`;
+    setTime("closed", "শেষ", "সময় শেষ");
     sections.classList.add("locked");
     if (!$("closedOverlay")) {
       const o = document.createElement("div");
       o.id = "closedOverlay";
       o.className = "closed-box";
-      o.innerHTML = `<span class="ic">🔒</span><h3>Submission Closed</h3><p>সময় শেষ। পরের Task-এর জন্য অপেক্ষা করো।</p>`;
+      o.innerHTML = `<h3>Submission Closed</h3><p>সময় শেষ। পরের Task-এর জন্য অপেক্ষা করুন।</p>`;
       document.querySelector(".page").appendChild(o);
     }
     return;
@@ -489,63 +492,27 @@ function updateCountdown() {
 
   isOpen = true;
   const diff = taskEndTime - now;
-  const isDanger = diff < 5 * 60 * 1000;
-  box.innerHTML = `
-    <div class="ts ${isDanger ? "upcoming" : "open"}">
-      <div class="ts-label">${isDanger ? "⚠️ সময় প্রায় শেষ!" : "🟢 Submit Open"}</div>
-      ${renderCountdown(diff)}
-    </div>`;
+  setTime(diff < 5 * 60 * 1000 ? "upcoming" : "open", fmtMs(diff), diff < 5 * 60 * 1000 ? "প্রায় শেষ!" : "বাকি");
   sections.classList.remove("locked");
   const o = $("closedOverlay");
   if (o) o.remove();
 }
 
-function renderCountdown(ms) {
-  const totalSec = Math.max(0, Math.floor(ms / 1000));
-  const days = Math.floor(totalSec / 86400);
-  const hours = Math.floor((totalSec % 86400) / 3600);
-  const mins = Math.floor((totalSec % 3600) / 60);
-  const secs = totalSec % 60;
-  const p = n => String(n).padStart(2, "0");
-  if (days > 0) {
-    return `<div class="cd">
-      <div class="cd-box"><span class="cd-num">${days}</span><span class="cd-lbl">দিন</span></div>
-      <div class="cd-box"><span class="cd-num">${p(hours)}</span><span class="cd-lbl">ঘণ্টা</span></div>
-      <div class="cd-box"><span class="cd-num">${p(mins)}</span><span class="cd-lbl">মিনিট</span></div>
-    </div>`;
-  }
-  return `<div class="cd">
-    <div class="cd-box"><span class="cd-num">${p(hours)}</span><span class="cd-lbl">ঘণ্টা</span></div>
-    <div class="cd-box"><span class="cd-num">${p(mins)}</span><span class="cd-lbl">মিনিট</span></div>
-    <div class="cd-box"><span class="cd-num">${p(secs)}</span><span class="cd-lbl">সেকেন্ড</span></div>
-  </div>`;
-}
-
 function verifyTime() {
   if (!task) { alert("Task এখনো load হয়নি!"); return false; }
   const now = new Date();
-  if (taskStartTime && now < taskStartTime) { alert("⏳ এখনো শুরু হয়নি!"); return false; }
-  if (taskEndTime && now > taskEndTime) { alert("🔴 সময় শেষ!"); updateCountdown(); return false; }
+  if (taskStartTime && now < taskStartTime) { alert("এখনো শুরু হয়নি!"); return false; }
+  if (taskEndTime && now > taskEndTime) { alert("সময় শেষ!"); updateCountdown(); return false; }
   return true;
 }
 
-/* ============================================================
-   ✅ IMPROVED: Field name দেখে space-prone detect করে
-   Detect করে:
-   - 2FA variants: 2fa, 2FA, 2Fa, twofa, two-factor, 2-factor,
-                   totp, authenticator, otp, 2-step
-   - Token variants: fulltoken, access_token, refresh_token, token
-   - Cookie, Session, Backup Code
-   Detect করে না (correct):
-   - UID, Password, Email, Gmail, Tempmail, ProfileLink, ProfitLink
-   ============================================================ */
+/* ============ Smart split (আগের মতোই) ============ */
 function isSpaceProneField(field) {
   const key = String(field?.key || "").toLowerCase();
   const label = String(field?.label || "").toLowerCase();
   const raw = key + " " + label;
   const compact = raw.replace(/[\s_\-.:]+/g, "");
 
-  // ---- 2FA family ----
   if (!/2fast|2face/.test(compact)) {
     if (compact.includes("2fa")) return true;
     if (compact.includes("twofa")) return true;
@@ -555,25 +522,15 @@ function isSpaceProneField(field) {
     if (compact.includes("totp")) return true;
     if (compact.includes("authenticator")) return true;
     if (compact.includes("otp")) return true;
-    if (/2f$/.test(compact)) return true; // truncated "2fa"
+    if (/2f$/.test(compact)) return true;
   }
-
-  // ---- Token family ----
-  if (compact.includes("token")) return true; // fulltoken, accesstoken, refresh_token...
-
-  // ---- Cookie / Session ----
+  if (compact.includes("token")) return true;
   if (compact.includes("cookie")) return true;
   if (compact.includes("session")) return true;
-
-  // ---- Backup codes ----
   if (compact.includes("backupcode")) return true;
-
   return false;
 }
 
-/* ============================================================
-   Extra parts → space-prone field এ merge (delimiter preserve)
-   ============================================================ */
 function mergeParts(parts, fields, joinChar) {
   const cols = fields.length;
   if (cols < 1 || parts.length <= cols) return parts;
@@ -584,7 +541,6 @@ function mergeParts(parts, fields, joinChar) {
   let targetIdx = spaceProneIdxs.length > 0
     ? spaceProneIdxs[spaceProneIdxs.length - 1]
     : cols - 1;
-
   if (targetIdx >= cols) targetIdx = cols - 1;
 
   const beforeCount = targetIdx;
@@ -595,17 +551,12 @@ function mergeParts(parts, fields, joinChar) {
     const tail = parts.slice(beforeCount).join(joinChar);
     return [...head, tail];
   }
-
   const before = parts.slice(0, beforeCount);
   const after = parts.slice(parts.length - afterCount);
   const middle = parts.slice(beforeCount, parts.length - afterCount).join(joinChar);
   return [...before, middle, ...after];
 }
 
-/* ============================================================
-   Field-aware smart split
-   Priority: Tab > Pipe > Comma > Multi-space > Single-space
-   ============================================================ */
 function splitLine(line, expectedCols) {
   const cols = Math.max(1, expectedCols || (getFields().length || 3));
   const fields = getFields();
@@ -623,12 +574,10 @@ function splitLine(line, expectedCols) {
     parts = line.trim().split(/\s+/).map(p => String(p ?? "").trim());
     type = "single-space";
   }
-
   if (parts.length > cols) {
     const joinChar = (type === "strong") ? String(delim) : " ";
     parts = mergeParts(parts, fields, joinChar);
   }
-
   return parts;
 }
 
@@ -647,25 +596,39 @@ function buildRow(cells, label, strict = true) {
   return { ok: true, row: { label: String(label), item, cells: clean } };
 }
 
+/* ============ Compact stats + collapsible preview ============ */
+function renderChips(el, analyzed, incomplete) {
+  if (!analyzed.length && !incomplete.length) { el.innerHTML = ""; return; }
+  const ok = analyzed.filter(r => r.status === "ok").length;
+  const dup = analyzed.length - ok;
+  let h = `<span class="chip g">${ok} unique</span>`;
+  if (dup) h += `<span class="chip r">${dup} duplicate</span>`;
+  if (incomplete.length) h += `<span class="chip y">${incomplete.length} অসম্পূর্ণ</span>`;
+  h += `<span class="chip n">মোট ${analyzed.length}</span>`;
+  el.innerHTML = h;
+}
+
 function renderPreview(el, analyzed, incomplete) {
-  if (!analyzed.length && !incomplete.length) { el.classList.remove("show"); el.innerHTML = ""; return; }
+  if (!analyzed.length && !incomplete.length) { el.innerHTML = ""; el.classList.remove("open"); return; }
   const fields = getFields();
   const PREVIEW_LIMIT = 50;
   let html = "";
   analyzed.slice(0, PREVIEW_LIMIT).forEach(r => {
     const lbl = fields.map(f => esc(r.item[f.key])).join(" | ");
     const bad = r.status !== "ok";
-    html += `<div class="row ${bad ? "duplicate" : "ok"}">${esc(r.label)}. ${lbl}${bad ? ` ❌ ${esc(dupText(r))}` : " ✓"}</div>`;
+    html += `<div class="row ${bad ? "duplicate" : "ok"}">${esc(r.label)}. ${lbl}${bad ? ` — ${esc(dupText(r))}` : ""}</div>`;
   });
   if (analyzed.length > PREVIEW_LIMIT) {
-    html += `<div class="row more">… Showing first ${PREVIEW_LIMIT} of ${analyzed.length} rows (All ${analyzed.length} ready for submit)</div>`;
+    html += `<div class="row more">প্রথম ${PREVIEW_LIMIT} টা দেখানো হচ্ছে (মোট ${analyzed.length} টা submit হবে)</div>`;
   }
   incomplete.slice(0, 25).forEach(x => {
-    html += `<div class="row warn">${esc(x.label)}. ⚠️ ${esc(x.reason)} — বাদ</div>`;
+    html += `<div class="row warn">${esc(x.label)}. ${esc(x.reason)} — বাদ</div>`;
   });
   el.innerHTML = html;
-  el.classList.add("show");
 }
+
+$("togglePrevBulk").onclick = () => $("bulkPreview").classList.toggle("open");
+$("togglePrevFile").onclick = () => $("filePreview").classList.toggle("open");
 
 function buildPayload(r, source) {
   const fallbackUid = r.item.uid || r.item[Object.keys(r.item)[0]] || (r.cells && r.cells[0]) || "";
@@ -709,10 +672,11 @@ async function commitRows(rows, source, onProgress) {
 async function runSubmit(rows, source, ui) {
   if (busy) return;
   if (!verifyTime()) return;
-  if (!rows.length) return alert("❌ কোনো account নেই!");
+  if (!rows.length) return alert("কোনো account নেই!");
 
   busy = true;
   ui.btn.disabled = true;
+  syncBar();
   try {
     ui.prog.classList.add("show");
     ui.text.textContent = "Duplicate চেক হচ্ছে...";
@@ -720,7 +684,7 @@ async function runSubmit(rows, source, ui) {
 
     try { await loadExisting(); }
     catch (e) {
-      alert("❌ Duplicate চেক করা যায়নি: " + e.message + "\nইন্টারনেট চেক করে আবার চেষ্টা করো।");
+      alert("Duplicate চেক করা যায়নি: " + e.message + "\nইন্টারনেট চেক করে আবার চেষ্টা করুন।");
       ui.prog.classList.remove("show");
       return;
     }
@@ -731,11 +695,11 @@ async function runSubmit(rows, source, ui) {
     ui.refresh();
 
     if (!ok.length) {
-      alert(`❌ সব account duplicate! (${bad} টা বাদ)`);
+      alert(`সব account duplicate! (${bad} টা বাদ)`);
       ui.prog.classList.remove("show");
       return;
     }
-    const skipMsg = bad ? `\n⚠️ ${bad} টা duplicate বাদ যাবে।` : "";
+    const skipMsg = bad ? `\n${bad} টা duplicate বাদ যাবে।` : "";
     if (!confirm(`${ok.length} টা account submit করবে?${skipMsg}`)) {
       ui.prog.classList.remove("show");
       return;
@@ -750,25 +714,27 @@ async function runSubmit(rows, source, ui) {
     });
 
     if (error) {
-      alert(`⚠️ ${success} টা submit হয়েছে, সমস্যা:\n${error.message}`);
+      alert(`${success} টা submit হয়েছে, সমস্যা:\n${error.message}`);
       ui.prog.classList.remove("show");
       ui.refresh();
       return;
     }
 
     ui.fill.style.width = "100%";
-    ui.text.textContent = `✅ Done! ${success} submitted`;
+    ui.text.textContent = `Done! ${success} submitted`;
     await new Promise(r => setTimeout(r, 400));
-    alert(`✅ ${success} টা submit সফল!${bad ? `\n⚠️ ${bad} টা duplicate বাদ গেছে।` : ""}\n💵 Expected: ৳${success * (Number(task.pricePerAccount) || 0)}`);
+    alert(`${success} টা submit সফল!${bad ? `\n${bad} টা duplicate বাদ গেছে।` : ""}\nExpected: ৳${success * (Number(task.pricePerAccount) || 0)}`);
     ui.prog.classList.remove("show");
     ui.reset();
   } finally {
     busy = false;
     ui.btn.disabled = false;
     ui.idle();
+    syncBar();
   }
 }
 
+/* ============ Single ============ */
 function readSingle() {
   const item = {};
   const missing = [];
@@ -802,36 +768,33 @@ $("singleSubmitBtn").onclick = async () => {
   if (busy) return;
   if (!verifyTime()) return;
   const { item, missing } = readSingle();
-  if (missing.length) return alert(`${missing[0]} দাও!`);
+  if (missing.length) return alert(`${missing[0]} দিন!`);
 
-  const btn = $("singleSubmitBtn");
   busy = true;
-  btn.disabled = true;
-  btn.textContent = "Checking...";
+  syncBar();
   try {
     await loadExisting();
     const row = singleRow(item);
     const res = analyze([row])[0];
     if (res.status !== "ok") {
       checkSingleDup();
-      alert("❌ Duplicate!\n" + dupText(res));
+      alert("Duplicate!\n" + dupText(res));
       return;
     }
-    btn.textContent = "Submitting...";
     const { error } = await commitRows([row], "single", () => {});
     if (error) throw error;
-    alert("✅ Submit সফল! Status: ⏳ Pending");
+    alert("Submit সফল! Status: Pending");
     getFields().forEach(f => { const el = $("dyn_" + f.key); if (el) el.value = ""; });
     $("singleDupWarning").style.display = "none";
   } catch (e) {
-    alert("❌ " + e.message);
+    alert(e.message);
   } finally {
     busy = false;
-    btn.disabled = false;
-    btn.textContent = "✅ Submit Account";
+    syncBar();
   }
 };
 
+/* ============ Bulk ============ */
 function parseBulk(text) {
   const rows = [], incomplete = [];
   if (!task) return { rows, incomplete };
@@ -850,40 +813,38 @@ function parseBulk(text) {
 function updateBulkCount() {
   const { rows, incomplete } = parseBulk($("bulkInput").value);
   const analyzed = analyze(rows);
-  const unique = analyzed.filter(r => r.status === "ok").length;
-  $("bulkCountNum").textContent = `${unique} / ${analyzed.length}`;
-  renderPreview($("bulkPreview"), analyzed, incomplete);
-  if (window.updateStickyBarVisibility) {
-    var activeTab = document.querySelector(".tab-btn.active")?.getAttribute("data-tab");
-    if (activeTab === "bulk") window.updateStickyBarVisibility("bulk");
+  bulkUnique = analyzed.filter(r => r.status === "ok").length;
+  if (!analyzed.length && !incomplete.length) {
+    $("bulkChips").innerHTML = `<span class="chip n">Paste করলে এখানে দেখাবে</span>`;
+  } else {
+    renderChips($("bulkChips"), analyzed, incomplete);
   }
+  renderPreview($("bulkPreview"), analyzed, incomplete);
+  syncBar();
 }
 
 function resetBulk() {
   $("bulkInput").value = "";
-  $("bulkCountNum").textContent = "0 / 0";
-  $("bulkPreview").classList.remove("show");
+  bulkUnique = 0;
+  $("bulkChips").innerHTML = `<span class="chip n">Paste করলে এখানে দেখাবে</span>`;
+  $("bulkPreview").classList.remove("open");
   $("bulkPreview").innerHTML = "";
-  if (window.updateStickyBarVisibility) window.updateStickyBarVisibility("bulk");
+  syncBar();
 }
 
 $("bulkSubmitBtn").onclick = triggerBulkSubmit;
-document.getElementById("stickyActionBtn").onclick = () => {
-  var activeTab = document.querySelector(".tab-btn.active")?.getAttribute("data-tab");
-  if (activeTab === "bulk") triggerBulkSubmit();
-  else if (activeTab === "file") $("fileSubmitBtn").click();
-};
 
 function triggerBulkSubmit() {
   const { rows } = parseBulk($("bulkInput").value);
-  if (!rows.length) return alert("❌ কোনো সম্পূর্ণ account detect হয়নি!");
+  if (!rows.length) return alert("কোনো সম্পূর্ণ account detect হয়নি!");
   runSubmit(rows, "bulk", {
     btn: $("bulkSubmitBtn"), prog: $("submitProgress"), text: $("spText"), fill: $("spFill"),
-    refresh: updateBulkCount, reset: resetBulk, idle: () => { if(window.updateStickyBarVisibility) window.updateStickyBarVisibility("bulk"); }
+    refresh: updateBulkCount, reset: resetBulk, idle: syncBar
   });
 }
 $("clearBulkBtn").onclick = resetBulk;
 
+/* ============ File ============ */
 const dropZone = $("dropZone");
 const fileInput = $("fileInput");
 const fileInfo = $("fileInfo");
@@ -946,10 +907,6 @@ function readFileSheets(file, ext) {
   });
 }
 
-/* ============================================================
-   ✅ File submit — multi-cell = as-is (আগের মতোই)
-   শুধু single-cell হলে smart split হয়
-   ============================================================ */
 function matrixToRows(sheetName, matrix, out, multi) {
   const fields = getFields(), fc = fields.length;
   const conv = matrix.map(r => Array.isArray(r) ? r.map(cellToStr) : []);
@@ -959,13 +916,8 @@ function matrixToRows(sheetName, matrix, out, multi) {
     if (!nonEmpty.length) return;
 
     let cells;
-    if (nonEmpty.length === 1 && fc > 1) {
-      // Single cell (TXT / one-column CSV) → smart split
-      cells = splitLine(nonEmpty[0], fc);
-    } else {
-      // Multi-cell (proper Excel/CSV) → cells0 ব্যবহার করি, unchanged
-      cells = cells0;
-    }
+    if (nonEmpty.length === 1 && fc > 1) cells = splitLine(nonEmpty[0], fc);
+    else cells = cells0;
 
     const label = multi ? `${sheetName}:${idx + 1}` : String(idx + 1);
     if (out.rows.length + out.incomplete.length >= MAX_ROWS) { out.truncated = true; return; }
@@ -977,19 +929,19 @@ function matrixToRows(sheetName, matrix, out, multi) {
 }
 
 async function handleFile(file) {
-  if (!task) return alert("Task এখনো load হয়নি, একটু অপেক্ষা করো!");
+  if (!task) return alert("Task এখনো load হয়নি, একটু অপেক্ষা করুন!");
   const ext = file.name.split(".").pop().toLowerCase();
   if (!["xlsx", "xls", "csv", "txt", "tsv"].includes(ext)) {
     fileInput.value = "";
-    return alert("❌ শুধুমাত্র Excel (.xlsx, .xls), CSV (.csv) বা TXT (.txt, .tsv) ফাইল দিন!");
+    return alert("শুধুমাত্র Excel (.xlsx, .xls), CSV (.csv) বা TXT (.txt, .tsv) ফাইল দিন!");
   }
-  if (file.size > 10 * 1024 * 1024) { fileInput.value = ""; return alert("❌ ফাইল ১০MB এর চেয়ে ছোট হতে হবে!"); }
+  if (file.size > 10 * 1024 * 1024) { fileInput.value = ""; return alert("ফাইল ১০MB এর চেয়ে ছোট হতে হবে!"); }
   if (ext !== "txt" && ext !== "tsv" && typeof XLSX === "undefined") {
     fileInput.value = "";
-    return alert("❌ Excel library load হয়নি। ইন্টারনেট চেক করে পেজ রিফ্রেশ দাও।");
+    return alert("Excel library load হয়নি। ইন্টারনেট চেক করে পেজ রিফ্রেশ দিন।");
   }
 
-  fileInfo.textContent = "⏳ ফাইল পড়া হচ্ছে...";
+  fileInfo.textContent = "ফাইল পড়া হচ্ছে...";
   fileInfo.classList.add("show");
 
   try {
@@ -1001,22 +953,21 @@ async function handleFile(file) {
     sheets.forEach(s => matrixToRows(s.name, s.matrix, out, multi));
 
     if (!out.rows.length) {
-      fileRows = []; fileMeta = null;
+      fileRows = []; fileMeta = null; fileUnique = 0;
       fileInfo.classList.remove("show");
-      $("fileCountBox").style.display = "none";
+      $("fileChips").innerHTML = "";
       renderPreview($("filePreview"), [], out.incomplete);
       $("fileSubmitBtn").disabled = true;
-      if (window.updateStickyBarVisibility) window.updateStickyBarVisibility("file");
-      return alert("❌ ফাইলে কোনো ডাটা পাওয়া যায়নি!");
+      syncBar();
+      return alert("ফাইলে কোনো ডাটা পাওয়া যায়নি!");
     }
 
     fileRows = out.rows;
     fileMeta = { name: file.name, incomplete: out.incomplete, headers: 0, truncated: out.truncated, sheets: sheets.length };
-    $("fileCountBox").style.display = "flex";
     updateFilePreview();
   } catch (err) {
     fileInfo.classList.remove("show");
-    alert("❌ ফাইল পড়তে সমস্যা: " + err.message);
+    alert("ফাইল পড়তে সমস্যা: " + err.message);
   } finally {
     fileInput.value = "";
   }
@@ -1025,46 +976,40 @@ async function handleFile(file) {
 function updateFilePreview() {
   if (!fileMeta) return;
   const analyzed = analyze(fileRows);
-  const unique = analyzed.filter(r => r.status === "ok").length;
-  const dupOld = analyzed.filter(r => r.status === "dup-old").length;
-  const dupFile = analyzed.filter(r => r.status === "dup-file").length;
+  fileUnique = analyzed.filter(r => r.status === "ok").length;
 
-  $("fileCountNum").textContent = `${unique} / ${analyzed.length}`;
+  renderChips($("fileChips"), analyzed, fileMeta.incomplete);
   renderPreview($("filePreview"), analyzed, fileMeta.incomplete);
 
-  let msg = `✅ ফাইল লোড হয়েছে: ${fileMeta.name} (${analyzed.length} টা ডাটা)`;
-  if (fileMeta.incomplete.length) msg += `\n⚠️ ${fileMeta.incomplete.length} টা অসম্পূর্ণ রো বাদ`;
-  if (dupOld) msg += `\n❌ ${dupOld} টা আগেই submit করা (বাদ যাবে)`;
-  if (dupFile) msg += `\n❌ ${dupFile} টা ফাইলের ভেতরেই ডুপ্লিকেট (বাদ যাবে)`;
-  fileInfo.textContent = msg;
+  fileInfo.textContent = `${fileMeta.name} — ${analyzed.length} টা ডাটা লোড হয়েছে`;
   fileInfo.classList.add("show");
 
-  $("fileSubmitBtn").disabled = busy || unique === 0;
-  if (window.updateStickyBarVisibility) window.updateStickyBarVisibility("file");
+  $("fileSubmitBtn").disabled = busy || fileUnique === 0;
+  syncBar();
 }
 
 function resetFile() {
   fileRows = [];
   fileMeta = null;
+  fileUnique = 0;
   fileInput.value = "";
   fileInfo.classList.remove("show");
   fileInfo.textContent = "";
-  $("fileCountBox").style.display = "none";
-  $("fileCountNum").textContent = "0 / 0";
-  $("filePreview").classList.remove("show");
+  $("fileChips").innerHTML = "";
+  $("filePreview").classList.remove("open");
   $("filePreview").innerHTML = "";
   $("fileSubmitBtn").disabled = true;
-  if (window.updateStickyBarVisibility) window.updateStickyBarVisibility("file");
+  syncBar();
 }
 
 $("clearFileBtn").onclick = resetFile;
 
 $("fileSubmitBtn").onclick = () => {
-  if (!fileRows.length) return alert("❌ কোনো ফাইল লোড করা হয়নি!");
+  if (!fileRows.length) return alert("কোনো ফাইল লোড করা হয়নি!");
   runSubmit(fileRows, "file", {
     btn: $("fileSubmitBtn"), prog: $("fileSubmitProgress"), text: $("fspText"), fill: $("fspFill"),
     refresh: updateFilePreview, reset: resetFile,
-    idle: () => { $("fileSubmitBtn").disabled = !fileRows.length; if(window.updateStickyBarVisibility) window.updateStickyBarVisibility("file"); }
+    idle: () => { $("fileSubmitBtn").disabled = !fileRows.length; syncBar(); }
   });
 };
 
