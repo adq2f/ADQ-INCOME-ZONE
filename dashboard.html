@@ -1,651 +1,232 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Dashboard — ADQ Income Zone</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=35">
-  <style>
-    :root {
-      --bg: #06060f;
-      --ink: #f4f4ff;
-      --muted: #9a9bb8;
-      --dim: #6f7090;
-      --line: rgba(255,255,255,0.09);
-      --glass: rgba(255,255,255,0.05);
-      --violet: #8b5cf6;
-      --indigo: #6366f1;
-      --cyan: #22d3ee;
-      --gold: #fbbf24;
-      --ok: #10b981;
-      --bad: #ef4444;
-    }
-    * { -webkit-tap-highlight-color: transparent; }
-    html, body { background: var(--bg) !important; }
-    body {
-      font-family: 'Hind Siliguri', 'Inter', system-ui, sans-serif !important;
-      color: var(--ink); margin: 0; min-height: 100vh; min-height: 100dvh;
-      overflow-x: hidden; position: relative;
-    }
-    a { text-decoration: none; }
-
-    /* ===== Aurora background ===== */
-    .d-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-    .d-orb { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
-    .d-orb.o1 { width: 420px; height: 420px; background: #4f46e5; top: -140px; left: -120px; opacity: .5; animation: dDrift1 20s ease-in-out infinite; }
-    .d-orb.o2 { width: 380px; height: 380px; background: #9333ea; bottom: -160px; right: -120px; opacity: .45; animation: dDrift2 24s ease-in-out infinite; }
-    .d-orb.o3 { width: 260px; height: 260px; background: #0891b2; top: 40%; right: -80px; opacity: .22; animation: dDrift1 28s ease-in-out infinite reverse; }
-    @keyframes dDrift1 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(50px,40px) scale(1.1); } }
-    @keyframes dDrift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,-50px) scale(1.08); } }
-    .d-grid {
-      position: absolute; inset: 0;
-      background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%);
-      -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%);
-    }
-
-    /* ===== Top bar ===== */
-    .d-top {
-      position: sticky; top: 0; z-index: 50;
-      padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px 12px;
-      background: rgba(6,6,15,0.65); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%);
-      border-bottom: 1px solid var(--line);
-    }
-    .d-top-in { max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
-    .d-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; letter-spacing: -.2px; }
-    .d-mark {
-      width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #22d3ee); color: #fff; font-family: 'Inter'; font-weight: 900; font-size: 17px;
-      box-shadow: 0 8px 20px -6px rgba(139,92,246,.8), inset 0 1px 0 rgba(255,255,255,.35);
-    }
-    .d-icon-btn {
-      width: 40px; height: 40px; border-radius: 13px; border: 1px solid var(--line); background: var(--glass);
-      color: var(--muted); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: .2s;
-    }
-    .d-icon-btn:hover { color: #fff; background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.45); }
-    .d-icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-    /* ===== Page ===== */
-    .d-page { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 18px 16px calc(120px + env(safe-area-inset-bottom, 0px)); }
-
-    /* Welcome */
-    .d-welcome { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-    .d-avatar-ring { padding: 3px; border-radius: 50%; background: conic-gradient(from 200deg, #6366f1, #22d3ee, #a855f7, #6366f1); flex: 0 0 auto; }
-    .d-avatar {
-      width: 54px; height: 54px; border-radius: 50%; background: #12122a; color: #fff;
-      display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; font-family: 'Inter';
-      border: 2px solid var(--bg);
-    }
-    .d-welcome-text { min-width: 0; flex: 1; }
-    .d-hello { font-size: 12.5px; color: var(--muted); font-weight: 500; }
-    .d-name-row { display: flex; align-items: center; gap: 8px; margin-top: 1px; }
-    .d-name { font-size: 20px; font-weight: 700; letter-spacing: -.3px; white-space: nowrap; overflow-x: auto; max-width: 210px; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg,#000 88%,transparent); mask-image: linear-gradient(90deg,#000 88%,transparent); }
-    .d-name::-webkit-scrollbar { display: none; }
-    .d-email { font-size: 12.5px; color: var(--dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-    /* Balance card */
-    .d-balance {
-      position: relative; overflow: hidden; border-radius: 28px; padding: 22px 22px 20px; margin-bottom: 14px;
-      background: linear-gradient(135deg, #4338ca 0%, #7c3aed 52%, #c026d3 110%);
-      box-shadow: 0 28px 60px -20px rgba(124,58,237,.85), inset 0 1px 0 rgba(255,255,255,.3);
-    }
-    .d-balance::before { content: ''; position: absolute; top: -60%; left: -20%; width: 90%; height: 160%; background: radial-gradient(circle, rgba(255,255,255,.22), transparent 62%); pointer-events: none; }
-    .d-balance::after {
-      content: ''; position: absolute; right: -70px; bottom: -90px; width: 240px; height: 240px; border-radius: 50%;
-      border: 1px solid rgba(255,255,255,.18); box-shadow: 0 0 0 28px rgba(255,255,255,.05), 0 0 0 58px rgba(255,255,255,.03); pointer-events: none;
-    }
-    .d-bal-top { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; }
-    .d-bal-label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.85); }
-    .d-bal-label svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .d-chip { width: 38px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, #fde68a, #f59e0b); box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); position: relative; }
-    .d-chip::before { content: ''; position: absolute; inset: 6px 8px; border: 1.5px solid rgba(120,53,15,.4); border-radius: 3px; }
-    .d-bal-amount { position: relative; z-index: 1; font-family: 'Inter', sans-serif; font-weight: 900; font-size: 46px; letter-spacing: -1.5px; line-height: 1; margin: 14px 0 20px; text-shadow: 0 6px 20px rgba(0,0,0,.25); }
-    .d-bal-actions { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .d-bal-btn {
-      display: flex; align-items: center; justify-content: center; gap: 8px; padding: 13px; border-radius: 15px;
-      font-size: 14px; font-weight: 700; color: #fff; transition: .25s;
-      background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); backdrop-filter: blur(8px);
-    }
-    .d-bal-btn.solid { background: #fff; color: #4c1d95; border-color: #fff; box-shadow: 0 10px 24px -8px rgba(0,0,0,.45); }
-    .d-bal-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,.24); }
-    .d-bal-btn.solid:hover { background: #f5f3ff; }
-    .d-bal-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-
-    /* Stats */
-    .d-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
-    .d-stat {
-      display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 20px; color: var(--ink);
-      background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border: 1px solid var(--line);
-      transition: .25s;
-    }
-    .d-stat:hover { transform: translateY(-3px); border-color: rgba(139,92,246,.5); box-shadow: 0 14px 30px -14px rgba(139,92,246,.6); }
-    .d-stat-ic { width: 42px; height: 42px; border-radius: 14px; flex: 0 0 42px; display: flex; align-items: center; justify-content: center; font-size: 19px; }
-    .d-stat-ic.a { background: linear-gradient(135deg, rgba(99,102,241,.35), rgba(139,92,246,.2)); }
-    .d-stat-ic.b { background: linear-gradient(135deg, rgba(16,185,129,.35), rgba(34,211,238,.18)); }
-    .d-stat-v { font-family: 'Inter'; font-weight: 800; font-size: 19px; line-height: 1.1; }
-    .d-stat-l { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 2px; }
-
-    /* Notice (JS inserts) */
-    .d-notice {
-      position: relative; border-radius: 22px; padding: 16px; margin-bottom: 20px; overflow: hidden;
-      background: linear-gradient(135deg, rgba(251,191,36,.14), rgba(245,158,11,.04)); border: 1px solid rgba(251,191,36,.35);
-    }
-    .d-notice::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #fbbf24, #f59e0b); }
-    .d-n-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-    .d-n-bell { width: 34px; height: 34px; border-radius: 11px; background: rgba(251,191,36,.2); display: flex; align-items: center; justify-content: center; font-size: 16px; flex: 0 0 34px; }
-    .d-n-title { font-size: 15.5px; font-weight: 700; color: #fde68a; line-height: 1.3; }
-    .d-n-msg { font-size: 13.5px; color: #e7e5f4; line-height: 1.6; word-break: break-word; }
-    .d-n-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-    .d-n-btn { padding: 9px 14px; border-radius: 12px; font-size: 12.5px; font-weight: 700; color: #fff; transition: .2s; }
-    .d-n-btn.apk { background: linear-gradient(135deg, #10b981, #059669); }
-    .d-n-btn.link { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-    .d-n-btn:hover { transform: translateY(-2px); }
-    .d-n-time { margin-top: 10px; font-size: 11.5px; color: var(--muted); font-weight: 500; }
-
-    /* Section head */
-    .d-sec { display: flex; align-items: center; justify-content: space-between; margin: 26px 2px 12px; }
-    .d-sec h3 { font-size: 17px; font-weight: 700; letter-spacing: -.2px; margin: 0; }
-    .d-sec a { font-size: 12.5px; color: #c4b5fd; font-weight: 600; transition: .2s; }
-    .d-sec a:hover { color: #fff; }
-    .d-sec.first { margin-top: 8px; }
-
-    /* Quick actions */
-    .d-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .d-q {
-      display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 4px 12px; border-radius: 20px; color: var(--ink);
-      background: linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.025)); border: 1px solid var(--line); transition: .25s;
-    }
-    .d-q:hover { transform: translateY(-4px); border-color: rgba(255,255,255,.22); }
-    .d-q:active { transform: scale(.96); }
-    .d-q-ic { width: 46px; height: 46px; border-radius: 15px; display: flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 10px 22px -8px var(--g); background: var(--g2); }
-    .d-q-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .d-q-ic.purple { --g: #8b5cf6; --g2: linear-gradient(135deg, #6366f1, #a855f7); }
-    .d-q-ic.green { --g: #10b981; --g2: linear-gradient(135deg, #10b981, #0d9488); }
-    .d-q-ic.orange { --g: #f59e0b; --g2: linear-gradient(135deg, #f59e0b, #ef4444); }
-    .d-q-ic.blue { --g: #0ea5e9; --g2: linear-gradient(135deg, #0ea5e9, #6366f1); }
-    .d-q-l { font-size: 12px; font-weight: 600; color: #dcdcf2; }
-
-    /* Task cards */
-    .d-task {
-      position: relative; display: flex; gap: 14px; padding: 16px; margin-bottom: 12px; border-radius: 24px; overflow: hidden;
-      background: linear-gradient(160deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid var(--line);
-      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      animation: dRise .55s cubic-bezier(.2,.8,.2,1) both; transition: .3s;
-    }
-    .d-task:hover { transform: translateY(-4px); border-color: rgba(139,92,246,.55); box-shadow: 0 20px 44px -18px rgba(139,92,246,.7); }
-    @keyframes dRise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-    .d-task-logo {
-      width: 58px; height: 58px; border-radius: 18px; flex: 0 0 58px; padding: 13px; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 12px 26px -8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.3);
-    }
-    .d-task-logo svg { width: 100%; height: 100%; }
-    .d-task-body { flex: 1; min-width: 0; }
-    .d-task-title { font-size: 15.5px; font-weight: 700; line-height: 1.35; margin-bottom: 8px; word-break: break-word; }
-    .d-price {
-      display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-family: 'Inter'; font-size: 13px; font-weight: 800;
-      color: #6ee7b7; background: rgba(16,185,129,.14); border: 1px solid rgba(16,185,129,.4); margin-bottom: 10px;
-    }
-    .d-price small { font-family: 'Hind Siliguri'; font-weight: 600; opacity: .75; margin-left: 4px; font-size: 11.5px; }
-    .d-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-    .d-meta-i { padding: 8px 10px; border-radius: 12px; text-align: center; background: rgba(255,255,255,.05); border: 1px solid var(--line); font-size: 11px; color: var(--muted); font-weight: 600; }
-    .d-meta-i .v { display: block; font-family: 'Inter'; font-size: 14px; font-weight: 800; color: var(--ink); margin-bottom: 1px; }
-    .d-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-    .d-badge { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-    .d-badge.open { background: rgba(16,185,129,.15); color: #6ee7b7; }
-    .d-badge.upcoming { background: rgba(245,158,11,.15); color: #fcd34d; }
-    .d-badge.closed { background: rgba(239,68,68,.15); color: #fca5a5; }
-    .d-badge.commission { background: rgba(251,191,36,.16); color: #fde68a; border: 1px solid rgba(251,191,36,.35); }
-    .d-badge.open::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #10b981; margin-right: 6px; vertical-align: 1px; box-shadow: 0 0 0 0 rgba(16,185,129,.7); animation: dPulse 1.8s infinite; }
-    @keyframes dPulse { 70% { box-shadow: 0 0 0 7px rgba(16,185,129,0); } 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); } }
-    .d-task-btn {
-      position: relative; overflow: hidden; display: block; text-align: center; padding: 13px; border-radius: 15px; color: #fff; font-size: 14.5px; font-weight: 700;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6 55%, #a855f7);
-      box-shadow: 0 12px 26px -10px rgba(139,92,246,.95), inset 0 1px 0 rgba(255,255,255,.3); transition: .25s;
-    }
-    .d-task-btn::before { content: ''; position: absolute; top: 0; left: -80%; width: 50%; height: 100%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-20deg); transition: left .7s; }
-    .d-task-btn:hover::before { left: 130%; }
-    .d-task-btn:hover { transform: translateY(-2px); }
-
-    /* Recent */
-    .d-recent {
-      display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px; border-radius: 18px;
-      background: linear-gradient(160deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); border: 1px solid var(--line);
-    }
-    .d-r-ic { width: 38px; height: 38px; border-radius: 12px; flex: 0 0 38px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-    .d-r-ic.good { background: rgba(16,185,129,.18); }
-    .d-r-ic.bad { background: rgba(239,68,68,.18); }
-    .d-r-ic.pending { background: rgba(245,158,11,.18); }
-    .d-r-info { flex: 1; min-width: 0; }
-    .d-r-uid { font-family: 'Courier New', monospace; font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .d-r-time { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
-    .d-r-earn { font-family: 'Inter'; font-size: 12.5px; font-weight: 800; padding: 5px 11px; border-radius: 999px; background: rgba(16,185,129,.16); color: #6ee7b7; white-space: nowrap; }
-    .d-r-earn.zero { background: rgba(255,255,255,.07); color: var(--muted); }
-
-    /* Empty / loading / error */
-    .d-empty { text-align: center; padding: 26px 16px; border-radius: 20px; border: 1.5px dashed rgba(255,255,255,.14); color: var(--muted); font-size: 13.5px; font-weight: 600; }
-    .d-empty .em { font-size: 28px; margin-bottom: 6px; }
-    .d-skel { height: 92px; border-radius: 22px; margin-bottom: 10px; background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.1) 50%, rgba(255,255,255,.04) 70%); background-size: 200% 100%; animation: dShimmer 1.4s infinite linear; border: 1px solid var(--line); }
-    .d-skel.sm { height: 62px; border-radius: 18px; }
-    @keyframes dShimmer { to { background-position: -200% 0; } }
-
-    /* ===== Floating dock ===== */
-    .d-dock {
-      position: fixed; z-index: 60; left: 50%; transform: translateX(-50%);
-      bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: calc(100% - 24px); max-width: 500px;
-      display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 8px;
-      background: rgba(18,18,40,.78); backdrop-filter: blur(24px) saturate(170%); -webkit-backdrop-filter: blur(24px) saturate(170%);
-      border: 1px solid rgba(255,255,255,.12); border-radius: 26px; box-shadow: 0 20px 50px -10px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.1);
-    }
-    .d-dock a { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px 6px; border-radius: 18px; color: var(--dim); font-size: 10.5px; font-weight: 600; transition: .25s; }
-    .d-dock a svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: .25s; }
-    .d-dock a:hover { color: #fff; }
-    .d-dock a.active { color: #fff; background: linear-gradient(135deg, rgba(99,102,241,.5), rgba(139,92,246,.35)); box-shadow: inset 0 0 0 1px rgba(167,139,250,.5), 0 8px 20px -8px rgba(139,92,246,.9); }
-    .d-dock a.active svg { transform: translateY(-1px) scale(1.08); }
-
-    a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
-    @media (max-width: 380px) {
-      .d-bal-amount { font-size: 40px; }
-      .d-q-l { font-size: 11px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .d-orb, .d-task, .d-skel, .d-badge.open::before { animation: none; }
-      .d-task-btn::before { display: none; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06060f">
+<title>Dashboard — ADQ Income Zone</title>
+<script src="app-shell.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+.d-hero{flex:0 0 auto;position:relative;overflow:hidden;border-radius:24px;padding:14px;color:#fff;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 24px 50px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.d-hero::before{content:'';position:absolute;top:-70%;left:-20%;width:90%;height:170%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
+.d-hero>*{position:relative}
+.d-row1{display:flex;align-items:center;gap:10px}
+.d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif}
+.d-wt{flex:1;min-width:0}
+.d-hi{font-size:11px;opacity:.8;font-weight:500}
+.d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2}
+.d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-vb{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:0 0 18px;border-radius:50%;color:#fff;box-shadow:0 4px 10px -2px rgba(0,0,0,.5)}
+.d-vb svg{width:11px;height:11px;stroke-width:3.4}
+.d-wd{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:13px;background:#fff;color:#4c1d95;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(0,0,0,.45);flex:0 0 auto}
+.d-wd svg{width:15px;height:15px}
+.d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}
+.d-bl{font-size:11px;font-weight:600;opacity:.85}
+.d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
+.d-mini{display:grid;grid-template-columns:repeat(3,auto);gap:6px}
+.d-mi{text-align:center;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.12)}
+.d-mi b{display:block;font:800 14px 'Inter',sans-serif;line-height:1.1}
+.d-mi span{font-size:10px;opacity:.8;font-weight:600}
+.d-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
+.d-notice svg{width:16px;height:16px;flex:0 0 16px}
+.d-notice span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.d-notice .chev{width:14px;height:14px;opacity:.7}
+.act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
+.act-row .x-rb{min-width:0}
+.act-chips{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.act-chips span{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
+.act-chips .g{background:rgba(16,185,129,.16);color:#6ee7b7}
+.act-chips .b{background:rgba(239,68,68,.16);color:#fca5a5}
+.act-chips .p{background:rgba(245,158,11,.16);color:#fcd34d}
+.act-earn{font:800 12.5px 'Inter',sans-serif;padding:5px 11px;border-radius:999px;background:rgba(16,185,129,.16);color:#6ee7b7;white-space:nowrap}
+.act-earn.zero{background:rgba(255,255,255,.07);color:#9a9bb8}
+</style>
 </head>
-<body>
+<body class="x-body">
+<div class="x-bg" aria-hidden="true"><div class="o o1"></div><div class="o o2"></div></div>
 
-  <div class="d-bg" aria-hidden="true">
-    <div class="d-orb o1"></div><div class="d-orb o2"></div><div class="d-orb o3"></div>
-    <div class="d-grid"></div>
-  </div>
-
-  <header class="d-top">
-    <div class="d-top-in">
-      <div class="d-brand">
-        <div class="d-mark">A</div>
-        <span>ADQ Income Zone</span>
-      </div>
-      <button class="d-icon-btn" id="logoutBtn" title="Logout" aria-label="Logout">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
+<div class="x-app">
+  <header class="x-top">
+    <div class="x-brand"><div class="x-mark">A</div><span>ADQ Income Zone</span></div>
+    <div class="x-actions">
+      <a class="x-ibtn" href="notifications.html" aria-label="Notifications" id="bellBtn"></a>
+      <button class="x-ibtn danger" id="logoutBtn" aria-label="Logout"></button>
     </div>
   </header>
 
-  <main class="d-page">
-
-    <div class="d-welcome">
-      <div class="d-avatar-ring"><div class="d-avatar" id="avatar">U</div></div>
-      <div class="d-welcome-text">
-        <div class="d-hello">👋 স্বাগতম</div>
-        <div class="d-name-row">
-          <div class="d-name" id="username">...</div>
-          <span id="dashBadge"></span>
-        </div>
-        <div class="d-email" id="email">...</div>
+  <section class="d-hero">
+    <div class="d-row1">
+      <div class="d-av" id="avatar">U</div>
+      <div class="d-wt">
+        <div class="d-hi">স্বাগতম</div>
+        <div class="d-name"><span id="username">...</span><span id="dashBadge"></span></div>
+      </div>
+      <a href="withdraw.html" class="d-wd" id="wdBtn">Withdraw</a>
+    </div>
+    <div class="d-bal">
+      <div>
+        <div class="d-bl">আপনার ব্যালেন্স</div>
+        <div class="d-ba" id="balance">৳0</div>
+      </div>
+      <div class="d-mini">
+        <div class="d-mi"><b id="sSubs">0</b><span>Subs</span></div>
+        <div class="d-mi"><b id="sGood">0</b><span>Good</span></div>
+        <div class="d-mi"><b id="sPend">0</b><span>Pending</span></div>
       </div>
     </div>
+  </section>
 
-    <section class="d-balance">
-      <div class="d-bal-top">
-        <div class="d-bal-label">
-          <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
-          আপনার ব্যালেন্স
-        </div>
-        <div class="d-chip"></div>
-      </div>
-      <div class="d-bal-amount" id="balance">৳0</div>
-      <div class="d-bal-actions">
-        <a href="withdraw.html" class="d-bal-btn solid">
-          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Withdraw
-        </a>
-        <a href="wallet.html" class="d-bal-btn">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          History
-        </a>
-      </div>
-    </section>
+  <button class="d-notice" id="noticeBar" hidden></button>
 
-    <div class="d-stats">
-      <a href="task-history.html" class="d-stat">
-        <div class="d-stat-ic a">📊</div>
-        <div>
-          <div class="d-stat-v" id="totalSubs">0</div>
-          <div class="d-stat-l">Total Subs</div>
-        </div>
-      </a>
-      <a href="wallet.html" class="d-stat">
-        <div class="d-stat-ic b">💰</div>
-        <div>
-          <div class="d-stat-v" id="earnedTotal">৳0</div>
-          <div class="d-stat-l">Total Earned</div>
-        </div>
-      </a>
-    </div>
+  <div class="x-seg" role="tablist">
+    <button class="active" data-p="pTasks" id="segTasks"></button>
+    <button data-p="pAct" id="segAct"></button>
+  </div>
 
-    <div id="noticeArea"></div>
+  <div class="x-scroll" id="pTasks"><div class="x-skel"></div><div class="x-skel"></div><div class="x-skel"></div></div>
+  <div class="x-scroll" id="pAct" hidden><div class="x-skel"></div><div class="x-skel"></div></div>
+</div>
 
-    <div class="d-sec first"><h3>⚡ Quick Actions</h3></div>
-    <div class="d-quick">
-      <a href="index.html" class="d-q">
-        <div class="d-q-ic purple"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-        <div class="d-q-l">Submit</div>
-      </a>
-      <a href="task-history.html" class="d-q">
-        <div class="d-q-ic green"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></div>
-        <div class="d-q-l">History</div>
-      </a>
-      <a href="wallet.html" class="d-q">
-        <div class="d-q-ic orange"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg></div>
-        <div class="d-q-l">Wallet</div>
-      </a>
-      <a href="leaderboard.html" class="d-q">
-        <div class="d-q-ic blue"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg></div>
-        <div class="d-q-l">Leaders</div>
-      </a>
-    </div>
+<div class="x-sheet" id="noticeSheet">
+  <div class="x-sheet-box">
+    <div class="x-sheet-h"><h3 id="nsTitle"></h3><button class="x-ibtn" id="nsClose" aria-label="Close"></button></div>
+    <div class="x-sheet-b" id="nsBody"></div>
+  </div>
+</div>
 
-    <div class="d-sec">
-      <h3>🎯 Available Tasks</h3>
-      <a href="index.html">সব দেখো →</a>
-    </div>
-    <div id="taskList"><div class="d-skel"></div><div class="d-skel"></div></div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    <div class="d-sec">
-      <h3>📋 সাম্প্রতিক Activity</h3>
-      <a href="task-history.html">সব দেখো →</a>
-    </div>
-    <div id="recentList"><div class="d-skel sm"></div><div class="d-skel sm"></div><div class="d-skel sm"></div></div>
-  </main>
+window.adqHold = true; // balance/data আসা পর্যন্ত loading screen থাকবে
+const { esc, svg: S, taskRow, logo } = window.ADQ;
+const $ = (id) => document.getElementById(id);
 
-  <nav class="d-dock">
-    <a href="dashboard.html" data-page="dashboard" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a>
-    <a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a>
-    <a href="leaderboard.html" data-page="leaderboard"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a>
-    <a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a>
-    <a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
-  </nav>
+$("bellBtn").innerHTML = S.bell;
+$("logoutBtn").innerHTML = S.logout;
+$("nsClose").innerHTML = S.close;
+$("wdBtn").insertAdjacentHTML("afterbegin", S.download);
+$("segTasks").innerHTML = S.bolt + 'Tasks <span class="n" id="cntTasks">0</span>';
+$("segAct").innerHTML = S.activity + "Activity";
 
-  <script type="module">
-    import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-    import { initChatWidget } from "./chat-widget.js";
-    import { initPremiumPopups } from "./premium-popup.js";
-
-    initChatWidget();
-    initPremiumPopups();
-
-    const PLATFORM_ICONS = {
-      Facebook: { color: "#1877F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
-      Twitter: { color: "#1DA1F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>` },
-      Instagram: { color: "linear-gradient(45deg,#F58529,#DD2A7B,#8134AF)", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>` },
-      LinkedIn: { color: "#0A66C2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>` },
-      TikTok: { color: "#000", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg>` },
-      Gmail: { color: "#EA4335", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>` },
-      WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
-      Other: { color: "#64748b", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>` }
-    };
-
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
-
-    function getBadgeClass(color) {
-      if (!color) return 'gold';
-      if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
-      if (color.includes("#ea580c") || color.includes("bronze")) return 'bronze';
-      if (color.includes("#a855f7")) return 'purple';
-      if (color.includes("#3b82f6")) return 'blue';
-      if (color.includes("#10b981")) return 'green';
-      if (color.includes("#ef4444")) return 'red';
-      return 'gold';
-    }
-
-    function countUp(el, end, duration) {
-      if (!end) { el.textContent = "৳0"; return; }
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = "৳" + end; return; }
-      let t0 = null;
-      const step = (ts) => {
-        if (!t0) t0 = ts;
-        const p = Math.min((ts - t0) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = "৳" + Math.floor(eased * end);
-        if (p < 1) requestAnimationFrame(step); else el.textContent = "৳" + end;
-      };
-      requestAnimationFrame(step);
-    }
-
-    document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট?")) return;
-      await signOut(auth);
-      location.href = "index.html";
-    };
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "login.html"; return; }
-      
-      // ✅ ফিক্স: রিয়েল-টাইম লিসেনার দিয়ে ইউজার ডাটা লোড করা হচ্ছে
-      const unsubUser = onSnapshot(doc(db, "users", user.uid), (snap) => {
-        if (!snap.exists()) return;
-        const u = snap.data();
-
-        document.getElementById("username").textContent = u.username || "User";
-        document.getElementById("email").textContent = u.email || "";
-        document.getElementById("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
-        countUp(document.getElementById("balance"), u.balance || 0, 1100);
-        document.getElementById("earnedTotal").textContent = "৳" + (u.balance || 0);
-
-        if (u.customBadge) {
-          const cls = getBadgeClass(u.customBadgeColor);
-          document.getElementById("dashBadge").innerHTML = `<span class="premium-badge ${cls}" title="${esc(u.customBadge)}"></span>`;
-        }
-      });
-
-      loadNotice();
-      loadTasks();
-      loadRecent(user.uid);
-      loadTotalSubs(user.uid);
-    });
-
-    async function loadTotalSubs(uid) {
-      try {
-        const q = query(collection(db, "submissions"), where("userId", "==", uid));
-        const snap = await getDocs(q);
-        document.getElementById("totalSubs").textContent = snap.size;
-      } catch (e) {}
-    }
-
-    async function loadNotice() {
-      try {
-        const q = query(collection(db, "notices"), where("active", "==", true));
-        const snap = await getDocs(q);
-        if (snap.empty) return;
-        const n = snap.docs.map(d => d.data()).sort((a, b) =>
-          (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0)
-        )[0];
-
-        const timeStr = n.createdAt?.toDate?.().toLocaleString("bn-BD", {
-          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-        }) || "";
-
-        const apkBtn = n.apkUrl
-          ? `<a href="${n.apkUrl}" class="d-n-btn apk" target="_blank" rel="noopener noreferrer">⬇️ Download APK</a>` : "";
-        const linkBtn = n.linkUrl
-          ? `<a href="${n.linkUrl}" class="d-n-btn link" target="_blank" rel="noopener noreferrer">🔗 Open Link</a>` : "";
-
-        document.getElementById("noticeArea").innerHTML = `
-          <div class="d-notice">
-            <div class="d-n-head">
-              <div class="d-n-bell">🔔</div>
-              <div class="d-n-title">${n.title}</div>
-            </div>
-            <div class="d-n-msg">${n.message}</div>
-            ${(apkBtn || linkBtn) ? `<div class="d-n-actions">${apkBtn}${linkBtn}</div>` : ""}
-            <div class="d-n-time">🕐 ${timeStr}</div>
-          </div>
-        `;
-      } catch (e) {}
-    }
-
-    async function loadTasks() {
-      const list = document.getElementById("taskList");
-      try {
-        const q = query(collection(db, "tasks"), where("active", "==", true));
-        
-        // ✅ ফিক্স: রিয়েল-টাইম লিসেনার ব্যবহার করা হয়েছে
-        onSnapshot(q, (snap) => {
-          if (snap.empty) {
-            list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো task নেই</div>`;
-            return;
-          }
-          const now = new Date();
-          const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-            .filter(t => {
-              const end = t.endTime?.toDate?.();
-              return !end || end > now;
-            })
-            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-
-          if (tasks.length === 0) {
-            list.innerHTML = `<div class="d-empty"><div class="em">⏰</div>এখনো কোনো open task নেই</div>`;
-            return;
-          }
-
-          list.innerHTML = tasks.map((t, i) => renderHighQualityTaskCard(t, i)).join("");
-        });
-      } catch (e) {
-        list.innerHTML = `<div class="d-empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-      }
-    }
-
-    function renderHighQualityTaskCard(t, idx) {
-      const platformKey = t.platform || "Other";
-      const platform = PLATFORM_ICONS[platformKey] || PLATFORM_ICONS.Other;
-      const fieldCount = (t.fields || []).length;
-      const commission = t.referCommission || 0;
-      const now = new Date();
-      const start = t.startTime?.toDate?.();
-      const end = t.endTime?.toDate?.();
-      let status = "open", statusLabel = "Open";
-      if (start && now < start) { status = "upcoming"; statusLabel = "⏳ Upcoming"; }
-      else if (end && now > end) { status = "closed"; statusLabel = "🔴 Closed"; }
-      let timeLeft = "";
-      if (end) {
-        const diffMs = end - now;
-        if (diffMs > 0) {
-          const hrs = Math.floor(diffMs / 3600000);
-          const mins = Math.floor((diffMs % 3600000) / 60000);
-          if (hrs > 24) {
-            const days = Math.floor(hrs / 24);
-            timeLeft = `${days}d ${hrs % 24}h`;
-          } else if (hrs > 0) {
-            timeLeft = `${hrs}h ${mins}m`;
-          } else {
-            timeLeft = `${mins}m`;
-          }
-        }
-      }
-      return `
-        <div class="d-task" style="animation-delay:${Math.min(idx, 8) * 0.06}s">
-          <div class="d-task-logo" style="background: ${platform.color}">
-            ${platform.svg}
-          </div>
-          <div class="d-task-body">
-            <div class="d-task-title">${t.title}</div>
-            <span class="d-price">৳${t.pricePerAccount}<small>/ account</small></span>
-            <div class="d-meta">
-              <div class="d-meta-i"><span class="v">${timeLeft || "—"}</span>Time Left</div>
-              <div class="d-meta-i"><span class="v">${fieldCount}</span>Fields</div>
-            </div>
-            <div class="d-badges">
-              <span class="d-badge ${status}">${statusLabel}</span>
-              ${commission > 0 ? `<span class="d-badge commission">🎁 ৳${commission} Refer Commission</span>` : ''}
-            </div>
-            <a href="task.html?id=${t.id}" class="d-task-btn">Submit Now →</a>
-          </div>
-        </div>
-      `;
-    }
-
-async function loadRecent(uid) {
-  const list = document.getElementById("recentList");
-  try {
-    const q = query(collection(db, "submissions"), where("userId", "==", uid));
-    
-    onSnapshot(q, (snap) => {
-      if (snap.empty) {
-        list.innerHTML = `<div class="d-empty"><div class="em">📭</div>এখনো কোনো submission নেই</div>`;
-        return;
-      }
-      
-      const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      
-      // ✅ Task অনুযায়ী group করা
-      const groups = {};
-      subs.forEach(s => {
-        if (!s.taskId) return;
-        if (!groups[s.taskId]) {
-          groups[s.taskId] = {
-            taskId: s.taskId,
-            taskTitle: s.taskTitle || "Task",
-            taskPlatform: s.taskPlatform || "Other",
-            items: [],
-            lastTime: 0
-          };
-        }
-        groups[s.taskId].items.push(s);
-        const t = s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || 0;
-        if (t > groups[s.taskId].lastTime) groups[s.taskId].lastTime = t;
-      });
-      
-      const grouped = Object.values(groups)
-        .sort((a, b) => b.lastTime - a.lastTime)
-        .slice(0, 6);
-      
-      const platformIcons = {
-        Facebook: "📘", Twitter: "🐦", Instagram: "📷",
-        LinkedIn: "💼", TikTok: "🎵", Gmail: "📧",
-        WhatsApp: "💬", Other: "🎯"
-      };
-      
-      list.innerHTML = grouped.map((g, i) => {
-        const good = g.items.filter(x => x.status === "good").length;
-        const bad = g.items.filter(x => x.status === "bad").length;
-        const pending = g.items.filter(x => x.status === "pending").length;
-        const earned = g.items
-          .filter(x => x.status === "good")
-          .reduce((sum, x) => sum + (Number(x.price) || 0), 0);
-        
-        const time = g.lastTime ? new Date(g.lastTime).toLocaleString("bn-BD", {
-          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-        }) : "";
-        const icon = platformIcons[g.taskPlatform] || "🎯";
-        
-        return `
-          <a href="task-history.html" class="d-recent" style="text-decoration:none;animation:dRise .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:${i * 0.05}s">
-            <div class="d-r-ic" style="background:rgba(99,102,241,.2);font-size:20px;color:#a5b4fc">${icon}</div>
-            <div class="d-r-info">
-              <div class="d-r-uid" style="font-family:'Hind Siliguri',sans-serif;font-size:14px">${esc(g.taskTitle)}</div>
-              <div class="d-r-time" style="margin-top:3px">
-                ✅ ${good} good &nbsp;•&nbsp; ❌ ${bad} bad${pending > 0 ? ` &nbsp;•&nbsp; ⏳ ${pending} pending` : ''}
-              </div>
-              <div class="d-r-time" style="margin-top:2px;font-size:10.5px">🕐 ${time}</div>
-            </div>
-            <span class="d-r-earn ${earned > 0 ? '' : 'zero'}" style="font-size:13px">${earned > 0 ? '+৳' + earned : '৳0'}</span>
-          </a>
-        `;
-      }).join("");
-    });
-  } catch (e) {
-    list.innerHTML = `<div class="d-empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-  }
+const ready = { user: false, tasks: false, subs: false };
+function mark(k) {
+  ready[k] = true;
+  if (ready.user && ready.tasks && ready.subs) window.adqReady && window.adqReady();
 }
-  </script>
+
+$("logoutBtn").onclick = async () => {
+  if (!confirm("লগআউট?")) return;
+  await signOut(auth);
+  location.href = "login.html";
+};
+
+document.querySelectorAll(".x-seg button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".x-seg button").forEach(x => x.classList.toggle("active", x === b));
+    ["pTasks", "pAct"].forEach(id => { $(id).hidden = id !== b.dataset.p; });
+  };
+});
+
+const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) { location.href = "login.html"; return; }
+
+  onSnapshot(doc(db, "users", user.uid), (snap) => {
+    if (snap.exists()) {
+      const u = snap.data();
+      $("username").textContent = u.username || "User";
+      $("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
+      $("balance").textContent = "৳" + (u.balance || 0);
+      $("sGood").textContent = u.totalGood || 0;
+      $("sPend").textContent = u.totalPending || 0;
+      $("dashBadge").innerHTML = u.customBadge
+        ? `<span class="d-vb" title="${esc(u.customBadge)}" style="background:${esc(u.customBadgeColor || "#f59e0b")}">${S.check}</span>` : "";
+    }
+    mark("user");
+  }, () => mark("user"));
+
+  loadNotice();
+  loadTasks();
+  loadActivity(user.uid);
+});
+
+async function loadNotice() {
+  try {
+    const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
+    if (snap.empty) return;
+    const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
+    const bar = $("noticeBar");
+    bar.innerHTML = S.bell + `<span>${esc(n.title)}</span>` + S.chev.replace("<svg", '<svg class="chev"');
+    bar.hidden = false;
+    bar.onclick = () => {
+      $("nsTitle").textContent = n.title || "নোটিশ";
+      const apk = safeUrl(n.apkUrl), link = safeUrl(n.linkUrl);
+      $("nsBody").innerHTML = `<div>${esc(n.message).replace(/\n/g, "<br>")}</div>` +
+        ((apk || link) ? `<div class="acts">${apk ? `<a class="apk" href="${esc(apk)}" target="_blank" rel="noopener noreferrer">Download APK</a>` : ""}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open Link</a>` : ""}</div>` : "");
+      $("noticeSheet").classList.add("show");
+    };
+  } catch (e) {}
+}
+$("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
+$("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
+
+function loadTasks() {
+  const list = $("pTasks");
+  onSnapshot(query(collection(db, "tasks"), where("active", "==", true)), (snap) => {
+    const now = new Date();
+    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(t => { const e = t.endTime?.toDate?.(); return !e || e > now; })
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    $("cntTasks").textContent = tasks.length;
+    if (!tasks.length) {
+      list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো open task নেই</div>`;
+    } else {
+      list.innerHTML = tasks.slice(0, 6).map(taskRow).join("") +
+        `<a class="x-more" href="tasks.html">সব Task দেখুন ${S.chev}</a>`;
+    }
+    mark("tasks");
+  }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
+}
+
+function loadActivity(uid) {
+  const list = $("pAct");
+  onSnapshot(query(collection(db, "submissions"), where("userId", "==", uid)), (snap) => {
+    $("sSubs").textContent = snap.size;
+    if (snap.empty) {
+      list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো submission নেই</div>`;
+      mark("subs");
+      return;
+    }
+    const groups = {};
+    snap.docs.forEach(d => {
+      const s = d.data();
+      if (!s.taskId) return;
+      const g = groups[s.taskId] || (groups[s.taskId] = { title: s.taskTitle || "Task", platform: s.taskPlatform || "Other", good: 0, bad: 0, pending: 0, earned: 0, last: 0 });
+      if (s.status === "good") { g.good++; g.earned += Number(s.price) || 0; }
+      else if (s.status === "bad") g.bad++;
+      else g.pending++;
+      const t = s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || 0;
+      if (t > g.last) g.last = t;
+    });
+    const rows = Object.values(groups).sort((a, b) => b.last - a.last).slice(0, 8);
+    list.innerHTML = rows.map(g => `
+      <a href="task-history.html" class="act-row">
+        ${logo(g.platform)}
+        <div class="x-rb">
+          <div class="x-rt">${esc(g.title)}</div>
+          <div class="act-chips"><span class="g">${g.good} good</span><span class="b">${g.bad} bad</span>${g.pending ? `<span class="p">${g.pending} pending</span>` : ""}</div>
+        </div>
+        <span class="act-earn ${g.earned > 0 ? "" : "zero"}">${g.earned > 0 ? "+৳" + g.earned : "৳0"}</span>
+      </a>`).join("") + `<a class="x-more" href="task-history.html">পুরো History ${S.chev}</a>`;
+    mark("subs");
+  }, () => mark("subs"));
+}
+</script>
 </body>
 </html>
