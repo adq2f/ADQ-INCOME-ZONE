@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -235,80 +235,150 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
       }).join("");
     }
 
-    window.downloadResultXLSX = function(taskId) {
-      if (typeof XLSX === "undefined") return alert("XLSX library load হয়নি!");
-      const group = allTaskGroups.find(g => g.taskId === taskId);
-      if (!group) return alert("Task পাওয়া যায়নি!");
-      const task = taskCache[taskId] || {};
-      const fields = task.fields || [{ key: "uid", label: "UID" }];
-
-      // শুধু ইউজারের নিজের Good এবং Bad অ্যাকাউন্টগুলো ফিল্টার করা হচ্ছে
-      const goodItems = group.items.filter(i => i.status === "good");
-      const badItems = group.items.filter(i => i.status === "bad");
-
-      const goodSheet = goodItems.map((s, idx) => {
-        const row = { "#": idx + 1 };
-        fields.forEach(f => {
-          let v = s[f.key];
-          if ((v === undefined || v === null || v === "") && f.label) {
-            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
-            for (const k of Object.keys(s)) {
-              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
-            }
-          }
-          row[f.label] = (v === undefined || v === null) ? "" : String(v);
-        });
-        row["Earned"] = "৳" + (s.price || 0);
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
-        return row;
-      });
-
-      const badSheet = badItems.map((s, idx) => {
-        const row = { "#": idx + 1 };
-        fields.forEach(f => {
-          let v = s[f.key];
-          if ((v === undefined || v === null || v === "") && f.label) {
-            const altKey = f.label.toLowerCase().replace(/[^a-z0-9]/g, "");
-            for (const k of Object.keys(s)) {
-              if (k.toLowerCase().replace(/[^a-z0-9]/g, "") === altKey) { v = s[k]; break; }
-            }
-          }
-          row[f.label] = (v === undefined || v === null) ? "" : String(v);
-        });
-        row["Earned"] = "৳0";
-        row["Submitted At"] = s.submittedAt?.toDate?.().toLocaleString("en-GB") || "";
-        return row;
-      });
-
-      const wb = XLSX.utils.book_new();
-      const wsGood = XLSX.utils.json_to_sheet(goodSheet.length ? goodSheet : [{ "No Data": "No good accounts" }]);
-      XLSX.utils.book_append_sheet(wb, wsGood, "GOOD Accounts");
-      const wsBad = XLSX.utils.json_to_sheet(badSheet.length ? badSheet : [{ "No Data": "No bad accounts" }]);
-      XLSX.utils.book_append_sheet(wb, wsBad, "BAD Accounts");
-
-      const totalEarned = goodItems.reduce((sum, s) => sum + (s.price || 0), 0);
-      const summary = [
-        { "Summary": "Total Submissions", "Value": group.items.length },
-        { "Summary": "✅ GOOD Accounts", "Value": goodItems.length },
-        { "Summary": "❌ BAD Accounts", "Value": badItems.length },
-        { "Summary": "💰 Total Earned", "Value": "৳" + totalEarned }
-      ];
-      const wsSummary = XLSX.utils.json_to_sheet(summary);
-      XLSX.utils.book_append_sheet(wb, wsSummary, "Summary");
-
-      const now = new Date();
-      const dateStr = now.toISOString().slice(0, 10);
-      XLSX.writeFile(wb, `${group.taskTitle.replace(/\s+/g, "_")}_result_${dateStr}.xlsx`);
+window.downloadResultXLSX = async function(taskId) {
+  if (typeof ExcelJS === "undefined") {
+    return alert("ExcelJS library load হয়নি! ইন্টারনেট চেক করে পেজ রিফ্রেশ দাও।");
+  }
+  
+  const group = allTaskGroups.find(g => g.taskId === taskId);
+  if (!group) return alert("Task পাওয়া যায়নি!");
+  const task = taskCache[taskId] || {};
+  const fields = task.fields || [{ key: "uid", label: "UID" }];
+  
+  const goodItems = group.items.filter(i => i.status === "good");
+  const badItems = group.items.filter(i => i.status === "bad");
+  
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "ADQ Income Zone";
+  wb.created = new Date();
+  
+  // ==========================================
+  // ✅ Helper: একটা sheet build করে (green/red)
+  // ==========================================
+  const buildSheet = (sheetName, items, fillArgb, isGood) => {
+    const sheet = wb.addWorksheet(sheetName);
+    
+    // Header row
+    const headerRow = [
+      "#",
+      ...fields.map(f => f.label || f.key),
+      isGood ? "Earned (৳)" : "Status",
+      "Submitted At"
+    ];
+    sheet.addRow(headerRow);
+    
+    const hr = sheet.getRow(1);
+    hr.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 11 };
+    hr.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: isGood ? "FF10B981" : "FFEF4444" }
     };
-
-    document.querySelectorAll(".tabs2 button").forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll(".tabs2 button").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentFilter = tab.dataset.filter;
-        renderHistory();
-      };
+    hr.alignment = { horizontal: "center", vertical: "middle" };
+    hr.height = 26;
+    
+    // Data rows
+    items.forEach((s, idx) => {
+      const rowData = [idx + 1];
+      
+      fields.forEach(f => {
+        let v = s[f.key];
+        // Fallback: allCells থেকে position দিয়ে চেষ্টা করি
+        if ((v === undefined || v === null || v === "") && Array.isArray(s.allCells)) {
+          const pos = fields.findIndex(ff => ff.key === f.key);
+          if (pos >= 0 && s.allCells[pos]) v = s.allCells[pos];
+        }
+        rowData.push(v === undefined || v === null ? "" : String(v));
+      });
+      
+      rowData.push(isGood ? (Number(s.price) || 0) : "Bad");
+      rowData.push(s.submittedAt?.toDate?.().toLocaleString("en-GB") || "");
+      
+      const row = sheet.addRow(rowData);
+      
+      // ✅ শুধু field columns color হবে (col 2 থেকে col 1+fields.length পর্যন্ত)
+      // # (col 1), Earned/Status (col 1+fields.length+1), Submitted At (শেষ) — এগুলো color হবে না
+      for (let c = 2; c <= 1 + fields.length; c++) {
+        const cell = row.getCell(c);
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: fillArgb }
+        };
+        cell.alignment = { vertical: "middle", horizontal: "left", wrapText: false };
+        cell.font = { size: 11, color: { argb: "FF1F2937" } };
+      }
+      
+      // # column center aligned
+      row.getCell(1).alignment = { horizontal: "center", vertical: "middle" };
     });
+    
+    // Column widths
+    sheet.columns.forEach((col, i) => {
+      if (i === 0) col.width = 6;
+      else if (i <= fields.length) col.width = 24;
+      else col.width = 22;
+    });
+    
+    // Header row freeze
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
+  };
+  
+  // ✅ GOOD sheet — light green cells
+  buildSheet("GOOD Accounts", goodItems, "FFD1FAE5", true);
+  
+  // ✅ BAD sheet — light red cells
+  buildSheet("BAD Accounts", badItems, "FFFEE2E2", false);
+  
+  // ==========================================
+  // Summary sheet
+  // ==========================================
+  const summary = wb.addWorksheet("Summary");
+  const totalEarned = goodItems.reduce((s, x) => s + (Number(x.price) || 0), 0);
+  
+  summary.addRow(["Summary", "Value"]);
+  const shr = summary.getRow(1);
+  shr.font = { bold: true, color: { argb: "FFFFFFFF" }, size: 12 };
+  shr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6366F1" } };
+  shr.height = 26;
+  
+  summary.addRow(["Task", group.taskTitle]);
+  summary.addRow(["Total Submissions", group.items.length]);
+  summary.addRow(["✅ GOOD Accounts", goodItems.length]);
+  summary.addRow(["❌ BAD Accounts", badItems.length]);
+  summary.addRow(["💰 Total Earned", "৳" + totalEarned]);
+  summary.addRow(["Generated", new Date().toLocaleString("en-GB")]);
+  
+  summary.columns.forEach(col => { col.width = 30; });
+  summary.getColumn(1).font = { bold: true };
+  
+  // ==========================================
+  // Download
+  // ==========================================
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = (group.taskTitle || "task").replace(/\s+/g, "_").replace(/[^A-Za-z0-9_-]/g, "");
+  a.download = `${safeName}_result_${new Date().toISOString().slice(0, 10)}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+};
+
+// ✅ Filter tab handlers (এইগুলো আগে হারিয়ে গিয়েছিল)
+document.querySelectorAll(".tabs2 button").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tabs2 button").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentFilter = tab.dataset.filter;
+    renderHistory();
+  };
+});
   </script>
 
 </body>
