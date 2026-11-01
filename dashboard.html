@@ -10,37 +10,32 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
-/* Animations */
-@keyframes slideUpFade{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-@keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+.d-hero{flex:0 0 auto;position:relative;overflow:hidden;border-radius:24px;padding:14px;color:#fff;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 24px 50px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.d-hero::before{content:'';position:absolute;top:-70%;left:-20%;width:90%;height:170%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
+.d-hero>*{position:relative}
 
-/* Premium Badge (Profile Style) */
-.premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700;margin-left:2px}
+/* Name and Badge */
+.d-row1{display:flex;align-items:flex-start;gap:10px}
+.d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif;margin-top:2px}
+.d-wt{flex:1;min-width:0}
+.d-hi{font-size:11px;opacity:.8;font-weight:500;margin-bottom:2px}
+.d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2;color:#fff}
+.d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:inline-block;vertical-align:middle}
+
+/* Exact Profile Premium Badge */
+.premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700}
 .premium-badge::before{content:'✓';color:#fff;font-size:11px;font-weight:900;position:relative;z-index:2;text-shadow:0 2px 4px rgba(180,123,0,.9)}
 .premium-badge::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 80%);transform:rotate(45deg);animation:premiumShine 3s infinite ease-in-out}
 @keyframes premiumPulse{0%{box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1)}100%{box-shadow:0 8px 20px rgba(245,158,11,.8),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1.05)}}
 @keyframes premiumShine{0%{left:-100%}20%{left:100%}100%{left:100%}}
 
-/* Hero Card */
-.d-hero{flex:0 0 auto;position:relative;overflow:hidden;border-radius:24px;padding:14px;color:#fff;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 24px 50px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3);animation:slideUpFade .5s ease both}
-.d-hero::before{content:'';position:absolute;top:-70%;left:-20%;width:90%;height:170%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
-.d-hero>*{position:relative}
-
-/* Top Row */
-.d-row1{display:flex;align-items:flex-start;gap:10px}
-.d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif;margin-top:2px}
-.d-wt{flex:1;min-width:0;display:flex;flex-direction:column}
-.d-hi{font-size:11px;opacity:.8;font-weight:500;margin-bottom:2px}
-.d-name{display:flex;align-items:center;gap:6px;font-size:15.5px;font-weight:700;line-height:1.3;color:#fff}
-.d-name #username{white-space:normal;word-break:break-word;max-width:160px}
-
-/* Green Withdraw Button */
-.d-wd{display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;align-self:center;margin-top:8px;transition:transform .2s}
+/* Green Tall Withdraw Button */
+.d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s}
 .d-wd:active{transform:scale(.95)}
-.d-wd svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5}
+.d-wd svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
 
-/* Balance & Stats */
-.d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}
+/* Balance Area */
+.d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:14px}
 .d-bl{font-size:11px;font-weight:600;opacity:.85}
 .d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
 .d-mini{display:grid;grid-template-columns:repeat(3,auto);gap:6px}
@@ -48,14 +43,19 @@
 .d-mi b{display:block;font:800 14px 'Inter',sans-serif;line-height:1.1}
 .d-mi span{font-size:10px;opacity:.8;font-weight:600}
 
-/* Notice Bar with Marquee */
-.d-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;animation:slideUpFade .6s ease .1s both;overflow:hidden}
+/* Notice Bar */
+.d-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;overflow:hidden}
 .d-notice svg{width:16px;height:16px;flex:0 0 16px}
 .notice-marquee{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;position:relative;height:18px}
-.notice-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeNotice 10s linear infinite}
+.notice-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeNotice 12s linear infinite}
+@keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .d-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
 
-/* Activity Styles */
+/* Timer Layout Fix (Prevents Jumping) */
+.x-tag.time{min-width:72px;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',sans-serif;font-size:11px}
+.x-tag.upcoming{min-width:80px}
+
+/* Activity */
 .act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
 .act-row .x-rb{min-width:0}
 .act-chips{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
@@ -65,10 +65,6 @@
 .act-chips .p{background:rgba(245,158,11,.16);color:#fcd34d}
 .act-earn{font:800 12.5px 'Inter',sans-serif;padding:5px 11px;border-radius:999px;background:rgba(16,185,129,.16);color:#6ee7b7;white-space:nowrap}
 .act-earn.zero{background:rgba(255,255,255,.07);color:#9a9bb8}
-
-/* Segmented Tab Animation */
-.x-seg{animation:slideUpFade .6s ease .15s both}
-.x-scroll{animation:slideUpFade .6s ease .2s both}
 </style>
 </head>
 <body class="x-body">
@@ -88,13 +84,18 @@
       <div class="d-av" id="avatar">U</div>
       <div class="d-wt">
         <div class="d-hi">স্বাগতম</div>
-        <div class="d-name"><span id="username">...</span><span id="dashBadge"></span></div>
+        <div class="d-name">
+          <span id="username">...</span>
+          <span id="dashBadge"></span>
+        </div>
       </div>
+      <!-- Green Tall Withdraw Button -->
       <a href="withdraw.html" class="d-wd" id="wdBtn">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Withdraw
       </a>
     </div>
+    
     <div class="d-bal">
       <div>
         <div class="d-bl">আপনার ব্যালেন্স</div>
@@ -174,7 +175,7 @@ onAuthStateChanged(auth, (user) => {
       $("sGood").textContent = u.totalGood || 0;
       $("sPend").textContent = u.totalPending || 0;
       
-      // Premium Badge Integration
+      // Premium Golden Badge Integration
       $("dashBadge").innerHTML = u.customBadge ? `<span class="premium-badge" title="${esc(u.customBadge)}"></span>` : "";
     }
     mark("user");
@@ -192,10 +193,8 @@ async function loadNotice() {
     const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
     
     const bar = $("noticeBar");
-    // Marquee Notice Text
     bar.innerHTML = S.bell + `<div class="notice-marquee"><span class="notice-text">${esc(n.title)}</span></div>` + S.chev.replace("<svg", '<svg class="chev"');
     
-    // Adjust duration based on text length
     const dur = Math.max(8, n.title.length * 0.2);
     bar.querySelector('.notice-text').style.animationDuration = dur + 's';
     
@@ -212,23 +211,28 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
 $("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
 
-// Custom Timer Format (HH:MM)
-function getFmt(ms) {
+/* ======= LIVE TIMER LOGIC (HH:MM:SS) ======= */
+function getFormattedTime(endMs, startMs) {
+  const now = Date.now();
+  if (startMs && now < startMs) {
+    const diff = startMs - now;
+    return { k: "upcoming", t: "শুরু " + fmt(diff) };
+  }
+  if (endMs && now > endMs) return { k: "closed", t: "শেষ" };
+  if (!endMs) return { k: "open", t: "Open" };
+  return { k: "open", t: fmt(endMs - now) + " বাকি" };
+}
+function fmt(ms) {
   let h = Math.floor(ms / 3600000);
   let m = Math.floor((ms % 3600000) / 60000);
-  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+  let s = Math.floor((ms % 60000) / 1000);
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
-// Custom Task Row using HH:MM
 function customTaskRow(t) {
-  let now = new Date();
-  let s = t.startTime?.toDate ? t.startTime.toDate() : null;
-  let e = t.endTime?.toDate ? t.endTime.toDate() : null;
-  let k = "open", text = "";
-  
-  if (s && now < s) { k = "upcoming"; text = "শুরু " + getFmt(s - now); }
-  else if (e && now > e) { k = "closed"; text = "শেষ"; }
-  else { k = "open"; text = e ? getFmt(e - now) + " বাকি" : "Open"; }
+  let startMs = t.startTime?.toDate?.()?.getTime() || 0;
+  let endMs = t.endTime?.toDate?.()?.getTime() || 0;
+  let st = getFormattedTime(endMs, startMs);
   
   let fields = (t.fields || []).length;
   let refer = Number(t.referCommission) > 0 ? `<span class="x-tag gold">${S.gift}৳${esc(t.referCommission)}</span>` : "";
@@ -239,7 +243,9 @@ function customTaskRow(t) {
       <div class="x-rt">${esc(t.title)}</div>
       <div class="x-rs">
         <span class="x-price">৳${esc(t.pricePerAccount)}</span>
-        <span class="x-tag ${k}"><i></i>${text}</span>
+        <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
+          <i></i><span class="time-text">${st.t}</span>
+        </span>
         <span class="x-tag">${S.layers} ${fields}</span>
         ${refer}
       </div>
@@ -255,7 +261,9 @@ function loadTasks() {
     const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
       .filter(t => { const e = t.endTime?.toDate?.(); return !e || e > now; })
       .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+      
     $("cntTasks").textContent = tasks.length;
+    
     if (!tasks.length) {
       list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো open task নেই</div>`;
     } else {
@@ -265,6 +273,22 @@ function loadTasks() {
     mark("tasks");
   }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
 }
+
+// ✅ LIVE TIMER UPDATE INTERVAL (প্রতি সেকেন্ডে)
+setInterval(() => {
+  document.querySelectorAll('.x-tag.time').forEach(el => {
+    const startMs = Number(el.dataset.start) || 0;
+    const endMs = Number(el.dataset.end) || 0;
+    const st = getFormattedTime(endMs, startMs);
+    
+    // Update Text
+    const textEl = el.querySelector('.time-text');
+    if (textEl) textEl.textContent = st.t;
+    
+    // Update Class (color change)
+    el.className = `x-tag time ${st.k}`;
+  });
+}, 1000);
 
 function loadActivity(uid) {
   const list = $("pAct");
