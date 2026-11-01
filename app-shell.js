@@ -1,9 +1,5 @@
 /* ==================================================
-   app-shell.js — ADQ Income Zone (সব পেজের <head> এ একবার যোগ করুন)
-   ১) Loading screen (সাইট পুরো লোড না হওয়া পর্যন্ত)
-   ২) একটাই নতুন নিচের মেনু (Home বাদ, Submit ঠিকমতো active)
-   ৩) Real SVG icon + compact task row (dashboard/tasks পেজ ব্যবহার করে)
-   ৪) পুরনো পেজগুলোর জন্য compact spacing (scroll কমানো)
+   app-shell.js — ADQ Income Zone 
    ================================================== */
 (function () {
   if (window.__adqShell) return;
@@ -30,6 +26,7 @@
   };
 
   function ic(inner) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">' + inner + '</svg>'; }
+  
   var S = {
     search: ic('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>'),
     bell: ic('<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>'),
@@ -45,7 +42,14 @@
     download: ic('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'),
     inbox: ic('<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'),
     activity: ic('<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'),
-    shield: ic('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>')
+    shield: ic('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'),
+    copy: ic('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'),
+    edit: ic('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'),
+    phone: ic('<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>'),
+    user: ic('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'),
+    eye: ic('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'),
+    eyeOff: ic('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'),
+    home: ic('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>')
   };
 
   function esc(s) {
@@ -103,7 +107,6 @@
     "@keyframes spPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}",
     "@keyframes spBar{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}",
 
-    /* ---- shared dock ---- */
     ".x-dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px;background:rgba(18,18,40,.84);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1);font-family:'Hind Siliguri','Inter',sans-serif}",
     ".x-dock a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 5px;border-radius:17px;color:#6f7090;font-size:10.5px;font-weight:600;transition:.25s;text-decoration:none}",
     ".x-dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}",
@@ -111,7 +114,6 @@
     ".x-dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}",
     ".x-dock a.active svg{transform:translateY(-1px) scale(1.08)}",
 
-    /* ---- new-page layout (x-body pages) ---- */
     "[hidden]{display:none!important}",
     ".x-body{margin:0;font-family:'Hind Siliguri','Inter',system-ui,sans-serif;background:#06060f;color:#f4f4ff;height:100vh;height:100dvh;overflow:hidden;-webkit-tap-highlight-color:transparent}",
     ".x-body *{box-sizing:border-box}.x-body a{text-decoration:none;color:inherit}.x-body button{font-family:inherit}",
@@ -181,7 +183,6 @@
     ".x-sheet-b .acts a{padding:10px 16px;border-radius:12px;font-size:12.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}",
     ".x-sheet-b .acts a.apk{background:linear-gradient(135deg,#10b981,#0d9488)}",
 
-    /* ---- পুরনো পেজগুলোর compact spacing (scroll কমানো) ---- */
     "body:not(.x-body) .page,body:not(.x-body) .p-page{padding-top:12px!important}",
     "body:not(.x-body) .lbh{display:none!important}",
     "body:not(.x-body) .podium{min-height:165px!important;margin:0 0 12px!important}",
@@ -229,9 +230,8 @@
 
   setTimeout(function () { minDone = true; check(); }, firstVisit ? 900 : 120);
   window.addEventListener("load", function () { loaded = true; check(); });
-  setTimeout(hide, 8000); // নিরাপদ fallback
+  setTimeout(hide, 8000); 
 
-  // Firebase auth সিদ্ধান্ত না হওয়া পর্যন্ত অপেক্ষা (login-এ পাঠানোর আগে খালি ব্যালেন্স দেখা যাবে না)
   try {
     Promise.all([
       import("./firebase.js"),
@@ -244,7 +244,7 @@
     }).catch(function () { authDone = true; check(); });
   } catch (e) { authDone = true; }
 
-  /* ---------------- DOCK (Home বাদ) ---------------- */
+  /* ---------------- DOCK ---------------- */
   function buildDock() {
     document.querySelectorAll(".dock,.d-dock,.p-dock,.bottom-nav").forEach(function (e) { e.remove(); });
     if (noDock) return;
