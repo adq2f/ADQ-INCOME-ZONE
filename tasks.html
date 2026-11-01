@@ -14,7 +14,7 @@
 .t-head h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.3px}
 .t-head .cnt{font:800 12px 'Inter',sans-serif;color:#c4b5fd;background:rgba(99,102,241,.22);padding:3px 11px;border-radius:999px}
 
-/* Notice Marquee Fix */
+/* Notice Marquee */
 .t-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;overflow:hidden}
 .t-notice svg{width:16px;height:16px;flex:0 0 16px}
 .notice-marquee{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;position:relative;height:18px}
@@ -24,13 +24,27 @@
 
 .x-scroll{margin-top:10px}
 
-/* Live Timer Fix */
+/* Live Timer */
 .x-rb{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
 .x-rs{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:nowrap;overflow:hidden;width:100%}
 .x-tag.time{width:86px;min-width:86px;flex-shrink:0;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',monospace;font-size:10px;padding:2px 0;white-space:nowrap;overflow:hidden}
 .x-go{flex-shrink:0}
 @keyframes blinkDanger{0%,100%{color:#fca5a5;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);box-shadow:0 0 8px rgba(239,68,68,.2)}50%{color:#ef4444;background:rgba(239,68,68,.35);border-color:rgba(239,68,68,.8);box-shadow:0 0 12px rgba(239,68,68,.6);font-weight:900}}
 .x-tag.time.danger{animation:blinkDanger 1s infinite;border:1px solid #ef4444}
+
+/* Task Wrapper & Toggle */
+.task-wrapper{display:flex;flex-direction:column;margin-bottom:8px}
+.info-toggle-btn{background:rgba(99,102,241,.15);border:1px solid rgba(139,92,246,.4);color:#c4b5fd;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:0.2s}
+.info-toggle-btn:active{transform:scale(0.95);background:rgba(99,102,241,.3)}
+.task-info-panel{display:none;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.09);border-top:none;border-radius:0 0 18px 18px;padding:12px;margin-top:-10px;margin-bottom:4px;animation:slideDown 0.3s ease}
+.task-info-panel.open{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.task-info-panel h4{margin:0 0 6px;font-size:12px;color:#fde68a;display:flex;align-items:center;gap:4px}
+.task-info-panel h4 svg{width:14px;height:14px}
+.task-info-panel p{margin:0 0 10px;font-size:12px;color:#dcdcf2;line-height:1.5;white-space:pre-wrap}
+.ms-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.ms-row{display:flex;justify-content:space-between;background:rgba(255,255,255,.05);padding:6px 10px;border-radius:8px;font-size:11.5px;font-weight:700}
+.ms-row span:last-child{color:#6ee7b7;font-family:'Inter'}
 </style>
 </head>
 <body class="x-body">
@@ -81,7 +95,6 @@ $("nsClose").innerHTML = S.close;
 let allTasks = [], filter = "all";
 const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
 
-/* ===== Custom Timer Logic for HH:MM:SS ===== */
 function getFormattedTime(endMs, startMs) {
   const now = Date.now();
   if (startMs && now < startMs) {
@@ -92,7 +105,7 @@ function getFormattedTime(endMs, startMs) {
   if (!endMs) return { k: "open", t: "Open", isDanger: false };
   
   const diff = endMs - now;
-  const isDanger = diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes blink
+  const isDanger = diff > 0 && diff <= 5 * 60 * 1000;
   return { k: "open", t: fmt(diff), isDanger };
 }
 
@@ -109,24 +122,57 @@ function customTaskRow(t) {
   let st = getFormattedTime(endMs, startMs);
   
   let fields = (t.fields || []).length;
-  let milestone = Number(t.milestoneTarget) > 0 ? `<span class="x-tag gold">${S.gift}${t.milestoneTarget}=৳${t.milestonePrice}</span>` : "";
+  let milestoneTag = (t.milestones && t.milestones.length > 0) ? `<span class="x-tag gold" style="color:#fcd34d;font-size:10px;">🎁 MS</span>` : "";
+  let fieldStr = (t.fields || []).map((f, i) => `${String.fromCharCode(65 + i)}=${f.label}`).join(" | ");
   
-  return `<a class="x-row" href="task.html?id=${esc(t.id)}">
-    ${logo(t.platform)}
-    <div class="x-rb">
-      <div class="x-rt">${esc(t.title)}</div>
-      <div class="x-rs">
-        <span class="x-price">৳${esc(t.pricePerAccount)}</span>
-        <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
-          <i></i><span class="time-text">${st.t}</span>
-        </span>
-        <span class="x-tag">${S.layers} ${fields}</span>
-        ${milestone}
+  let msHtml = "";
+  if (t.milestones && t.milestones.length > 0) {
+    msHtml = `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;">
+      <h4 style="margin-bottom:6px;color:#fbbf24;">🔥 Milestone Rates</h4>
+      <div class="ms-list">
+        ${t.milestones.map(m => `<div class="ms-row"><span>${m.target} Accounts Good</span><span>৳${m.price}/ea</span></div>`).join("")}
       </div>
+    </div>`;
+  }
+
+  return `<div class="task-wrapper">
+    <div style="display:flex; position:relative;">
+      <a class="x-row" href="task.html?id=${esc(t.id)}" style="flex:1; margin-bottom:0; border-radius:18px 18px 0 0; border-bottom:none; padding-right:50px;">
+        ${logo(t.platform)}
+        <div class="x-rb">
+          <div class="x-rt">${esc(t.title)}</div>
+          <div class="x-rs">
+            <span class="x-price">৳${esc(t.pricePerAccount)}</span>
+            <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
+              <i></i><span class="time-text">${st.t}</span>
+            </span>
+            <span class="x-tag">${S.layers} ${fields}</span>
+            ${milestoneTag}
+          </div>
+        </div>
+      </a>
+      <button class="info-toggle-btn" onclick="toggleTaskInfo(event, '${t.id}')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); z-index:2;">
+        ℹ️ Info
+      </button>
     </div>
-    <span class="x-go">${S.chev}</span>
-  </a>`;
+    
+    <div class="task-info-panel" id="info-${t.id}">
+      ${t.rules ? `<h4>📜 Rules</h4><p>${esc(t.rules)}</p>` : ''}
+      <h4>📋 Field Format</h4>
+      <p>${esc(fieldStr)}</p>
+      ${msHtml}
+    </div>
+  </div>`;
 }
+
+window.toggleTaskInfo = function(event, taskId) {
+  event.preventDefault(); 
+  event.stopPropagation();
+  const panel = document.getElementById(`info-${taskId}`);
+  if (panel) {
+    panel.classList.toggle("open");
+  }
+};
 
 function render() {
   const list = $("taskList");
@@ -156,7 +202,7 @@ document.querySelectorAll("#filters button").forEach(b => {
   };
 });
 
-// ✅ LIVE TIMER UPDATE (প্রতি সেকেন্ডে)
+// Live Timer Update
 setInterval(() => {
   document.querySelectorAll('.x-tag.time').forEach(el => {
     const startMs = Number(el.dataset.start) || 0;
@@ -194,8 +240,6 @@ async function loadNotice() {
     if (snap.empty) return;
     const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
     const bar = $("noticeBar");
-    
-    // ✅ FIX: নোটিশের টেক্সট স্ক্রল করার জন্য সঠিক HTML
     bar.innerHTML = S.bell + `<div class="notice-marquee"><span class="notice-text">${esc(n.title)}</span></div>` + S.chev.replace("<svg", '<svg class="chev"');
     
     const dur = Math.max(8, n.title.length * 0.2);
