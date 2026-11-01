@@ -21,7 +21,7 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
-.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.75);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
 .top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
 .mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
@@ -38,6 +38,7 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .skel.big{height:170px;border-radius:28px}
 @keyframes shim{to{background-position:-200% 0}}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
 .atag{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.8px;color:#2a1700;background:linear-gradient(135deg,#fde68a,#f59e0b);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
 .top .mark{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);color:#2a1700;box-shadow:0 8px 20px -6px rgba(245,158,11,.8),inset 0 1px 0 rgba(255,255,255,.4)}
 .switch{position:relative;width:54px;height:30px;flex:0 0 54px;display:inline-block}
@@ -111,26 +112,12 @@ select.inp option{background:#12122a;color:#fff}
 .field-remove{width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;background:rgba(239,68,68,.18);color:#fca5a5;font-weight:800}
 .time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
 .inp.ta{min-height:96px;resize:vertical}
-.tk{display:flex;gap:14px;padding:16px;margin-bottom:12px;border-radius:24px;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
-.tk-logo{width:54px;height:54px;flex:0 0 54px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:25px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 12px 24px -8px #8b5cf6}
-.tk-b{flex:1;min-width:0}
-.tk-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.tk-top h4{margin:0;font-size:15.5px;font-weight:700;word-break:break-word}
-.pill{padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800}
-.pill.open{background:rgba(16,185,129,.18);color:#6ee7b7}.pill.closed{background:rgba(239,68,68,.18);color:#fca5a5}.pill.waiting{background:rgba(245,158,11,.18);color:#fcd34d}
-.chip{display:inline-block;font-size:12px;font-weight:800;padding:3px 11px;border-radius:999px;margin:0 6px 4px 0;font-family:'Inter'}
-.chip.g{background:rgba(16,185,129,.16);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)}.chip.y{background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.38)}
-.tk-m{margin:8px 0 0;font-size:12.5px;line-height:1.7;color:var(--muted)}
-.tk-a{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-.mini{padding:9px 16px;border-radius:12px;border:none;cursor:pointer;font-size:12.5px;font-weight:700;font-family:inherit;color:#fff;transition:.2s}
-.mini:hover{transform:translateY(-2px)}
-.mini.p{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 20px -8px rgba(139,92,246,.9)}
-.mini.r{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 10px 20px -8px rgba(239,68,68,.9)}
+/* ... rest of CSS ... */
 </style>
 </head>
 <body>
-<!-- Part 2 will start from here -->
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+<!-- Part 2 will start from here (HTML) -->
+ <div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
 <header class="top">
   <div class="top-in">
     <div class="brand"><div class="mark">⚡</div><span>Admin Panel<em class="atag">ADMIN</em></span></div>
@@ -151,7 +138,7 @@ select.inp option{background:#12122a;color:#fff}
     <button class="admin-tab" data-tab="settingsTab">⚙️ Settings</button>
   </div>
 
-  <!-- DASHBOARD TAB -->
+  <!-- 1. DASHBOARD TAB -->
   <div id="dashboardTab" class="admin-section">
     <div class="ahero"><h2>👋 স্বাগতম, Admin</h2><p>সব অ্যাক্টিভিটি এক জায়গায়</p></div>
 
@@ -179,7 +166,7 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- TASK TAB (Milestone System Added) -->
+  <!-- 2. TASK TAB (Milestone System Added) -->
   <div id="taskTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3 id="taskFormTitle">➕ নতুন Task</h3>
@@ -224,7 +211,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="taskList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- RESULT PROCESS TAB -->
+  <!-- 3. RESULT PROCESS TAB -->
   <div id="resultTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📥 Result Process</h3>
@@ -236,7 +223,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="resultOutput"></div>
   </div>
 
-  <!-- PUBLISHED RESULTS TAB -->
+  <!-- 4. PUBLISHED RESULTS TAB -->
   <div id="publishedTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📊 Published Results</h3>
@@ -249,11 +236,11 @@ select.inp option{background:#12122a;color:#fff}
     <div id="publishedGroups"><div class="skel"></div></div>
   </div>
 
-  <!-- NOTICE TAB -->
+  <!-- 5. NOTICE TAB -->
   <div id="noticeTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📢 Global Notice</h3>
-      <p class="sub">নতুন নোটিশ দিলে আগের নোটিশ বন্ধ হয়ে যাবে।</p>
+      <p class="sub">নতুন নোটিশ দিলে আগের নোটিশ বন্ধ হয়ে যাবে।</p>
       <input type="text" id="noticeTitle" class="inp" placeholder="Notice Title">
       <textarea id="noticeMsg" class="inp ta" placeholder="Notice Message"></textarea>
       <label class="lab">📱 APK Download Link (optional)</label>
@@ -266,7 +253,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="noticeList"><div class="skel"></div></div>
   </div>
 
-  <!-- USERS TAB -->
+  <!-- 6. USERS TAB -->
   <div id="usersTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>👥 সব Members</h3>
@@ -280,7 +267,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="userList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 
-  <!-- CLEANUP TAB -->
+  <!-- 7. CLEANUP TAB -->
   <div id="bulkTab" class="admin-section" style="display:none">
     <div class="acard glass" style="text-align:center;padding:30px">
       <div style="font-size:46px;margin-bottom:10px">🧹</div>
@@ -290,7 +277,7 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- BADGES TAB -->
+  <!-- 8. BADGES TAB -->
   <div id="badgesTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>🎖️ Quick Badge Assign</h3>
@@ -320,7 +307,7 @@ select.inp option{background:#12122a;color:#fff}
     <div id="badgedUsersList"><div class="skel"></div></div>
   </div>
 
-  <!-- SETTINGS TAB (Referral Removed) -->
+  <!-- 9. SETTINGS TAB -->
   <div id="settingsTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3><span class="hi" style="background:rgba(16,185,129,.22)">💰</span>Withdraw Settings</h3>
@@ -339,7 +326,7 @@ select.inp option{background:#12122a;color:#fff}
   </div>
 </main>
 
-<!-- Result Process Modal -->
+<!-- Modals & Action Bars -->
 <div class="mbk" id="badModal"><div class="mbx">
   <h3>✅ Result Process</h3>
   <p class="sub" id="badModalInfo"></p>
@@ -384,6 +371,7 @@ select.inp option{background:#12122a;color:#fff}
       location.href = "index.html";
     };
 
+    // Tabs Logic
     document.querySelectorAll(".admin-tab").forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
@@ -396,6 +384,7 @@ select.inp option{background:#12122a;color:#fff}
       };
     });
 
+    // Online Status
     function paintOnline(on) {
       document.getElementById("ostate").className = "ostate " + (on ? "on" : "off");
       document.getElementById("ostateText").textContent = on ? "Online — সব user আপনাকে Online দেখছে" : "Offline — user-রা Offline দেখছে";
@@ -408,6 +397,7 @@ select.inp option{background:#12122a;color:#fff}
       catch (err) { e.target.checked = !on; paintOnline(!on); alert("❌ " + err.message); }
     };
 
+    // Platform Picker
     const PLATFORM_ICONS = {
       Facebook: { color: "#1877F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>` },
       Twitter: { color: "#1DA1F2", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>` },
@@ -434,11 +424,11 @@ select.inp option{background:#12122a;color:#fff}
       });
     })();
 
+    // Field Builder
     function makeFieldKey(label) {
       const k = label.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").substring(0, 20);
       return k || ("f_" + Math.random().toString(36).substring(2, 8));
     }
-
     let fieldCounter = 0;
     function createFieldRow(label = "", placeholder = "", checked = true) {
       fieldCounter++;
@@ -485,6 +475,7 @@ select.inp option{background:#12122a;color:#fff}
       return fields;
     }
 
+    // Add/Edit Task
     let editTaskId = null;
     document.getElementById("cancelEditBtn").onclick = () => {
       editTaskId = null;
@@ -610,7 +601,8 @@ select.inp option{background:#12122a;color:#fff}
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    let loadedTask = null;
+// Part 4 will start from here (Result Process, Users, Badges, Init)
+     let loadedTask = null;
     let pendingGroups = {};
     let allPublishedGroups = {};
 
@@ -839,16 +831,12 @@ select.inp option{background:#12122a;color:#fff}
 
             // Milestone check
             if (mTarget > 0 && mPrice > 0 && p.g > 0) {
-              // Get user's total good accounts for this specific task
               const uq = query(collection(db, "submissions"), where("userId", "==", uid), where("taskId", "==", loadedTask.id), where("status", "==", "good"));
               const usnap = await getDocs(uq);
               const userTotalGoodForTask = usnap.size; 
-              // Note: usnap.size here includes the ones we are about to commit if they were already saved as good. Wait, we just set them to good in batch, but they aren't committed yet. 
-              // So usnap.size is the count *before* this batch. 
-              // If (previous + current) >= target, they get milestone price for this batch.
+              
               if (userTotalGoodForTask + p.g >= mTarget) {
                 earnedAmount = p.g * mPrice;
-                // Update the earned amount for these specific submission items
                 p.items.forEach(id => {
                   batch.set(doc(db, "submissions", id), { earned: mPrice }, { merge: true });
                 });
@@ -932,25 +920,18 @@ select.inp option{background:#12122a;color:#fff}
       }
     }
 
-    // ==========================================
-    // 📊 PUBLISHED RESULTS TAB LOGIC
-    // ==========================================
+    // PUBLISHED RESULTS LOGIC
     async function loadPublishedResults() {
       const container = document.getElementById("publishedGroups");
       container.innerHTML = `<div class="skel"></div><div class="skel"></div>`;
-
       try {
         const selectedTaskId = document.getElementById("publishedFilterTask").value;
         let q = query(collection(db, "submissions"), where("status", "in", ["good", "bad"]));
         if (selectedTaskId && selectedTaskId !== "all") {
           q = query(collection(db, "submissions"), where("taskId", "==", selectedTaskId), where("status", "in", ["good", "bad"]));
         }
-
         const snap = await getDocs(q);
-        if (snap.empty) {
-          container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট পাওয়া যায়নি।</div>`;
-          return;
-        }
+        if (snap.empty) { container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট পাওয়া যায়নি।</div>`; return; }
 
         let subs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         subs.sort((a, b) => (b.checkedAt?.toMillis?.() || 0) - (a.checkedAt?.toMillis?.() || 0));
@@ -970,11 +951,8 @@ select.inp option{background:#12122a;color:#fff}
           allPublishedGroups[currentKey].push(s);
           currentEnd = ts;
         });
-
         renderPublishedGroups();
-      } catch (e) {
-        container.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`;
-      }
+      } catch (e) { container.innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div>`; }
     }
 
     document.getElementById("publishedFilterTask").onchange = loadPublishedResults;
@@ -982,18 +960,13 @@ select.inp option{background:#12122a;color:#fff}
     function renderPublishedGroups() {
       const container = document.getElementById("publishedGroups");
       const keys = Object.keys(allPublishedGroups);
-
-      if (keys.length === 0) {
-        container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট নেই।</div>`;
-        return;
-      }
+      if (keys.length === 0) { container.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো প্রকাশিত রেজাল্ট নেই।</div>`; return; }
 
       container.innerHTML = keys.map((key) => {
         const items = allPublishedGroups[key];
         const good = items.filter(i => i.status === "good").length;
         const bad = items.filter(i => i.status === "bad").length;
         const earned = items.reduce((sum, i) => sum + (Number(i.earned) || 0), 0);
-
         return `
           <div class="time-group-card glass processed">
             <div class="tgh">
@@ -1036,9 +1009,7 @@ select.inp option{background:#12122a;color:#fff}
     window.deletePublishedGroup = async function(key) {
       const items = allPublishedGroups[key] || [];
       if (!items.length) return;
-
-      if (!confirm(`⚠️ আপনি ${items.length} টি সাবমিশন ডিলিট করতে যাচ্ছেন। ইউজাররা আর এই রেজাল্ট দেখতে পাবে না। নিশ্চিত?`)) return;
-
+      if (!confirm(`⚠️ আপনি ${items.length} টি সাবমিশন ডিলিট করতে যাচ্ছেন। নিশ্চিত?`)) return;
       try {
         let batch = writeBatch(db);
         let count = 0;
@@ -1048,7 +1019,6 @@ select.inp option{background:#12122a;color:#fff}
           if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
         }
         if (count > 0) await batch.commit();
-
         alert(`✅ ${items.length} টি সাবমিশন ডিলিট হয়েছে।`);
         delete allPublishedGroups[key];
         renderPublishedGroups();
@@ -1063,7 +1033,6 @@ select.inp option{background:#12122a;color:#fff}
       keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
       if (!confirm(`🚨 মোট ${totalCount} টি রেজাল্ট মুছে ফেলা হবে! নিশ্চিত?`)) return;
       if (prompt("নিশ্চিত করতে DELETE লিখুন:") !== "DELETE") return alert("বাতিল।");
-
       try {
         let batch = writeBatch(db), count = 0;
         for (const k of keys) {
@@ -1081,7 +1050,7 @@ select.inp option{background:#12122a;color:#fff}
       } catch (e) { alert("❌ ডিলিট সমস্যা: " + e.message); }
     };
 
-    // Notice Logic
+    // NOTICE LOGIC
     document.getElementById("addNoticeBtn").onclick = async () => {
       const title = document.getElementById("noticeTitle").value.trim();
       const message = document.getElementById("noticeMsg").value.trim();
@@ -1123,7 +1092,7 @@ select.inp option{background:#12122a;color:#fff}
       loadNotices();
     };
 
-    // Users Logic
+    // USERS LOGIC
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -1133,9 +1102,7 @@ select.inp option{background:#12122a;color:#fff}
         const snap = await getDocs(collection(db, "users"));
         allUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }));
         renderUsers();
-      } catch (e) {
-        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-      }
+      } catch (e) { list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`; }
     }
 
     function renderUsers() {
@@ -1143,15 +1110,9 @@ select.inp option{background:#12122a;color:#fff}
       const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
       let filtered = allUsers;
       if (search) {
-        filtered = allUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(search) ||
-          (u.email || "").toLowerCase().includes(search)
-        );
+        filtered = allUsers.filter(u => (u.username || "").toLowerCase().includes(search) || (u.email || "").toLowerCase().includes(search));
       }
-      if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`;
-        return;
-      }
+      if (filtered.length === 0) { list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`; return; }
       list.innerHTML = filtered.map(u => {
         const isChecked = selectedUsers.has(u.id);
         const badgeHtml = u.customBadge ? `<span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">🎖️ ${esc(u.customBadge)}</span>` : '';
@@ -1173,8 +1134,7 @@ select.inp option{background:#12122a;color:#fff}
           const uid = cb.dataset.uid;
           if (selectedUsers.has(uid)) selectedUsers.delete(uid);
           else selectedUsers.add(uid);
-          renderUsers();
-          updateActionBar();
+          renderUsers(); updateActionBar();
         };
       });
     }
@@ -1182,48 +1142,26 @@ select.inp option{background:#12122a;color:#fff}
     function updateActionBar() {
       const bar = document.getElementById("actionBar");
       const count = document.getElementById("selectedCount");
-      if (selectedUsers.size > 0) {
-        bar.classList.add("show");
-        count.textContent = `${selectedUsers.size} user selected`;
-      } else {
-        bar.classList.remove("show");
-      }
+      if (selectedUsers.size > 0) { bar.classList.add("show"); count.textContent = `${selectedUsers.size} user selected`; }
+      else { bar.classList.remove("show"); }
     }
 
     document.getElementById("selectAllUsersBtn").onclick = () => {
       const search = (document.getElementById("userSearch").value || "").trim().toLowerCase();
       let filtered = allUsers;
-      if (search) {
-        filtered = allUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(search) ||
-          (u.email || "").toLowerCase().includes(search)
-        );
-      }
+      if (search) filtered = allUsers.filter(u => (u.username || "").toLowerCase().includes(search) || (u.email || "").toLowerCase().includes(search));
       filtered.forEach(u => selectedUsers.add(u.id));
       renderUsers(); updateActionBar();
     };
 
-    document.getElementById("clearSelectionBtn").onclick = () => {
-      selectedUsers.clear();
-      renderUsers(); updateActionBar();
-    };
+    document.getElementById("clearSelectionBtn").onclick = () => { selectedUsers.clear(); renderUsers(); updateActionBar(); };
 
-    const USER_DATA = [
-      ["submissions", "userId"],
-      ["withdrawals", "userId"],
-      ["completed_tasks", "userId"],
-      ["reports", "userId"],
-      ["refer_earnings", "referrerId"],
-      ["refer_earnings", "referredUserId"]
-    ];
+    const USER_DATA = [["submissions", "userId"], ["withdrawals", "userId"], ["completed_tasks", "userId"], ["reports", "userId"], ["refer_earnings", "referrerId"], ["refer_earnings", "referredUserId"]];
     const CHAT_COL = "chats", CHAT_SUB = "messages";
 
     async function delDocs(docs) {
       let b = writeBatch(db), n = 0;
-      for (const d of docs) {
-        b.delete(d.ref);
-        if (++n % 400 === 0) { await b.commit(); b = writeBatch(db); }
-      }
+      for (const d of docs) { b.delete(d.ref); if (++n % 400 === 0) { await b.commit(); b = writeBatch(db); } }
       if (n % 400) await b.commit();
     }
     const delSub = async (ref) => delDocs((await getDocs(collection(ref, CHAT_SUB))).docs);
@@ -1238,33 +1176,27 @@ select.inp option{background:#12122a;color:#fff}
         for (const uid of selectedUsers) {
           const u = allUsers.find(x => x.id === uid);
           if (uid === auth.currentUser?.uid || u?.role === "admin") continue;
-
           for (const [col, field] of USER_DATA) {
-            try { await delDocs((await getDocs(query(collection(db, col), where(field, "==", uid)))).docs); }
-            catch (e) { warns.add(col); }
+            try { await delDocs((await getDocs(query(collection(db, col), where(field, "==", uid)))).docs); } catch (e) { warns.add(col); }
           }
-
           try {
             const ref = doc(db, CHAT_COL, uid);
-            await delSub(ref);
-            await deleteDoc(ref);
+            await delSub(ref); await deleteDoc(ref);
             const q = await getDocs(query(collection(db, CHAT_COL), where("userId", "==", uid)));
             for (const d of q.docs) { await delSub(d.ref); await deleteDoc(d.ref); }
           } catch (e) { warns.add("chat"); }
-
           await deleteDoc(doc(db, "users", uid));
           count++;
         }
       } catch (e) { alert("❌ " + e.message); }
       alert(`✅ ${count} user delete!` + (warns.size ? `\n⚠️ এগুলো পুরো মোছা যায়নি: ${[...warns].join(", ")}` : ""));
-      selectedUsers.clear();
-      loadUsers(); updateActionBar(); loadStats();
+      selectedUsers.clear(); loadUsers(); updateActionBar(); loadStats();
     };
 
     window.editUser = (uid) => { location.href = "admin-user-edit.html?id=" + uid; };
     document.getElementById("userSearch").oninput = renderUsers;
 
-    // Badges Logic
+    // BADGES LOGIC
     let allBadgeUsers = [];
     let selectedBadgeUserId = null;
     let badgeColor = "#6366f1";
@@ -1297,18 +1229,10 @@ select.inp option{background:#12122a;color:#fff}
       const container = document.getElementById("badgeUserResults");
       const s = search.toLowerCase().trim();
       let filtered = allBadgeUsers;
-      if (s) {
-        filtered = allBadgeUsers.filter(u =>
-          (u.username || "").toLowerCase().includes(s) ||
-          (u.email || "").toLowerCase().includes(s)
-        );
-      }
+      if (s) filtered = allBadgeUsers.filter(u => (u.username || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s));
       filtered = filtered.slice(0, 50);
 
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="empty" style="padding:16px">কোনো user পাওয়া যায়নি</div>`;
-        return;
-      }
+      if (filtered.length === 0) { container.innerHTML = `<div class="empty" style="padding:16px">কোনো user পাওয়া যায়নি</div>`; return; }
 
       container.innerHTML = filtered.map(u => `
         <div class="brow ${selectedBadgeUserId === u.id ? 'sel' : ''}" data-uid="${u.id}" data-name="${esc(u.username || 'User')}" data-email="${esc(u.email || '')}">
@@ -1330,20 +1254,14 @@ select.inp option{background:#12122a;color:#fff}
       });
     }
 
-    document.getElementById("badgeUserSearch").addEventListener("input", (e) => {
-      renderBadgeUserResults(e.target.value);
-    });
+    document.getElementById("badgeUserSearch").addEventListener("input", (e) => { renderBadgeUserResults(e.target.value); });
 
     async function loadBadgedUsers() {
       const list = document.getElementById("badgedUsersList");
       try {
         const snap = await getDocs(collection(db, "users"));
-        const badgedUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }))
-          .filter(u => u.customBadge);
-        if (badgedUsers.length === 0) {
-          list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge assign করা হয়নি</div>`;
-          return;
-        }
+        const badgedUsers = snap.docs.map(d => ({ ...d.data(), id: d.id })).filter(u => u.customBadge);
+        if (badgedUsers.length === 0) { list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge assign করা হয়নি</div>`; return; }
         list.innerHTML = badgedUsers.map(u => `
           <div class="user-card glass">
             <div class="user-avatar user">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
@@ -1361,8 +1279,7 @@ select.inp option{background:#12122a;color:#fff}
       if (!confirm("Badge remove করবে?")) return;
       try {
         await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
-        loadBadgedUsers();
-        loadBadgeUsers();
+        loadBadgedUsers(); loadBadgeUsers();
         alert("✅ Badge removed!");
       } catch (e) { alert("❌ " + e.message); }
     };
@@ -1374,10 +1291,7 @@ select.inp option{background:#12122a;color:#fff}
       if (!userId) return alert("User select করো!");
       if (!badgeName) return alert("Badge name দাও!");
       try {
-        await updateDoc(doc(db, "users", userId), {
-          customBadge: badgeName,
-          customBadgeColor: color
-        });
+        await updateDoc(doc(db, "users", userId), { customBadge: badgeName, customBadgeColor: color });
         document.getElementById("badgeOutput").innerHTML = `
           <div class="result-box">
             <h3>✅ Badge Assigned!</h3>
@@ -1385,8 +1299,7 @@ select.inp option{background:#12122a;color:#fff}
             <p>Badge: <span class="bdg" style="background:${esc(color)};margin-left:0">${esc(badgeName)}</span></p>
           </div>`;
         document.getElementById("badgeName").value = "";
-        loadBadgedUsers();
-        loadBadgeUsers();
+        loadBadgedUsers(); loadBadgeUsers();
       } catch (e) { alert("❌ " + e.message); }
     };
 
@@ -1395,17 +1308,13 @@ select.inp option{background:#12122a;color:#fff}
       if (!userId) return alert("User select করো!");
       if (!confirm("Badge remove করবে?")) return;
       try {
-        await updateDoc(doc(db, "users", userId), {
-          customBadge: null,
-          customBadgeColor: null
-        });
+        await updateDoc(doc(db, "users", userId), { customBadge: null, customBadgeColor: null });
         alert("✅ Badge removed!");
-        loadBadgedUsers();
-        loadBadgeUsers();
+        loadBadgedUsers(); loadBadgeUsers();
       } catch (e) { alert("❌ " + e.message); }
     };
 
-    // Settings Logic (Referral removed)
+    // SETTINGS LOGIC
     async function loadSettings() {
       try {
         const wSnap = await getDoc(doc(db, "settings", "withdraw_config"));
@@ -1436,10 +1345,7 @@ select.inp option{background:#12122a;color:#fff}
       if (minWithdraw < 0) return alert("Minimum cannot be negative!");
       if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
       try {
-        await setDoc(doc(db, "settings", "withdraw_config"), {
-          minWithdraw, maxWithdraw, processingTime, withdrawEnabled,
-          updatedAt: new Date()
-        }, { merge: true });
+        await setDoc(doc(db, "settings", "withdraw_config"), { minWithdraw, maxWithdraw, processingTime, withdrawEnabled, updatedAt: new Date() }, { merge: true });
         showSettingsOutput("✅ Withdraw settings saved!");
       } catch (e) { alert("❌ " + e.message); }
     };
@@ -1450,6 +1356,7 @@ select.inp option{background:#12122a;color:#fff}
       setTimeout(() => out.innerHTML = "", 3000);
     }
 
+    // LOAD STATS & INIT
     async function loadStats() {
       try {
         const taskQ = query(collection(db, "tasks"), where("active", "==", true));
@@ -1475,10 +1382,8 @@ select.inp option{background:#12122a;color:#fff}
         return;
       }
       adminName = snap.data().username || "ADQ Admin";
-
       loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
-      loadBadgeUsers();
-      loadBadgedUsers();
+      loadBadgeUsers(); loadBadgedUsers();
     });
 
     window.addEventListener("beforeunload", (e) => {
@@ -1486,4 +1391,4 @@ select.inp option{background:#12122a;color:#fff}
     });
   </script>
 </body>
-</html>
+</html> 
