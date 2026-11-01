@@ -13,7 +13,7 @@
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
 html,body{background:var(--bg)!important}
-body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
+body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;height:100vh;height:100dvh;overflow:hidden;position:relative}
 a{text-decoration:none;color:inherit}button{font-family:inherit}
 svg{display:block}
 .bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
@@ -25,81 +25,85 @@ svg{display:block}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes shim{to{background-position:-200% 0}}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
-.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 8px) 14px 8px;background:rgba(6,6,15,.7);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
-.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* FIXED LAYOUT */
+.page-wrapper{position:relative;z-index:1;height:100vh;height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
+
+/* HEADER */
+.top{flex:0 0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:rgba(6,6,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
 .mark{width:30px;height:30px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:14px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
 .ibtn{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 36px}
 .ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:12px 14px calc(165px + env(safe-area-inset-bottom,0px))}
+
+/* SCROLLABLE CONTENT */
+.content{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:12px 14px calc(150px + env(safe-area-inset-bottom,0px));scrollbar-width:none}
+.content::-webkit-scrollbar{display:none}
 .glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
 .empty{text-align:center;padding:26px 16px;border-radius:20px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
 .skel{height:76px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
-.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px;background:rgba(18,18,40,.82);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
-.dock a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 5px;border-radius:16px;color:var(--dim);font-size:10px;font-weight:600;transition:.25s}
-.dock a svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.dock a:hover{color:#fff}
-a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,.drop-zone:focus-visible,summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
-/* ===== Compact header ===== */
-.hd{display:flex;align-items:center;gap:12px;padding:12px;border-radius:22px;margin-bottom:10px;background:linear-gradient(135deg,rgba(67,56,202,.55),rgba(124,58,237,.4) 55%,rgba(192,38,211,.3));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px -20px rgba(124,58,237,.9),inset 0 1px 0 rgba(255,255,255,.2)}
+/* TASK HEADER CARD */
+.hd{display:flex;align-items:center;gap:12px;padding:14px;border-radius:22px;margin-bottom:12px;background:linear-gradient(135deg,rgba(67,56,202,.55),rgba(124,58,237,.4) 55%,rgba(192,38,211,.3));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 40px -20px rgba(124,58,237,.9),inset 0 1px 0 rgba(255,255,255,.2);animation:rise .4s cubic-bezier(.2,.8,.2,1) both}
 .hd-logo{width:46px;height:46px;flex:0 0 46px;border-radius:15px;padding:10px;box-shadow:0 10px 22px -8px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.3)}
 .hd-logo svg{width:100%;height:100%}
 .hd-main{flex:1;min-width:0}
 .hd-title{font-size:15px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.hd-sub{display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap}
+.hd-sub{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
 .pr{font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a}
 .pr small{font-family:'Hind Siliguri';font-weight:600;font-size:11px;color:rgba(255,255,255,.75);margin-left:2px}
 .pl{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff}
-.hd-time{flex:0 0 auto;text-align:center;padding:7px 10px;border-radius:14px;min-width:78px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12)}
-.hd-time .t{font-family:'Inter';font-size:15px;font-weight:900;line-height:1.1;color:#6ee7b7;white-space:nowrap}
-.hd-time .l{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:2px}
+
+/* TIMER */
+.hd-time{flex:0 0 auto;text-align:center;padding:8px 12px;border-radius:14px;min-width:85px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12)}
+.hd-time .t{font-family:'Inter';font-size:15px;font-weight:900;line-height:1.1;color:#6ee7b7;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hd-time .l{font-size:10.5px;font-weight:700;color:var(--muted);margin-top:3px}
 .hd-time.upcoming .t{color:#fcd34d}
 .hd-time.closed .t{color:#fca5a5}
-.hd-time.open{border-color:rgba(16,185,129,.4)}
+.hd-time.open{border-color:rgba(16,185,129,.4);box-shadow:0 0 15px rgba(16,185,129,.2)}
 .hd-time.upcoming{border-color:rgba(245,158,11,.45)}
 .hd-time.closed{border-color:rgba(239,68,68,.45)}
 
-/* ===== Rules accordion ===== */
-.acc{border-radius:18px;margin-bottom:10px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.03));border:1px solid rgba(251,191,36,.32)}
-.acc summary{list-style:none;display:flex;align-items:center;gap:9px;padding:11px 13px;cursor:pointer;font-size:13.5px;font-weight:700;color:#fde68a;user-select:none}
+/* RULES ACCORDION */
+.acc{border-radius:18px;margin-bottom:12px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.03));border:1px solid rgba(251,191,36,.32)}
+.acc summary{list-style:none;display:flex;align-items:center;gap:9px;padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:700;color:#fde68a;user-select:none}
 .acc summary::-webkit-details-marker{display:none}
 .acc summary svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 17px}
 .acc summary .sm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acc summary .hint{font-size:11px;font-weight:600;color:rgba(253,230,138,.7);margin-left:auto}
 .acc summary .chev{width:8px;height:8px;border-right:2px solid #fde68a;border-bottom:2px solid #fde68a;transform:rotate(45deg);transition:.25s;flex:0 0 8px;margin:-3px 2px 0 4px}
 .acc[open] summary .chev{transform:rotate(-135deg);margin-top:3px}
-.acc-body{padding:0 13px 12px;font-size:13px;line-height:1.65;color:#fde9a8;word-break:break-word}
+.acc-body{padding:0 14px 14px;font-size:13px;line-height:1.65;color:#fde9a8;word-break:break-word}
 .acc-body .rl{margin-bottom:8px}
 .acc-body ul{margin:0;padding-left:18px;color:#bae6fd}
 .acc-body .tm{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)}
 .acc-body .tm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ===== Tabs ===== */
-.tab-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
+/* TABS */
+.tab-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
 .tab-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 4px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.25s;white-space:nowrap}
 .tab-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 16px}
 .tab-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
 .tab-btn.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.3)}
-@media(max-width:360px){.tab-btn{font-size:11.5px;gap:5px}.tab-btn svg{display:none}}
 .tab-content{display:none}
-.tab-content.active{display:block}
+.tab-content.active{display:block;animation:rise .3s ease both}
 .locked .tab-content{opacity:.45;pointer-events:none;filter:grayscale(.4)}
 
-/* ===== Form card ===== */
-.fc{border-radius:22px;padding:14px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.fc-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;font-size:13px;font-weight:700;color:var(--muted)}
+/* FORM AREA */
+.fc{border-radius:22px;padding:16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);margin-bottom:10px}
+.fc-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--muted)}
 .fc-h b{color:#fff;font-size:14px}
 .fmt{font-size:11px;font-weight:700;color:#c4b5fd;background:rgba(99,102,241,.18);padding:3px 9px;border-radius:999px;max-width:62%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.inp{display:block;width:100%;padding:12px 14px;margin:0 0 8px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:14.5px;font-weight:500;outline:none;transition:.25s}
+.inp{display:block;width:100%;padding:13px 14px;margin:0 0 10px;border-radius:14px;border:1.5px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font-family:inherit;font-size:14.5px;font-weight:500;outline:none;transition:.25s}
 .inp::placeholder{color:#6f7090;font-weight:400}
 .inp:focus{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18)}
-textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;font-size:13px;line-height:1.55;resize:vertical;margin-bottom:6px}
-.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:12px;margin-bottom:6px;font-size:12.5px;font-weight:700;word-break:break-word}
+textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;font-size:13px;line-height:1.55;resize:vertical;margin-bottom:6px}
+.dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:12px;margin-bottom:8px;font-size:12.5px;font-weight:700;word-break:break-word}
 
+/* STATS & CHIPS */
 .statrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:999px;white-space:nowrap}
@@ -108,112 +112,131 @@ textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;f
 .chip.y{background:rgba(245,158,11,.16);color:#fcd34d}
 .chip.n{background:rgba(255,255,255,.07);color:var(--muted)}
 .lnks{display:flex;gap:6px;flex:0 0 auto}
-.lnk{border:1px solid var(--line);background:rgba(255,255,255,.05);color:#c4b5fd;padding:5px 11px;border-radius:10px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.2s}
+.lnk{border:1px solid var(--line);background:rgba(255,255,255,.05);color:#c4b5fd;padding:6px 12px;border-radius:10px;font-size:11.5px;font-weight:700;cursor:pointer;transition:.2s}
 .lnk:hover{background:rgba(255,255,255,.1);color:#fff}
 .lnk.red{color:#fca5a5}
-.bprev{display:none;max-height:150px;overflow-y:auto;padding:8px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.55;margin-top:8px}
+
+/* PREVIEW */
+.bprev{display:none;max-height:150px;overflow-y:auto;padding:10px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid var(--line);font-family:'Courier New',monospace;font-size:11.5px;line-height:1.55;margin-top:10px}
 .bprev.open{display:block}
-.bprev .row{padding:4px 8px;border-radius:8px;margin-bottom:3px;word-break:break-all}
+.bprev .row{padding:5px 9px;border-radius:8px;margin-bottom:3px;word-break:break-all}
 .bprev .row.ok{background:rgba(16,185,129,.14);color:#6ee7b7}
 .bprev .row.duplicate{background:rgba(239,68,68,.14);color:#fca5a5}
 .bprev .row.warn{background:rgba(245,158,11,.14);color:#fcd34d}
 .bprev .row.more{background:rgba(255,255,255,.06);color:var(--muted);text-align:center}
-.prog{display:none;padding:10px 12px;border-radius:14px;margin-top:8px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+
+/* PROGRESS BAR */
+.prog{display:none;padding:12px;border-radius:14px;margin-top:10px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
 .prog.show{display:block}
 .prog .t{font-size:13px;font-weight:700;color:#c4b5fd}
 .pbar{height:8px;border-radius:8px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}
 .pfill{height:100%;width:0;border-radius:8px;background:linear-gradient(90deg,#6366f1,#22d3ee);transition:width .3s}
-.hidden-btn{display:none!important}
 
-/* ===== File drop ===== */
-.drop-zone{display:flex;align-items:center;gap:12px;border:2px dashed rgba(139,92,246,.5);border-radius:16px;padding:14px;text-align:left;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:8px}
+/* FILE DROP */
+.drop-zone{display:flex;align-items:center;gap:12px;border:2px dashed rgba(139,92,246,.5);border-radius:16px;padding:14px;text-align:left;transition:.3s;cursor:pointer;background:rgba(139,92,246,.06);margin-bottom:10px}
 .drop-zone:hover,.drop-zone.dragover{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.15)}
 .drop-zone .dz-ic{width:44px;height:44px;flex:0 0 44px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
 .drop-zone .dz-ic svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .drop-zone h4{margin:0 0 2px;font-size:14px;font-weight:700;color:#fff}
 .drop-zone p{margin:0;font-size:11.5px;color:var(--muted);line-height:1.5}
 .drop-zone input[type="file"]{display:none}
-.file-info{display:none;white-space:pre-line;padding:9px 12px;border-radius:12px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:8px;font-size:12.5px;line-height:1.55;color:#6ee7b7;font-weight:600;word-break:break-word}
+.file-info{display:none;white-space:pre-line;padding:10px 12px;border-radius:12px;background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.4);margin-bottom:10px;font-size:12.5px;line-height:1.55;color:#6ee7b7;font-weight:600;word-break:break-word}
 .file-info.show{display:block}
 
-/* ===== Sticky action bar (always visible) ===== */
-.sbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 74px);width:calc(100% - 24px);max-width:496px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px 9px 16px;background:rgba(18,18,42,.94);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1.5px solid rgba(139,92,246,.6);border-radius:20px;box-shadow:0 20px 50px -10px rgba(0,0,0,.85),0 0 25px rgba(139,92,246,.3);z-index:58}
+/* FIXED SUBMIT BAR */
+.sbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 82px);width:calc(100% - 24px);max-width:496px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 10px 18px;background:rgba(18,18,42,.94);backdrop-filter:blur(24px) saturate(170%);border:1.5px solid rgba(139,92,246,.6);border-radius:20px;box-shadow:0 20px 50px -10px rgba(0,0,0,.85),0 0 25px rgba(139,92,246,.3);z-index:58}
 .sb-info{font-size:12.5px;font-weight:700;color:var(--muted);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sb-info b{font-family:'Inter';font-size:15px;color:#fff;margin:0 3px}
-.sb-btn{display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:14px;border:none;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#0d9488);cursor:pointer;box-shadow:0 10px 24px -8px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3);transition:.2s;white-space:nowrap}
+.sb-btn{display:flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;border:none;font-size:14.5px;font-weight:800;color:#fff;background:linear-gradient(135deg,#10b981,#0d9488);cursor:pointer;box-shadow:0 10px 24px -8px rgba(16,185,129,.9),inset 0 1px 0 rgba(255,255,255,.3);transition:.2s;white-space:nowrap}
 .sb-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .sb-btn:hover:not(:disabled){transform:translateY(-2px)}
 .sb-btn:disabled{background:rgba(255,255,255,.1);color:var(--dim);box-shadow:none;cursor:not-allowed}
 
-.closed-box{border-radius:20px;padding:16px;text-align:center;border:1.5px dashed rgba(239,68,68,.5);background:rgba(239,68,68,.08);margin-top:10px}
-.closed-box h3{margin:0 0 3px;font-size:16px;color:#fca5a5}
+.closed-box{border-radius:20px;padding:18px;text-align:center;border:1.5px dashed rgba(239,68,68,.5);background:rgba(239,68,68,.08);margin-top:10px}
+.closed-box h3{margin:0 0 4px;font-size:16px;color:#fca5a5}
 .closed-box p{margin:0;font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
-<header class="top"><div class="top-in"><button class="ibtn" onclick="history.back()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Submit Task</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
 
-<main class="page">
-  <div id="taskInfo"><div class="skel"></div></div>
-  <div id="rulesWrap"></div>
-
-  <div id="submitSections" class="locked">
-    <div class="tab-bar" role="tablist">
-      <button type="button" class="tab-btn active" data-tab="single" role="tab" aria-selected="true">
-        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Single Submit</span>
+<div class="page-wrapper">
+  <!-- Header -->
+  <header class="top">
+    <div class="top-in">
+      <button class="ibtn" onclick="history.back()" aria-label="Back">
+        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <button type="button" class="tab-btn" data-tab="file" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>File Submit</span>
+      <div class="brand"><div class="mark">A</div><span>Submit Task</span></div>
+      <button class="ibtn danger" id="logoutBtn" aria-label="Logout">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </button>
     </div>
+  </header>
 
-    <!-- Single -->
-    <div id="tab-single" class="tab-content active">
-      <div class="fc glass">
-        <div class="fc-h"><b>Single Submit</b><span class="fmt" id="singleFmt"></span></div>
-        <div id="dynamicFields"></div>
-        <div class="dup" id="singleDupWarning">Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
-        <button class="hidden-btn" id="singleSubmitBtn">Submit</button>
+  <!-- Scrollable Content -->
+  <main class="content">
+    <div id="taskInfo"><div class="skel"></div></div>
+    <div id="rulesWrap"></div>
+
+    <div id="submitSections" class="locked">
+      <div class="tab-bar" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="single" role="tab" aria-selected="true">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Single Submit</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="file" role="tab" aria-selected="false">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>File Submit</span>
+        </button>
       </div>
-    </div>
 
-    <!-- File -->
-    <div id="tab-file" class="tab-content">
-      <div class="fc glass">
-        <div class="fc-h"><b>File Submit</b><span class="fmt" id="fileFormatHint">—</span></div>
-        <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
-          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt,.tsv">
-          <div class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-          <div><h4>ফাইল সিলেক্ট বা ড্রপ করুন</h4><p>.xlsx .xls .csv .txt .tsv — ফাইল যেমন আছে তেমনই: প্রতি রো = ১ অ্যাকাউন্ট, প্রতি কলাম = ১ ফিল্ড</p></div>
+      <!-- Single Submit -->
+      <div id="tab-single" class="tab-content active">
+        <div class="fc glass">
+          <div class="fc-h"><b>Single Submit</b><span class="fmt" id="singleFmt"></span></div>
+          <div id="dynamicFields"></div>
+          <div class="dup" id="singleDupWarning">Duplicate Detect হয়েছে! <span id="singleDupMsg"></span></div>
+          <button class="hidden-btn" id="singleSubmitBtn" style="display:none;">Submit</button>
         </div>
-        <div class="file-info" id="fileInfo"></div>
-        <div class="statrow">
-          <div class="chips" id="fileChips"></div>
-          <div class="lnks">
-            <button type="button" class="lnk" id="togglePrevFile">বিস্তারিত</button>
-            <button type="button" class="lnk red" id="clearFileBtn">মুছুন</button>
+      </div>
+
+      <!-- File Submit -->
+      <div id="tab-file" class="tab-content">
+        <div class="fc glass">
+          <div class="fc-h"><b>File Submit</b><span class="fmt" id="fileFormatHint">—</span></div>
+          <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
+            <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt,.tsv">
+            <div class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div><h4>ফাইল সিলেক্ট বা ড্রপ করুন</h4><p>.xlsx .xls .csv .txt .tsv — প্রতি রো = ১ অ্যাকাউন্ট</p></div>
           </div>
+          <div class="file-info" id="fileInfo"></div>
+          <div class="statrow">
+            <div class="chips" id="fileChips"></div>
+            <div class="lnks">
+              <button type="button" class="lnk" id="togglePrevFile">বিস্তারিত</button>
+              <button type="button" class="lnk red" id="clearFileBtn">মুছুন</button>
+            </div>
+          </div>
+          <div class="bprev" id="filePreview"></div>
+          <div class="prog" id="fileSubmitProgress">
+            <div class="t" id="fspText">Submitting 0/0...</div>
+            <div class="pbar"><div class="pfill" id="fspFill"></div></div>
+          </div>
+          <button class="hidden-btn" id="fileSubmitBtn" style="display:none;" disabled>Submit</button>
         </div>
-        <div class="bprev" id="filePreview"></div>
-        <div class="prog" id="fileSubmitProgress">
-          <div class="t" id="fspText">Submitting 0/0...</div>
-          <div class="pbar"><div class="pfill" id="fspFill"></div></div>
-        </div>
-        <button class="hidden-btn" id="fileSubmitBtn" disabled>Submit</button>
       </div>
     </div>
-  </div>
-</main>
-
-<!-- Always-visible action bar: scroll ছাড়াই submit -->
-<div class="sbar" id="sbar">
-  <div class="sb-info" id="sbInfo">—</div>
-  <button class="sb-btn" id="sbBtn" disabled><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Submit</span></button>
+  </main>
 </div>
 
-<nav class="dock"><a href="dashboard.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
+<!-- Sticky Action Bar -->
+<div class="sbar" id="sbar">
+  <div class="sb-info" id="sbInfo">—</div>
+  <button class="sb-btn" id="sbBtn" disabled>
+    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Submit</span>
+  </button>
+</div>
 
+<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -237,7 +260,6 @@ const PLATFORM_ICONS = {
 };
 const ICON_BOOK = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
 const ICON_CLOCK = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-const ICON_CHECK = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`;
 
 const DEFAULT_FIELDS = [
   { key: "uid", label: "UID" },
@@ -266,7 +288,7 @@ $("logoutBtn").onclick = async () => {
   location.href = "index.html";
 };
 
-/* ============ Tabs + always-visible action bar ============ */
+/* ============ Tabs ============ */
 function showTab(name) {
   activeTab = name;
   document.querySelectorAll(".tab-btn").forEach(b => {
@@ -358,7 +380,6 @@ onAuthStateChanged(auth, async (user) => {
     el.addEventListener("input", () => { clearTimeout(singleTimer); singleTimer = setTimeout(checkSingleDup, 350); });
   });
 
-
   $("fileFormatHint").textContent = labels.map((l, i) => `${colName(i)}=${l}`).join(" | ");
 
   startCountdown();
@@ -404,7 +425,7 @@ function dupText(r) {
     : `রো ${r.dupOf}-এর সাথে পুরো একই`;
 }
 
-/* ============ Compact countdown (header chip) ============ */
+/* ============ LIVE TIMER LOGIC ============ */
 function startCountdown() {
   updateCountdown();
   if (countdownInterval) clearInterval(countdownInterval);
@@ -418,7 +439,7 @@ function fmtMs(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   const p = n => String(n).padStart(2, "0");
-  if (d > 0) return `${d}d ${p(h)}h`;
+  if (d > 0) return `${d}d ${p(h)}:${p(m)}:${p(s)}`;
   return `${p(h)}:${p(m)}:${p(s)}`;
 }
 
@@ -455,14 +476,15 @@ function updateCountdown() {
       o.id = "closedOverlay";
       o.className = "closed-box";
       o.innerHTML = `<h3>Submission Closed</h3><p>সময় শেষ। পরের Task-এর জন্য অপেক্ষা করুন।</p>`;
-      document.querySelector(".page").appendChild(o);
+      document.querySelector(".content").appendChild(o);
     }
     return;
   }
 
   isOpen = true;
   const diff = taskEndTime - now;
-  setTime(diff < 5 * 60 * 1000 ? "upcoming" : "open", fmtMs(diff), diff < 5 * 60 * 1000 ? "প্রায় শেষ!" : "বাকি");
+  const isDanger = diff <= 5 * 60 * 1000;
+  setTime(isDanger ? "closed" : "open", fmtMs(diff), isDanger ? "প্রায় শেষ!" : "বাকি");
   sections.classList.remove("locked");
   const o = $("closedOverlay");
   if (o) o.remove();
@@ -938,4 +960,4 @@ window.addEventListener("beforeunload", (e) => {
 });
 </script>
 </body>
-</html>
+</html>  
