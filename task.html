@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="app-shell.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
@@ -78,7 +79,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,
 .acc-body .tm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ===== Tabs ===== */
-.tab-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
+.tab-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
 .tab-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 4px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.25s;white-space:nowrap}
 .tab-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 16px}
 .tab-btn:hover{color:#fff;background:rgba(255,255,255,.06)}
@@ -160,13 +161,10 @@ textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;f
   <div id="submitSections" class="locked">
     <div class="tab-bar" role="tablist">
       <button type="button" class="tab-btn active" data-tab="single" role="tab" aria-selected="true">
-        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Single</span>
-      </button>
-      <button type="button" class="tab-btn" data-tab="bulk" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg><span>All Paste</span>
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><span>Single Submit</span>
       </button>
       <button type="button" class="tab-btn" data-tab="file" role="tab" aria-selected="false">
-        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>File</span>
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>File Submit</span>
       </button>
     </div>
 
@@ -180,27 +178,6 @@ textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;f
       </div>
     </div>
 
-    <!-- Bulk -->
-    <div id="tab-bulk" class="tab-content">
-      <div class="fc glass">
-        <div class="fc-h"><b>All Paste</b><span class="fmt" id="bulkFormatHint">UID | Password | 2FA</span></div>
-        <textarea id="bulkInput" class="inp" placeholder="এখানে সব অ্যাকাউন্ট paste করুন (প্রতি লাইনে ১টি)"></textarea>
-        <div class="statrow">
-          <div class="chips" id="bulkChips"><span class="chip n">Paste করলে এখানে দেখাবে</span></div>
-          <div class="lnks">
-            <button type="button" class="lnk" id="togglePrevBulk">বিস্তারিত</button>
-            <button type="button" class="lnk red" id="clearBulkBtn">মুছুন</button>
-          </div>
-        </div>
-        <div class="bprev" id="bulkPreview"></div>
-        <div class="prog" id="submitProgress">
-          <div class="t" id="spText">Submitting 0/0...</div>
-          <div class="pbar"><div class="pfill" id="spFill"></div></div>
-        </div>
-        <button class="hidden-btn" id="bulkSubmitBtn">Submit</button>
-      </div>
-    </div>
-
     <!-- File -->
     <div id="tab-file" class="tab-content">
       <div class="fc glass">
@@ -208,7 +185,7 @@ textarea.inp{height:132px;min-height:100px;font-family:'Courier New',monospace;f
         <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
           <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.txt,.tsv">
           <div class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-          <div><h4>ফাইল সিলেক্ট বা ড্রপ করুন</h4><p>.xlsx .xls .csv .txt .tsv — প্রতি রো = ১টি অ্যাকাউন্ট</p></div>
+          <div><h4>ফাইল সিলেক্ট বা ড্রপ করুন</h4><p>.xlsx .xls .csv .txt .tsv — ফাইল যেমন আছে তেমনই: প্রতি রো = ১ অ্যাকাউন্ট, প্রতি কলাম = ১ ফিল্ড</p></div>
         </div>
         <div class="file-info" id="fileInfo"></div>
         <div class="statrow">
@@ -242,6 +219,7 @@ import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc, collection, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+window.adqHold = true;
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const taskId = params.get("id");
@@ -273,7 +251,7 @@ let task = null, currentUser = null, isOpen = false, busy = false;
 let countdownInterval = null, taskStartTime = null, taskEndTime = null;
 let existingValues = new Set();
 let fileRows = [], fileMeta = null;
-let activeTab = "single", bulkUnique = 0, fileUnique = 0;
+let activeTab = "single", fileUnique = 0;
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -305,14 +283,12 @@ function syncBar() {
   const info = $("sbInfo"), btn = $("sbBtn");
   let n = 1;
   if (activeTab === "single") info.innerHTML = `সিঙ্গেল সাবমিট`;
-  else if (activeTab === "bulk") { n = bulkUnique; info.innerHTML = `Ready<b>${n}</b>টি অ্যাকাউন্ট`; }
   else { n = fileUnique; info.innerHTML = `Ready<b>${n}</b>টি অ্যাকাউন্ট`; }
   btn.disabled = busy || !isOpen || n === 0;
   btn.querySelector("span").textContent = busy ? "অপেক্ষা করুন..." : (isOpen || !task ? "Submit" : "বন্ধ");
 }
 $("sbBtn").onclick = () => {
   if (activeTab === "single") $("singleSubmitBtn").click();
-  else if (activeTab === "bulk") triggerBulkSubmit();
   else $("fileSubmitBtn").click();
 };
 setInterval(syncBar, 400);
@@ -320,14 +296,15 @@ setInterval(syncBar, 400);
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = "login.html"; return; }
   currentUser = user;
-  if (!taskId) { $("taskInfo").innerHTML = `<div class="empty">Task ID নেই</div>`; return; }
+  if (!taskId) { $("taskInfo").innerHTML = `<div class="empty">Task ID নেই</div>`; window.adqReady && window.adqReady(); return; }
 
   try {
     const snap = await getDoc(doc(db, "tasks", taskId));
-    if (!snap.exists()) { $("taskInfo").innerHTML = `<div class="empty">Task পাওয়া যায়নি</div>`; return; }
+    if (!snap.exists()) { $("taskInfo").innerHTML = `<div class="empty">Task পাওয়া যায়নি</div>`; window.adqReady && window.adqReady(); return; }
     task = snap.data();
   } catch (e) {
     $("taskInfo").innerHTML = `<div class="empty">Task load হয়নি: ${esc(e.message)}</div>`;
+    window.adqReady && window.adqReady(); 
     return;
   }
 
@@ -381,19 +358,12 @@ onAuthStateChanged(auth, async (user) => {
     el.addEventListener("input", () => { clearTimeout(singleTimer); singleTimer = setTimeout(checkSingleDup, 350); });
   });
 
-  $("bulkFormatHint").textContent = labels.join(" | ");
-  $("bulkInput").placeholder = labels.join("\t");
-
-  let bulkDebounce = null;
-  $("bulkInput").addEventListener("input", () => {
-    clearTimeout(bulkDebounce);
-    bulkDebounce = setTimeout(updateBulkCount, 400);
-  });
 
   $("fileFormatHint").textContent = labels.map((l, i) => `${colName(i)}=${l}`).join(" | ");
 
   startCountdown();
   syncBar();
+  window.adqReady && window.adqReady();
 });
 
 function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1); }
@@ -627,7 +597,6 @@ function renderPreview(el, analyzed, incomplete) {
   el.innerHTML = html;
 }
 
-$("togglePrevBulk").onclick = () => $("bulkPreview").classList.toggle("open");
 $("togglePrevFile").onclick = () => $("filePreview").classList.toggle("open");
 
 function buildPayload(r, source) {
@@ -793,56 +762,6 @@ $("singleSubmitBtn").onclick = async () => {
     syncBar();
   }
 };
-
-/* ============ Bulk ============ */
-function parseBulk(text) {
-  const rows = [], incomplete = [];
-  if (!task) return { rows, incomplete };
-  const lines = text.replace(/^\uFEFF/, "").split(/\r\n|\r|\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    if (rows.length + incomplete.length >= MAX_ROWS) break;
-    const r = buildRow(splitLine(line, getFields().length), i + 1);
-    if (r.ok) rows.push(r.row);
-    else incomplete.push({ label: String(i + 1), reason: r.reason });
-  }
-  return { rows, incomplete };
-}
-
-function updateBulkCount() {
-  const { rows, incomplete } = parseBulk($("bulkInput").value);
-  const analyzed = analyze(rows);
-  bulkUnique = analyzed.filter(r => r.status === "ok").length;
-  if (!analyzed.length && !incomplete.length) {
-    $("bulkChips").innerHTML = `<span class="chip n">Paste করলে এখানে দেখাবে</span>`;
-  } else {
-    renderChips($("bulkChips"), analyzed, incomplete);
-  }
-  renderPreview($("bulkPreview"), analyzed, incomplete);
-  syncBar();
-}
-
-function resetBulk() {
-  $("bulkInput").value = "";
-  bulkUnique = 0;
-  $("bulkChips").innerHTML = `<span class="chip n">Paste করলে এখানে দেখাবে</span>`;
-  $("bulkPreview").classList.remove("open");
-  $("bulkPreview").innerHTML = "";
-  syncBar();
-}
-
-$("bulkSubmitBtn").onclick = triggerBulkSubmit;
-
-function triggerBulkSubmit() {
-  const { rows } = parseBulk($("bulkInput").value);
-  if (!rows.length) return alert("কোনো সম্পূর্ণ account detect হয়নি!");
-  runSubmit(rows, "bulk", {
-    btn: $("bulkSubmitBtn"), prog: $("submitProgress"), text: $("spText"), fill: $("spFill"),
-    refresh: updateBulkCount, reset: resetBulk, idle: syncBar
-  });
-}
-$("clearBulkBtn").onclick = resetBulk;
 
 /* ============ File ============ */
 const dropZone = $("dropZone");
