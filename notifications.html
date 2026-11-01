@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="app-shell.js"></script>
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -20,71 +21,117 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
-.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
+
+/* Top Bar */
+.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.75);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
 .top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
 .mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
-.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
+.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px;position:relative}
 .ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
 .ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
-.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
+
+/* Badge on bell */
+.bell-badge{position:absolute;top:-5px;right:-5px;min-width:20px;height:20px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:10.5px;font-weight:800;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 6px;border:2px solid #06060f;box-shadow:0 4px 10px rgba(239,68,68,.6);font-family:'Inter'}
+.bell-badge.show{display:flex;animation:badgePop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes badgePop{0%{transform:scale(0)}100%{transform:scale(1)}}
+
+/* Page */
+.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:16px 16px calc(130px + env(safe-area-inset-bottom,0px))}
+.sec{margin:22px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
 .glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
 .empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
 .empty .em{font-size:30px;margin-bottom:6px}
 .skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
-.skel.big{height:170px;border-radius:28px}
 @keyframes shim{to{background-position:-200% 0}}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
-.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
-.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
-.dock a:hover{color:#fff}
-.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
-.dock a.active svg{transform:translateY(-1px) scale(1.08)}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
 
+/* NOTICE MARQUEE BAR */
+.notice-marquee-bar{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border-radius:14px;border:1px solid rgba(251,191,36,.4);background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(245,158,11,.05));color:#fde68a;font-size:12.5px;font-weight:600;margin-bottom:16px;overflow:hidden;animation:rise .5s ease both}
+.notice-marquee-bar svg{width:16px;height:16px;flex:0 0 16px;color:#fbbf24}
+.marquee-wrap{flex:1;min-width:0;overflow:hidden;position:relative;height:18px;display:flex;align-items:center}
+.marquee-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeMove 12s linear infinite}
+@keyframes marqueeMove{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
+/* Page Header with count */
 .nh{margin-bottom:16px}
-.nh h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.3px}
+.nh h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.nh h2 .new-count{font-size:13px;font-weight:800;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:3px 10px;border-radius:999px;display:none;font-family:'Inter'}
+.nh h2 .new-count.show{display:inline-block;animation:badgePop .4s cubic-bezier(.34,1.56,.64,1)}
 .nh p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+
+/* Tabs */
 .tabs2{display:flex;gap:8px;overflow-x:auto;margin-bottom:16px;padding-bottom:4px}
 .tabs2::-webkit-scrollbar{display:none}
 .tabs2 button{padding:10px 18px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.25s}
 .tabs2 button:hover{color:#fff}
 .tabs2 button.active{color:#fff;border-color:transparent;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+
+/* Notification items */
 .day{margin:20px 4px 10px;font-size:12.5px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:flex;align-items:center;gap:10px}
 .day::after{content:'';flex:1;height:1px;background:var(--line)}
 .ni{position:relative;display:flex;gap:14px;align-items:flex-start;padding:15px;margin-bottom:10px;border-radius:22px;border-left:4px solid var(--a);animation:rise .5s cubic-bezier(.2,.8,.2,1) both;transition:.25s}
 .ni:hover{transform:translateY(-2px);box-shadow:0 18px 40px -22px var(--a)}
 .ni-ic{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:22px;background:color-mix(in srgb,var(--a) 22%,transparent)}
 .ni-body{flex:1;min-width:0}
-.ni-t{font-size:15px;font-weight:700;margin-bottom:4px;word-break:break-word}
+.ni-t{font-size:15px;font-weight:700;margin-bottom:4px;word-break:break-word;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ni-t .new-tag{font-size:9.5px;font-weight:800;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;padding:2px 7px;border-radius:6px;letter-spacing:.5px;animation:badgePop .4s}
 .ni-m{font-size:13px;color:#cfd0e6;line-height:1.55;font-weight:500;word-break:break-word}
 .ni-time{font-size:11.5px;color:var(--muted);margin-top:8px;font-weight:600}
-.ni.notice{--a:#f59e0b}.ni.task{--a:#6366f1}.ni.good{--a:#10b981}.ni.bad{--a:#ef4444}
+.ni.notice{--a:#f59e0b}.ni.task{--a:#6366f1}.ni.good{--a:#10b981}.ni.bad{--a:#ef4444}.ni.withdraw{--a:#8b5cf6}
 .ni.notice{background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(255,255,255,.025) 50%)}
+.ni.task{background:linear-gradient(90deg,rgba(99,102,241,.1),rgba(255,255,255,.025) 50%)}
 .ni.good{background:linear-gradient(90deg,rgba(16,185,129,.1),rgba(255,255,255,.025) 50%)}
 .ni.bad{background:linear-gradient(90deg,rgba(239,68,68,.1),rgba(255,255,255,.025) 50%)}
+.ni.withdraw{background:linear-gradient(90deg,rgba(139,92,246,.1),rgba(255,255,255,.025) 50%)}
+.ni.unread{border-width:4px;box-shadow:0 12px 30px -18px var(--a)}
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>নোটিফিকেশন</span></div><div style="display:flex;gap:8px"><button class="ibtn" id="soundToggle" onclick="toggleSound()" aria-label="Sound" style="font-size:17px">🔔</button><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></div></header>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+
+<header class="top">
+  <div class="top-in">
+    <button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="brand"><div class="mark">A</div><span>নোটিফিকেশন</span></div>
+    <div style="display:flex;gap:8px">
+      <button class="ibtn" id="bellBtnTop" aria-label="Notifications">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="bell-badge" id="bellBadgeTop">0</span>
+      </button>
+      <button class="ibtn" id="soundToggle" onclick="toggleSound()" aria-label="Sound" style="font-size:17px">🔔</button>
+    </div>
+  </div>
+</header>
+
 <main class="page">
-  <div class="nh"><h2>🔔 নোটিফিকেশন</h2><p>নোটিশ, নতুন টাস্ক ও আপনার রেজাল্ট</p></div>
+  <!-- Notice Marquee Bar -->
+  <div class="notice-marquee-bar" id="noticeBar" style="display:none">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <div class="marquee-wrap">
+      <span class="marquee-text" id="noticeText">Loading...</span>
+    </div>
+  </div>
+
+  <div class="nh">
+    <h2>🔔 নোটিফিকেশন <span class="new-count" id="headerNewCount">0 New</span></h2>
+    <p>নোটিশ, নতুন টাস্ক, রেজাল্ট ও উইথড্র আপডেট</p>
+  </div>
+
   <div class="tabs2">
     <button class="active" data-f="all">সব</button>
     <button data-f="notice">📢 নোটিশ</button>
     <button data-f="task">🎯 টাস্ক</button>
     <button data-f="result">📊 রেজাল্ট</button>
+    <button data-f="withdraw">💸 উইথড্র</button>
   </div>
+
   <div id="notifList"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
 </main>
-<nav class="dock"><a href="index.html" data-page="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a href="dashboard.html" data-page="dash" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
-<script type="module">
+<!-- Part 2 will start from here (JavaScript) -->
+ <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -126,22 +173,24 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
     function playNotificationSound() {
       if (!soundEnabled) return;
-      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioCtx.createOscillator();
-      const gainNode = audioCtx.createGain();
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
 
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1); // A6 note
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
 
-      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioCtx.destination);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
 
-      oscillator.start();
-      oscillator.stop(audioCtx.currentTime + 0.3);
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + 0.3);
+      } catch(e) {}
     }
 
     let allNotifs = [];
@@ -158,14 +207,15 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 
     function renderList() {
       const list = document.getElementById("notifList");
-      const filtered = allNotifs.filter(n =>
-        currentFilter === "all" ? true :
-        currentFilter === "result" ? (n.type === "good" || n.type === "bad") :
-        n.type === currentFilter
-      );
+      const filtered = allNotifs.filter(n => {
+        if (currentFilter === "all") return true;
+        if (currentFilter === "result") return n.type === "good" || n.type === "bad";
+        if (currentFilter === "withdraw") return n.type === "withdraw";
+        return n.type === currentFilter;
+      });
 
       if (filtered.length === 0) {
-        list.innerHTML = `<div class="empty"><div class="em">🔕</div>কোনো notification নেই</div>`;
+        list.innerHTML = `<div class="empty"><div class="em">🔕</div>কোনো নোটিফিকেশন নেই</div>`;
         return;
       }
 
@@ -175,11 +225,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
         const head = label !== lastDay ? `<div class="day">${label}</div>` : "";
         lastDay = label;
         const time = n.time.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+        const newTag = n.isNew ? `<span class="new-tag">NEW</span>` : "";
+        const unreadClass = n.isNew ? "unread" : "";
+
         return head + `
-          <div class="ni glass ${n.type}" style="animation-delay:${Math.min(i, 10) * 0.04}s">
+          <div class="ni glass ${n.type} ${unreadClass}" style="animation-delay:${Math.min(i, 10) * 0.04}s">
             <div class="ni-ic">${n.icon}</div>
             <div class="ni-body">
-              <div class="ni-t">${esc(n.title)}</div>
+              <div class="ni-t">${esc(n.title)} ${newTag}</div>
               <div class="ni-m">${esc(n.message)}</div>
               <div class="ni-time">🕐 ${time}</div>
             </div>
@@ -199,77 +252,140 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       const notifications = [];
+      
+      // Get last seen time from localStorage
+      let lastSeenTime = parseInt(localStorage.getItem("adq_last_notif_seen") || "0");
+      if (lastSeenTime === 0) lastSeenTime = Date.now() - (24 * 60 * 60 * 1000); // First time 1 day back
 
-      // Notices
+      let latestNoticeText = "";
+
+      // 1. Notices
       try {
         const q = query(collection(db, "notices"), where("active", "==", true));
         const snap = await getDocs(q);
-        snap.forEach(d => {
-          const n = d.data();
+        const noticeDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+        
+        if (noticeDocs.length > 0) latestNoticeText = noticeDocs[0].title;
+
+        noticeDocs.forEach(n => {
+          const tMs = n.createdAt?.toMillis?.() || Date.now();
           notifications.push({
             type: "notice", icon: "📢", title: n.title, message: n.message,
-            sortTime: n.createdAt?.toMillis?.() || Date.now(), time: n.createdAt?.toDate?.() || new Date()
+            sortTime: tMs, time: n.createdAt?.toDate?.() || new Date(),
+            isNew: tMs > lastSeenTime
           });
         });
       } catch (e) {}
 
-      // Tasks
+      // 2. Tasks
       try {
         const q = query(collection(db, "tasks"), where("active", "==", true));
         const snap = await getDocs(q);
         snap.forEach(d => {
           const t = d.data();
+          const tMs = t.createdAt?.toMillis?.() || Date.now();
           notifications.push({
-            type: "task", icon: "🎯", title: "নতুন Task: " + t.title,
-            message: `প্রতি account ৳${t.pricePerAccount}`,
-            sortTime: t.createdAt?.toMillis?.() || Date.now(), time: t.createdAt?.toDate?.() || new Date()
+            type: "task", icon: "🎯", title: "নতুন টাস্ক: " + t.title,
+            message: `প্রতি অ্যাকাউন্ট ৳${t.pricePerAccount}`,
+            sortTime: tMs, time: t.createdAt?.toDate?.() || new Date(),
+            isNew: tMs > lastSeenTime
           });
         });
       } catch (e) {}
 
-      // Submissions
+      // 3. Submissions (Good / Bad)
       try {
         const q = query(collection(db, "submissions"), where("userId", "==", user.uid));
         const snap = await getDocs(q);
         snap.forEach(d => {
           const s = d.data();
+          const tMs = s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || 0;
           if (s.status === "good") {
             notifications.push({
               type: "good", icon: "✅", title: "Good account approved",
-              message: `UID ${s.uid} — ৳${s.price} যোগ হয়েছে`,
-              sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now(),
-              time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date()
+              message: `UID ${s.uid || "N/A"} — ৳${s.earned || s.price || 0} যোগ হয়েছে`,
+              sortTime: tMs, time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date(),
+              isNew: tMs > lastSeenTime
             });
           } else if (s.status === "bad") {
             notifications.push({
               type: "bad", icon: "❌", title: "Bad account detected",
-              message: `UID ${s.uid} — কোনো reward নেই`,
-              sortTime: s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || Date.now(),
-              time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date()
+              message: `UID ${s.uid || "N/A"} — কোনো রিওয়ার্ড নেই`,
+              sortTime: tMs, time: s.checkedAt?.toDate?.() || s.submittedAt?.toDate?.() || new Date(),
+              isNew: tMs > lastSeenTime
             });
           }
         });
       } catch (e) {}
 
+      // 4. Withdrawals (Approved / Rejected)
+      try {
+        const q = query(collection(db, "withdrawals"), where("userId", "==", user.uid));
+        const snap = await getDocs(q);
+        snap.forEach(d => {
+          const w = d.data();
+          if (w.status === "approved" || w.status === "rejected") {
+            const tMs = w.approvedAt?.toMillis?.() || w.rejectedAt?.toMillis?.() || w.requestedAt?.toMillis?.() || 0;
+            const isAppr = w.status === "approved";
+            notifications.push({
+              type: "withdraw",
+              icon: isAppr ? "💸" : "↩️",
+              title: isAppr ? "উইথড্র অ্যাপ্রুভড" : "উইথড্র রিজেক্টেড",
+              message: `৳${w.amount} (${w.methodName || w.method}) — ${isAppr ? "পেমেন্ট সম্পন্ন" : "টাকা ফেরত দেওয়া হয়েছে"}`,
+              sortTime: tMs,
+              time: w.approvedAt?.toDate?.() || w.rejectedAt?.toDate?.() || w.requestedAt?.toDate?.() || new Date(),
+              isNew: tMs > lastSeenTime
+            });
+          }
+        });
+      } catch (e) {}
+
+      // Sort by time (newest first)
       notifications.sort((a, b) => b.sortTime - a.sortTime);
+      
+      // Calculate new notifications
+      const newCount = notifications.filter(n => n.isNew).length;
+
+      // Update Badges
+      const bellBadge = document.getElementById("bellBadgeTop");
+      const headerBadge = document.getElementById("headerNewCount");
+
+      if (newCount > 0) {
+        bellBadge.textContent = newCount > 99 ? "99+" : newCount;
+        bellBadge.classList.add("show");
+        
+        headerBadge.textContent = `${newCount} New`;
+        headerBadge.classList.add("show");
+
+        // Play sound once per minute if new notifications exist
+        const lastPlayed = parseInt(sessionStorage.getItem("adq_sound_played") || "0");
+        if (Date.now() - lastPlayed > 60000) {
+          playNotificationSound();
+          sessionStorage.setItem("adq_sound_played", Date.now());
+        }
+      } else {
+        bellBadge.classList.remove("show");
+        headerBadge.classList.remove("show");
+      }
+
       allNotifs = notifications;
-
-      if (notifications.length === 0) {
-        renderList();
-        return;
-      }
-
-      // নতুন নোটিফিকেশন থাকলে সাউন্ড বাজানো (শুধু একবার)
-      const latestTime = notifications[0].sortTime;
-      const lastSeenTime = parseInt(localStorage.getItem("last_notif_time") || "0");
-      if (latestTime > lastSeenTime && lastSeenTime !== 0) {
-        playNotificationSound();
-      }
-      localStorage.setItem("last_notif_time", latestTime);
-
       renderList();
+
+      // Setup Notice Marquee
+      if (latestNoticeText) {
+        const noticeBar = document.getElementById("noticeBar");
+        const noticeText = document.getElementById("noticeText");
+        noticeBar.style.display = "flex";
+        noticeText.textContent = latestNoticeText;
+        const dur = Math.max(8, latestNoticeText.length * 0.2);
+        noticeText.style.animationDuration = dur + 's';
+      }
+
+      // Save current time as last seen
+      localStorage.setItem("adq_last_notif_seen", Date.now());
     });
   </script>
 
 </body>
-</html>
+</html> 
