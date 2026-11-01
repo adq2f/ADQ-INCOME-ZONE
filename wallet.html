@@ -3,507 +3,275 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06060f">
 <title>Wallet — ADQ Income Zone</title>
+<script src="app-shell.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
-*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
-html,body{background:var(--bg)!important}
-body{font-family:'Hind Siliguri','Inter',system-ui,sans-serif!important;color:var(--ink);margin:0;padding:0!important;min-height:100vh;min-height:100dvh;overflow-x:hidden;position:relative}
-a{text-decoration:none;color:inherit}button{font-family:inherit}
-.bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
-.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
-.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.5;animation:dr1 20s ease-in-out infinite}
-.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.42;animation:dr2 24s ease-in-out infinite}
-@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
-@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
-.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 20%,transparent 70%)}
-.top{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;background:rgba(6,6,15,.65);backdrop-filter:blur(20px) saturate(160%);-webkit-backdrop-filter:blur(20px) saturate(160%);border-bottom:1px solid var(--line)}
-.top-in{max-width:520px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
-.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
-.ibtn{width:40px;height:40px;border-radius:13px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 40px}
-.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
-.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}
-.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.page{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:20px 16px calc(130px + env(safe-area-inset-bottom,0px))}
-.sec{margin:26px 2px 12px;font-size:17px;font-weight:700;letter-spacing:-.2px;display:flex;align-items:center;justify-content:space-between}
-.glass{background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
-.empty{text-align:center;padding:30px 16px;border-radius:22px;border:1.5px dashed rgba(255,255,255,.14);color:var(--muted);font-size:13.5px;font-weight:600}
-.empty .em{font-size:30px;margin-bottom:6px}
-.skel{height:92px;border-radius:22px;margin-bottom:10px;border:1px solid var(--line);background:linear-gradient(100deg,rgba(255,255,255,.04) 30%,rgba(255,255,255,.1) 50%,rgba(255,255,255,.04) 70%);background-size:200% 100%;animation:shim 1.4s infinite linear}
-@keyframes shim{to{background-position:-200% 0}}
-@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:8px;background:rgba(18,18,40,.78);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:26px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1)}
-.dock a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border-radius:18px;color:var(--dim);font-size:10.5px;font-weight:600;transition:.25s}
-.dock a svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:.25s}
-.dock a:hover{color:#fff}
-.dock a.active{color:#fff;background:linear-gradient(135deg,rgba(99,102,241,.5),rgba(139,92,246,.35));box-shadow:inset 0 0 0 1px rgba(167,139,250,.5),0 8px 20px -8px rgba(139,92,246,.9)}
-.dock a.active svg{transform:translateY(-1px) scale(1.08)}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
-@media(prefers-reduced-motion:reduce){.orb,.skel{animation:none}}
-
-/* ===== Balance card ===== */
-.bal{position:relative;overflow:hidden;border-radius:28px;padding:22px 22px 20px;margin-bottom:14px;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 28px 60px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
-.bal::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
-.bal::after{content:'';position:absolute;right:-70px;bottom:-90px;width:240px;height:240px;border-radius:50%;border:1px solid rgba(255,255,255,.18);box-shadow:0 0 0 28px rgba(255,255,255,.05),0 0 0 58px rgba(255,255,255,.03);pointer-events:none}
-.bal>*{position:relative;z-index:1}
-.bal-top{display:flex;align-items:center;justify-content:space-between}
-.bal-label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.88)}
-.chip-gold{width:38px;height:28px;border-radius:7px;background:linear-gradient(135deg,#fde68a,#f59e0b);position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-.chip-gold::before{content:'';position:absolute;inset:6px 8px;border:1.5px solid rgba(120,53,15,.4);border-radius:3px}
-.bal-amt{font-family:'Inter';font-weight:900;font-size:46px;letter-spacing:-1.5px;line-height:1;margin:14px 0 0;text-shadow:0 6px 20px rgba(0,0,0,.25)}
-.bal-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-.bal-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:15px;font-size:14px;font-weight:700;color:#fff;transition:.25s;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28)}
-.bal-btn.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 10px 24px -8px rgba(0,0,0,.45)}
-.bal-btn:hover{transform:translateY(-2px)}
-.bal-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-
-/* ===== Payment info strip ===== */
-.pstrip{margin-bottom:14px;padding:16px;border-radius:24px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line)}
-.pstrip-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
-.pstrip-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700}
-.pcount{min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-family:'Inter';font-size:12px;font-weight:800;line-height:22px;text-align:center}
-.pedit{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;transition:.2s}
-.pedit:hover{background:rgba(139,92,246,.2);border-color:rgba(139,92,246,.6)}
-.pedit svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.pscroll{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding-bottom:6px;scrollbar-width:none}
-.pscroll::-webkit-scrollbar{display:none}
-.pm-tile{position:relative;overflow:hidden;flex:0 0 78%;max-width:270px;scroll-snap-align:start;border-radius:20px;padding:14px 14px 13px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 14px 28px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.28)}
-.pm-tile::after{content:'';position:absolute;right:-40px;bottom:-50px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.1);pointer-events:none}
-.pm-top{display:flex;align-items:center;justify-content:space-between;gap:8px;position:relative;z-index:1}
-.pm-name{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700}
-.pm-dot{width:26px;height:26px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.22);font-family:'Inter';font-size:13px;font-weight:900}
-.pm-copy{width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
-.pm-copy:hover{background:rgba(255,255,255,.28)}
-.pm-copy.done{background:rgba(16,185,129,.55);border-color:rgba(255,255,255,.5)}
+.w-bal{flex:0 0 auto;margin-bottom:10px}
+.w-l{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;opacity:.9}
+.w-l svg{width:16px;height:16px;margin-right:6px;display:inline-block;vertical-align:-3px}
+.w-chip{width:34px;height:25px;border-radius:6px;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.w-a{font:900 38px 'Inter',sans-serif;letter-spacing:-1.2px;line-height:1.05;margin:8px 0 12px;text-shadow:0 6px 18px rgba(0,0,0,.25)}
+.w-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.w-b{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:14px;font-size:13.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28)}
+.w-b.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 10px 22px -8px rgba(0,0,0,.45)}
+.w-b svg{width:16px;height:16px}
+.pm-tile{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.28)}
+.pm-dot{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.22);font:900 15px 'Inter',sans-serif}
+.pm-info{flex:1;min-width:0}
+.pm-info b{display:block;font-size:12.5px;opacity:.9}
+.pm-info span{display:block;font:800 16px 'Inter',sans-serif;letter-spacing:.4px;word-break:break-all}
+.pm-info small{font-size:11.5px;opacity:.8}
+.pm-copy{width:34px;height:34px;flex:0 0 34px;border-radius:11px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .pm-copy svg{width:16px;height:16px}
-.pm-num{position:relative;z-index:1;margin-top:12px;font-family:'Inter';font-size:19px;font-weight:800;letter-spacing:.5px;word-break:break-all}
-.pm-holder{position:relative;z-index:1;margin-top:3px;font-size:12px;font-weight:600;color:rgba(255,255,255,.8)}
-.pempty{padding:16px;border-radius:16px;text-align:center;font-size:13px;font-weight:600;color:#fde9a8;background:rgba(251,191,36,.1);border:1px dashed rgba(251,191,36,.4)}
-
-/* ===== Good / Bad / Pending ===== */
-.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:6px}
-.s3{position:relative;overflow:hidden;padding:14px 6px 12px;border-radius:20px;text-align:center}
-.s3::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
-.s3 .ic{display:block;font-size:20px;margin-bottom:4px}
-.s3 .num{font-family:'Inter';font-size:22px;font-weight:900;color:var(--c);line-height:1.1}
-.s3 .lbl{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px}
-
-/* ===== Withdraw history ===== */
-.wdsum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.wdsum-i{position:relative;overflow:hidden;padding:12px 6px 10px;border-radius:18px;text-align:center}
-.wdsum-i::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 12px var(--c)}
-.wdsum-i .n{font-family:'Inter';font-size:17px;font-weight:900;color:var(--c);line-height:1.15}
-.wdsum-i .l{font-size:11px;color:var(--muted);font-weight:600;margin-top:3px}
-.wdi{display:flex;gap:12px;padding:14px;margin-bottom:10px;border-radius:22px;border-left:4px solid #f59e0b;animation:rise .5s cubic-bezier(.2,.8,.2,1) both;transition:.25s}
-.wdi:hover{transform:translateY(-2px)}
-.wdi.pending{background:linear-gradient(90deg,rgba(245,158,11,.12),rgba(255,255,255,.025) 50%)}
-.wdi.approved{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(255,255,255,.025) 50%)}
-.wdi.rejected{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.14),rgba(255,255,255,.025) 50%)}
-.wdi-logo{width:46px;height:46px;flex:0 0 46px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:19px;font-family:'Inter';color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 10px 22px -8px var(--c1)}
-.wdi-main{flex:1;min-width:0}
-.wdi-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.wdi-amt{font-family:'Inter';font-size:19px;font-weight:900}
-.wdi-st{font-size:11.5px;font-weight:800;padding:4px 10px;border-radius:999px;white-space:nowrap}
-.wdi-st.pending{background:rgba(245,158,11,.18);color:#fcd34d}
-.wdi-st.approved{background:rgba(16,185,129,.18);color:#6ee7b7}
-.wdi-st.rejected{background:rgba(239,68,68,.18);color:#fca5a5}
-.wdi-meta{font-size:12.5px;color:#dcdcf2;font-weight:600;margin-top:4px;word-break:break-all}
-.wdi-time{font-size:11.5px;color:var(--muted);margin-top:3px}
-.wdi-hint{margin-top:8px;font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:10px;background:rgba(255,255,255,.05);color:var(--muted)}
-
-/* ===== Form fields / buttons ===== */
-.lab{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin:14px 2px 7px}
-.field{position:relative;display:flex;align-items:center;margin-bottom:4px;background:rgba(255,255,255,.05);border:1.5px solid var(--line);border-radius:16px;transition:.25s}
-.field:hover{background:rgba(255,255,255,.07)}
-.field:focus-within{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.18),0 8px 24px -10px rgba(139,92,246,.6)}
-.f-ic{flex:0 0 48px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:16px;font-weight:800}
-.field input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--ink);font-family:inherit;font-size:16px;font-weight:500;padding:16px 12px 16px 0}
-.field input::placeholder{color:#6f7090;font-weight:400}
-.cta{position:relative;overflow:hidden;display:block;width:100%;border:none;cursor:pointer;border-radius:16px;padding:16px;color:#fff;font-size:16px;font-weight:700;transition:.25s;text-align:center}
-.cta.purple{background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);box-shadow:0 16px 34px -10px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.35)}
-.cta::before{content:'';position:absolute;top:0;left:-80%;width:50%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg);transition:left .7s}
-.cta:hover:not(:disabled)::before{left:130%}
-.cta:hover:not(:disabled){transform:translateY(-2px)}
-.cta:active:not(:disabled){transform:scale(.985)}
-.cta:disabled{filter:saturate(.5) brightness(.85);cursor:not-allowed}
-.cta.ghost{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);box-shadow:none}
-
-/* ===== Wallet setup modal (bottom sheet) ===== */
-.p-modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;background:rgba(3,3,10,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
-.p-modal.show{display:flex}
-.p-sheet{width:100%;max-width:520px;max-height:92vh;max-height:92dvh;overflow-y:auto;background:#101026;border:1px solid var(--line);border-bottom:none;border-radius:28px 28px 0 0;padding:20px 18px calc(22px + env(safe-area-inset-bottom,0px));box-shadow:0 -24px 60px -20px rgba(0,0,0,.9);animation:rise .35s cubic-bezier(.2,.8,.2,1) both}
-.p-sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.p-sheet-head h3{margin:0;font-size:18px;font-weight:700}
-.p-close{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--muted);font-size:15px;cursor:pointer}
-.p-close:hover{color:#fff;background:rgba(239,68,68,.2)}
-.p-sub{margin:4px 0 14px;font-size:12.5px;color:var(--muted);font-weight:500}
-.wm-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:5px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
-.wm-tab{padding:10px 2px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.2s}
-.wm-tab:hover{color:#fff}
-.wm-tab.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 8px 18px -8px rgba(139,92,246,.9)}
-.sheet-acts{display:grid;grid-template-columns:1fr 56px;gap:10px;margin-top:20px}
-.sheet-acts .cta{padding:15px}
+.wm-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);margin-bottom:10px}
+.wm-tab{padding:9px 2px;border-radius:11px;border:none;background:transparent;color:#9a9bb8;font-size:12.5px;font-weight:700;cursor:pointer}
+.wm-tab.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.sheet-pad{padding:0 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet-acts{display:grid;grid-template-columns:1fr 54px;gap:10px;margin-top:12px}
 </style>
 </head>
-<body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+<body class="x-body">
+<div class="x-bg" aria-hidden="true"><div class="o o1"></div><div class="o o2"></div></div>
 
-<header class="top"><div class="top-in">
-  <button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
-  <div class="brand"><div class="mark">A</div><span>My Wallet</span></div>
-  <button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
-</div></header>
+<div class="x-app">
+  <header class="x-top">
+    <div class="x-brand"><div class="x-mark">A</div><span>My Wallet</span></div>
+    <div class="x-actions"><button class="x-ibtn danger" id="logoutBtn" aria-label="Logout"></button></div>
+  </header>
 
-<main class="page">
-  <section class="bal">
-    <div class="bal-top">
-      <div class="bal-label"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>Available Balance</div>
-      <div class="chip-gold"></div>
-    </div>
-    <div class="bal-amt" id="balance">৳0</div>
-    <div class="bal-acts">
-      <a href="withdraw.html" id="withdrawBtnLink" class="bal-btn solid"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>Withdraw</a>
-      <a href="task-history.html" class="bal-btn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>History</a>
+  <section class="x-hero w-bal">
+    <div class="w-l"><span id="icWallet"></span><div class="w-chip"></div></div>
+    <div class="w-a" id="balance">৳0</div>
+    <div class="w-acts">
+      <a href="withdraw.html" id="withdrawBtnLink" class="w-b solid"></a>
+      <a href="task-history.html" class="w-b" id="histBtn"></a>
     </div>
   </section>
 
-  <div class="pstrip" id="walletSetupCard">
-    <div class="pstrip-head">
-      <div class="pstrip-title">💳 My Payment Info <span class="pcount" id="payCount" style="display:none"></span></div>
-      <button class="pedit" id="editWalletBtn"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Edit</button>
-    </div>
-    <div id="walletInfoContent"><div class="skel" style="height:90px;margin:0"></div></div>
+  <div class="x-stats">
+    <div class="x-st" style="--c:#34d399"><b id="statGood">0</b><span>Good</span></div>
+    <div class="x-st" style="--c:#f87171"><b id="statBad">0</b><span>Bad</span></div>
+    <div class="x-st" style="--c:#fbbf24"><b id="statPending">0</b><span>Pending</span></div>
   </div>
 
-  <div class="stats3">
-    <div class="s3 glass" style="--c:#34d399"><span class="ic">✅</span><div class="num" id="statGood">0</div><div class="lbl">Good</div></div>
-    <div class="s3 glass" style="--c:#f87171"><span class="ic">❌</span><div class="num" id="statBad">0</div><div class="lbl">Bad</div></div>
-    <div class="s3 glass" style="--c:#fbbf24"><span class="ic">⏳</span><div class="num" id="statPending">0</div><div class="lbl">Pending</div></div>
+  <div class="x-seg">
+    <button class="active" data-p="pHist" id="segHist"></button>
+    <button data-p="pPay" id="segPay"></button>
   </div>
 
-  <div class="sec"><span>📜 Withdraw History</span></div>
-  <div class="wdsum">
-    <div class="wdsum-i glass" style="--c:#818cf8"><div class="n" id="wdSumReq">0</div><div class="l">Requests</div></div>
-    <div class="wdsum-i glass" style="--c:#34d399"><div class="n" id="wdSumApproved">৳0</div><div class="l">Approved</div></div>
-    <div class="wdsum-i glass" style="--c:#fbbf24"><div class="n" id="wdSumPending">৳0</div><div class="l">Pending</div></div>
-  </div>
-  <div id="withdrawHistory"><div class="skel"></div><div class="skel"></div></div>
-</main>
+  <div class="x-scroll" id="pHist"><div class="x-skel"></div><div class="x-skel"></div></div>
 
-<div class="p-modal" id="walletModal">
-  <div class="p-sheet">
-    <div class="p-sheet-head"><h3>💳 Wallet Setup</h3><button class="p-close" id="closeWalletX" aria-label="Close">✕</button></div>
-    <div class="p-sub">আপনার পেমেন্ট মেথডগুলো সেভ করে রাখুন।</div>
-    <div class="wm-tabs">
-      <button class="wm-tab active" data-method="bkash">bKash</button>
-      <button class="wm-tab" data-method="nagad">Nagad</button>
-      <button class="wm-tab" data-method="rocket">Rocket</button>
-      <button class="wm-tab" data-method="binance">Binance</button>
-    </div>
-    <label class="lab" id="wmLabel">bKash Number</label>
-    <div class="field"><span class="f-ic">📱</span><input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off" inputmode="text"></div>
-    <label class="lab">Account Name (optional)</label>
-    <div class="field"><span class="f-ic">👤</span><input type="text" id="wm-name" placeholder="আপনার নাম" autocomplete="off"></div>
-    <div class="sheet-acts">
-      <button class="cta purple" id="saveWalletBtn">💾 Save</button>
-      <button class="cta ghost" id="closeWalletBtn" aria-label="Close">✕</button>
+  <div class="x-scroll" id="pPay" hidden>
+    <div id="walletInfoContent"></div>
+    <button class="x-btn ghost" id="editWalletBtn"></button>
+  </div>
+</div>
+
+<div class="x-sheet" id="walletModal">
+  <div class="x-sheet-box">
+    <div class="x-sheet-h"><h3 style="color:#fff">Wallet Setup</h3><button class="x-ibtn" id="closeWalletX" aria-label="Close"></button></div>
+    <div class="sheet-pad">
+      <div class="wm-tabs">
+        <button class="wm-tab active" data-method="bkash">bKash</button>
+        <button class="wm-tab" data-method="nagad">Nagad</button>
+        <button class="wm-tab" data-method="rocket">Rocket</button>
+        <button class="wm-tab" data-method="binance">Binance</button>
+      </div>
+      <div class="x-lab" id="wmLabel">bKash Number</div>
+      <div class="x-field"><span class="ic" id="icPhone"></span><input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off"></div>
+      <div class="x-lab">Account Name (optional)</div>
+      <div class="x-field"><span class="ic" id="icUser"></span><input type="text" id="wm-name" placeholder="আপনার নাম" autocomplete="off"></div>
+      <div class="sheet-acts">
+        <button class="x-btn" id="saveWalletBtn"></button>
+        <button class="x-btn ghost" id="closeWalletBtn" aria-label="Close"></button>
+      </div>
     </div>
   </div>
 </div>
 
-<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="leaderboard.html" data-page="leaders"><svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg><span>Leaders</span></a><a href="wallet.html" data-page="wallet" class="active"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
-
 <script type="module">
-    import { auth, db } from "./firebase.js";
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    window.goBack = function() {
-      if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
-        history.back();
-      } else {
-        location.href = "dashboard.html";
+window.adqHold = true;
+const { esc, svg: S, toast } = window.ADQ;
+const $ = (id) => document.getElementById(id);
+
+$("logoutBtn").innerHTML = S.logout;
+$("icWallet").innerHTML = S.wallet + "Available Balance";
+$("withdrawBtnLink").innerHTML = S.download + "Withdraw";
+$("histBtn").innerHTML = S.activity + "History";
+$("segHist").innerHTML = S.clock + "Withdraw History";
+$("segPay").innerHTML = S.wallet + "Payment Info";
+$("editWalletBtn").innerHTML = S.edit + "Payment Info Edit";
+$("closeWalletX").innerHTML = S.close;
+$("closeWalletBtn").innerHTML = S.close;
+$("saveWalletBtn").innerHTML = S.check + "Save";
+$("icPhone").innerHTML = S.phone;
+$("icUser").innerHTML = S.user;
+
+document.querySelectorAll(".x-seg button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".x-seg button").forEach(x => x.classList.toggle("active", x === b));
+    ["pHist", "pPay"].forEach(id => { $(id).hidden = id !== b.dataset.p; });
+  };
+});
+
+let currentUser = null, userData = null, started = false;
+let enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+let tempWalletData = {}, activeMethod = "bkash";
+const ready = { user: false, wd: false };
+const mark = (k) => { ready[k] = true; if (ready.user && ready.wd) window.adqReady && window.adqReady(); };
+
+const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
+const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
+const METHOD_PH = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
+const COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
+
+function normalizeWallet(method, raw) {
+  const s = String(raw || "").trim();
+  if (method === "binance") return /^[A-Za-z0-9_.@:+-]{4,80}$/.test(s) ? s : null;
+  const d = s.replace(/[\s-]/g, "");
+  const m = d.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
+  return m ? m[1] : null;
+}
+
+$("logoutBtn").onclick = async () => {
+  if (!confirm("লগআউট?")) return;
+  await signOut(auth);
+  location.href = "login.html";
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { location.href = "login.html"; return; }
+  if (started) return;
+  started = true;
+  currentUser = user;
+
+  try {
+    const snap = await getDoc(doc(db, "settings", "payment_methods"));
+    if (snap.exists()) enabledMethods = { ...enabledMethods, ...snap.data() };
+  } catch (e) {}
+  if (!Object.keys(METHOD_NAMES).some(k => enabledMethods[k] !== false)) {
+    const l = $("withdrawBtnLink"); l.style.opacity = ".5"; l.style.pointerEvents = "none";
+  }
+
+  onSnapshot(doc(db, "users", user.uid), (snap) => {
+    if (snap.exists()) {
+      userData = snap.data();
+      $("balance").textContent = "৳" + (Number(userData.balance) || 0);
+      $("statGood").textContent = userData.totalGood || 0;
+      $("statBad").textContent = userData.totalBad || 0;
+      $("statPending").textContent = userData.totalPending || 0;
+      if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
+        userData.wallets = { [userData.walletInfo.method]: { number: userData.walletInfo.number, name: userData.walletInfo.name || "" } };
       }
-    };
-
-    let currentUser = null;
-    let userData = null;
-    // ✅ ডিফল্ট সব চালু — লোড হওয়ার আগে Withdraw বাটন যেন বন্ধ না দেখায়
-    let enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
-    let tempWalletData = {};
-    let activeMethod = "bkash";
-    let lastBalance = 0;
-    let started = false;
-
-    const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
-    const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
-    const METHOD_PLACEHOLDERS = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
-    const METHOD_COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
-    const WD_COLORS = METHOD_COLORS;
-
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      renderWallets();
     }
+    mark("user");
+  }, () => mark("user"));
 
-    // bKash/Nagad/Rocket: বাংলাদেশি মোবাইল নম্বর। Binance: ID/Address
-    function normalizeWallet(method, raw) {
-      const s = String(raw || "").trim();
-      if (method === "binance") return /^[A-Za-z0-9_.@:+-]{4,80}$/.test(s) ? s : null;
-      const d = s.replace(/[\s-]/g, "");
-      const m = d.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
-      return m ? m[1] : null;
-    }
+  onSnapshot(query(collection(db, "withdrawals"), where("userId", "==", user.uid)), (snap) => {
+    const items = snap.docs.map(d => d.data()).sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
+    renderHistory(items);
+    mark("wd");
+  }, (e) => { $("pHist").innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("wd"); });
+});
 
-    function renderWdHistory(items, list) {
-      let approved = 0, pending = 0;
-      items.forEach(h => {
-        if (h.status === "approved") approved += Number(h.amount) || 0;
-        else if (h.status === "pending") pending += Number(h.amount) || 0;
-      });
-      document.getElementById("wdSumReq").textContent = items.length;
-      document.getElementById("wdSumApproved").textContent = "৳" + approved;
-      document.getElementById("wdSumPending").textContent = "৳" + pending;
+function renderHistory(items) {
+  const box = $("pHist");
+  let ap = 0, pe = 0;
+  items.forEach(h => { if (h.status === "approved") ap += Number(h.amount) || 0; else if (h.status === "pending") pe += Number(h.amount) || 0; });
+  if (!items.length) { box.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো withdraw নেই</div>`; return; }
+  box.innerHTML = `<div class="x-stats"><div class="x-st" style="--c:#818cf8"><b>${items.length}</b><span>Requests</span></div><div class="x-st" style="--c:#34d399"><b>৳${ap}</b><span>Approved</span></div><div class="x-st" style="--c:#fbbf24"><b>৳${pe}</b><span>Pending</span></div></div>` +
+    items.map((h, i) => {
+      const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
+      const col = st === "approved" ? "#10b981" : st === "rejected" ? "#ef4444" : "#f59e0b";
+      const cls = st === "approved" ? "g" : st === "rejected" ? "r" : "y";
+      const txt = st === "approved" ? "Approved" : st === "rejected" ? "Rejected" : "Pending";
+      const [c1, c2] = COLORS[h.method] || ["#6366f1", "#312e81"];
+      const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
+      return `<div class="x-item" style="--c:${col};animation-delay:${Math.min(i, 8) * 0.04}s">
+        <div class="x-ia" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
+        <div style="flex:1;min-width:0"><div class="x-it">৳${esc(h.amount)} <span style="font-weight:600;color:#9a9bb8">• ${esc(h.methodName || h.method)}</span></div>
+        <div class="x-is">${esc(h.accountNum)} • ${time}</div></div>
+        <span class="x-amt ${cls}">${txt}</span></div>`;
+    }).join("");
+}
 
-      list.innerHTML = items.map((h, i) => {
-        const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
-        const stText = st === "pending" ? "⏳ Pending" : st === "approved" ? "✅ Approved" : "❌ Rejected";
-        const hint = st === "pending" ? "⏳ Admin approve করার অপেক্ষায়" : st === "approved" ? "✅ পেমেন্ট সম্পন্ন হয়েছে" : "↩️ টাকা তোমার balance-এ ফেরত এসেছে";
-        const [c1, c2] = WD_COLORS[h.method] || ["#6366f1", "#312e81"];
-        const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-        return `
-          <div class="wdi glass ${st}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
-            <div class="wdi-logo" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
-            <div class="wdi-main">
-              <div class="wdi-top"><span class="wdi-amt">৳${esc(h.amount)}</span><span class="wdi-st ${st}">${stText}</span></div>
-              <div class="wdi-meta">${esc(h.methodName || h.method)} • 📱 ${esc(h.accountNum)}</div>
-              <div class="wdi-time">🕐 ${time}</div>
-              <div class="wdi-hint">${hint}</div>
-            </div>
-          </div>`;
-      }).join("");
-    }
+function renderWallets() {
+  const c = $("walletInfoContent");
+  const w = userData?.wallets || {};
+  const keys = Object.keys(w).filter(k => w[k] && w[k].number);
+  if (!keys.length) { c.innerHTML = `<div class="x-empty">${S.wallet}কোনো Wallet setup করা হয়নি</div>`; return; }
+  c.innerHTML = keys.map(k => {
+    const [c1, c2] = COLORS[k] || ["#6366f1", "#312e81"];
+    return `<div class="pm-tile" style="--c1:${c1};--c2:${c2}">
+      <div class="pm-dot">${esc((METHOD_NAMES[k] || k).charAt(0))}</div>
+      <div class="pm-info"><b>${esc(METHOD_NAMES[k] || k)}</b><span>${esc(w[k].number)}</span>${w[k].name ? `<small>${esc(w[k].name)}</small>` : ""}</div>
+      <button class="pm-copy" data-copy="${esc(w[k].number)}" aria-label="Copy">${S.copy}</button></div>`;
+  }).join("");
+}
 
-    function animateValue(obj, start, end, duration) {
-      if (start === end) { obj.textContent = "৳" + end; return; }
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { obj.textContent = "৳" + end; return; }
-      let t0 = null;
-      const step = (ts) => {
-        if (!t0) t0 = ts;
-        const p = Math.min((ts - t0) / duration, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        obj.textContent = "৳" + Math.round(eased * (end - start) + start);
-        if (p < 1) requestAnimationFrame(step);
-        else obj.textContent = "৳" + end;
-      };
-      requestAnimationFrame(step);
-    }
+$("walletInfoContent").addEventListener("click", (e) => {
+  const b = e.target.closest(".pm-copy");
+  if (!b) return;
+  navigator.clipboard?.writeText(b.dataset.copy).then(() => toast("Copied!")).catch(() => {});
+});
 
-    document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট?")) return;
-      await signOut(auth);
-      location.href = "index.html";
-    };
+/* ===== Wallet setup sheet ===== */
+const modal = $("walletModal");
+const closeModal = () => modal.classList.remove("show");
+$("editWalletBtn").onclick = () => {
+  tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
+  loadTab("bkash");
+  modal.classList.add("show");
+};
+$("closeWalletBtn").onclick = closeModal;
+$("closeWalletX").onclick = closeModal;
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+document.querySelectorAll(".wm-tab").forEach(t => { t.onclick = () => { stash(); loadTab(t.dataset.method); }; });
 
-    async function loadEnabledMethods() {
-      try {
-        const snap = await getDoc(doc(db, "settings", "payment_methods"));
-        if (snap.exists()) enabledMethods = { ...enabledMethods, ...snap.data() };
-      } catch (e) { /* ডিফল্ট সব চালু */ }
-    }
+function stash() {
+  const num = $("wm-number").value.trim(), name = $("wm-name").value.trim();
+  if (num) tempWalletData[activeMethod] = { number: num, name }; else delete tempWalletData[activeMethod];
+}
+function loadTab(m) {
+  activeMethod = m;
+  document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === m));
+  $("wmLabel").textContent = METHOD_LABELS[m];
+  $("wm-number").placeholder = METHOD_PH[m];
+  const d = tempWalletData[m] || {};
+  $("wm-number").value = d.number || "";
+  $("wm-name").value = d.name || "";
+}
 
-    function checkWithdrawAvailability() {
-      const anyEnabled = Object.keys(METHOD_NAMES).some(k => enabledMethods[k] !== false);
-      const link = document.getElementById("withdrawBtnLink");
-      if (!anyEnabled) {
-        link.style.opacity = "0.5";
-        link.style.pointerEvents = "none";
-        link.title = "Withdraw বন্ধ আছে";
-      } else {
-        link.style.opacity = "";
-        link.style.pointerEvents = "";
-        link.title = "";
-      }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) { location.href = "login.html"; return; }
-      if (started) return;
-      started = true;
-      currentUser = user;
-
-      // ✅ আগে মেথড সেটিং লোড, তারপর বাকি সব
-      await loadEnabledMethods();
-      checkWithdrawAvailability();
-
-      onSnapshot(doc(db, "users", user.uid), (snap) => {
-        if (!snap.exists()) return;
-        userData = snap.data();
-
-        const currentBalance = Number(userData.balance) || 0;
-        animateValue(document.getElementById("balance"), lastBalance, currentBalance, 900);
-        lastBalance = currentBalance;
-
-        document.getElementById("statGood").textContent = userData.totalGood || 0;
-        document.getElementById("statBad").textContent = userData.totalBad || 0;
-        document.getElementById("statPending").textContent = userData.totalPending || 0;
-
-        if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
-          userData.wallets = {};
-          userData.wallets[userData.walletInfo.method] = { number: userData.walletInfo.number, name: userData.walletInfo.name || "" };
-        }
-
-        renderWalletInfo();
-      }, (err) => {
-        document.getElementById("walletInfoContent").innerHTML = `<div class="pempty">${esc(err.message)}</div>`;
-      });
-
-      loadWithdrawHistory();
-    });
-
-    const COPY_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-    const CHECK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-
-    function renderWalletInfo() {
-      const content = document.getElementById("walletInfoContent");
-      const countEl = document.getElementById("payCount");
-      const wallets = userData?.wallets || {};
-      const savedKeys = Object.keys(wallets).filter(k => wallets[k] && wallets[k].number);
-
-      if (savedKeys.length > 0) {
-        countEl.style.display = "inline-block";
-        countEl.textContent = savedKeys.length;
-        content.innerHTML = `<div class="pscroll">` + savedKeys.map(key => {
-          const w = wallets[key];
-          const [c1, c2] = METHOD_COLORS[key] || ["#6366f1", "#312e81"];
-          const label = METHOD_NAMES[key] || key;
-          return `
-            <div class="pm-tile" style="--c1:${c1};--c2:${c2}">
-              <div class="pm-top">
-                <div class="pm-name"><span class="pm-dot">${esc(label.charAt(0))}</span>${esc(label)}</div>
-                <button class="pm-copy" data-copy="${esc(w.number)}" aria-label="${esc(label)} নাম্বার কপি করুন">${COPY_ICON}</button>
-              </div>
-              <div class="pm-num">${esc(w.number)}</div>
-              ${w.name ? `<div class="pm-holder">${esc(w.name)}</div>` : ""}
-            </div>`;
-        }).join("") + `</div>`;
-      } else {
-        countEl.style.display = "none";
-        content.innerHTML = `<div class="pempty">⚠️ কোনো Wallet setup করা হয়নি</div>`;
-      }
-    }
-
-    document.getElementById("walletInfoContent").addEventListener("click", (e) => {
-      const btn = e.target.closest(".pm-copy");
-      if (!btn) return;
-      const text = btn.dataset.copy;
-      const done = () => {
-        btn.classList.add("done");
-        btn.innerHTML = CHECK_ICON;
-        setTimeout(() => { btn.classList.remove("done"); btn.innerHTML = COPY_ICON; }, 1400);
-      };
-      if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(done).catch(() => {});
-    });
-
-    /* ===== Wallet modal ===== */
-    const modal = document.getElementById("walletModal");
-    const closeModal = () => modal.classList.remove("show");
-
-    document.getElementById("editWalletBtn").onclick = () => {
-      tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
-      activeMethod = "bkash";
-      loadTab("bkash");
-      modal.classList.add("show");
-    };
-    document.getElementById("closeWalletBtn").onclick = closeModal;
-    document.getElementById("closeWalletX").onclick = closeModal;
-    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-
-    document.querySelectorAll(".wm-tab").forEach(tab => {
-      tab.onclick = () => switchMethodTab(tab.dataset.method);
-    });
-
-    // বর্তমান ট্যাবের ইনপুট tempWalletData তে রাখা (খালি হলে মুছে ফেলা)
-    function stashCurrentTab() {
-      const num = document.getElementById("wm-number").value.trim();
-      const name = document.getElementById("wm-name").value.trim();
-      if (num) tempWalletData[activeMethod] = { number: num, name };
-      else delete tempWalletData[activeMethod];
-    }
-
-    function loadTab(method) {
-      activeMethod = method;
-      document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === method));
-      document.getElementById("wmLabel").textContent = METHOD_LABELS[method];
-      document.getElementById("wm-number").placeholder = METHOD_PLACEHOLDERS[method];
-      const data = tempWalletData[method] || {};
-      document.getElementById("wm-number").value = data.number || "";
-      document.getElementById("wm-name").value = data.name || "";
-    }
-
-    function switchMethodTab(method) {
-      stashCurrentTab();
-      loadTab(method);
-    }
-
-    document.getElementById("saveWalletBtn").onclick = async () => {
-      stashCurrentTab();
-
-      // সব নম্বর যাচাই + পরিষ্কার করা
-      const cleaned = {};
-      for (const key of Object.keys(tempWalletData)) {
-        const w = tempWalletData[key];
-        if (!w || !w.number) continue;
-        const n = normalizeWallet(key, w.number);
-        if (!n) {
-          alert("❌ " + METHOD_NAMES[key] + " এর নম্বর সঠিক নয়।");
-          loadTab(key);
-          return;
-        }
-        cleaned[key] = { number: n, name: w.name || "" };
-      }
-
-      const btn = document.getElementById("saveWalletBtn");
-      btn.disabled = true;
-      try {
-        await updateDoc(doc(db, "users", currentUser.uid), { wallets: cleaned });
-        userData.wallets = cleaned;
-        renderWalletInfo();
-        closeModal();
-        alert("✅ Wallet info saved!");
-      } catch (e) {
-        alert("❌ " + e.message);
-      } finally {
-        btn.disabled = false;
-      }
-    };
-
-    function loadWithdrawHistory() {
-      const list = document.getElementById("withdrawHistory");
-      try {
-        const q = query(collection(db, "withdrawals"), where("userId", "==", currentUser.uid));
-        onSnapshot(q, (snap) => {
-          if (snap.empty) {
-            document.getElementById("wdSumReq").textContent = 0;
-            document.getElementById("wdSumApproved").textContent = "৳0";
-            document.getElementById("wdSumPending").textContent = "৳0";
-            list.innerHTML = `<div class="empty"><div class="em">📭</div>এখনো কোনো withdraw নেই</div>`;
-            return;
-          }
-          const items = snap.docs.map(d => d.data())
-            .sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
-          renderWdHistory(items, list);
-        }, (err) => {
-          list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(err.message)}</div>`;
-        });
-      } catch (e) {
-        list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`;
-      }
-    }
-  </script>
-
+$("saveWalletBtn").onclick = async () => {
+  stash();
+  const cleaned = {};
+  for (const k of Object.keys(tempWalletData)) {
+    const w = tempWalletData[k];
+    if (!w || !w.number) continue;
+    const n = normalizeWallet(k, w.number);
+    if (!n) { alert(METHOD_NAMES[k] + " এর নম্বর সঠিক নয়।"); loadTab(k); return; }
+    cleaned[k] = { number: n, name: w.name || "" };
+  }
+  const btn = $("saveWalletBtn");
+  btn.disabled = true;
+  try {
+    await updateDoc(doc(db, "users", currentUser.uid), { wallets: cleaned });
+    userData.wallets = cleaned;
+    renderWallets();
+    closeModal();
+    toast("Wallet saved!");
+  } catch (e) { alert(e.message); }
+  finally { btn.disabled = false; }
+};
+</script>
 </body>
 </html>
