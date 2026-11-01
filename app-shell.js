@@ -1,5 +1,5 @@
 /* ==================================================
-   app-shell.js — ADQ Income Zone 
+   app-shell.js — ADQ Income Zone (Global Layout & Fixes)
    ================================================== */
 (function () {
   if (window.__adqShell) return;
@@ -78,20 +78,19 @@
   function taskRow(t) {
     var st = tstatus(t);
     var fields = (t.fields || []).length;
-    var refer = Number(t.referCommission) > 0
-      ? '<span class="x-tag gold">' + S.gift + "৳" + esc(t.referCommission) + "</span>" : "";
+    var milestone = Number(t.milestoneTarget) > 0 ? `<span class="x-tag gold">${S.gift}${t.milestoneTarget}=৳${t.milestonePrice}</span>` : "";
     return '<a class="x-row" href="task.html?id=' + esc(t.id) + '">' +
       logo(t.platform) +
       '<div class="x-rb"><div class="x-rt">' + esc(t.title) + "</div>" +
       '<div class="x-rs"><span class="x-price">৳' + esc(t.pricePerAccount) + "</span>" +
       '<span class="x-tag ' + st.k + '"><i></i>' + esc(st.text) + "</span>" +
-      '<span class="x-tag">' + S.layers + fields + "</span>" + refer + "</div></div>" +
+      '<span class="x-tag">' + S.layers + fields + "</span>" + milestone + "</div></div>" +
       '<span class="x-go">' + S.chev + "</span></a>";
   }
 
   window.ADQ = { platforms: P, svg: S, esc: esc, tstatus: tstatus, logo: logo, taskRow: taskRow, fmtMs: fmtMs };
 
-  /* ---------------- CSS ---------------- */
+  /* ---------------- CSS (Global App Layout & Scroll Fix) ---------------- */
   var css = [
     "html.adq-loading body{visibility:hidden}",
     "#adqSplash{position:fixed;inset:0;z-index:2147483000;background:#06060f;display:flex;align-items:center;justify-content:center;transition:opacity .45s ease,visibility .45s}",
@@ -244,17 +243,23 @@
     }).catch(function () { authDone = true; check(); });
   } catch (e) { authDone = true; }
 
-  /* ---------------- DOCK ---------------- */
+  /* ---------------- DOCK (Fixed Navigation) ---------------- */
   function buildDock() {
     document.querySelectorAll(".dock,.d-dock,.p-dock,.bottom-nav").forEach(function (e) { e.remove(); });
     if (noDock) return;
 
+    // Fix: exact mapping for tabs so it never shows 'Home' by mistake
     var map = {
-      "dashboard.html": "dash", "task-history.html": "dash", "my-submissions.html": "dash",
-      "notifications.html": "dash", "reports.html": "dash",
-      "tasks.html": "submit", "task.html": "submit",
+      "dashboard.html": "dash", 
+      "task-history.html": "dash", 
+      "my-submissions.html": "dash",
+      "notifications.html": "dash", 
+      "reports.html": "dash",
+      "tasks.html": "submit", 
+      "task.html": "submit",
       "leaderboard.html": "leaders",
-      "wallet.html": "wallet", "withdraw.html": "wallet",
+      "wallet.html": "wallet", 
+      "withdraw.html": "wallet",
       "profile.html": "profile"
     };
     var cur = map[file] || "";
