@@ -17,26 +17,21 @@
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
 html,body{background:var(--bg)!important;margin:0;padding:0;height:100vh;height:100dvh;overflow:hidden;font-family:'Hind Siliguri','Inter',sans-serif;color:var(--ink)}
 a{text-decoration:none;color:inherit} button{font-family:inherit}
-
-/* Background Glow */
 .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
 .orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.4;animation:dr1 20s ease-in-out infinite}
 .orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.3;animation:dr2 24s ease-in-out infinite}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
-
-/* Smooth Animations */
 @keyframes slideUpFade{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 
-/* App Layout (Strict No-Scroll) */
 .app{position:relative;z-index:1;max-width:520px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:0 16px}
 
-/* Header */
+/* Top Bar */
 .top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 12px;animation:slideUpFade .5s ease both}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.3px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px}
 .mark{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
 .actions{display:flex;gap:8px}
 .ibtn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 36px}
@@ -44,11 +39,9 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fca5a5}
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
-/* Compact Hero Card */
+/* Hero */
 .hero{flex-shrink:0;position:relative;overflow:hidden;border-radius:24px;padding:16px;margin-bottom:12px;background:linear-gradient(135deg,#312e81 0%,#5b21b6 50%,#7e22ce 100%);box-shadow:0 20px 40px -15px rgba(124,58,237,.7),inset 0 1px 0 rgba(255,255,255,.2);animation:slideUpFade .6s cubic-bezier(.2,.8,.2,1) both}
 .hero::before{content:'';position:absolute;top:-50%;left:-30%;width:120%;height:150%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 60%);pointer-events:none}
-
-/* User Info (Top) */
 .h-top{display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1}
 .d-left{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
 .d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif;margin-top:2px}
@@ -57,7 +50,6 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2;color:#fff}
 .d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:inline-block;vertical-align:middle}
 
-/* Exact Profile Premium Badge (Dynamic Colors) */
 .premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700}
 .premium-badge::before{content:'✓';color:#fff;font-size:10px;font-weight:900;position:relative;z-index:2;text-shadow:0 2px 4px rgba(180,123,0,.9)}
 .premium-badge::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 80%);transform:rotate(45deg);animation:premiumShine 3s infinite ease-in-out}
@@ -70,12 +62,10 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .premium-badge.red{background:linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c);border-color:#fecaca}
 .premium-badge.bronze{background:linear-gradient(135deg,#fdba74,#ea580c,#9a3412);border-color:#fed7aa}
 
-/* Green Tall Withdraw Button */
 .d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s;margin-top:4px}
 .d-wd:active{transform:scale(.95)}
 .d-wd svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
 
-/* Balance Area */
 .d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:14px}
 .d-bl{font-size:11px;font-weight:600;opacity:.85}
 .d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
@@ -84,14 +74,12 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .d-mi b{display:block;font:800 14px 'Inter',sans-serif;line-height:1.1}
 .d-mi span{font-size:10px;opacity:.8;font-weight:600}
 
-/* Notice Bar */
 .d-notice{flex-shrink:0;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;overflow:hidden;animation:slideUpFade .6s ease .1s both}
 .d-notice svg{width:16px;height:16px;flex:0 0 16px}
 .notice-marquee{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;position:relative;height:18px}
 .notice-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeNotice 12s linear infinite}
 .d-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
 
-/* Tabs */
 .seg{flex-shrink:0;display:flex;background:rgba(255,255,255,.04);padding:4px;border-radius:16px;margin-bottom:12px;position:relative;border:1px solid var(--line);animation:slideUpFade .8s ease both}
 .seg-btn{flex:1;padding:10px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.3s;position:relative;z-index:1}
 .seg-btn.active{color:#fff}
@@ -100,34 +88,36 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .seg.right .seg-bg{transform:translateX(100%)}
 .seg .count{font-family:'Inter';background:rgba(255,255,255,.2);padding:1px 6px;border-radius:999px;font-size:10px}
 
-/* Content Area (Only this scrolls) */
 .content-area{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px));animation:fadeIn .5s ease both}
 .content-area::-webkit-scrollbar{display:none}
 .hidden{display:none!important}
 
-/* Task Rows */
-.task-wrapper{display:flex;flex-direction:column;margin-bottom:8px}
+/* Task Row */
 .x-rb{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
 .x-rs{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:nowrap;overflow:hidden;width:100%}
 .x-tag.time{width:86px;min-width:86px;flex-shrink:0;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',monospace;font-size:10px;padding:2px 0;white-space:nowrap;overflow:hidden}
 .x-go{flex-shrink:0}
 
-/* Toggle Button */
-.info-toggle-btn{background:rgba(99,102,241,.15);border:1px solid rgba(139,92,246,.4);color:#c4b5fd;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;margin-left:6px;transition:0.2s}
-.info-toggle-btn:active{transform:scale(0.95);background:rgba(99,102,241,.3)}
+/* Price Clickable */
+.x-price{cursor:pointer; position:relative; transition:transform 0.2s}
+.x-price:active{transform:scale(0.92)}
 
-/* Toggle Panel */
-.task-info-panel{display:none;background:rgba(0,0,0,.25);border:1px solid var(--line);border-top:none;border-radius:0 0 18px 18px;padding:12px;margin-top:-10px;margin-bottom:4px;animation:slideDown 0.3s ease}
-.task-info-panel.open{display:block}
-@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-.task-info-panel h4{margin:0 0 6px;font-size:12px;color:#fde68a;display:flex;align-items:center;gap:4px}
-.task-info-panel h4 svg{width:14px;height:14px}
-.task-info-panel p{margin:0 0 10px;font-size:12px;color:#dcdcf2;line-height:1.5;white-space:pre-wrap}
-.ms-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
-.ms-row{display:flex;justify-content:space-between;background:rgba(255,255,255,.05);padding:6px 10px;border-radius:8px;font-size:11.5px;font-weight:700}
-.ms-row span:last-child{color:#6ee7b7;font-family:'Inter'}
+/* Modal for Milestone */
+.ms-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,3,10,.8);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .3s}
+.ms-modal.show{opacity:1;visibility:visible}
+.ms-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;transform:translateY(100%);transition:transform .4s cubic-bezier(.2,.8,.2,1);padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.ms-modal.show .ms-sheet{transform:translateY(0)}
+.ms-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.ms-head h3{margin:0;font-size:18px;font-weight:700;color:#fff}
+.ms-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px}
+.ms-body{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.ms-item{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+.ms-item span{font-size:14px;font-weight:700;color:#dcdcf2}
+.ms-item b{font-size:15px;font-weight:900;color:#6ee7b7;font-family:'Inter'}
+.ms-item.highlight{background:linear-gradient(135deg, rgba(251,191,36,.15), rgba(245,158,11,.05));border-color:rgba(251,191,36,.4)}
+.ms-item.highlight span{color:#fde68a}
+.ms-item.highlight b{color:#fbbf24}
 
-/* Activity Rows */
 .act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
 .act-row .x-rb{min-width:0}
 .act-chips{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
@@ -213,6 +203,17 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
   </div>
 </div>
 
+<!-- Milestone Modal -->
+<div class="ms-modal" id="msModal">
+  <div class="ms-sheet">
+    <div class="ms-head">
+      <h3 id="msTitle">Milestones</h3>
+      <button class="ms-close" onclick="document.getElementById('msModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="ms-body" id="msBody"></div>
+  </div>
+</div>
+
 <div class="x-sheet" id="noticeSheet">
   <div class="x-sheet-box">
     <div class="x-sheet-h"><h3 id="nsTitle"></h3><button class="x-ibtn" id="nsClose" aria-label="Close"></button></div>
@@ -220,7 +221,6 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
   </div>
 </div>
 
-<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -234,7 +234,6 @@ $("bellBtn").innerHTML = S.bell;
 $("logoutBtn").innerHTML = S.logout;
 $("nsClose").innerHTML = S.close;
 
-// Badge Color Logic
 function getBadgeClass(color) {
   if (!color) return '';
   if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
@@ -243,7 +242,7 @@ function getBadgeClass(color) {
   if (color.includes("#10b981")) return 'green';
   if (color.includes("#ef4444")) return 'red';
   if (color.includes("#ea580c")) return 'bronze';
-  return ''; // Default Golden
+  return '';
 }
 
 const ready = { user: false, tasks: false, subs: false };
@@ -252,31 +251,27 @@ function mark(k) {
   if (ready.user && ready.tasks && ready.subs) window.adqReady && window.adqReady();
 }
 
-// Logout
 $("logoutBtn").onclick = async () => {
   if (!confirm("লগআউট করবেন?")) return;
   await signOut(auth);
   location.href = "login.html";
 };
 
-// Tabs
 document.querySelectorAll(".seg-btn").forEach(btn => {
   btn.onclick = () => {
     const seg = $("segTabs");
     seg.classList.toggle("right", btn.dataset.target === "pAct");
     document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    
     ["pTasks", "pAct"].forEach(id => $(id).classList.add("hidden"));
     const target = $(btn.dataset.target);
     target.classList.remove("hidden");
     target.style.animation = "none";
-    target.offsetHeight; // trigger reflow
+    target.offsetHeight; 
     target.style.animation = "fadeIn .4s ease both";
   };
 });
 
-// Live Timer Logic
 function getFormattedTime(endMs, startMs) {
   const now = Date.now();
   if (startMs && now < startMs) {
@@ -285,7 +280,6 @@ function getFormattedTime(endMs, startMs) {
   }
   if (endMs && now > endMs) return { k: "closed", t: "শেষ", isDanger: false };
   if (!endMs) return { k: "open", t: "Open", isDanger: false };
-  
   const diff = endMs - now;
   const isDanger = diff > 0 && diff <= 5 * 60 * 1000;
   return { k: "open", t: fmt(diff), isDanger };
@@ -298,68 +292,50 @@ function fmt(ms) {
   return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
-// Task Row Generation with Toggle
+// Show Milestone Modal
+window.showMilestones = function(event, taskId) {
+  event.preventDefault();
+  event.stopPropagation();
+  const t = window._tasksCache[taskId];
+  if(!t || !t.milestones || t.milestones.length === 0) return;
+
+  $("msTitle").textContent = "Milestones - ৳" + t.pricePerAccount;
+  const body = $("msBody");
+  body.innerHTML = t.milestones.map((m, i) => {
+    const isHighest = i === t.milestones.length - 1;
+    return `<div class="ms-item ${isHighest ? 'highlight' : ''}">
+      <span>${m.target}+ Accounts (Good)</span>
+      <b>৳${m.price}/ea</b>
+    </div>`;
+  }).join("");
+  
+  $("msModal").classList.add("show");
+};
+
 function customTaskRow(t) {
   let startMs = t.startTime?.toDate?.()?.getTime() || 0;
   let endMs = t.endTime?.toDate?.()?.getTime() || 0;
   let st = getFormattedTime(endMs, startMs);
-  
   let fields = (t.fields || []).length;
-  let milestoneTag = (t.milestones && t.milestones.length > 0) ? `<span class="x-tag gold" style="color:#fcd34d;font-size:10px;">🎁 MS</span>` : "";
   
-  // Field Format String (A=UID | B=Pass)
-  let fieldStr = (t.fields || []).map((f, i) => `${String.fromCharCode(65 + i)}=${f.label}`).join(" | ");
+  let priceClass = (t.milestones && t.milestones.length > 0) ? "x-price" : "x-price";
+  let clickAttr = (t.milestones && t.milestones.length > 0) ? `onclick="showMilestones(event, '${t.id}')"` : "";
   
-  // Milestone Rates
-  let msHtml = "";
-  if (t.milestones && t.milestones.length > 0) {
-    msHtml = `<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.1);padding-top:8px;">
-      <h4 style="margin-bottom:6px;color:#fbbf24;">🔥 Milestone Rates</h4>
-      <div class="ms-list">
-        ${t.milestones.map(m => `<div class="ms-row"><span>${m.target} Accounts Good</span><span>৳${m.price}/ea</span></div>`).join("")}
+  return `<a class="x-row" href="task.html?id=${esc(t.id)}">
+    ${logo(t.platform)}
+    <div class="x-rb">
+      <div class="x-rt">${esc(t.title)}</div>
+      <div class="x-rs">
+        <span class="${priceClass}" ${clickAttr}>৳${esc(t.pricePerAccount)}</span>
+        <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
+          <i></i><span class="time-text">${st.t}</span>
+        </span>
+        <span class="x-tag">${S.layers} ${fields}</span>
       </div>
-    </div>`;
-  }
-
-  return `<div class="task-wrapper">
-    <div style="display:flex; position:relative;">
-      <a class="x-row" href="task.html?id=${esc(t.id)}" style="flex:1; margin-bottom:0; border-radius:18px 18px 0 0; border-bottom:none; padding-right:50px;">
-        ${logo(t.platform)}
-        <div class="x-rb">
-          <div class="x-rt">${esc(t.title)}</div>
-          <div class="x-rs">
-            <span class="x-price">৳${esc(t.pricePerAccount)}</span>
-            <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
-              <i></i><span class="time-text">${st.t}</span>
-            </span>
-            <span class="x-tag">${S.layers} ${fields}</span>
-            ${milestoneTag}
-          </div>
-        </div>
-      </a>
-      <button class="info-toggle-btn" onclick="toggleTaskInfo(event, '${t.id}')" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); z-index:2;">
-        ℹ️ Info
-      </button>
     </div>
-    
-    <div class="task-info-panel" id="info-${t.id}">
-      ${t.rules ? `<h4>📜 Rules</h4><p>${esc(t.rules)}</p>` : ''}
-      <h4>📋 Field Format</h4>
-      <p>${esc(fieldStr)}</p>
-      ${msHtml}
-    </div>
-  </div>`;
+    <span class="x-go">${S.chev}</span>
+  </a>`;
 }
-
-// Global Toggle Function
-window.toggleTaskInfo = function(event, taskId) {
-  event.preventDefault(); // Stop link navigation
-  event.stopPropagation();
-  const panel = document.getElementById(`info-${taskId}`);
-  if (panel) {
-    panel.classList.toggle("open");
-  }
-};
 
 const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
 
@@ -374,7 +350,6 @@ onAuthStateChanged(auth, (user) => {
       $("balance").textContent = "৳" + (u.balance || 0);
       $("sGood").textContent = u.totalGood || 0;
       $("sPend").textContent = u.totalPending || 0;
-      
       if (u.customBadge) {
         const badgeClass = getBadgeClass(u.customBadgeColor);
         $("dashBadge").innerHTML = `<span class="premium-badge ${badgeClass}" title="${esc(u.customBadge)}"></span>`;
@@ -390,19 +365,15 @@ onAuthStateChanged(auth, (user) => {
   loadActivity(user.uid);
 });
 
-// Notice
 async function loadNotice() {
   try {
     const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
     if (snap.empty) return;
     const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
-    
     const bar = $("noticeBar");
     bar.innerHTML = S.bell + `<div class="notice-marquee"><span class="notice-text">${esc(n.title)}</span></div>` + S.chev.replace("<svg", '<svg class="chev"');
-    
     const dur = Math.max(8, n.title.length * 0.2);
     bar.querySelector('.notice-text').style.animationDuration = dur + 's';
-    
     bar.hidden = false;
     bar.onclick = () => {
       $("nsTitle").textContent = n.title || "নোটিশ";
@@ -417,7 +388,8 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
 $("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
 
-// Tasks
+window._tasksCache = {};
+
 function loadTasks() {
   const list = $("pTasks");
   onSnapshot(query(collection(db, "tasks"), where("active", "==", true)), (snap) => {
@@ -427,7 +399,9 @@ function loadTasks() {
       .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
       
     $("cntTasks").textContent = tasks.length;
-    
+    window._tasksCache = {};
+    tasks.forEach(t => window._tasksCache[t.id] = t);
+
     if (!tasks.length) {
       list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো open task নেই</div>`;
     } else {
@@ -438,21 +412,17 @@ function loadTasks() {
   }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
 }
 
-// ✅ LIVE TIMER UPDATE
 setInterval(() => {
   document.querySelectorAll('.x-tag.time').forEach(el => {
     const startMs = Number(el.dataset.start) || 0;
     const endMs = Number(el.dataset.end) || 0;
     const st = getFormattedTime(endMs, startMs);
-    
     const textEl = el.querySelector('.time-text');
     if (textEl) textEl.textContent = st.t;
-    
     el.className = `x-tag time ${st.k}${st.isDanger ? ' danger' : ''}`;
   });
 }, 1000);
 
-// Activity
 function loadActivity(uid) {
   const list = $("pAct");
   onSnapshot(query(collection(db, "submissions"), where("userId", "==", uid)), (snap) => {
@@ -489,4 +459,4 @@ function loadActivity(uid) {
 }
 </script>
 </body>
-</html>  
+</html>
