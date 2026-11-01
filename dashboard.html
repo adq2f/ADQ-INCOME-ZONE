@@ -26,12 +26,12 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
 
-/* Premium Animations */
+/* Smooth Animations */
 @keyframes slideUpFade{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes marqueeNotice{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
 
-/* App Layout - FIXED (No Body Scroll) */
+/* Layout - FIXED NO SCROLL */
 .app{position:relative;z-index:1;max-width:520px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:0 16px}
 
 /* Header */
@@ -48,14 +48,14 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .hero{flex-shrink:0;position:relative;overflow:hidden;border-radius:24px;padding:16px;margin-bottom:12px;background:linear-gradient(135deg,#312e81 0%,#5b21b6 50%,#7e22ce 100%);box-shadow:0 20px 40px -15px rgba(124,58,237,.7),inset 0 1px 0 rgba(255,255,255,.2);animation:slideUpFade .6s cubic-bezier(.2,.8,.2,1) both}
 .hero::before{content:'';position:absolute;top:-50%;left:-30%;width:120%;height:150%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 60%);pointer-events:none}
 
-/* User Info (Top) */
-.h-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+/* Top Row: Name & Badge */
+.h-top{display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1}
 .h-user{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .avatar{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:rgba(0,0,0,.3);border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-family:'Inter';font-weight:800;font-size:15px;box-shadow:0 8px 16px -4px rgba(0,0,0,.4)}
 .u-info{display:flex;flex-direction:column;min-width:0;flex:1}
 .u-hi{font-size:10.5px;opacity:.8;font-weight:500;letter-spacing:.5px}
-.u-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;width:100%}
-.name-truncate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:inline-block}
+.u-name{font-size:15px;font-weight:700;display:flex;align-items:center;gap:6px;width:100%;margin-top:2px}
+.name-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;display:inline-block}
 
 /* Exact Profile Badge */
 .premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700}
@@ -64,32 +64,32 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 @keyframes premiumPulse{0%{box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1)}100%{box-shadow:0 8px 20px rgba(245,158,11,.8),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1.05)}}
 @keyframes premiumShine{0%{left:-100%}20%{left:100%}100%{left:100%}}
 
-/* Middle Section (Balance & Green Tall Withdraw) */
-.h-mid{display:flex;align-items:center;justify-content:space-between;margin-top:14px;position:relative;z-index:1}
+/* Middle Row: Balance & Green Withdraw */
+.h-mid{display:flex;align-items:flex-end;justify-content:space-between;margin-top:14px;position:relative;z-index:1}
 .h-bal{display:flex;flex-direction:column}
 .bal-l{font-size:11px;font-weight:600;opacity:.85;margin-bottom:4px;display:flex;align-items:center;gap:5px}
 .bal-a{font-family:'Inter';font-weight:900;font-size:32px;letter-spacing:-1px;line-height:1;text-shadow:0 4px 12px rgba(0,0,0,.3)}
 
 /* Tall Green Withdraw Button */
-.btn-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 18px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:12.5px;font-weight:800;box-shadow:0 10px 25px -6px rgba(16,185,129,.7),inset 0 1px 0 rgba(255,255,255,.3);transition:all .25s cubic-bezier(.2,.8,.2,1);flex-shrink:0;height:56px}
+.btn-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 20px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:12.5px;font-weight:800;box-shadow:0 10px 25px -6px rgba(16,185,129,.7),inset 0 1px 0 rgba(255,255,255,.3);transition:all .25s cubic-bezier(.2,.8,.2,1);flex-shrink:0;height:56px}
 .btn-wd svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .btn-wd:active{transform:scale(.94);box-shadow:0 5px 15px -5px rgba(16,185,129,.7)}
 
-/* Stats */
+/* Bottom Row: Stats */
 .h-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:14px;position:relative;z-index:1}
 .st-box{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:8px 4px;text-align:center;transition:.3s;backdrop-filter:blur(10px)}
 .st-box:hover{background:rgba(0,0,0,.4);transform:translateY(-2px)}
 .st-box b{display:block;font-family:'Inter';font-size:15px;font-weight:900;line-height:1.2}
 .st-box span{font-size:10px;opacity:.8;font-weight:600;letter-spacing:.5px}
 
-/* Notice Bar (Full Marquee) */
+/* Notice Bar */
 .notice{flex-shrink:0;display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;border-radius:14px;border:1px solid rgba(245,158,11,.3);background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.05));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;margin-bottom:12px;transition:.3s;animation:slideUpFade .7s ease both;overflow:hidden}
 .notice > svg{width:16px;height:16px;flex:0 0 16px;color:#fbbf24}
 .notice-marquee{overflow:hidden;flex:1;min-width:0;position:relative;height:18px;display:flex;align-items:center}
 .notice-text{white-space:nowrap;position:absolute;animation:marqueeNotice 10s linear infinite;font-weight:inherit}
 .notice .chev{width:14px;height:14px;opacity:.6;flex:0 0 14px}
 
-/* Tabs Segmented Control */
+/* Tabs */
 .seg{flex-shrink:0;display:flex;background:rgba(255,255,255,.04);padding:4px;border-radius:16px;margin-bottom:12px;position:relative;border:1px solid var(--line);animation:slideUpFade .8s ease both}
 .seg-btn{flex:1;padding:10px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.3s;position:relative;z-index:1}
 .seg-btn.active{color:#fff}
@@ -98,7 +98,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .seg.right .seg-bg{transform:translateX(100%)}
 .seg .count{font-family:'Inter';background:rgba(255,255,255,.2);padding:1px 6px;border-radius:999px;font-size:10px}
 
-/* Content Area (ONLY THIS SCROLLS) */
+/* List Area (Only this scrolls) */
 .content-area{flex:1;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px));animation:fadeIn .5s ease both}
 .content-area::-webkit-scrollbar{display:none}
 .hidden{display:none!important}
@@ -129,17 +129,15 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .act-earn{font-family:'Inter';font-size:12px;font-weight:900;padding:5px 10px;border-radius:8px;background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
 .act-earn.zero{background:rgba(255,255,255,.05);color:#9a9bb8;border-color:transparent}
 
-/* Empty State */
+/* Empty & More Button */
 .empty{text-align:center;padding:30px 20px;background:rgba(255,255,255,.02);border:1.5px dashed rgba(255,255,255,.1);border-radius:20px;color:var(--muted);font-size:13px;font-weight:600}
 .empty svg{width:36px;height:36px;margin-bottom:10px;stroke:var(--muted);fill:none;stroke-width:1.5;opacity:.5}
-
-/* View All Button */
 .btn-more{display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:14px;color:#c4b5fd;font-size:12.5px;font-weight:700;background:rgba(99,102,241,.1);border:1px solid rgba(139,92,246,.3);margin-top:4px;transition:.3s}
 .btn-more:hover{background:rgba(99,102,241,.2);color:#fff}
 .btn-more svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* Notice Modal */
-.modal{position:fixed;inset:0;z-index:2000;background:rgba(3,3,10,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.modal{position:fixed;inset:0;z-index:2000;background:rgba(3,3,10,.75);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
 .modal.show{opacity:1;visibility:visible}
 .sheet{width:100%;max-width:520px;background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.1);border-bottom:none;border-radius:28px 28px 0 0;transform:translateY(100%);transition:transform .4s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom,0px)}
 .modal.show .sheet{transform:none}
@@ -167,23 +165,23 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
     </div>
   </header>
 
-  <!-- Premium Hero Card -->
+  <!-- Compact Hero Card -->
   <section class="hero">
-    <!-- Top: Name & Badge -->
+    <!-- Name & Badge -->
     <div class="h-top">
       <div class="h-user">
         <div class="avatar" id="avatar">U</div>
         <div class="u-info">
           <div class="u-hi">স্বাগতম,</div>
           <div class="u-name">
-            <span class="name-truncate" id="username">Loading...</span>
+            <span class="name-text" id="username">Loading...</span>
             <span id="badgeWrap" style="display:none" class="premium-badge"></span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Middle: Balance & Green Tall Withdraw -->
+    <!-- Balance & Withdraw Button -->
     <div class="h-mid">
       <div class="h-bal">
         <div class="bal-l"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg> আপনার ব্যালেন্স</div>
@@ -194,7 +192,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
       </a>
     </div>
 
-    <!-- Bottom: Stats -->
+    <!-- Stats -->
     <div class="h-stats">
       <div class="st-box"><b id="sSubs">0</b><span>Subs</span></div>
       <div class="st-box" style="color:#6ee7b7"><b id="sGood">0</b><span>Good</span></div>
@@ -202,7 +200,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
     </div>
   </section>
 
-  <!-- Notice Bar (Full Text Marquee) -->
+  <!-- Notice -->
   <button class="notice" id="noticeBar" hidden>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
     <div class="notice-marquee">
@@ -222,17 +220,16 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
     </button>
   </div>
 
-  <!-- Content Areas (Only this scrolls) -->
+  <!-- Scrollable List -->
   <div class="content-area" id="pTasks">
     <div class="empty">লোড হচ্ছে...</div>
   </div>
-
   <div class="content-area hidden" id="pAct">
     <div class="empty">লোড হচ্ছে...</div>
   </div>
 </div>
 
-<!-- Notice Modal -->
+<!-- Modal -->
 <div class="modal" id="noticeModal">
   <div class="sheet">
     <div class="sheet-h">
@@ -250,7 +247,6 @@ import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// App Shell Helpers
 const S = window.ADQ.svg;
 const esc = window.ADQ.esc;
 const logo = window.ADQ.logo;
@@ -266,31 +262,29 @@ $("logoutBtn").onclick = async () => {
   location.href = "login.html";
 };
 
-// Tabs Logic
+// Tabs
 document.querySelectorAll(".seg-btn").forEach(btn => {
   btn.onclick = () => {
     const seg = $("segTabs");
     seg.classList.toggle("right", btn.dataset.target === "pAct");
     document.querySelectorAll(".seg-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    
     ["pTasks", "pAct"].forEach(id => $(id).classList.add("hidden"));
     const target = $(btn.dataset.target);
     target.classList.remove("hidden");
     target.style.animation = "none";
-    target.offsetHeight; // reflow
+    target.offsetHeight;
     target.style.animation = "fadeIn .4s ease both";
   };
 });
 
-// Countdown Timer Logic (HH:MM:SS)
+// Countdown Timer (HH:MM Only)
 function getFormattedTime(endMs) {
   const diff = endMs - Date.now();
   if (diff <= 0) return "শেষ";
   const h = Math.floor(diff / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
-  const s = Math.floor((diff % 60000) / 1000);
-  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
 }
 
 const ready = { user: false, tasks: false, subs: false };
@@ -304,7 +298,6 @@ const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
 onAuthStateChanged(auth, (user) => {
   if (!user) { location.href = "login.html"; return; }
 
-  // User Data
   onSnapshot(doc(db, "users", user.uid), (snap) => {
     if (snap.exists()) {
       const u = snap.data();
@@ -326,19 +319,16 @@ onAuthStateChanged(auth, (user) => {
   loadActivity(user.uid);
 });
 
-// Load Notice
+// Notice
 async function loadNotice() {
   try {
     const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
     if (snap.empty) return;
     const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
     
-    // Notice marquee setup
     $("noticeTitle").textContent = n.title;
-    // Adjust animation duration based on text length (approx 10 chars per second)
     const duration = Math.max(8, n.title.length * 0.3); 
     $("noticeTitle").style.animationDuration = `${duration}s`;
-    
     $("noticeBar").hidden = false;
     
     $("noticeBar").onclick = () => {
@@ -353,11 +343,10 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeModal").classList.remove("show");
 $("noticeModal").addEventListener("click", (e) => { if (e.target === $("noticeModal")) $("noticeModal").classList.remove("show"); });
 
-// Load Tasks & Live Countdown
+// Tasks & Countdown
 let taskInterval = null;
 function loadTasks() {
   const list = $("pTasks");
-  
   onSnapshot(query(collection(db, "tasks"), where("active", "==", true)), (snap) => {
     const now = new Date();
     const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
@@ -366,7 +355,6 @@ function loadTasks() {
       
     $("cntTasks").textContent = tasks.length;
     
-    // Initial Render
     if (!tasks.length) {
       list.innerHTML = `<div class="empty">${S.inbox}এখনো কোনো open task নেই</div>`;
     } else {
@@ -392,7 +380,6 @@ function loadTasks() {
       }).join("") + `<a href="tasks.html" class="btn-more">সব Task দেখুন ${S.chev}</a>`;
     }
 
-    // Live Timer Update
     if (taskInterval) clearInterval(taskInterval);
     taskInterval = setInterval(() => {
       const taskElements = list.querySelectorAll('.task-item');
@@ -416,7 +403,7 @@ function loadTasks() {
   }, (e) => { list.innerHTML = `<div class="empty">${esc(e.message)}</div>`; mark("tasks"); });
 }
 
-// Load Activity
+// Activity
 function loadActivity(uid) {
   const list = $("pAct");
   onSnapshot(query(collection(db, "submissions"), where("userId", "==", uid)), (snap) => {
