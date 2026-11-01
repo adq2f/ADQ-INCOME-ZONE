@@ -4,169 +4,304 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#06060f">
-<title>Wallet — ADQ Income Zone</title>
+<title>My Wallet — ADQ Income Zone</title>
+<!-- app-shell.js রাখা হলো শুধু নিচের মেনুর (Dock) জন্য -->
 <script src="app-shell.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
-.w-bal{flex:0 0 auto;margin-bottom:10px}
-.w-l{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;opacity:.9}
-.w-l svg{width:16px;height:16px;margin-right:6px;display:inline-block;vertical-align:-3px}
-.w-chip{width:34px;height:25px;border-radius:6px;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
-.w-a{font:900 38px 'Inter',sans-serif;letter-spacing:-1.2px;line-height:1.05;margin:8px 0 12px;text-shadow:0 6px 18px rgba(0,0,0,.25)}
-.w-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.w-b{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:14px;font-size:13.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28)}
-.w-b.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 10px 22px -8px rgba(0,0,0,.45)}
-.w-b svg{width:16px;height:16px}
-.pm-tile{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.28)}
-.pm-dot{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.22);font:900 15px 'Inter',sans-serif}
-.pm-info{flex:1;min-width:0}
-.pm-info b{display:block;font-size:12.5px;opacity:.9}
-.pm-info span{display:block;font:800 16px 'Inter',sans-serif;letter-spacing:.4px;word-break:break-all}
-.pm-info small{font-size:11.5px;opacity:.8}
-.pm-copy{width:34px;height:34px;flex:0 0 34px;border-radius:11px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
-.pm-copy svg{width:16px;height:16px}
-.wm-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);margin-bottom:10px}
-.wm-tab{padding:9px 2px;border-radius:11px;border:none;background:transparent;color:#9a9bb8;font-size:12.5px;font-weight:700;cursor:pointer}
-.wm-tab.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
-.sheet-pad{padding:0 16px calc(18px + env(safe-area-inset-bottom,0px))}
-.sheet-acts{display:grid;grid-template-columns:1fr 54px;gap:10px;margin-top:12px}
+:root{
+  --bg:#06060f; --ink:#f4f4ff; --muted:#9a9bb8; --line:rgba(255,255,255,.09);
+  --brand:#6366f1; --accent:#8b5cf6; --cyan:#22d3ee; --green:#10b981; --red:#ef4444; --gold:#f59e0b;
+}
+*{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
+html,body{background:var(--bg)!important;margin:0;padding:0;min-height:100vh;min-height:100dvh;overflow-x:hidden;font-family:'Hind Siliguri','Inter',sans-serif;color:var(--ink)}
+a{text-decoration:none;color:inherit} button{font-family:inherit}
+
+/* Background Glow */
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
+.orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.4;animation:dr1 20s ease-in-out infinite}
+.orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.3;animation:dr2 24s ease-in-out infinite}
+@keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
+@keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+
+/* Layout */
+.app{position:relative;z-index:1;max-width:520px;margin:0 auto;padding:0 16px calc(100px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;min-height:100vh}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+.mark{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
+.ibtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 38px}
+.ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fca5a5}
+.ibtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Smooth Animations */
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 10px 30px -10px rgba(16,185,129,.6)}50%{box-shadow:0 15px 40px -5px rgba(16,185,129,.9)}}
+
+/* Hero Balance Card */
+.hero{position:relative;overflow:hidden;border-radius:28px;padding:24px;margin-bottom:16px;background:linear-gradient(135deg,#047857 0%,#0d9488 55%,#0891b2 110%);box-shadow:0 24px 50px -18px rgba(13,148,136,.8),inset 0 1px 0 rgba(255,255,255,.3);animation:slideUp .6s cubic-bezier(.2,.8,.2,1) both}
+.hero::before{content:'';position:absolute;top:-60%;left:-20%;width:90%;height:160%;background:radial-gradient(circle,rgba(255,255,255,.2),transparent 62%);pointer-events:none}
+.hero::after{content:'';position:absolute;right:-60px;bottom:-80px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,.15);box-shadow:0 0 0 20px rgba(255,255,255,.05),0 0 0 40px rgba(255,255,255,.03);pointer-events:none}
+.h-top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;font-size:13px;font-weight:600;opacity:.9}
+.h-top svg{width:18px;height:18px;margin-right:6px;vertical-align:-3px}
+.h-chip{width:34px;height:26px;border-radius:6px;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.h-amt{font-family:'Inter';font-weight:900;font-size:46px;letter-spacing:-1.5px;line-height:1;margin:16px 0 20px;position:relative;z-index:1;text-shadow:0 6px 18px rgba(0,0,0,.3);animation:slideUp .7s cubic-bezier(.2,.8,.2,1) both}
+.h-acts{display:grid;grid-template-columns:1fr 1fr;gap:12px;position:relative;z-index:1}
+.h-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:15px;font-size:14px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);transition:.25s}
+.h-btn:active{transform:scale(.97)}
+.h-btn.solid{background:#fff;color:#0f766e;border-color:#fff;box-shadow:0 10px 24px -8px rgba(0,0,0,.4)}
+.h-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;animation:slideUp .7s cubic-bezier(.2,.8,.2,1) both}
+.st{position:relative;overflow:hidden;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:14px 8px 12px;border-radius:20px;text-align:center;transition:.3s}
+.st:hover{transform:translateY(-2px);background:rgba(255,255,255,.07)}
+.st::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 6px 6px;background:var(--c);box-shadow:0 0 14px var(--c)}
+.st b{display:block;font-family:'Inter';font-size:22px;font-weight:900;color:var(--c);line-height:1.1}
+.st span{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:3px;display:block}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;background:rgba(255,255,255,.04);padding:4px;border-radius:16px;margin-bottom:16px;animation:slideUp .8s cubic-bezier(.2,.8,.2,1) both}
+.tab{flex:1;padding:10px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;transition:.3s;display:flex;align-items:center;justify-content:center;gap:6px}
+.tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 10px 22px -8px rgba(139,92,246,.9)}
+.tab svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Content Area */
+.content{animation:fadeIn .5s ease both}
+.hidden{display:none!important}
+
+/* History Items */
+.h-item{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-left:4px solid #f59e0b;border-radius:20px;transition:.25s;animation:slideUp .4s cubic-bezier(.2,.8,.2,1) both}
+.h-item:hover{transform:translateY(-2px);background:rgba(255,255,255,.07)}
+.h-item.approved{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.12),rgba(255,255,255,.03) 50%)}
+.h-item.rejected{border-left-color:#ef4444;background:linear-gradient(90deg,rgba(239,68,68,.12),rgba(255,255,255,.03) 50%)}
+.h-item.pending{background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(255,255,255,.03) 50%)}
+.h-logo{width:46px;height:46px;flex:0 0 46px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-family:'Inter';font-weight:900;font-size:18px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 10px 20px -8px var(--c1)}
+.h-info{flex:1;min-width:0}
+.h-amt{font-family:'Inter';font-size:16px;font-weight:900;color:#fff}
+.h-meta{font-size:12px;color:var(--muted);font-weight:600;margin-top:2px;word-break:break-all}
+.h-time{font-size:11px;color:#6f7090;margin-top:3px}
+.h-status{font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.h-status.approved{background:rgba(16,185,129,.18);color:#6ee7b7}
+.h-status.rejected{background:rgba(239,68,68,.18);color:#fca5a5}
+.h-status.pending{background:rgba(245,158,11,.18);color:#fcd34d}
+
+/* Wallet Info Cards */
+.w-tile{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;border-radius:20px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.25);animation:slideUp .4s cubic-bezier(.2,.8,.2,1) both}
+.w-dot{width:36px;height:36px;flex:0 0 36px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.2);font-family:'Inter';font-weight:900;font-size:16px}
+.w-info{flex:1;min-width:0}
+.w-info b{display:block;font-size:12px;opacity:.9;font-weight:600;margin-bottom:2px}
+.w-info span{display:block;font-family:'Inter';font-weight:800;font-size:16px;letter-spacing:.5px;word-break:break-all}
+.w-info small{font-size:11.5px;opacity:.85}
+.w-copy{width:36px;height:36px;flex:0 0 36px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.15);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s}
+.w-copy:active{transform:scale(.9);background:rgba(255,255,255,.3)}
+.w-copy svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+.btn-edit{width:100%;padding:14px;border-radius:16px;border:1.5px dashed rgba(139,92,246,.5);background:rgba(139,92,246,.1);color:#c4b5fd;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:.25s;margin-top:10px}
+.btn-edit:hover{background:rgba(139,92,246,.2)}
+.btn-edit svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Empty State */
+.empty{text-align:center;padding:40px 20px;background:rgba(255,255,255,.02);border:1.5px dashed rgba(255,255,255,.1);border-radius:24px;color:var(--muted);font-size:13.5px;font-weight:600}
+.empty svg{width:40px;height:40px;margin-bottom:12px;stroke:var(--muted);fill:none;stroke-width:1.5;opacity:.5}
+
+/* Modal (Bottom Sheet) */
+.modal{position:fixed;inset:0;z-index:2000;background:rgba(3,3,10,.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:flex-end;justify-content:center;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}
+.modal.show{opacity:1;visibility:visible}
+.sheet{width:100%;max-width:520px;max-height:90vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;transform:translateY(100%);transition:transform .4s cubic-bezier(.2,.8,.2,1);box-shadow:0 -20px 60px -10px rgba(0,0,0,.8)}
+.modal.show .sheet{transform:none}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sheet-head h3{margin:0;font-size:18px;font-weight:700;color:#fff}
+.close-btn{width:34px;height:34px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.close-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.sheet-body{padding:20px;overflow-y:auto}
+
+.method-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:rgba(255,255,255,.04);padding:4px;border-radius:14px;margin-bottom:16px}
+.m-tab{padding:10px 0;border-radius:10px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.2s}
+.m-tab.active{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;box-shadow:0 8px 18px -6px rgba(139,92,246,.8)}
+
+.input-grp{margin-bottom:14px}
+.input-grp label{display:block;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.input-wrapper{position:relative;display:flex;align-items:center;background:rgba(255,255,255,.05);border:1.5px solid var(--line);border-radius:14px;transition:.2s}
+.input-wrapper:focus-within{border-color:rgba(139,92,246,.8);background:rgba(139,92,246,.08);box-shadow:0 0 0 4px rgba(139,92,246,.15)}
+.input-wrapper svg{width:18px;height:18px;margin-left:14px;color:var(--muted);fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.input-wrapper input{width:100%;padding:14px;background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:15px;font-weight:500}
+.input-wrapper input::placeholder{color:#6f7090}
+
+.btn-save{width:100%;padding:15px;border-radius:16px;border:none;background:linear-gradient(135deg,#10b981,#0d9488);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 14px 30px -10px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);transition:.25s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.btn-save:active{transform:scale(.97)}
+.btn-save svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+
+/* Toast Notification */
+.toast{position:fixed;bottom:100px;left:50%;transform:translate(-50%,20px);background:rgba(16,185,129,.95);color:#fff;padding:12px 20px;border-radius:999px;font-size:13.5px;font-weight:700;box-shadow:0 10px 30px -5px rgba(16,185,129,.6);opacity:0;visibility:hidden;transition:.3s;z-index:3000}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
 </style>
 </head>
-<body class="x-body">
-<div class="x-bg" aria-hidden="true"><div class="o o1"></div><div class="o o2"></div></div>
+<body>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div></div>
 
-<div class="x-app">
-  <header class="x-top">
-    <div class="x-brand"><div class="x-mark">A</div><span>My Wallet</span></div>
-    <div class="x-actions"><button class="x-ibtn danger" id="logoutBtn" aria-label="Logout"></button></div>
+<div class="app">
+  <!-- Top Bar -->
+  <header class="top">
+    <div class="brand"><div class="mark">A</div><span>My Wallet</span></div>
+    <button class="ibtn danger" id="logoutBtn" aria-label="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
   </header>
 
-  <section class="x-hero w-bal">
-    <div class="w-l"><span id="icWallet"></span><div class="w-chip"></div></div>
-    <div class="w-a" id="balance">৳0</div>
-    <div class="w-acts">
-      <a href="withdraw.html" id="withdrawBtnLink" class="w-b solid"></a>
-      <a href="task-history.html" class="w-b" id="histBtn"></a>
+  <!-- Hero Balance Card -->
+  <section class="hero">
+    <div class="h-top">
+      <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg> Available Balance</span>
+      <div class="h-chip"></div>
+    </div>
+    <div class="h-amt" id="balance">৳0</div>
+    <div class="h-acts">
+      <a href="withdraw.html" class="h-btn solid">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Withdraw
+      </a>
+      <a href="task-history.html" class="h-btn">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> History
+      </a>
     </div>
   </section>
 
-  <div class="x-stats">
-    <div class="x-st" style="--c:#34d399"><b id="statGood">0</b><span>Good</span></div>
-    <div class="x-st" style="--c:#f87171"><b id="statBad">0</b><span>Bad</span></div>
-    <div class="x-st" style="--c:#fbbf24"><b id="statPending">0</b><span>Pending</span></div>
+  <!-- Stats Grid -->
+  <div class="stats">
+    <div class="st" style="--c:#34d399"><b id="statGood">0</b><span>Good</span></div>
+    <div class="st" style="--c:#f87171"><b id="statBad">0</b><span>Bad</span></div>
+    <div class="st" style="--c:#fbbf24"><b id="statPending">0</b><span>Pending</span></div>
   </div>
 
-  <div class="x-seg">
-    <button class="active" data-p="pHist" id="segHist"></button>
-    <button data-p="pPay" id="segPay"></button>
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-target="pHist">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Withdraw History
+    </button>
+    <button class="tab" data-target="pPay">
+      <svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg> Payment Info
+    </button>
   </div>
 
-  <div class="x-scroll" id="pHist"><div class="x-skel"></div><div class="x-skel"></div></div>
+  <!-- History Content -->
+  <div class="content" id="pHist">
+    <div id="historyList"></div>
+  </div>
 
-  <div class="x-scroll" id="pPay" hidden>
+  <!-- Payment Info Content -->
+  <div class="content hidden" id="pPay">
     <div id="walletInfoContent"></div>
-    <button class="x-btn ghost" id="editWalletBtn"></button>
+    <button class="btn-edit" id="editWalletBtn">
+      <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      Edit Payment Info
+    </button>
   </div>
 </div>
 
-<div class="x-sheet" id="walletModal">
-  <div class="x-sheet-box">
-    <div class="x-sheet-h"><h3 style="color:#fff">Wallet Setup</h3><button class="x-ibtn" id="closeWalletX" aria-label="Close"></button></div>
-    <div class="sheet-pad">
-      <div class="wm-tabs">
-        <button class="wm-tab active" data-method="bkash">bKash</button>
-        <button class="wm-tab" data-method="nagad">Nagad</button>
-        <button class="wm-tab" data-method="rocket">Rocket</button>
-        <button class="wm-tab" data-method="binance">Binance</button>
+<!-- Wallet Setup Modal -->
+<div class="modal" id="walletModal">
+  <div class="sheet">
+    <div class="sheet-head">
+      <h3>Setup Wallet</h3>
+      <button class="close-btn" id="closeWalletBtn">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="method-tabs">
+        <button class="m-tab active" data-m="bkash">bKash</button>
+        <button class="m-tab" data-m="nagad">Nagad</button>
+        <button class="m-tab" data-m="rocket">Rocket</button>
+        <button class="m-tab" data-m="binance">Binance</button>
       </div>
-      <div class="x-lab" id="wmLabel">bKash Number</div>
-      <div class="x-field"><span class="ic" id="icPhone"></span><input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off"></div>
-      <div class="x-lab">Account Name (optional)</div>
-      <div class="x-field"><span class="ic" id="icUser"></span><input type="text" id="wm-name" placeholder="আপনার নাম" autocomplete="off"></div>
-      <div class="sheet-acts">
-        <button class="x-btn" id="saveWalletBtn"></button>
-        <button class="x-btn ghost" id="closeWalletBtn" aria-label="Close"></button>
+      
+      <div class="input-grp">
+        <label id="wmLabel">bKash Number</label>
+        <div class="input-wrapper">
+          <svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off">
+        </div>
       </div>
+      
+      <div class="input-grp">
+        <label>Account Name (Optional)</label>
+        <div class="input-wrapper">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="wm-name" placeholder="Your Name" autocomplete="off">
+        </div>
+      </div>
+      
+      <button class="btn-save" id="saveWalletBtn">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Save Wallet Info
+      </button>
     </div>
   </div>
 </div>
+
+<!-- Toast -->
+<div class="toast" id="toastMsg">Saved successfully!</div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-window.adqHold = true;
-const { esc, svg: S, toast } = window.ADQ;
+// Local Helpers (App shell er upor depend kore na)
 const $ = (id) => document.getElementById(id);
-
-// ✅ Inline SVG for safety (app-shell.js এর ওপর নির্ভরশীল নয়)
-const SVG_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
-const SVG_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-const SVG_PHONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`;
-const SVG_USER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-
-$("logoutBtn").innerHTML = S.logout;
-$("icWallet").innerHTML = S.wallet + "Available Balance";
-$("withdrawBtnLink").innerHTML = S.download + "Withdraw";
-$("histBtn").innerHTML = S.activity + "History";
-$("segHist").innerHTML = S.clock + "Withdraw History";
-$("segPay").innerHTML = S.wallet + "Payment Info";
-$("editWalletBtn").innerHTML = SVG_EDIT + " Payment Info Edit";
-$("closeWalletX").innerHTML = S.close;
-$("closeWalletBtn").innerHTML = S.close;
-$("saveWalletBtn").innerHTML = S.check + "Save";
-$("icPhone").innerHTML = SVG_PHONE;
-$("icUser").innerHTML = SVG_USER;
-
-document.querySelectorAll(".x-seg button").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".x-seg button").forEach(x => x.classList.toggle("active", x === b));
-    ["pHist", "pPay"].forEach(id => { $(id).hidden = id !== b.dataset.p; });
-  };
-});
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 let currentUser = null, userData = null, started = false;
-let enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
 let tempWalletData = {}, activeMethod = "bkash";
-const ready = { user: false, wd: false };
-const mark = (k) => { ready[k] = true; if (ready.user && ready.wd) window.adqReady && window.adqReady(); };
 
 const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
 const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
 const METHOD_PH = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
 const COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
 
-function normalizeWallet(method, raw) {
-  const s = String(raw || "").trim();
-  if (method === "binance") return /^[A-Za-z0-9_.@:+-]{4,80}$/.test(s) ? s : null;
-  const d = s.replace(/[\s-]/g, "");
-  const m = d.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
-  return m ? m[1] : null;
+// Toast Function
+let toastTimer;
+function showToast(msg) {
+  const t = $("toastMsg");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
 }
 
+// Tabs Logic
+document.querySelectorAll(".tab").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    btn.classList.add("active");
+    ["pHist", "pPay"].forEach(id => {
+      $(id).classList.add("hidden");
+    });
+    $(btn.dataset.target).classList.remove("hidden");
+    $(btn.dataset.target).style.animation = "none";
+    $(btn.dataset.target).offsetHeight; // trigger reflow
+    $(btn.dataset.target).style.animation = "fadeIn .4s ease both";
+  };
+});
+
+// Logout
 $("logoutBtn").onclick = async () => {
-  if (!confirm("লগআউট?")) return;
+  if (!confirm("Are you sure you want to logout?")) return;
   await signOut(auth);
   location.href = "login.html";
 };
 
+// Firebase Auth & Data
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = "login.html"; return; }
   if (started) return;
   started = true;
   currentUser = user;
 
-  try {
-    const snap = await getDoc(doc(db, "settings", "payment_methods"));
-    if (snap.exists()) enabledMethods = { ...enabledMethods, ...snap.data() };
-  } catch (e) {}
-  if (!Object.keys(METHOD_NAMES).some(k => enabledMethods[k] !== false)) {
-    const l = $("withdrawBtnLink"); l.style.opacity = ".5"; l.style.pointerEvents = "none";
-  }
-
+  // Listen to User Data (Balance, Stats)
   onSnapshot(doc(db, "users", user.uid), (snap) => {
     if (snap.exists()) {
       userData = snap.data();
@@ -174,81 +309,108 @@ onAuthStateChanged(auth, async (user) => {
       $("statGood").textContent = userData.totalGood || 0;
       $("statBad").textContent = userData.totalBad || 0;
       $("statPending").textContent = userData.totalPending || 0;
+      
       if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
         userData.wallets = { [userData.walletInfo.method]: { number: userData.walletInfo.number, name: userData.walletInfo.name || "" } };
       }
       renderWallets();
     }
-    mark("user");
-  }, () => mark("user"));
+  });
 
+  // Listen to Withdrawal History
   onSnapshot(query(collection(db, "withdrawals"), where("userId", "==", user.uid)), (snap) => {
     const items = snap.docs.map(d => d.data()).sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
     renderHistory(items);
-    mark("wd");
-  }, (e) => { $("pHist").innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("wd"); });
+  });
 });
 
+// Render History List
 function renderHistory(items) {
-  const box = $("pHist");
-  let ap = 0, pe = 0;
-  items.forEach(h => { if (h.status === "approved") ap += Number(h.amount) || 0; else if (h.status === "pending") pe += Number(h.amount) || 0; });
-  if (!items.length) { box.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো withdraw নেই</div>`; return; }
-  box.innerHTML = `<div class="x-stats"><div class="x-st" style="--c:#818cf8"><b>${items.length}</b><span>Requests</span></div><div class="x-st" style="--c:#34d399"><b>৳${ap}</b><span>Approved</span></div><div class="x-st" style="--c:#fbbf24"><b>৳${pe}</b><span>Pending</span></div></div>` +
-    items.map((h, i) => {
-      const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
-      const col = st === "approved" ? "#10b981" : st === "rejected" ? "#ef4444" : "#f59e0b";
-      const cls = st === "approved" ? "g" : st === "rejected" ? "r" : "y";
-      const txt = st === "approved" ? "Approved" : st === "rejected" ? "Rejected" : "Pending";
-      const [c1, c2] = COLORS[h.method] || ["#6366f1", "#312e81"];
-      const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
-      return `<div class="x-item" style="--c:${col};animation-delay:${Math.min(i, 8) * 0.04}s">
-        <div class="x-ia" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
-        <div style="flex:1;min-width:0"><div class="x-it">৳${esc(h.amount)} <span style="font-weight:600;color:#9a9bb8">• ${esc(h.methodName || h.method)}</span></div>
-        <div class="x-is">${esc(h.accountNum)} • ${time}</div></div>
-        <span class="x-amt ${cls}">${txt}</span></div>`;
-    }).join("");
+  const box = $("historyList");
+  if (!items.length) {
+    box.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>No withdrawal history yet</div>`;
+    return;
+  }
+
+  box.innerHTML = items.map((h, i) => {
+    const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
+    const txt = st === "approved" ? "Approved" : st === "rejected" ? "Rejected" : "Pending";
+    const [c1, c2] = COLORS[h.method] || ["#6366f1", "#312e81"];
+    const time = h.requestedAt?.toDate?.().toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
+    
+    return `
+      <div class="h-item ${st}" style="animation-delay:${Math.min(i, 8) * 0.05}s">
+        <div class="h-logo" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
+        <div class="h-info">
+          <div class="h-amt">৳${esc(h.amount)}</div>
+          <div class="h-meta">${esc(h.methodName || h.method)} • ${esc(h.accountNum)}</div>
+          <div class="h-time">${time}</div>
+        </div>
+        <div class="h-status ${st}">${txt}</div>
+      </div>`;
+  }).join("");
 }
 
+// Render Wallet Info
 function renderWallets() {
   const c = $("walletInfoContent");
   const w = userData?.wallets || {};
   const keys = Object.keys(w).filter(k => w[k] && w[k].number);
-  if (!keys.length) { c.innerHTML = `<div class="x-empty">${S.wallet}কোনো Wallet setup করা হয়নি</div>`; return; }
-  c.innerHTML = keys.map(k => {
+  
+  if (!keys.length) {
+    c.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>No wallet setup found. Please add one.</div>`;
+    return;
+  }
+  
+  c.innerHTML = keys.map((k, i) => {
     const [c1, c2] = COLORS[k] || ["#6366f1", "#312e81"];
-    return `<div class="pm-tile" style="--c1:${c1};--c2:${c2}">
-      <div class="pm-dot">${esc((METHOD_NAMES[k] || k).charAt(0))}</div>
-      <div class="pm-info"><b>${esc(METHOD_NAMES[k] || k)}</b><span>${esc(w[k].number)}</span>${w[k].name ? `<small>${esc(w[k].name)}</small>` : ""}</div>
-      <button class="pm-copy" data-copy="${esc(w[k].number)}" aria-label="Copy">${SVG_COPY}</button></div>`;
+    return `
+      <div class="w-tile" style="--c1:${c1};--c2:${c2}; animation-delay:${i * 0.1}s">
+        <div class="w-dot">${esc((METHOD_NAMES[k] || k).charAt(0))}</div>
+        <div class="w-info">
+          <b>${esc(METHOD_NAMES[k] || k)}</b>
+          <span>${esc(w[k].number)}</span>
+          ${w[k].name ? `<small>${esc(w[k].name)}</small>` : ""}
+        </div>
+        <button class="w-copy" data-copy="${esc(w[k].number)}" aria-label="Copy">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>`;
   }).join("");
 }
 
+// Copy Wallet Number
 $("walletInfoContent").addEventListener("click", (e) => {
-  const b = e.target.closest(".pm-copy");
+  const b = e.target.closest(".w-copy");
   if (!b) return;
-  navigator.clipboard?.writeText(b.dataset.copy).then(() => toast("Copied!")).catch(() => {});
+  navigator.clipboard?.writeText(b.dataset.copy).then(() => showToast("Copied to clipboard!")).catch(() => {});
 });
 
+// Modal Logic
 const modal = $("walletModal");
 const closeModal = () => modal.classList.remove("show");
+
 $("editWalletBtn").onclick = () => {
   tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
   loadTab("bkash");
   modal.classList.add("show");
 };
 $("closeWalletBtn").onclick = closeModal;
-$("closeWalletX").onclick = closeModal;
 modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
-document.querySelectorAll(".wm-tab").forEach(t => { t.onclick = () => { stash(); loadTab(t.dataset.method); }; });
+
+document.querySelectorAll(".m-tab").forEach(t => { 
+  t.onclick = () => { stash(); loadTab(t.dataset.m); }; 
+});
 
 function stash() {
   const num = $("wm-number").value.trim(), name = $("wm-name").value.trim();
-  if (num) tempWalletData[activeMethod] = { number: num, name }; else delete tempWalletData[activeMethod];
+  if (num) tempWalletData[activeMethod] = { number: num, name }; 
+  else delete tempWalletData[activeMethod];
 }
+
 function loadTab(m) {
   activeMethod = m;
-  document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === m));
+  document.querySelectorAll(".m-tab").forEach(t => t.classList.toggle("active", t.dataset.m === m));
   $("wmLabel").textContent = METHOD_LABELS[m];
   $("wm-number").placeholder = METHOD_PH[m];
   const d = tempWalletData[m] || {};
@@ -256,16 +418,26 @@ function loadTab(m) {
   $("wm-name").value = d.name || "";
 }
 
+// Save Wallet Logic
 $("saveWalletBtn").onclick = async () => {
   stash();
   const cleaned = {};
   for (const k of Object.keys(tempWalletData)) {
     const w = tempWalletData[k];
     if (!w || !w.number) continue;
-    const n = normalizeWallet(k, w.number);
-    if (!n) { alert(METHOD_NAMES[k] + " এর নম্বর সঠিক নয়।"); loadTab(k); return; }
-    cleaned[k] = { number: n, name: w.name || "" };
+    
+    // Simple validation
+    if (k !== "binance") {
+      const d = w.number.replace(/[\s-]/g, "");
+      const valid = d.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
+      if (!valid) { alert(METHOD_NAMES[k] + " number is not valid!"); loadTab(k); return; }
+      cleaned[k] = { number: valid[1], name: w.name || "" };
+    } else {
+      if (w.number.length < 4) { alert("Binance ID/Address is invalid!"); loadTab(k); return; }
+      cleaned[k] = { number: w.number, name: w.name || "" };
+    }
   }
+  
   const btn = $("saveWalletBtn");
   btn.disabled = true;
   try {
@@ -273,9 +445,12 @@ $("saveWalletBtn").onclick = async () => {
     userData.wallets = cleaned;
     renderWallets();
     closeModal();
-    toast("Wallet saved!");
-  } catch (e) { alert(e.message); }
-  finally { btn.disabled = false; }
+    showToast("Wallet info saved successfully!");
+  } catch (e) { 
+    alert("Error saving: " + e.message); 
+  } finally { 
+    btn.disabled = false; 
+  }
 };
 </script>
 </body>
