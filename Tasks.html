@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#06060f">
+<title>Submit — ADQ Income Zone</title>
+<script src="app-shell.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+.t-head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;margin:2px 2px 10px}
+.t-head h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.3px}
+.t-head .cnt{font:800 12px 'Inter',sans-serif;color:#c4b5fd;background:rgba(99,102,241,.22);padding:3px 11px;border-radius:999px}
+.t-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
+.t-notice svg{width:16px;height:16px;flex:0 0 16px}
+.t-notice span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.x-scroll{margin-top:10px}
+</style>
+</head>
+<body class="x-body">
+<div class="x-bg" aria-hidden="true"><div class="o o1"></div><div class="o o2"></div></div>
+
+<div class="x-app">
+  <header class="x-top">
+    <div class="x-brand"><div class="x-mark">A</div><span>Submit Task</span></div>
+    <div class="x-actions">
+      <a class="x-ibtn" href="notifications.html" aria-label="Notifications" id="bellBtn"></a>
+    </div>
+  </header>
+
+  <div class="t-head"><h2>Available Tasks</h2><span class="cnt" id="taskCount">0</span></div>
+
+  <div class="x-search"><span id="searchIc"></span><input type="text" id="taskSearch" placeholder="টাস্কের নাম খুঁজুন..." autocomplete="off"></div>
+  <div class="x-chips" id="filters">
+    <button class="active" data-f="all">সব</button>
+    <button data-f="open">Open</button>
+    <button data-f="upcoming">Upcoming</button>
+  </div>
+
+  <button class="t-notice" id="noticeBar" hidden></button>
+
+  <div class="x-scroll" id="taskList"><div class="x-skel"></div><div class="x-skel"></div><div class="x-skel"></div><div class="x-skel"></div></div>
+</div>
+
+<div class="x-sheet" id="noticeSheet">
+  <div class="x-sheet-box">
+    <div class="x-sheet-h"><h3 id="nsTitle"></h3><button class="x-ibtn" id="nsClose" aria-label="Close"></button></div>
+    <div class="x-sheet-b" id="nsBody"></div>
+  </div>
+</div>
+
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+window.adqHold = true;
+const { esc, svg: S, taskRow, tstatus } = window.ADQ;
+const $ = (id) => document.getElementById(id);
+
+$("bellBtn").innerHTML = S.bell;
+$("searchIc").innerHTML = S.search;
+$("nsClose").innerHTML = S.close;
+
+let allTasks = [], filter = "all";
+const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
+
+function render() {
+  const list = $("taskList");
+  const q = ($("taskSearch").value || "").trim().toLowerCase();
+  const rows = allTasks.filter(t => {
+    if (q && !(t.title || "").toLowerCase().includes(q)) return false;
+    const k = tstatus(t).k;
+    if (filter === "open") return k === "open";
+    if (filter === "upcoming") return k === "upcoming";
+    return true;
+  });
+  $("taskCount").textContent = rows.length;
+  list.innerHTML = rows.length
+    ? rows.map(taskRow).join("")
+    : `<div class="x-empty">${S.search}কোনো টাস্ক খুঁজে পাওয়া যায়নি</div>`;
+}
+
+$("taskSearch").addEventListener("input", render);
+document.querySelectorAll("#filters button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll("#filters button").forEach(x => x.classList.toggle("active", x === b));
+    filter = b.dataset.f;
+    render();
+  };
+});
+setInterval(render, 60000); // বাকি সময় আপডেট
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) { location.href = "login.html"; return; }
+
+  onSnapshot(query(collection(db, "tasks"), where("active", "==", true)), (snap) => {
+    const now = new Date();
+    allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(t => { const e = t.endTime?.toDate?.(); return !e || e > now; })
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    render();
+    window.adqReady && window.adqReady();
+  }, (e) => {
+    $("taskList").innerHTML = `<div class="x-empty">${esc(e.message)}</div>`;
+    window.adqReady && window.adqReady();
+  });
+
+  loadNotice();
+});
+
+async function loadNotice() {
+  try {
+    const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
+    if (snap.empty) return;
+    const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
+    const bar = $("noticeBar");
+    bar.innerHTML = S.bell + `<span>${esc(n.title)}</span>`;
+    bar.hidden = false;
+    bar.onclick = () => {
+      $("nsTitle").textContent = n.title || "নোটিশ";
+      const apk = safeUrl(n.apkUrl), link = safeUrl(n.linkUrl);
+      $("nsBody").innerHTML = `<div>${esc(n.message).replace(/\n/g, "<br>")}</div>` +
+        ((apk || link) ? `<div class="acts">${apk ? `<a class="apk" href="${esc(apk)}" target="_blank" rel="noopener noreferrer">Download APK</a>` : ""}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open Link</a>` : ""}</div>` : "");
+      $("noticeSheet").classList.add("show");
+    };
+  } catch (e) {}
+}
+$("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
+$("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
+</script>
+</body>
+</html>
