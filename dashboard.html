@@ -22,12 +22,37 @@
 .d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2;color:#fff}
 .d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:inline-block;vertical-align:middle}
 
-/* Exact Profile Premium Badge */
-.premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700}
-.premium-badge::before{content:'✓';color:#fff;font-size:11px;font-weight:900;position:relative;z-index:2;text-shadow:0 2px 4px rgba(180,123,0,.9)}
-.premium-badge::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 80%);transform:rotate(45deg);animation:premiumShine 3s infinite ease-in-out}
-@keyframes premiumPulse{0%{box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1)}100%{box-shadow:0 8px 20px rgba(245,158,11,.8),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);transform:scale(1.05)}}
-@keyframes premiumShine{0%{left:-100%}20%{left:100%}100%{left:100%}}
+/* Premium Badge (Dynamic Colors) */
+.premium-badge {
+  width: 20px; height: 20px; flex-shrink: 0; position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
+  background: linear-gradient(135deg, #fceabb 0%, #f8b500 50%, #b47b00 100%);
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4), inset 0 -2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8);
+  animation: premiumPulse 2s ease-in-out infinite alternate;
+  overflow: hidden; border: 1px solid #ffd700;
+}
+.premium-badge::before {
+  content: '✓'; color: #ffffff; font-size: 10px; font-weight: 900; position: relative; z-index: 2; text-shadow: 0 2px 4px rgba(180, 123, 0, 0.9);
+  transform: translateY(-0.5px);
+}
+.premium-badge::after {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 80%);
+  transform: rotate(45deg); animation: premiumShine 3s infinite ease-in-out;
+}
+@keyframes premiumPulse {
+  0% { box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4), inset 0 -2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8); transform: scale(1); }
+  100% { box-shadow: 0 8px 20px rgba(245, 158, 11, 0.8), inset 0 -2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8); transform: scale(1.05); }
+}
+@keyframes premiumShine {
+  0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; }
+}
+/* Dynamic Badge Classes */
+.premium-badge.silver { background: linear-gradient(135deg, #ffffff, #94a3b8, #64748b); border-color: #e2e8f0; box-shadow: 0 4px 10px rgba(148,163,184,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
+.premium-badge.purple { background: linear-gradient(135deg, #d8b4fe, #a855f7, #6b21a8); border-color: #e9d5ff; box-shadow: 0 4px 10px rgba(168,85,247,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
+.premium-badge.blue { background: linear-gradient(135deg, #93c5fd, #3b82f6, #1d4ed8); border-color: #bfdbfe; box-shadow: 0 4px 10px rgba(59,130,246,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
+.premium-badge.green { background: linear-gradient(135deg, #6ee7b7, #10b981, #047857); border-color: #a7f3d0; box-shadow: 0 4px 10px rgba(16,185,129,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
+.premium-badge.red { background: linear-gradient(135deg, #fca5a5, #ef4444, #b91c1c); border-color: #fecaca; box-shadow: 0 4px 10px rgba(239,68,68,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
+.premium-badge.bronze { background: linear-gradient(135deg, #fdba74, #ea580c, #9a3412); border-color: #fed7aa; box-shadow: 0 4px 10px rgba(234,88,12,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
 
 /* Green Tall Withdraw Button */
 .d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s}
@@ -51,9 +76,27 @@
 @keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .d-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
 
-/* Timer Layout Fix (Prevents Jumping) */
-.x-tag.time{min-width:72px;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',sans-serif;font-size:11px}
-.x-tag.upcoming{min-width:80px}
+/* Timer Styling (Smaller & Blink Effect) */
+.x-tag.time{
+  min-width:64px;
+  justify-content:center;
+  font-variant-numeric:tabular-nums;
+  font-family:'Inter',sans-serif;
+  font-size:10px; /* Smaller font */
+  padding: 3px 8px; /* Tighter padding */
+  transition: all 0.3s;
+}
+.x-tag.upcoming{min-width:72px}
+
+/* 5 Min Blink Red Premium Animation */
+@keyframes blinkDanger {
+  0%, 100% { color: #fca5a5; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  50% { color: #ef4444; background: rgba(239, 68, 68, 0.35); border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); font-weight:900; }
+}
+.x-tag.time.danger {
+  animation: blinkDanger 1s infinite;
+  border: 1px solid #ef4444;
+}
 
 /* Activity */
 .act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
@@ -142,6 +185,18 @@ $("nsClose").innerHTML = S.close;
 $("segTasks").innerHTML = S.bolt + 'Tasks <span class="n" id="cntTasks">0</span>';
 $("segAct").innerHTML = S.activity + "Activity";
 
+// Badge Dynamic Color Function (same as Profile page)
+function getBadgeClass(color) {
+  if (!color) return '';
+  if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
+  if (color.includes("#a855f7")) return 'purple';
+  if (color.includes("#3b82f6")) return 'blue';
+  if (color.includes("#10b981")) return 'green';
+  if (color.includes("#ef4444")) return 'red';
+  if (color.includes("#ea580c")) return 'bronze';
+  return ''; // Default is golden
+}
+
 const ready = { user: false, tasks: false, subs: false };
 function mark(k) {
   ready[k] = true;
@@ -175,8 +230,13 @@ onAuthStateChanged(auth, (user) => {
       $("sGood").textContent = u.totalGood || 0;
       $("sPend").textContent = u.totalPending || 0;
       
-      // Premium Golden Badge Integration
-      $("dashBadge").innerHTML = u.customBadge ? `<span class="premium-badge" title="${esc(u.customBadge)}"></span>` : "";
+      // Dynamic Badge Rendering (Same as Profile)
+      if (u.customBadge) {
+        const badgeClass = getBadgeClass(u.customBadgeColor);
+        $("dashBadge").innerHTML = `<span class="premium-badge ${badgeClass}" title="${esc(u.customBadge)}"></span>`;
+      } else {
+        $("dashBadge").innerHTML = "";
+      }
     }
     mark("user");
   }, () => mark("user"));
@@ -211,16 +271,19 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
 $("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
 
-/* ======= LIVE TIMER LOGIC (HH:MM:SS) ======= */
+/* ======= LIVE TIMER LOGIC (HH:MM:SS + 5 Min Blink) ======= */
 function getFormattedTime(endMs, startMs) {
   const now = Date.now();
   if (startMs && now < startMs) {
     const diff = startMs - now;
-    return { k: "upcoming", t: "শুরু " + fmt(diff) };
+    return { k: "upcoming", t: "শুরু " + fmt(diff), isDanger: false };
   }
-  if (endMs && now > endMs) return { k: "closed", t: "শেষ" };
-  if (!endMs) return { k: "open", t: "Open" };
-  return { k: "open", t: fmt(endMs - now) + " বাকি" };
+  if (endMs && now > endMs) return { k: "closed", t: "শেষ", isDanger: false };
+  if (!endMs) return { k: "open", t: "Open", isDanger: false };
+  
+  const diff = endMs - now;
+  const isDanger = diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes or less
+  return { k: "open", t: fmt(diff) + " বাকি", isDanger };
 }
 function fmt(ms) {
   let h = Math.floor(ms / 3600000);
@@ -274,7 +337,7 @@ function loadTasks() {
   }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
 }
 
-// ✅ LIVE TIMER UPDATE INTERVAL (প্রতি সেকেন্ডে)
+// ✅ LIVE TIMER UPDATE INTERVAL (প্রতি সেকেন্ডে + Red Blink if <5m)
 setInterval(() => {
   document.querySelectorAll('.x-tag.time').forEach(el => {
     const startMs = Number(el.dataset.start) || 0;
@@ -285,8 +348,8 @@ setInterval(() => {
     const textEl = el.querySelector('.time-text');
     if (textEl) textEl.textContent = st.t;
     
-    // Update Class (color change)
-    el.className = `x-tag time ${st.k}`;
+    // Update Classes (Base status + Danger Blink)
+    el.className = `x-tag time ${st.k}${st.isDanger ? ' danger' : ''}`;
   });
 }, 1000);
 
