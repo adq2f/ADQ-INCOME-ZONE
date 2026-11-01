@@ -4,45 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#06060f">
-<title>Dashboard — ADQ Income Zone</title>
+<title>Wallet — ADQ Income Zone</title>
 <script src="app-shell.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <style>
-.d-hero{flex:0 0 auto;position:relative;overflow:hidden;border-radius:24px;padding:14px;color:#fff;background:linear-gradient(135deg,#4338ca 0%,#7c3aed 52%,#c026d3 110%);box-shadow:0 24px 50px -20px rgba(124,58,237,.85),inset 0 1px 0 rgba(255,255,255,.3)}
-.d-hero::before{content:'';position:absolute;top:-70%;left:-20%;width:90%;height:170%;background:radial-gradient(circle,rgba(255,255,255,.22),transparent 62%);pointer-events:none}
-.d-hero>*{position:relative}
-.d-row1{display:flex;align-items:center;gap:10px}
-.d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif}
-.d-wt{flex:1;min-width:0}
-.d-hi{font-size:11px;opacity:.8;font-weight:500}
-.d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2}
-.d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.d-vb{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:0 0 18px;border-radius:50%;color:#fff;box-shadow:0 4px 10px -2px rgba(0,0,0,.5)}
-.d-vb svg{width:11px;height:11px;stroke-width:3.4}
-.d-wd{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:13px;background:#fff;color:#4c1d95;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(0,0,0,.45);flex:0 0 auto;text-decoration:none}
-.d-wd svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5}
-.d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}
-.d-bl{font-size:11px;font-weight:600;opacity:.85}
-.d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
-.d-mini{display:grid;grid-template-columns:repeat(3,auto);gap:6px}
-.d-mi{text-align:center;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,.24);border:1px solid rgba(255,255,255,.12)}
-.d-mi b{display:block;font:800 14px 'Inter',sans-serif;line-height:1.1}
-.d-mi span{font-size:10px;opacity:.8;font-weight:600}
-.d-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
-.d-notice svg{width:16px;height:16px;flex:0 0 16px}
-.d-notice span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.d-notice .chev{width:14px;height:14px;opacity:.7}
-.act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
-.act-row .x-rb{min-width:0}
-.act-chips{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
-.act-chips span{font-size:11px;font-weight:800;padding:2px 8px;border-radius:999px}
-.act-chips .g{background:rgba(16,185,129,.16);color:#6ee7b7}
-.act-chips .b{background:rgba(239,68,68,.16);color:#fca5a5}
-.act-chips .p{background:rgba(245,158,11,.16);color:#fcd34d}
-.act-earn{font:800 12.5px 'Inter',sans-serif;padding:5px 11px;border-radius:999px;background:rgba(16,185,129,.16);color:#6ee7b7;white-space:nowrap}
-.act-earn.zero{background:rgba(255,255,255,.07);color:#9a9bb8}
+.w-bal{flex:0 0 auto;margin-bottom:10px}
+.w-l{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;opacity:.9}
+.w-l svg{width:16px;height:16px;margin-right:6px;display:inline-block;vertical-align:-3px}
+.w-chip{width:34px;height:25px;border-radius:6px;background:linear-gradient(135deg,#fde68a,#f59e0b);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.w-a{font:900 38px 'Inter',sans-serif;letter-spacing:-1.2px;line-height:1.05;margin:8px 0 12px;text-shadow:0 6px 18px rgba(0,0,0,.25)}
+.w-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.w-b{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:14px;font-size:13.5px;font-weight:700;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28)}
+.w-b.solid{background:#fff;color:#4c1d95;border-color:#fff;box-shadow:0 10px 22px -8px rgba(0,0,0,.45)}
+.w-b svg{width:16px;height:16px}
+.pm-tile{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px;border-radius:18px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 12px 24px -12px var(--c1),inset 0 1px 0 rgba(255,255,255,.28)}
+.pm-dot{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.22);font:900 15px 'Inter',sans-serif}
+.pm-info{flex:1;min-width:0}
+.pm-info b{display:block;font-size:12.5px;opacity:.9}
+.pm-info span{display:block;font:800 16px 'Inter',sans-serif;letter-spacing:.4px;word-break:break-all}
+.pm-info small{font-size:11.5px;opacity:.8}
+.pm-copy{width:34px;height:34px;flex:0 0 34px;border-radius:11px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.pm-copy svg{width:16px;height:16px}
+.wm-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);margin-bottom:10px}
+.wm-tab{padding:9px 2px;border-radius:11px;border:none;background:transparent;color:#9a9bb8;font-size:12.5px;font-weight:700;cursor:pointer}
+.wm-tab.active{color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.sheet-pad{padding:0 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet-acts{display:grid;grid-template-columns:1fr 54px;gap:10px;margin-top:12px}
 </style>
 </head>
 <body class="x-body">
@@ -50,76 +39,112 @@
 
 <div class="x-app">
   <header class="x-top">
-    <div class="x-brand"><div class="x-mark">A</div><span>ADQ Income Zone</span></div>
-    <div class="x-actions">
-      <a class="x-ibtn" href="notifications.html" aria-label="Notifications" id="bellBtn"></a>
-      <button class="x-ibtn danger" id="logoutBtn" aria-label="Logout"></button>
-    </div>
+    <div class="x-brand"><div class="x-mark">A</div><span>My Wallet</span></div>
+    <div class="x-actions"><button class="x-ibtn danger" id="logoutBtn" aria-label="Logout"></button></div>
   </header>
 
-  <section class="d-hero">
-    <div class="d-row1">
-      <div class="d-av" id="avatar">U</div>
-      <div class="d-wt">
-        <div class="d-hi">স্বাগতম</div>
-        <div class="d-name"><span id="username">...</span><span id="dashBadge"></span></div>
-      </div>
-      <!-- ✅ Withdraw বাটনটি সরাসরি HTML এ ফিক্স করা হয়েছে -->
-      <a href="withdraw.html" class="d-wd" id="wdBtn">
-        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Withdraw
-      </a>
-    </div>
-    <div class="d-bal">
-      <div>
-        <div class="d-bl">আপনার ব্যালেন্স</div>
-        <div class="d-ba" id="balance">৳0</div>
-      </div>
-      <div class="d-mini">
-        <div class="d-mi"><b id="sSubs">0</b><span>Subs</span></div>
-        <div class="d-mi"><b id="sGood">0</b><span>Good</span></div>
-        <div class="d-mi"><b id="sPend">0</b><span>Pending</span></div>
-      </div>
+  <section class="x-hero w-bal">
+    <div class="w-l"><span id="icWallet"></span><div class="w-chip"></div></div>
+    <div class="w-a" id="balance">৳0</div>
+    <div class="w-acts">
+      <a href="withdraw.html" id="withdrawBtnLink" class="w-b solid"></a>
+      <a href="task-history.html" class="w-b" id="histBtn"></a>
     </div>
   </section>
 
-  <button class="d-notice" id="noticeBar" hidden></button>
-
-  <div class="x-seg" role="tablist">
-    <button class="active" data-p="pTasks" id="segTasks"></button>
-    <button data-p="pAct" id="segAct"></button>
+  <div class="x-stats">
+    <div class="x-st" style="--c:#34d399"><b id="statGood">0</b><span>Good</span></div>
+    <div class="x-st" style="--c:#f87171"><b id="statBad">0</b><span>Bad</span></div>
+    <div class="x-st" style="--c:#fbbf24"><b id="statPending">0</b><span>Pending</span></div>
   </div>
 
-  <div class="x-scroll" id="pTasks"><div class="x-skel"></div><div class="x-skel"></div><div class="x-skel"></div></div>
-  <div class="x-scroll" id="pAct" hidden><div class="x-skel"></div><div class="x-skel"></div></div>
+  <div class="x-seg">
+    <button class="active" data-p="pHist" id="segHist"></button>
+    <button data-p="pPay" id="segPay"></button>
+  </div>
+
+  <div class="x-scroll" id="pHist"><div class="x-skel"></div><div class="x-skel"></div></div>
+
+  <div class="x-scroll" id="pPay" hidden>
+    <div id="walletInfoContent"></div>
+    <button class="x-btn ghost" id="editWalletBtn"></button>
+  </div>
 </div>
 
-<div class="x-sheet" id="noticeSheet">
+<div class="x-sheet" id="walletModal">
   <div class="x-sheet-box">
-    <div class="x-sheet-h"><h3 id="nsTitle"></h3><button class="x-ibtn" id="nsClose" aria-label="Close"></button></div>
-    <div class="x-sheet-b" id="nsBody"></div>
+    <div class="x-sheet-h"><h3 style="color:#fff">Wallet Setup</h3><button class="x-ibtn" id="closeWalletX" aria-label="Close"></button></div>
+    <div class="sheet-pad">
+      <div class="wm-tabs">
+        <button class="wm-tab active" data-method="bkash">bKash</button>
+        <button class="wm-tab" data-method="nagad">Nagad</button>
+        <button class="wm-tab" data-method="rocket">Rocket</button>
+        <button class="wm-tab" data-method="binance">Binance</button>
+      </div>
+      <div class="x-lab" id="wmLabel">bKash Number</div>
+      <div class="x-field"><span class="ic" id="icPhone"></span><input type="text" id="wm-number" placeholder="01XXXXXXXXX" autocomplete="off"></div>
+      <div class="x-lab">Account Name (optional)</div>
+      <div class="x-field"><span class="ic" id="icUser"></span><input type="text" id="wm-name" placeholder="আপনার নাম" autocomplete="off"></div>
+      <div class="sheet-acts">
+        <button class="x-btn" id="saveWalletBtn"></button>
+        <button class="x-btn ghost" id="closeWalletBtn" aria-label="Close"></button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { doc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { doc, getDoc, updateDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 window.adqHold = true;
-const { esc, svg: S, taskRow, logo } = window.ADQ;
+const { esc, svg: S, toast } = window.ADQ;
 const $ = (id) => document.getElementById(id);
 
-$("bellBtn").innerHTML = S.bell;
-$("logoutBtn").innerHTML = S.logout;
-$("nsClose").innerHTML = S.close;
-$("segTasks").innerHTML = S.bolt + 'Tasks <span class="n" id="cntTasks">0</span>';
-$("segAct").innerHTML = S.activity + "Activity";
+// ✅ Inline SVG for safety (app-shell.js এর ওপর নির্ভরশীল নয়)
+const SVG_COPY = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const SVG_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const SVG_PHONE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>`;
+const SVG_USER = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
-const ready = { user: false, tasks: false, subs: false };
-function mark(k) {
-  ready[k] = true;
-  if (ready.user && ready.tasks && ready.subs) window.adqReady && window.adqReady();
+$("logoutBtn").innerHTML = S.logout;
+$("icWallet").innerHTML = S.wallet + "Available Balance";
+$("withdrawBtnLink").innerHTML = S.download + "Withdraw";
+$("histBtn").innerHTML = S.activity + "History";
+$("segHist").innerHTML = S.clock + "Withdraw History";
+$("segPay").innerHTML = S.wallet + "Payment Info";
+$("editWalletBtn").innerHTML = SVG_EDIT + " Payment Info Edit";
+$("closeWalletX").innerHTML = S.close;
+$("closeWalletBtn").innerHTML = S.close;
+$("saveWalletBtn").innerHTML = S.check + "Save";
+$("icPhone").innerHTML = SVG_PHONE;
+$("icUser").innerHTML = SVG_USER;
+
+document.querySelectorAll(".x-seg button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".x-seg button").forEach(x => x.classList.toggle("active", x === b));
+    ["pHist", "pPay"].forEach(id => { $(id).hidden = id !== b.dataset.p; });
+  };
+});
+
+let currentUser = null, userData = null, started = false;
+let enabledMethods = { bkash: true, nagad: true, rocket: true, binance: true };
+let tempWalletData = {}, activeMethod = "bkash";
+const ready = { user: false, wd: false };
+const mark = (k) => { ready[k] = true; if (ready.user && ready.wd) window.adqReady && window.adqReady(); };
+
+const METHOD_NAMES = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
+const METHOD_LABELS = { bkash: "bKash Number", nagad: "Nagad Number", rocket: "Rocket Number", binance: "Binance Wallet/ID" };
+const METHOD_PH = { bkash: "01XXXXXXXXX", nagad: "01XXXXXXXXX", rocket: "01XXXXXXXXX", binance: "Binance ID or Address" };
+const COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
+
+function normalizeWallet(method, raw) {
+  const s = String(raw || "").trim();
+  if (method === "binance") return /^[A-Za-z0-9_.@:+-]{4,80}$/.test(s) ? s : null;
+  const d = s.replace(/[\s-]/g, "");
+  const m = d.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
+  return m ? m[1] : null;
 }
 
 $("logoutBtn").onclick = async () => {
@@ -128,108 +153,130 @@ $("logoutBtn").onclick = async () => {
   location.href = "login.html";
 };
 
-document.querySelectorAll(".x-seg button").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".x-seg button").forEach(x => x.classList.toggle("active", x === b));
-    ["pTasks", "pAct"].forEach(id => { $(id).hidden = id !== b.dataset.p; });
-  };
-});
-
-const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
-
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) { location.href = "login.html"; return; }
+  if (started) return;
+  started = true;
+  currentUser = user;
+
+  try {
+    const snap = await getDoc(doc(db, "settings", "payment_methods"));
+    if (snap.exists()) enabledMethods = { ...enabledMethods, ...snap.data() };
+  } catch (e) {}
+  if (!Object.keys(METHOD_NAMES).some(k => enabledMethods[k] !== false)) {
+    const l = $("withdrawBtnLink"); l.style.opacity = ".5"; l.style.pointerEvents = "none";
+  }
 
   onSnapshot(doc(db, "users", user.uid), (snap) => {
     if (snap.exists()) {
-      const u = snap.data();
-      $("username").textContent = u.username || "User";
-      $("avatar").textContent = (u.username || "U").charAt(0).toUpperCase();
-      $("balance").textContent = "৳" + (u.balance || 0);
-      $("sGood").textContent = u.totalGood || 0;
-      $("sPend").textContent = u.totalPending || 0;
-      $("dashBadge").innerHTML = u.customBadge
-        ? `<span class="d-vb" title="${esc(u.customBadge)}" style="background:${esc(u.customBadgeColor || "#f59e0b")}">${S.check}</span>` : "";
+      userData = snap.data();
+      $("balance").textContent = "৳" + (Number(userData.balance) || 0);
+      $("statGood").textContent = userData.totalGood || 0;
+      $("statBad").textContent = userData.totalBad || 0;
+      $("statPending").textContent = userData.totalPending || 0;
+      if (userData.walletInfo && userData.walletInfo.method && !userData.wallets) {
+        userData.wallets = { [userData.walletInfo.method]: { number: userData.walletInfo.number, name: userData.walletInfo.name || "" } };
+      }
+      renderWallets();
     }
     mark("user");
   }, () => mark("user"));
 
-  loadNotice();
-  loadTasks();
-  loadActivity(user.uid);
+  onSnapshot(query(collection(db, "withdrawals"), where("userId", "==", user.uid)), (snap) => {
+    const items = snap.docs.map(d => d.data()).sort((a, b) => (b.requestedAt?.toMillis?.() || 0) - (a.requestedAt?.toMillis?.() || 0));
+    renderHistory(items);
+    mark("wd");
+  }, (e) => { $("pHist").innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("wd"); });
 });
 
-async function loadNotice() {
+function renderHistory(items) {
+  const box = $("pHist");
+  let ap = 0, pe = 0;
+  items.forEach(h => { if (h.status === "approved") ap += Number(h.amount) || 0; else if (h.status === "pending") pe += Number(h.amount) || 0; });
+  if (!items.length) { box.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো withdraw নেই</div>`; return; }
+  box.innerHTML = `<div class="x-stats"><div class="x-st" style="--c:#818cf8"><b>${items.length}</b><span>Requests</span></div><div class="x-st" style="--c:#34d399"><b>৳${ap}</b><span>Approved</span></div><div class="x-st" style="--c:#fbbf24"><b>৳${pe}</b><span>Pending</span></div></div>` +
+    items.map((h, i) => {
+      const st = h.status === "approved" ? "approved" : h.status === "rejected" ? "rejected" : "pending";
+      const col = st === "approved" ? "#10b981" : st === "rejected" ? "#ef4444" : "#f59e0b";
+      const cls = st === "approved" ? "g" : st === "rejected" ? "r" : "y";
+      const txt = st === "approved" ? "Approved" : st === "rejected" ? "Rejected" : "Pending";
+      const [c1, c2] = COLORS[h.method] || ["#6366f1", "#312e81"];
+      const time = h.requestedAt?.toDate?.().toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) || "";
+      return `<div class="x-item" style="--c:${col};animation-delay:${Math.min(i, 8) * 0.04}s">
+        <div class="x-ia" style="--c1:${c1};--c2:${c2}">${esc((h.methodName || h.method || "?").charAt(0).toUpperCase())}</div>
+        <div style="flex:1;min-width:0"><div class="x-it">৳${esc(h.amount)} <span style="font-weight:600;color:#9a9bb8">• ${esc(h.methodName || h.method)}</span></div>
+        <div class="x-is">${esc(h.accountNum)} • ${time}</div></div>
+        <span class="x-amt ${cls}">${txt}</span></div>`;
+    }).join("");
+}
+
+function renderWallets() {
+  const c = $("walletInfoContent");
+  const w = userData?.wallets || {};
+  const keys = Object.keys(w).filter(k => w[k] && w[k].number);
+  if (!keys.length) { c.innerHTML = `<div class="x-empty">${S.wallet}কোনো Wallet setup করা হয়নি</div>`; return; }
+  c.innerHTML = keys.map(k => {
+    const [c1, c2] = COLORS[k] || ["#6366f1", "#312e81"];
+    return `<div class="pm-tile" style="--c1:${c1};--c2:${c2}">
+      <div class="pm-dot">${esc((METHOD_NAMES[k] || k).charAt(0))}</div>
+      <div class="pm-info"><b>${esc(METHOD_NAMES[k] || k)}</b><span>${esc(w[k].number)}</span>${w[k].name ? `<small>${esc(w[k].name)}</small>` : ""}</div>
+      <button class="pm-copy" data-copy="${esc(w[k].number)}" aria-label="Copy">${SVG_COPY}</button></div>`;
+  }).join("");
+}
+
+$("walletInfoContent").addEventListener("click", (e) => {
+  const b = e.target.closest(".pm-copy");
+  if (!b) return;
+  navigator.clipboard?.writeText(b.dataset.copy).then(() => toast("Copied!")).catch(() => {});
+});
+
+const modal = $("walletModal");
+const closeModal = () => modal.classList.remove("show");
+$("editWalletBtn").onclick = () => {
+  tempWalletData = JSON.parse(JSON.stringify(userData?.wallets || {}));
+  loadTab("bkash");
+  modal.classList.add("show");
+};
+$("closeWalletBtn").onclick = closeModal;
+$("closeWalletX").onclick = closeModal;
+modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+document.querySelectorAll(".wm-tab").forEach(t => { t.onclick = () => { stash(); loadTab(t.dataset.method); }; });
+
+function stash() {
+  const num = $("wm-number").value.trim(), name = $("wm-name").value.trim();
+  if (num) tempWalletData[activeMethod] = { number: num, name }; else delete tempWalletData[activeMethod];
+}
+function loadTab(m) {
+  activeMethod = m;
+  document.querySelectorAll(".wm-tab").forEach(t => t.classList.toggle("active", t.dataset.method === m));
+  $("wmLabel").textContent = METHOD_LABELS[m];
+  $("wm-number").placeholder = METHOD_PH[m];
+  const d = tempWalletData[m] || {};
+  $("wm-number").value = d.number || "";
+  $("wm-name").value = d.name || "";
+}
+
+$("saveWalletBtn").onclick = async () => {
+  stash();
+  const cleaned = {};
+  for (const k of Object.keys(tempWalletData)) {
+    const w = tempWalletData[k];
+    if (!w || !w.number) continue;
+    const n = normalizeWallet(k, w.number);
+    if (!n) { alert(METHOD_NAMES[k] + " এর নম্বর সঠিক নয়।"); loadTab(k); return; }
+    cleaned[k] = { number: n, name: w.name || "" };
+  }
+  const btn = $("saveWalletBtn");
+  btn.disabled = true;
   try {
-    const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
-    if (snap.empty) return;
-    const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
-    const bar = $("noticeBar");
-    bar.innerHTML = S.bell + `<span>${esc(n.title)}</span>` + S.chev.replace("<svg", '<svg class="chev"');
-    bar.hidden = false;
-    bar.onclick = () => {
-      $("nsTitle").textContent = n.title || "নোটিশ";
-      const apk = safeUrl(n.apkUrl), link = safeUrl(n.linkUrl);
-      $("nsBody").innerHTML = `<div>${esc(n.message).replace(/\n/g, "<br>")}</div>` +
-        ((apk || link) ? `<div class="acts">${apk ? `<a class="apk" href="${esc(apk)}" target="_blank" rel="noopener noreferrer">Download APK</a>` : ""}${link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open Link</a>` : ""}</div>` : "");
-      $("noticeSheet").classList.add("show");
-    };
-  } catch (e) {}
-}
-$("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
-$("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
-
-function loadTasks() {
-  const list = $("pTasks");
-  onSnapshot(query(collection(db, "tasks"), where("active", "==", true)), (snap) => {
-    const now = new Date();
-    const tasks = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .filter(t => { const e = t.endTime?.toDate?.(); return !e || e > now; })
-      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
-    $("cntTasks").textContent = tasks.length;
-    if (!tasks.length) {
-      list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো open task নেই</div>`;
-    } else {
-      list.innerHTML = tasks.slice(0, 6).map(taskRow).join("") +
-        `<a class="x-more" href="tasks.html">সব Task দেখুন ${S.chev}</a>`;
-    }
-    mark("tasks");
-  }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
-}
-
-function loadActivity(uid) {
-  const list = $("pAct");
-  onSnapshot(query(collection(db, "submissions"), where("userId", "==", uid)), (snap) => {
-    $("sSubs").textContent = snap.size;
-    if (snap.empty) {
-      list.innerHTML = `<div class="x-empty">${S.inbox}এখনো কোনো submission নেই</div>`;
-      mark("subs");
-      return;
-    }
-    const groups = {};
-    snap.docs.forEach(d => {
-      const s = d.data();
-      if (!s.taskId) return;
-      const g = groups[s.taskId] || (groups[s.taskId] = { title: s.taskTitle || "Task", platform: s.taskPlatform || "Other", good: 0, bad: 0, pending: 0, earned: 0, last: 0 });
-      if (s.status === "good") { g.good++; g.earned += Number(s.price) || 0; }
-      else if (s.status === "bad") g.bad++;
-      else g.pending++;
-      const t = s.checkedAt?.toMillis?.() || s.submittedAt?.toMillis?.() || 0;
-      if (t > g.last) g.last = t;
-    });
-    const rows = Object.values(groups).sort((a, b) => b.last - a.last).slice(0, 8);
-    list.innerHTML = rows.map(g => `
-      <a href="task-history.html" class="act-row">
-        ${logo(g.platform)}
-        <div class="x-rb">
-          <div class="x-rt">${esc(g.title)}</div>
-          <div class="act-chips"><span class="g">${g.good} good</span><span class="b">${g.bad} bad</span>${g.pending ? `<span class="p">${g.pending} pending</span>` : ""}</div>
-        </div>
-        <span class="act-earn ${g.earned > 0 ? "" : "zero"}">${g.earned > 0 ? "+৳" + g.earned : "৳0"}</span>
-      </a>`).join("") + `<a class="x-more" href="task-history.html">পুরো History ${S.chev}</a>`;
-    mark("subs");
-  }, () => mark("subs"));
-}
+    await updateDoc(doc(db, "users", currentUser.uid), { wallets: cleaned });
+    userData.wallets = cleaned;
+    renderWallets();
+    closeModal();
+    toast("Wallet saved!");
+  } catch (e) { alert(e.message); }
+  finally { btn.disabled = false; }
+};
 </script>
 </body>
 </html>
