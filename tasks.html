@@ -13,10 +13,24 @@
 .t-head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;margin:2px 2px 10px}
 .t-head h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.3px}
 .t-head .cnt{font:800 12px 'Inter',sans-serif;color:#c4b5fd;background:rgba(99,102,241,.22);padding:3px 11px;border-radius:999px}
-.t-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left}
+
+/* Notice Marquee Fix */
+.t-notice{flex:0 0 auto;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;overflow:hidden}
 .t-notice svg{width:16px;height:16px;flex:0 0 16px}
-.t-notice span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notice-marquee{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;position:relative;height:18px}
+.notice-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeNotice 12s linear infinite}
+@keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+.t-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
+
 .x-scroll{margin-top:10px}
+
+/* Live Timer Fix */
+.x-rb{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.x-rs{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:nowrap;overflow:hidden;width:100%}
+.x-tag.time{width:86px;min-width:86px;flex-shrink:0;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',monospace;font-size:10px;padding:2px 0;white-space:nowrap;overflow:hidden}
+.x-go{flex-shrink:0}
+@keyframes blinkDanger{0%,100%{color:#fca5a5;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);box-shadow:0 0 8px rgba(239,68,68,.2)}50%{color:#ef4444;background:rgba(239,68,68,.35);border-color:rgba(239,68,68,.8);box-shadow:0 0 12px rgba(239,68,68,.6);font-weight:900}}
+.x-tag.time.danger{animation:blinkDanger 1s infinite;border:1px solid #ef4444}
 </style>
 </head>
 <body class="x-body">
@@ -57,7 +71,7 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/fi
 import { collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 window.adqHold = true;
-const { esc, svg: S, taskRow, tstatus } = window.ADQ;
+const { esc, svg: S, logo } = window.ADQ;
 const $ = (id) => document.getElementById(id);
 
 $("bellBtn").innerHTML = S.bell;
@@ -67,19 +81,69 @@ $("nsClose").innerHTML = S.close;
 let allTasks = [], filter = "all";
 const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "";
 
+/* ===== Custom Timer Logic for HH:MM:SS ===== */
+function getFormattedTime(endMs, startMs) {
+  const now = Date.now();
+  if (startMs && now < startMs) {
+    const diff = startMs - now;
+    return { k: "upcoming", t: "শুরু " + fmt(diff), isDanger: false };
+  }
+  if (endMs && now > endMs) return { k: "closed", t: "শেষ", isDanger: false };
+  if (!endMs) return { k: "open", t: "Open", isDanger: false };
+  
+  const diff = endMs - now;
+  const isDanger = diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes blink
+  return { k: "open", t: fmt(diff), isDanger };
+}
+
+function fmt(ms) {
+  let h = Math.floor(ms / 3600000);
+  let m = Math.floor((ms % 3600000) / 60000);
+  let s = Math.floor((ms % 60000) / 1000);
+  return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+}
+
+function customTaskRow(t) {
+  let startMs = t.startTime?.toDate?.()?.getTime() || 0;
+  let endMs = t.endTime?.toDate?.()?.getTime() || 0;
+  let st = getFormattedTime(endMs, startMs);
+  
+  let fields = (t.fields || []).length;
+  let milestone = Number(t.milestoneTarget) > 0 ? `<span class="x-tag gold">${S.gift}${t.milestoneTarget}=৳${t.milestonePrice}</span>` : "";
+  
+  return `<a class="x-row" href="task.html?id=${esc(t.id)}">
+    ${logo(t.platform)}
+    <div class="x-rb">
+      <div class="x-rt">${esc(t.title)}</div>
+      <div class="x-rs">
+        <span class="x-price">৳${esc(t.pricePerAccount)}</span>
+        <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
+          <i></i><span class="time-text">${st.t}</span>
+        </span>
+        <span class="x-tag">${S.layers} ${fields}</span>
+        ${milestone}
+      </div>
+    </div>
+    <span class="x-go">${S.chev}</span>
+  </a>`;
+}
+
 function render() {
   const list = $("taskList");
   const q = ($("taskSearch").value || "").trim().toLowerCase();
   const rows = allTasks.filter(t => {
     if (q && !(t.title || "").toLowerCase().includes(q)) return false;
-    const k = tstatus(t).k;
+    let now = Date.now();
+    let sMs = t.startTime?.toDate?.()?.getTime() || 0;
+    let eMs = t.endTime?.toDate?.()?.getTime() || 0;
+    let k = getFormattedTime(eMs, sMs).k;
     if (filter === "open") return k === "open";
     if (filter === "upcoming") return k === "upcoming";
     return true;
   });
   $("taskCount").textContent = rows.length;
   list.innerHTML = rows.length
-    ? rows.map(taskRow).join("")
+    ? rows.map(customTaskRow).join("")
     : `<div class="x-empty">${S.search}কোনো টাস্ক খুঁজে পাওয়া যায়নি</div>`;
 }
 
@@ -91,7 +155,20 @@ document.querySelectorAll("#filters button").forEach(b => {
     render();
   };
 });
-setInterval(render, 60000); // বাকি সময় আপডেট
+
+// ✅ LIVE TIMER UPDATE (প্রতি সেকেন্ডে)
+setInterval(() => {
+  document.querySelectorAll('.x-tag.time').forEach(el => {
+    const startMs = Number(el.dataset.start) || 0;
+    const endMs = Number(el.dataset.end) || 0;
+    const st = getFormattedTime(endMs, startMs);
+    
+    const textEl = el.querySelector('.time-text');
+    if (textEl) textEl.textContent = st.t;
+    
+    el.className = `x-tag time ${st.k}${st.isDanger ? ' danger' : ''}`;
+  });
+}, 1000);
 
 onAuthStateChanged(auth, (user) => {
   if (!user) { location.href = "login.html"; return; }
@@ -117,7 +194,13 @@ async function loadNotice() {
     if (snap.empty) return;
     const n = snap.docs.map(d => d.data()).sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))[0];
     const bar = $("noticeBar");
-    bar.innerHTML = S.bell + `<span>${esc(n.title)}</span>`;
+    
+    // ✅ FIX: নোটিশের টেক্সট স্ক্রল করার জন্য সঠিক HTML
+    bar.innerHTML = S.bell + `<div class="notice-marquee"><span class="notice-text">${esc(n.title)}</span></div>` + S.chev.replace("<svg", '<svg class="chev"');
+    
+    const dur = Math.max(8, n.title.length * 0.2);
+    bar.querySelector('.notice-text').style.animationDuration = dur + 's';
+    
     bar.hidden = false;
     bar.onclick = () => {
       $("nsTitle").textContent = n.title || "নোটিশ";
