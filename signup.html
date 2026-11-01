@@ -80,15 +80,6 @@
     .subtitle { margin-top: 6px; font-size: 14px; color: var(--muted); font-weight: 500; }
     .subtitle b { color: var(--cyan); font-weight: 700; }
 
-    /* ===== Refer badge ===== */
-    .refer-badge { display: none; text-align: center; margin-bottom: 16px; }
-    .refer-badge span {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(34,211,238,0.12));
-      color: #6ee7b7; border: 1px solid rgba(16,185,129,0.5);
-      padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
-    }
-
     /* ===== Success ===== */
     .success {
       display: none; align-items: center; gap: 12px;
@@ -140,15 +131,6 @@
     .hint { margin: -4px 4px 10px; font-size: 12px; font-weight: 600; min-height: 0; display: none; }
     .hint.ok { color: #6ee7b7; display: block; }
     .hint.err { color: #fca5a5; display: block; }
-
-    /* Refer info */
-    .refer-info {
-      display: none; margin-bottom: 14px; padding: 12px 14px; border-radius: 14px;
-      font-size: 13px; line-height: 1.5; color: #fde68a;
-      background: linear-gradient(135deg, rgba(251,191,36,0.16), rgba(245,158,11,0.06));
-      border: 1px solid rgba(251,191,36,0.4); border-left: 4px solid var(--gold);
-    }
-    .refer-info b { color: #fff; }
 
     /* ===== Button ===== */
     .btn-main {
@@ -204,8 +186,6 @@
         <p class="subtitle">মাত্র <b>৩০ সেকেন্ডে</b> রেজিস্ট্রেশন</p>
       </div>
 
-      <div id="referBadge" class="refer-badge"><span>🎁 Refer Code Applied!</span></div>
-
       <div id="successBox" class="success">
         <div class="badge-icon">✓</div>
         <div>রেজিস্ট্রেশন সফল! লগইন পেজে নিয়ে যাচ্ছি...</div>
@@ -239,13 +219,6 @@
       </div>
       <div class="hint" id="matchHint"></div>
 
-      <div class="field">
-        <span class="field-icon">🎁</span>
-        <input type="text" id="referCode" placeholder="Refer Code (optional)" autocomplete="off" autocapitalize="characters">
-      </div>
-
-      <div id="referInfo" class="refer-info">✅ Refer code applied!</div>
-
       <button class="btn-main" id="signupBtn">রেজিস্ট্রেশন সম্পন্ন করুন</button>
 
       <div class="perks">
@@ -263,25 +236,8 @@
     import { createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ Refer code এখন সার্ভার API দিয়ে যাচাই হয় (login ছাড়াই কাজ করে)
-    const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
-      ? ""
-      : "https://adq-income-zone.vercel.app";
-    const REFER_URL = API_BASE + "/api/refer";
-
     const EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
     const EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-
-    function esc(s) {
-      return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
-
-    function flashField(input, state) {
-      const f = input.closest(".field");
-      f.classList.remove("ok", "err");
-      f.classList.add(state);
-      setTimeout(() => f.classList.remove(state), 1500);
-    }
 
     window.togglePass = function(id, btn) {
       const input = document.getElementById(id);
@@ -297,20 +253,6 @@
         code += chars.charAt(Math.floor(Math.random() * chars.length));
       }
       return code;
-    }
-
-    const referInput = document.getElementById("referCode");
-    const referInfo = document.getElementById("referInfo");
-    const referBadge = document.getElementById("referBadge");
-
-    // URL থেকে রেফার কোড নেওয়া
-    const urlRef = new URLSearchParams(location.search).get("ref");
-    if (urlRef) {
-      const clean = urlRef.toUpperCase().trim();
-      referInput.value = clean;
-      referBadge.style.display = "block";
-      referInfo.style.display = "block";
-      referInfo.innerHTML = "🎁 Refer code applied: <b>" + esc(clean) + "</b>";
     }
 
     // পাসওয়ার্ড শক্তি মিটার
@@ -353,49 +295,11 @@
     pwInput.addEventListener("input", () => { checkStrength(); checkMatch(); });
     cpInput.addEventListener("input", checkMatch);
 
-    let referTimer = null;
-
-    // রেফার কোড টাইপ করার সময় সার্ভার API দিয়ে যাচাই
-    referInput.addEventListener("input", () => {
-      clearTimeout(referTimer);
-      const code = referInput.value.trim().toUpperCase();
-      referInput.value = code;
-
-      if (!code || code.length < 3) {
-        referInfo.style.display = "none";
-        referBadge.style.display = "none";
-        return;
-      }
-
-      referTimer = setTimeout(async () => {
-        try {
-          const res = await fetch(REFER_URL + "?code=" + encodeURIComponent(code));
-          const data = await res.json().catch(() => null);
-          if (data?.valid) {
-            flashField(referInput, "ok");
-            referBadge.style.display = "block";
-            referInfo.style.display = "block";
-            referInfo.innerHTML = "✅ Valid! <b>" + esc(data.username) + "</b> referred you";
-          } else if (res.ok) {
-            referInfo.style.display = "none";
-            referBadge.style.display = "none";
-            flashField(referInput, "err");
-          }
-        } catch (e) {
-          console.log("Refer check error:", e);
-        }
-      }, 500);
-    });
-
-    // URL এর কোড থাকলে সাথে সাথে যাচাই করা
-    if (urlRef) referInput.dispatchEvent(new Event("input"));
-
     document.getElementById("signupBtn").onclick = async () => {
       const username = document.getElementById("username").value.trim();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const confirmPassword = document.getElementById("confirmPassword").value;
-      const referCode = referInput.value.trim().toUpperCase();
       const btn = document.getElementById("signupBtn");
 
       if (!username || !email || !password || !confirmPassword) return alert("সব ঘর পূরণ করুন!");
@@ -412,9 +316,9 @@
         // ২. ফায়ারবেস সেশন আপডেট হওয়ার জন্য ১ সেকেন্ড অপেক্ষা
         await new Promise(r => setTimeout(r, 1000));
 
-        const myCode = generateReferCode();
+        const myCode = generateReferCode(); // ইউজারের নিজস্ব রেফার কোড জেনারেট করা হচ্ছে (যদি ভবিষ্যতে লাগে)
 
-        // ৩. ফায়ারস্টোরে ডেটা সেভ (referredBy এখানে null — সার্ভার পরে বসাবে)
+        // ৩. ফায়ারস্টোরে ডেটা সেভ
         await setDoc(doc(db, "users", cred.user.uid), {
           username,
           email,
@@ -430,21 +334,7 @@
           createdAt: new Date()
         });
 
-        // ৪. Refer code থাকলে সার্ভারে apply (ব্যর্থ হলেও signup আটকাবে না)
-        if (referCode) {
-          try {
-            const token = await cred.user.getIdToken();
-            await fetch(REFER_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-              body: JSON.stringify({ action: "apply", code: referCode })
-            });
-          } catch (e) {
-            console.error("Refer apply error:", e);
-          }
-        }
-
-        // ৫. সাইনআপ শেষে লগআউট করে লগইন পেজে পাঠানো
+        // ৪. সাইনআপ শেষে লগআউট করে লগইন পেজে পাঠানো
         await signOut(auth);
 
         document.getElementById("successBox").style.display = "flex";
@@ -452,13 +342,11 @@
 
       } catch (e) {
         console.error("Signup Error:", e);
-
         let msg = e.message;
         if (e.code === "auth/email-already-in-use") msg = "এই ইমেইল আগেই ব্যবহার হয়েছে!";
         else if (e.code === "auth/invalid-email") msg = "ইমেইল ফরম্যাট সঠিক নয়!";
         else if (e.code === "auth/weak-password") msg = "পাসওয়ার্ড দুর্বল!";
-        else if (e.code === "permission-denied") msg = "ডেটাবেস পারমিশন সমস্যা। ফায়ারবেস রুলস চেক করুন।";
-
+        
         alert("❌ " + msg);
         btn.disabled = false;
         btn.textContent = "রেজিস্ট্রেশন সম্পন্ন করুন";
