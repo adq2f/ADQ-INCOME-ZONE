@@ -21,8 +21,8 @@
 .d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .d-vb{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:0 0 18px;border-radius:50%;color:#fff;box-shadow:0 4px 10px -2px rgba(0,0,0,.5)}
 .d-vb svg{width:11px;height:11px;stroke-width:3.4}
-.d-wd{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:13px;background:#fff;color:#4c1d95;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(0,0,0,.45);flex:0 0 auto}
-.d-wd svg{width:15px;height:15px}
+.d-wd{display:flex;align-items:center;gap:6px;padding:9px 13px;border-radius:13px;background:#fff;color:#4c1d95;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(0,0,0,.45);flex:0 0 auto;text-decoration:none}
+.d-wd svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.5}
 .d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}
 .d-bl{font-size:11px;font-weight:600;opacity:.85}
 .d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
@@ -64,7 +64,11 @@
         <div class="d-hi">স্বাগতম</div>
         <div class="d-name"><span id="username">...</span><span id="dashBadge"></span></div>
       </div>
-      <a href="withdraw.html" class="d-wd" id="wdBtn">Withdraw</a>
+      <!-- ✅ Withdraw বাটনের সাদা সমস্যা ফিক্স (সরাসরি SVG) -->
+      <a href="withdraw.html" class="d-wd" id="wdBtn">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Withdraw
+      </a>
     </div>
     <div class="d-bal">
       <div>
@@ -102,14 +106,13 @@ import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { doc, collection, query, where, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-window.adqHold = true; // balance/data আসা পর্যন্ত loading screen থাকবে
+window.adqHold = true;
 const { esc, svg: S, taskRow, logo } = window.ADQ;
 const $ = (id) => document.getElementById(id);
 
 $("bellBtn").innerHTML = S.bell;
 $("logoutBtn").innerHTML = S.logout;
 $("nsClose").innerHTML = S.close;
-$("wdBtn").insertAdjacentHTML("afterbegin", S.download);
 $("segTasks").innerHTML = S.bolt + 'Tasks <span class="n" id="cntTasks">0</span>';
 $("segAct").innerHTML = S.activity + "Activity";
 
