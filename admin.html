@@ -38,7 +38,6 @@ a{text-decoration:none;color:inherit}button{font-family:inherit}
 .skel.big{height:170px;border-radius:28px}
 @keyframes shim{to{background-position:-200% 0}}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-
 .atag{font-style:normal;font-size:10px;font-weight:800;letter-spacing:.8px;color:#2a1700;background:linear-gradient(135deg,#fde68a,#f59e0b);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:2px}
 .top .mark{background:linear-gradient(135deg,#fbbf24,#f59e0b 55%,#d97706);color:#2a1700;box-shadow:0 8px 20px -6px rgba(245,158,11,.8),inset 0 1px 0 rgba(255,255,255,.4)}
 .switch{position:relative;width:54px;height:30px;flex:0 0 54px;display:inline-block}
@@ -112,7 +111,81 @@ select.inp option{background:#12122a;color:#fff}
 .field-remove{width:30px;height:30px;border-radius:9px;border:none;cursor:pointer;background:rgba(239,68,68,.18);color:#fca5a5;font-weight:800}
 .time-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}
 .inp.ta{min-height:96px;resize:vertical}
-/* ... rest of CSS ... */
+.tk{display:flex;gap:14px;padding:16px;margin-bottom:12px;border-radius:24px;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.tk-logo{width:54px;height:54px;flex:0 0 54px;border-radius:17px;display:flex;align-items:center;justify-content:center;font-size:25px;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 12px 24px -8px #8b5cf6}
+.tk-b{flex:1;min-width:0}
+.tk-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.tk-top h4{margin:0;font-size:15.5px;font-weight:700;word-break:break-word}
+.pill{padding:4px 11px;border-radius:999px;font-size:11px;font-weight:800}
+.pill.open{background:rgba(16,185,129,.18);color:#6ee7b7}.pill.closed{background:rgba(239,68,68,.18);color:#fca5a5}.pill.waiting{background:rgba(245,158,11,.18);color:#fcd34d}
+.chip{display:inline-block;font-size:12px;font-weight:800;padding:3px 11px;border-radius:999px;margin:0 6px 4px 0;font-family:'Inter'}
+.chip.g{background:rgba(16,185,129,.16);color:#6ee7b7;border:1px solid rgba(16,185,129,.4)}.chip.y{background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.38)}
+.tk-m{margin:8px 0 0;font-size:12.5px;line-height:1.7;color:var(--muted)}
+.tk-a{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.mini{padding:9px 16px;border-radius:12px;border:none;cursor:pointer;font-size:12.5px;font-weight:700;font-family:inherit;color:#fff;transition:.2s}
+.mini:hover{transform:translateY(-2px)}
+.mini.p{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 20px -8px rgba(139,92,246,.9)}
+.mini.r{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 10px 20px -8px rgba(239,68,68,.9)}
+.time-group-card{padding:18px;margin-bottom:14px;border-radius:24px;border-left:4px solid #6366f1;animation:rise .45s cubic-bezier(.2,.8,.2,1) both}
+.time-group-card.processed{border-left-color:#10b981;background:linear-gradient(90deg,rgba(16,185,129,.14),rgba(255,255,255,.025) 45%)}
+.tgh{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.tgt{display:inline-block;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 10px 20px -8px rgba(139,92,246,.9);font-family:'Inter'}
+.tgt.done{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 10px 20px -8px rgba(16,185,129,.9)}
+.tgd{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.6}
+.tgn{text-align:right}.tgn b{display:block;font-family:'Inter';font-size:26px;font-weight:900;line-height:1}.tgn span{font-size:11px;color:var(--muted);font-weight:600}
+.tgs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.tg-stat{padding:11px 6px;border-radius:16px;text-align:center;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.tg-stat .v{font-family:'Inter';font-size:19px;font-weight:900}.tg-stat .l{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px}
+.tg-stat.good .v{color:#34d399}.tg-stat.bad .v{color:#f87171}.tg-stat.pending .v{color:#fbbf24}.tg-stat.pending.zero .v{color:var(--dim)}
+.tga{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.tga button{flex:1;min-width:110px;padding:12px;border-radius:14px;border:none;cursor:pointer;font-weight:700;font-size:12.5px;font-family:inherit;color:#fff;transition:.2s}
+.tga button:hover{transform:translateY(-2px)}
+.tga .dl{background:linear-gradient(135deg,#10b981,#0d9488);box-shadow:0 12px 24px -10px rgba(16,185,129,.9)}
+.tga .pr{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 12px 24px -10px rgba(139,92,246,.9)}
+.tga .dx{background:rgba(239,68,68,.18);color:#fca5a5;flex:0 0 56px;min-width:56px}
+.result-box{padding:18px;margin-top:14px;border-radius:22px;background:linear-gradient(135deg,rgba(16,185,129,.18),rgba(34,211,238,.06));border:1px solid rgba(16,185,129,.45);border-left:4px solid #10b981}
+.result-box h3{margin:0 0 10px;font-size:16px;color:#6ee7b7}.result-box p{margin:0 0 6px;font-size:14px;color:#d1fae5}.result-box .big{font-family:'Inter';font-size:22px;font-weight:900;color:#fff}
+.nrow{padding:16px;margin-bottom:10px;border-radius:22px;border-left:4px solid #f59e0b;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(255,255,255,.025))}
+.nrow h3{margin:0 0 6px;font-size:15px;color:#fde68a}.nrow p{margin:0;font-size:13px;line-height:1.6;color:#e7e5f4;word-break:break-word}.nrow a{color:#c4b5fd;font-weight:700}
+.user-card{display:flex;align-items:center;gap:12px;padding:13px;border-radius:20px;margin-bottom:9px;transition:.25s}
+.user-card:hover{border-color:rgba(139,92,246,.45)}
+.user-checkbox{width:24px;height:24px;flex:0 0 24px;border-radius:8px;border:2px solid rgba(255,255,255,.25);background:rgba(255,255,255,.04);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+.user-checkbox.checked{background:linear-gradient(135deg,#ef4444,#b91c1c);border-color:transparent;color:#fff;box-shadow:0 8px 18px -6px rgba(239,68,68,.9)}
+.user-checkbox.checked::after{content:'✓';font-size:14px;font-weight:800}
+.user-avatar{width:46px;height:46px;flex:0 0 46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-family:'Inter';font-size:18px}
+.user-avatar.admin{background:linear-gradient(135deg,#f87171,#b91c1c)}.user-avatar.user{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.user-info{flex:1;min-width:0;cursor:pointer}
+.user-info h4{margin:0 0 2px;font-size:14.5px;font-weight:700;word-break:break-word}.user-info p{margin:0 0 4px;font-size:11.5px;color:var(--muted);word-break:break-all}
+.user-info .badges{font-size:11.5px;color:var(--muted)}
+.bdg{display:inline-block;padding:2px 9px;border-radius:999px;font-size:9.5px;font-weight:800;text-transform:uppercase;color:#fff;margin-left:4px;vertical-align:1px}
+.admin-action-bar{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:688px;display:none;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:20px;color:#fff;background:linear-gradient(135deg,#dc2626,#9f1239);border:1px solid rgba(255,255,255,.22);box-shadow:0 18px 40px -10px rgba(220,38,38,.8);z-index:55}
+.admin-action-bar.show{display:flex}
+.admin-action-bar .count{font-weight:700;font-size:14px}
+.admin-action-bar button{background:#fff;color:#b91c1c;border:none;padding:9px 15px;border-radius:12px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit}
+.sw-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.badge-color-btn{width:38px;height:38px;border-radius:12px;border:3px solid transparent;cursor:pointer;transition:.2s;box-shadow:0 8px 16px -6px rgba(0,0,0,.6)}
+.badge-color-btn:hover{transform:scale(1.1)}
+.badge-color-btn.on{border-color:#fff}
+.brow{display:flex;align-items:center;gap:10px;padding:12px;margin-bottom:8px;border-radius:18px;border:1.5px solid var(--line);background:rgba(255,255,255,.04);cursor:pointer;transition:.2s}
+.brow.sel{border-color:rgba(139,92,246,.9);background:rgba(139,92,246,.12)}
+.bsel{display:none;padding:14px;border-radius:18px;margin-bottom:14px;background:rgba(99,102,241,.14);border-left:4px solid #6366f1}
+.bsel small{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
+.bsel b{font-size:15px}.bsel span{display:block;font-size:12px;color:var(--muted)}
+.cleanup-card{padding:22px 20px;border-radius:28px;text-align:center;border:1.5px solid rgba(239,68,68,.5);background:linear-gradient(135deg,rgba(239,68,68,.16),rgba(190,24,93,.08))}
+.cleanup-card .big{font-size:46px;margin-bottom:6px}.cleanup-card h3{margin:0 0 6px;font-size:20px;color:#fecaca}
+.cleanup-card p{margin:0 0 14px;font-size:13px;line-height:1.7;color:#fecaca}
+.cleanup-list{list-style:none;padding:0;margin:0 0 16px;text-align:left}
+.cleanup-list li{padding:9px 12px;border-radius:12px;background:rgba(0,0,0,.22);margin-bottom:6px;font-size:13px;font-weight:600}
+.cleanup-list li.ok{background:rgba(16,185,129,.1);color:#a7f3d0}
+.cleanup-card a.cta{display:block}
+.mbk{position:fixed;inset:0;z-index:120;background:rgba(3,3,10,.8);display:none;align-items:center;justify-content:center;padding:12px}
+.mbk.show{display:flex}
+.mbx{width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:26px;padding:20px;background:#12122a;border:1px solid rgba(255,255,255,.14)}
+.mbx h3{margin:0 0 6px;font-size:18px}
+.mbx .sub{margin:0 0 12px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+.pv{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.pv div{padding:12px;border-radius:16px;text-align:center;background:rgba(255,255,255,.05);font-size:12px;color:var(--muted)}
+.pv b{display:block;font-family:Inter;font-size:24px;color:#fff}
 </style>
 </head>
 <body>
@@ -166,11 +239,11 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- 2. TASK TAB (Milestone System Added) -->
+  <!-- 2. TASK TAB (Milestone Format Added) -->
   <div id="taskTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3 id="taskFormTitle">➕ নতুন Task</h3>
-      <p class="sub">Task এর তথ্য, সময়, মাইলস্টোন বোনাস ও প্রয়োজনীয় field ঠিক করুন।</p>
+      <p class="sub">Task এর তথ্য, সময়, মাইলস্টোন ও প্রয়োজনীয় field ঠিক করুন।</p>
       <input type="text" id="taskTitle" class="inp" placeholder="Task Title">
       <textarea id="taskDesc" class="inp ta" placeholder="Description"></textarea>
       
@@ -183,12 +256,14 @@ select.inp option{background:#12122a;color:#fff}
           <input type="number" id="taskPrice" class="inp" placeholder="যেমন: 6" min="1">
         </div>
         <div>
-          <label class="lab" style="margin-top:0">Milestone Target</label>
-          <input type="number" id="taskMilestoneTarget" class="inp" placeholder="যেমন: 500" min="0">
+          <label class="lab" style="margin-top:0">🔥 Milestones</label>
+          <input type="text" id="taskMilestones" class="inp" placeholder="যেমন: 500:7, 1000:8">
         </div>
       </div>
-      <label class="lab">🔥 Milestone Bonus Rate (৳ per account)</label>
-      <input type="number" id="taskMilestonePrice" class="inp" placeholder="যেমন: 7 (Target পূরণ হলে এই রেট পাবে)" step="0.01" min="0" value="0">
+      <p style="font-size:11.5px; color:var(--muted); margin-top:-6px; margin-bottom:12px;">
+        * মাইলস্টোন ফরম্যাট: <b>অ্যাকাউন্ট_সংখ্যা:রেট</b> (কমা দিয়ে আলাদা করুন)। <br>
+        * শুধু ফাইলের ওপর নির্ভর করবে। ৫০০ পূর্ণ হলে ৭৳, ১০০০ পূর্ণ হলে ৮৳।
+      </p>
 
       <label class="lab">Time Range</label>
       <div class="time-row">
@@ -342,8 +417,8 @@ select.inp option{background:#12122a;color:#fff}
   <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
 </div>
 
-<!-- Part 3 will start from here (JavaScript) -->
-<script type="module">
+<!-- Part 3 will start from here (JavaScript Part 1) -->
+ <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -356,6 +431,7 @@ select.inp option{background:#12122a;color:#fff}
     const DONE_STATUSES = new Set(["good", "bad", "processed", "completed", "approved", "success", "done", "accepted", "rejected"]);
     const isPendingSub = (s) => !DONE_STATUSES.has(String(s.status || "").toLowerCase().trim());
 
+    // Session Check
     const SESSION_DURATION = 12 * 60 * 60 * 1000;
     const sessionTime = sessionStorage.getItem("admin_verified");
     if (!sessionTime || (Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
@@ -363,6 +439,7 @@ select.inp option{background:#12122a;color:#fff}
       location.href = "admin-login.html";
     }
 
+    // Logout
     document.getElementById("logoutBtn").onclick = async () => {
       if (!confirm("লগআউট?")) return;
       sessionStorage.removeItem("admin_verified");
@@ -371,7 +448,7 @@ select.inp option{background:#12122a;color:#fff}
       location.href = "index.html";
     };
 
-    // Tabs Logic
+    // Tabs
     document.querySelectorAll(".admin-tab").forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
@@ -384,7 +461,7 @@ select.inp option{background:#12122a;color:#fff}
       };
     });
 
-    // Online Status
+    // Online Toggle
     function paintOnline(on) {
       document.getElementById("ostate").className = "ostate " + (on ? "on" : "off");
       document.getElementById("ostateText").textContent = on ? "Online — সব user আপনাকে Online দেখছে" : "Offline — user-রা Offline দেখছে";
@@ -482,8 +559,7 @@ select.inp option{background:#12122a;color:#fff}
       document.getElementById("taskFormTitle").textContent = "➕ নতুন Task";
       document.getElementById("addTaskBtn").textContent = "Add Task";
       document.getElementById("cancelEditBtn").style.display = "none";
-      ["taskTitle","taskDesc","taskPrice","taskMilestoneTarget","taskMilestonePrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
-      document.getElementById("taskMilestonePrice").value = "0";
+      ["taskTitle","taskDesc","taskPrice","taskMilestones","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
       resetFields();
     };
 
@@ -491,8 +567,22 @@ select.inp option{background:#12122a;color:#fff}
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
       const pricePerAccount = parseFloat(document.getElementById("taskPrice").value);
-      const milestoneTarget = parseInt(document.getElementById("taskMilestoneTarget").value) || 0;
-      const milestonePrice = parseFloat(document.getElementById("taskMilestonePrice").value) || 0;
+      
+      // Parse Milestones "500:7, 1000:8"
+      const mStr = document.getElementById("taskMilestones").value.trim();
+      let milestones = [];
+      if (mStr) {
+        milestones = mStr.split(",").map(s => {
+          const parts = s.split(":");
+          if (parts.length === 2) {
+            const t = parseInt(parts[0].trim());
+            const p = parseFloat(parts[1].trim());
+            if (!isNaN(t) && !isNaN(p)) return { target: t, price: p };
+          }
+          return null;
+        }).filter(Boolean).sort((a,b) => a.target - b.target);
+      }
+
       const startVal = document.getElementById("taskStartTime").value;
       const endVal = document.getElementById("taskEndTime").value;
       const rules = document.getElementById("taskRules").value.trim();
@@ -508,19 +598,19 @@ select.inp option{background:#12122a;color:#fff}
       try {
         if (editTaskId) {
           await updateDoc(doc(db, "tasks", editTaskId), {
-            title, description, pricePerAccount, milestoneTarget, milestonePrice, platform: selectedPlatform, fields, rules,
+            title, description, pricePerAccount, milestones, platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal), updatedAt: new Date()
           });
           alert("✅ Updated!");
           document.getElementById("cancelEditBtn").click();
         } else {
           await addDoc(collection(db, "tasks"), {
-            title, description, pricePerAccount, milestoneTarget, milestonePrice, platform: selectedPlatform, fields, rules,
+            title, description, pricePerAccount, milestones, platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal),
             active: true, createdAt: new Date()
           });
           alert("✅ Added!");
-          ["taskTitle","taskDesc","taskPrice","taskMilestoneTarget","taskMilestonePrice","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
+          ["taskTitle","taskDesc","taskPrice","taskMilestones","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
           resetFields();
         }
         loadTasks(); loadDropdowns(); loadStats();
@@ -549,12 +639,18 @@ select.inp option{background:#12122a;color:#fff}
         else { label = "🟢 Open"; cls = "open"; }
         const startStr = start ? start.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
         const endStr = end ? end.toLocaleString("bn-BD", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+        
+        let mTags = "";
+        if (t.milestones && t.milestones.length > 0) {
+          mTags = t.milestones.map(m => `<span class="chip y">${m.target}=৳${m.price}</span>`).join("");
+        }
+
         return `
           <div class="tk glass" style="animation-delay:${Math.min(i, 8) * 0.05}s">
             <div class="tk-logo" style="background:${pf.color}">${pf.svg}</div>
             <div class="tk-b">
               <div class="tk-top"><h4>${esc(t.title)}</h4><span class="pill ${cls}">${label}</span></div>
-              <span class="chip g">৳${t.pricePerAccount}/account</span>${t.milestoneTarget > 0 ? `<span class="chip y">🎁 ${t.milestoneTarget}=৳${t.milestonePrice}</span>` : ''}
+              <span class="chip g">৳${t.pricePerAccount}/account</span>${mTags}
               <p class="tk-m">🌐 ${esc(t.platform || "Other")} • 📝 ${fieldCount} fields<br>⏰ ${startStr} → ${endStr}</p>
               <div class="tk-a">
                 <button class="mini p" onclick="editTask('${t.id}')">✏️ Edit</button>
@@ -576,8 +672,13 @@ select.inp option{background:#12122a;color:#fff}
       document.getElementById("taskTitle").value = t.title || "";
       document.getElementById("taskDesc").value = t.description || "";
       document.getElementById("taskPrice").value = t.pricePerAccount || "";
-      document.getElementById("taskMilestoneTarget").value = t.milestoneTarget || "";
-      document.getElementById("taskMilestonePrice").value = t.milestonePrice || "0";
+      
+      if (t.milestones && t.milestones.length > 0) {
+        document.getElementById("taskMilestones").value = t.milestones.map(m => `${m.target}:${m.price}`).join(", ");
+      } else {
+        document.getElementById("taskMilestones").value = "";
+      }
+
       document.getElementById("taskRules").value = t.rules || "";
       selectedPlatform = t.platform || "Facebook";
       document.querySelectorAll(".platform-opt").forEach(o => o.classList.toggle("active", o.dataset.platform === selectedPlatform));
@@ -601,10 +702,9 @@ select.inp option{background:#12122a;color:#fff}
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-// Part 4 will start from here (Result Process, Users, Badges, Init)
-     let loadedTask = null;
+    // Loading pending submissions for process
+    let loadedTask = null;
     let pendingGroups = {};
-    let allPublishedGroups = {};
 
     async function loadDropdowns() {
       const q = query(collection(db, "tasks"), where("active", "==", true));
@@ -724,7 +824,8 @@ select.inp option{background:#12122a;color:#fff}
       XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${key.replace(/[: ]/g, "-")}.xlsx`);
     };
 
-    let modalKey = null, processing = false;
+// Part 4 will start from here (Result Process Logic & Final Init)
+     let modalKey = null, processing = false;
 
     function parseBad(text) {
       const set = new Set();
@@ -776,7 +877,7 @@ select.inp option{background:#12122a;color:#fff}
       processGroup(modalKey, $("badText").value);
     };
 
-    // Milestone Logic Implemented inside processGroup
+    // Milestone Logic Implemented Exactly as requested (File-based evaluation)
     async function processGroup(key, badText) {
       if (processing) return;
       processing = true;
@@ -788,100 +889,74 @@ select.inp option{background:#12122a;color:#fff}
         if (!pending.length) { out.innerHTML = `<div class="empty"><div class="em">📭</div>Pending নেই</div>`; return; }
 
         const normalPrice = Number(loadedTask.pricePerAccount) || 0;
-        const mTarget = Number(loadedTask.milestoneTarget) || 0;
-        const mPrice = Number(loadedTask.milestonePrice) || 0;
-        const cache = new Map();
-        const getU = async (uid) => {
-          if (!uid) return null;
-          if (!cache.has(uid)) {
-            let u = null;
-            try { const s = await getDoc(doc(db, "users", uid)); u = s.exists() ? s.data() : null; } catch (e) {}
-            cache.set(uid, u);
+        const milestones = loadedTask.milestones || []; 
+        
+        // ১. এই ফাইলে ইউজার কতগুলো Good এবং Bad দিয়েছে তা একবারে ক্যালকুলেট করা
+        const userTotals = {}; // { uid: { good: count, bad: count, goodItems: [], badItems: [] } }
+        let totalGood = 0, totalBad = 0;
+
+        for (const s of pending) {
+          const isBad = !!matchBad(s, fields, set);
+          const p = userTotals[s.userId] || (userTotals[s.userId] = { g: 0, b: 0, goodItems: [], badItems: [] });
+          if (isBad) {
+            p.b++; totalBad++; p.badItems.push(s.id);
+          } else {
+            p.g++; totalGood++; p.goodItems.push(s.id);
           }
-          return cache.get(uid);
-        };
+        }
 
-        let good = 0, bad = 0, totalPayout = 0, done = 0;
-        const BATCH = 100;
+        let totalPayout = 0;
+        let batch = writeBatch(db);
+        let batchCount = 0;
 
-        for (let i = 0; i < pending.length; i += BATCH) {
-          const chunk = pending.slice(i, i + BATCH);
-          const batch = writeBatch(db);
-          const per = {};
+        // ২. প্রতিটি ইউজারের জন্য ফাইলের Good সংখ্যা অনুযায়ী রেট বের করা এবং ডাটাবেস আপডেট
+        for (const [uid, p] of Object.entries(userTotals)) {
+          if (!uid || uid === "undefined" || uid === "null") continue;
+          
+          // ডিফল্ট রেট
+          let appliedPrice = normalPrice;
 
-          for (const s of chunk) {
-            const isBad = !!matchBad(s, fields, set);
-            batch.set(doc(db, "submissions", s.id), {
-              status: isBad ? "bad" : "good",
-              earned: isBad ? 0 : normalPrice, // We will update this below if milestone applies
-              checkedAt: new Date(),
-              processedAt: new Date(),
-              processedBy: auth.currentUser?.uid || null
-            }, { merge: true });
-            const p = per[s.userId] || (per[s.userId] = { g: 0, b: 0, items: [] });
-            if (isBad) { p.b++; bad++; } else { p.g++; good++; p.items.push(s.id); }
-          }
-
-          for (const [uid, p] of Object.entries(per)) {
-            if (!uid || uid === "undefined" || uid === "null") continue;
-            const u = await getU(uid);
-            if (!u) continue;
-
-            let earnedAmount = p.g * normalPrice;
-
-            // Milestone check
-            if (mTarget > 0 && mPrice > 0 && p.g > 0) {
-              const uq = query(collection(db, "submissions"), where("userId", "==", uid), where("taskId", "==", loadedTask.id), where("status", "==", "good"));
-              const usnap = await getDocs(uq);
-              const userTotalGoodForTask = usnap.size; 
-              
-              if (userTotalGoodForTask + p.g >= mTarget) {
-                earnedAmount = p.g * mPrice;
-                p.items.forEach(id => {
-                  batch.set(doc(db, "submissions", id), { earned: mPrice }, { merge: true });
-                });
-              }
+          // মাইলস্টোন চেক (এই ফাইলে ইউজারের মোট Good সংখ্যা p.g)
+          for (const m of milestones) {
+            if (p.g >= m.target) {
+              appliedPrice = m.price;
             }
+          }
 
-            totalPayout += earnedAmount;
+          const earnedAmount = p.g * appliedPrice;
+          totalPayout += earnedAmount;
 
+          // Good সাবমিশন আপডেট
+          for (const id of p.goodItems) {
+            batch.set(doc(db, "submissions", id), {
+              status: "good", earned: appliedPrice, checkedAt: new Date(), processedBy: auth.currentUser?.uid || null
+            }, { merge: true });
+            batchCount++;
+            if (batchCount >= 400) { await batch.commit(); batch = writeBatch(db); batchCount = 0; }
+          }
+          // Bad সাবমিশন আপডেট
+          for (const id of p.badItems) {
+            batch.set(doc(db, "submissions", id), {
+              status: "bad", earned: 0, checkedAt: new Date(), processedBy: auth.currentUser?.uid || null
+            }, { merge: true });
+            batchCount++;
+            if (batchCount >= 400) { await batch.commit(); batch = writeBatch(db); batchCount = 0; }
+          }
+
+          // ইউজার ব্যালেন্স আপডেট
+          if (p.g > 0 || p.b > 0) {
             batch.set(doc(db, "users", uid), {
               balance: increment(earnedAmount),
               totalGood: increment(p.g),
               totalBad: increment(p.b),
               totalPending: increment(-(p.g + p.b))
             }, { merge: true });
+            batchCount++;
+            if (batchCount >= 400) { await batch.commit(); batch = writeBatch(db); batchCount = 0; }
           }
-
-          await batch.commit();
-
-          // Force-fix verification
-          try {
-            const verifyBatch = writeBatch(db);
-            let vCount = 0;
-            for (const s of chunk) {
-              const vSnap = await getDoc(doc(db, "submissions", s.id));
-              if (vSnap.exists()) {
-                const vSt = vSnap.data().status;
-                if (vSt !== "good" && vSt !== "bad" && vSt !== "processed") {
-                  const isBad = !!matchBad(s, fields, set);
-                  verifyBatch.set(doc(db, "submissions", s.id), {
-                    status: isBad ? "bad" : "good",
-                    checkedAt: new Date(),
-                    processedAt: new Date(),
-                    processedBy: auth.currentUser?.uid || null,
-                    _forceFixed: true
-                  }, { merge: true });
-                  vCount++;
-                }
-              }
-            }
-            if (vCount > 0) await verifyBatch.commit();
-          } catch (verifyErr) { console.warn("Verify error:", verifyErr); }
-
-          done += chunk.length;
-          out.innerHTML = `<div class="result-box"><h3>⏳ Processing ${done}/${pending.length}...</h3></div>`;
         }
+
+        if (batchCount > 0) await batch.commit();
 
         // Daily Reports
         try {
@@ -890,8 +965,8 @@ select.inp option{background:#12122a;color:#fff}
             taskTitle: loadedTask.title,
             platform: loadedTask.platform || "Other",
             pricePerAccount: normalPrice,
-            goodCount: good,
-            badCount: bad,
+            goodCount: totalGood,
+            badCount: totalBad,
             pendingCount: 0,
             totalEarned: totalPayout,
             date: new Date().toISOString(),
@@ -904,10 +979,9 @@ select.inp option{background:#12122a;color:#fff}
             <h3>✅ File Processed &amp; Published!</h3>
             <p><b>📁 ${esc(key)}</b></p>
             <p>Total: <b>${pending.length}</b></p>
-            <p>✅ Good: <span class="big" style="color:#34d399">${good}</span></p>
-            <p>❌ Bad: <span class="big" style="color:#f87171">${bad}</span></p>
+            <p>✅ Good: <span class="big" style="color:#34d399">${totalGood}</span></p>
+            <p>❌ Bad: <span class="big" style="color:#f87171">${totalBad}</span></p>
             <p>💰 Total Paid: <span class="big" style="color:#fbbf24">৳${totalPayout}</span></p>
-            ${mTarget > 0 ? `<p style="margin-top:10px;font-size:12px;color:#9a9bb8">Milestone target was ${mTarget} (Rate: ৳${mPrice})</p>` : ""}
           </div>`;
 
         delete pendingGroups[key];
@@ -920,7 +994,8 @@ select.inp option{background:#12122a;color:#fff}
       }
     }
 
-    // PUBLISHED RESULTS LOGIC
+    // PUBLISHED RESULTS
+    let allPublishedGroups = {};
     async function loadPublishedResults() {
       const container = document.getElementById("publishedGroups");
       container.innerHTML = `<div class="skel"></div><div class="skel"></div>`;
@@ -993,12 +1068,8 @@ select.inp option{background:#12122a;color:#fff}
       const items = allPublishedGroups[key] || [];
       if (!items.length) return alert("No data");
       const sheetData = items.map((s, idx) => ({
-        "#": idx + 1,
-        "UID": s.uid || "",
-        "Task": s.taskTitle || "",
-        "Status": s.status || "",
-        "Earned": "৳" + (s.earned || 0),
-        "Processed At": s.checkedAt?.toDate?.().toLocaleString("en-GB") || ""
+        "#": idx + 1, "UID": s.uid || "", "Task": s.taskTitle || "", "Status": s.status || "",
+        "Earned": "৳" + (s.earned || 0), "Processed At": s.checkedAt?.toDate?.().toLocaleString("en-GB") || ""
       }));
       const ws = XLSX.utils.json_to_sheet(sheetData);
       const wb = XLSX.utils.book_new();
@@ -1011,8 +1082,7 @@ select.inp option{background:#12122a;color:#fff}
       if (!items.length) return;
       if (!confirm(`⚠️ আপনি ${items.length} টি সাবমিশন ডিলিট করতে যাচ্ছেন। নিশ্চিত?`)) return;
       try {
-        let batch = writeBatch(db);
-        let count = 0;
+        let batch = writeBatch(db), count = 0;
         for (const s of items) {
           batch.delete(doc(db, "submissions", s.id));
           count++;
@@ -1092,7 +1162,7 @@ select.inp option{background:#12122a;color:#fff}
       loadNotices();
     };
 
-    // USERS LOGIC
+    // USERS & STATS
     let allUsers = [];
     let selectedUsers = new Set();
 
@@ -1155,164 +1225,25 @@ select.inp option{background:#12122a;color:#fff}
     };
 
     document.getElementById("clearSelectionBtn").onclick = () => { selectedUsers.clear(); renderUsers(); updateActionBar(); };
-
-    const USER_DATA = [["submissions", "userId"], ["withdrawals", "userId"], ["completed_tasks", "userId"], ["reports", "userId"], ["refer_earnings", "referrerId"], ["refer_earnings", "referredUserId"]];
-    const CHAT_COL = "chats", CHAT_SUB = "messages";
-
-    async function delDocs(docs) {
-      let b = writeBatch(db), n = 0;
-      for (const d of docs) { b.delete(d.ref); if (++n % 400 === 0) { await b.commit(); b = writeBatch(db); } }
-      if (n % 400) await b.commit();
-    }
-    const delSub = async (ref) => delDocs((await getDocs(collection(ref, CHAT_SUB))).docs);
-
-    document.getElementById("deleteSelectedBtn").onclick = async () => {
-      if (!selectedUsers.size) return;
-      if (!confirm(`${selectedUsers.size} টা user-এর সব data delete?`)) return;
-      if (prompt("নিশ্চিত করতে DELETE লিখুন") !== "DELETE") return;
-      let count = 0;
-      const warns = new Set();
+    
+    async function loadStats() {
       try {
-        for (const uid of selectedUsers) {
-          const u = allUsers.find(x => x.id === uid);
-          if (uid === auth.currentUser?.uid || u?.role === "admin") continue;
-          for (const [col, field] of USER_DATA) {
-            try { await delDocs((await getDocs(query(collection(db, col), where(field, "==", uid)))).docs); } catch (e) { warns.add(col); }
-          }
-          try {
-            const ref = doc(db, CHAT_COL, uid);
-            await delSub(ref); await deleteDoc(ref);
-            const q = await getDocs(query(collection(db, CHAT_COL), where("userId", "==", uid)));
-            for (const d of q.docs) { await delSub(d.ref); await deleteDoc(d.ref); }
-          } catch (e) { warns.add("chat"); }
-          await deleteDoc(doc(db, "users", uid));
-          count++;
-        }
-      } catch (e) { alert("❌ " + e.message); }
-      alert(`✅ ${count} user delete!` + (warns.size ? `\n⚠️ এগুলো পুরো মোছা যায়নি: ${[...warns].join(", ")}` : ""));
-      selectedUsers.clear(); loadUsers(); updateActionBar(); loadStats();
-    };
+        const taskQ = query(collection(db, "tasks"), where("active", "==", true));
+        const taskSnap = await getDocs(taskQ);
+        document.getElementById("statTasks").textContent = taskSnap.size;
+        const userSnap = await getDocs(collection(db, "users"));
+        document.getElementById("statUsers").textContent = userSnap.size;
+        const subSnap = await getDocs(collection(db, "submissions"));
+        const pendingCount = subSnap.docs.filter(d => isPendingSub(d.data())).length;
+        document.getElementById("statSubs").textContent = pendingCount;
+        const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
+        const wdSnap = await getDocs(wdQ);
+        document.getElementById("statWithdrawals").textContent = wdSnap.size;
+      } catch (e) {}
+    }
 
     window.editUser = (uid) => { location.href = "admin-user-edit.html?id=" + uid; };
     document.getElementById("userSearch").oninput = renderUsers;
-
-    // BADGES LOGIC
-    let allBadgeUsers = [];
-    let selectedBadgeUserId = null;
-    let badgeColor = "#6366f1";
-
-    document.querySelectorAll(".badge-color-btn").forEach(btn => {
-      btn.onclick = () => {
-        badgeColor = btn.dataset.color;
-        document.getElementById("badgeCustomColor").value = badgeColor;
-        document.querySelectorAll(".badge-color-btn").forEach(b => b.classList.remove("on"));
-        btn.classList.add("on");
-      };
-    });
-
-    document.getElementById("badgeCustomColor").oninput = (e) => {
-      badgeColor = e.target.value;
-      document.querySelectorAll(".badge-color-btn").forEach(b => b.classList.remove("on"));
-    };
-
-    async function loadBadgeUsers() {
-      try {
-        const snap = await getDocs(collection(db, "users"));
-        allBadgeUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }))
-          .filter(u => u.role !== "admin")
-          .sort((a, b) => (b.totalGood || 0) - (a.totalGood || 0));
-        renderBadgeUserResults(document.getElementById("badgeUserSearch").value || "");
-      } catch (e) {}
-    }
-
-    function renderBadgeUserResults(search) {
-      const container = document.getElementById("badgeUserResults");
-      const s = search.toLowerCase().trim();
-      let filtered = allBadgeUsers;
-      if (s) filtered = allBadgeUsers.filter(u => (u.username || "").toLowerCase().includes(s) || (u.email || "").toLowerCase().includes(s));
-      filtered = filtered.slice(0, 50);
-
-      if (filtered.length === 0) { container.innerHTML = `<div class="empty" style="padding:16px">কোনো user পাওয়া যায়নি</div>`; return; }
-
-      container.innerHTML = filtered.map(u => `
-        <div class="brow ${selectedBadgeUserId === u.id ? 'sel' : ''}" data-uid="${u.id}" data-name="${esc(u.username || 'User')}" data-email="${esc(u.email || '')}">
-          <div class="user-avatar user" style="width:40px;height:40px;flex-basis:40px;font-size:16px">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:14px;font-weight:700">${esc(u.username || "User")} ${u.customBadge ? `<span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">${esc(u.customBadge)}</span>` : ''}</div>
-            <div style="font-size:11.5px;color:var(--muted);word-break:break-all">${esc(u.email || "")} • ✅ ${u.totalGood || 0}</div>
-          </div>
-        </div>`).join("");
-
-      container.querySelectorAll(".brow").forEach(row => {
-        row.onclick = () => {
-          selectedBadgeUserId = row.dataset.uid;
-          document.getElementById("selectedBadgeUser").style.display = "block";
-          document.getElementById("selectedBadgeUserName").textContent = row.dataset.name;
-          document.getElementById("selectedBadgeUserEmail").textContent = row.dataset.email;
-          renderBadgeUserResults(document.getElementById("badgeUserSearch").value);
-        };
-      });
-    }
-
-    document.getElementById("badgeUserSearch").addEventListener("input", (e) => { renderBadgeUserResults(e.target.value); });
-
-    async function loadBadgedUsers() {
-      const list = document.getElementById("badgedUsersList");
-      try {
-        const snap = await getDocs(collection(db, "users"));
-        const badgedUsers = snap.docs.map(d => ({ ...d.data(), id: d.id })).filter(u => u.customBadge);
-        if (badgedUsers.length === 0) { list.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো badge assign করা হয়নি</div>`; return; }
-        list.innerHTML = badgedUsers.map(u => `
-          <div class="user-card glass">
-            <div class="user-avatar user">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
-            <div class="user-info" style="cursor:default">
-              <h4>${esc(u.username || "User")} <span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">${esc(u.customBadge)}</span></h4>
-              <p>${esc(u.email || "")}</p>
-              <div class="badges">✅ ${u.totalGood || 0} good</div>
-            </div>
-            <button class="mini r" onclick="removeUserBadge('${u.id}')">Remove</button>
-          </div>`).join("");
-      } catch (e) {}
-    }
-
-    window.removeUserBadge = async (uid) => {
-      if (!confirm("Badge remove করবে?")) return;
-      try {
-        await updateDoc(doc(db, "users", uid), { customBadge: null, customBadgeColor: null });
-        loadBadgedUsers(); loadBadgeUsers();
-        alert("✅ Badge removed!");
-      } catch (e) { alert("❌ " + e.message); }
-    };
-
-    document.getElementById("saveBadgeBtn").onclick = async () => {
-      const userId = selectedBadgeUserId;
-      const badgeName = document.getElementById("badgeName").value.trim().toUpperCase();
-      const color = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
-      if (!userId) return alert("User select করো!");
-      if (!badgeName) return alert("Badge name দাও!");
-      try {
-        await updateDoc(doc(db, "users", userId), { customBadge: badgeName, customBadgeColor: color });
-        document.getElementById("badgeOutput").innerHTML = `
-          <div class="result-box">
-            <h3>✅ Badge Assigned!</h3>
-            <p>User: ${esc(document.getElementById("selectedBadgeUserName").textContent)}</p>
-            <p>Badge: <span class="bdg" style="background:${esc(color)};margin-left:0">${esc(badgeName)}</span></p>
-          </div>`;
-        document.getElementById("badgeName").value = "";
-        loadBadgedUsers(); loadBadgeUsers();
-      } catch (e) { alert("❌ " + e.message); }
-    };
-
-    document.getElementById("removeBadgeBtn").onclick = async () => {
-      const userId = selectedBadgeUserId;
-      if (!userId) return alert("User select করো!");
-      if (!confirm("Badge remove করবে?")) return;
-      try {
-        await updateDoc(doc(db, "users", userId), { customBadge: null, customBadgeColor: null });
-        alert("✅ Badge removed!");
-        loadBadgedUsers(); loadBadgeUsers();
-      } catch (e) { alert("❌ " + e.message); }
-    };
 
     // SETTINGS LOGIC
     async function loadSettings() {
@@ -1346,33 +1277,11 @@ select.inp option{background:#12122a;color:#fff}
       if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
       try {
         await setDoc(doc(db, "settings", "withdraw_config"), { minWithdraw, maxWithdraw, processingTime, withdrawEnabled, updatedAt: new Date() }, { merge: true });
-        showSettingsOutput("✅ Withdraw settings saved!");
+        alert("✅ Withdraw settings saved!");
       } catch (e) { alert("❌ " + e.message); }
     };
 
-    function showSettingsOutput(msg) {
-      const out = document.getElementById("settingsOutput");
-      out.innerHTML = `<div class="result-box"><h3>${msg}</h3></div>`;
-      setTimeout(() => out.innerHTML = "", 3000);
-    }
-
-    // LOAD STATS & INIT
-    async function loadStats() {
-      try {
-        const taskQ = query(collection(db, "tasks"), where("active", "==", true));
-        const taskSnap = await getDocs(taskQ);
-        document.getElementById("statTasks").textContent = taskSnap.size;
-        const userSnap = await getDocs(collection(db, "users"));
-        document.getElementById("statUsers").textContent = userSnap.size;
-        const subSnap = await getDocs(collection(db, "submissions"));
-        const pendingCount = subSnap.docs.filter(d => isPendingSub(d.data())).length;
-        document.getElementById("statSubs").textContent = pendingCount;
-        const wdQ = query(collection(db, "withdrawals"), where("status", "==", "pending"));
-        const wdSnap = await getDocs(wdQ);
-        document.getElementById("statWithdrawals").textContent = wdSnap.size;
-      } catch (e) {}
-    }
-
+    // INIT
     onAuthStateChanged(auth, async (user) => {
       if (!user) { location.href = "login.html"; return; }
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -1383,7 +1292,6 @@ select.inp option{background:#12122a;color:#fff}
       }
       adminName = snap.data().username || "ADQ Admin";
       loadTasks(); loadNotices(); loadDropdowns(); loadUsers(); loadStats(); loadSettings();
-      loadBadgeUsers(); loadBadgedUsers();
     });
 
     window.addEventListener("beforeunload", (e) => {
