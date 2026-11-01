@@ -15,14 +15,15 @@
 .d-hero>*{position:relative}
 
 /* Name and Badge */
-.d-row1{display:flex;align-items:flex-start;gap:10px}
+.d-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.d-left{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
 .d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif;margin-top:2px}
 .d-wt{flex:1;min-width:0}
 .d-hi{font-size:11px;opacity:.8;font-weight:500;margin-bottom:2px}
 .d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2;color:#fff}
 .d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:inline-block;vertical-align:middle}
 
-/* Premium Badge (Dynamic Colors) */
+/* Exact Profile Premium Badge (Dynamic Colors) */
 .premium-badge {
   width: 20px; height: 20px; flex-shrink: 0; position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%;
   background: linear-gradient(135deg, #fceabb 0%, #f8b500 50%, #b47b00 100%);
@@ -55,7 +56,7 @@
 .premium-badge.bronze { background: linear-gradient(135deg, #fdba74, #ea580c, #9a3412); border-color: #fed7aa; box-shadow: 0 4px 10px rgba(234,88,12,.4), inset 0 -2px 4px rgba(0,0,0,.3), inset 0 2px 4px rgba(255,255,255,.8); }
 
 /* Green Tall Withdraw Button */
-.d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s}
+.d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s;margin-top:4px}
 .d-wd:active{transform:scale(.95)}
 .d-wd svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
 
@@ -76,19 +77,26 @@
 @keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 .d-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
 
-/* Timer Styling (Smaller & Blink Effect) */
+/* =========================================
+   TIMER FIX: FIXED WIDTH & ALIGNMENT
+   ========================================= */
+.x-rb{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.x-rs{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:nowrap;overflow:hidden;width:100%}
 .x-tag.time{
-  min-width:64px;
-  justify-content:center;
-  font-variant-numeric:tabular-nums;
-  font-family:'Inter',sans-serif;
-  font-size:10px; /* Smaller font */
-  padding: 3px 8px; /* Tighter padding */
-  transition: all 0.3s;
+  width: 86px; /* Fixed width to prevent jumping */
+  min-width: 86px;
+  flex-shrink: 0; /* Prevents box from shrinking */
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-family: 'Inter', monospace; /* Monospace keeps numbers same width */
+  font-size: 10px;
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
 }
-.x-tag.upcoming{min-width:72px}
+.x-go{flex-shrink:0}
 
-/* 5 Min Blink Red Premium Animation */
+/* Blink Red Animation for <5 mins */
 @keyframes blinkDanger {
   0%, 100% { color: #fca5a5; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
   50% { color: #ef4444; background: rgba(239, 68, 68, 0.35); border-color: rgba(239, 68, 68, 0.8); box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); font-weight:900; }
@@ -124,15 +132,16 @@
 
   <section class="d-hero">
     <div class="d-row1">
-      <div class="d-av" id="avatar">U</div>
-      <div class="d-wt">
-        <div class="d-hi">স্বাগতম</div>
-        <div class="d-name">
-          <span id="username">...</span>
-          <span id="dashBadge"></span>
+      <div class="d-left">
+        <div class="d-av" id="avatar">U</div>
+        <div class="d-wt">
+          <div class="d-hi">স্বাগতম</div>
+          <div class="d-name">
+            <span id="username">...</span>
+            <span id="dashBadge"></span>
+          </div>
         </div>
       </div>
-      <!-- Green Tall Withdraw Button -->
       <a href="withdraw.html" class="d-wd" id="wdBtn">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Withdraw
@@ -185,7 +194,6 @@ $("nsClose").innerHTML = S.close;
 $("segTasks").innerHTML = S.bolt + 'Tasks <span class="n" id="cntTasks">0</span>';
 $("segAct").innerHTML = S.activity + "Activity";
 
-// Badge Dynamic Color Function (same as Profile page)
 function getBadgeClass(color) {
   if (!color) return '';
   if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
@@ -194,7 +202,7 @@ function getBadgeClass(color) {
   if (color.includes("#10b981")) return 'green';
   if (color.includes("#ef4444")) return 'red';
   if (color.includes("#ea580c")) return 'bronze';
-  return ''; // Default is golden
+  return ''; 
 }
 
 const ready = { user: false, tasks: false, subs: false };
@@ -230,7 +238,6 @@ onAuthStateChanged(auth, (user) => {
       $("sGood").textContent = u.totalGood || 0;
       $("sPend").textContent = u.totalPending || 0;
       
-      // Dynamic Badge Rendering (Same as Profile)
       if (u.customBadge) {
         const badgeClass = getBadgeClass(u.customBadgeColor);
         $("dashBadge").innerHTML = `<span class="premium-badge ${badgeClass}" title="${esc(u.customBadge)}"></span>`;
@@ -271,7 +278,7 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
 $("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
 
-/* ======= LIVE TIMER LOGIC (HH:MM:SS + 5 Min Blink) ======= */
+/* ======= LIVE TIMER LOGIC ======= */
 function getFormattedTime(endMs, startMs) {
   const now = Date.now();
   if (startMs && now < startMs) {
@@ -283,7 +290,7 @@ function getFormattedTime(endMs, startMs) {
   
   const diff = endMs - now;
   const isDanger = diff > 0 && diff <= 5 * 60 * 1000; // 5 minutes or less
-  return { k: "open", t: fmt(diff) + " বাকি", isDanger };
+  return { k: "open", t: fmt(diff), isDanger };
 }
 function fmt(ms) {
   let h = Math.floor(ms / 3600000);
@@ -337,18 +344,16 @@ function loadTasks() {
   }, (e) => { list.innerHTML = `<div class="x-empty">${esc(e.message)}</div>`; mark("tasks"); });
 }
 
-// ✅ LIVE TIMER UPDATE INTERVAL (প্রতি সেকেন্ডে + Red Blink if <5m)
+// ✅ LIVE TIMER UPDATE INTERVAL
 setInterval(() => {
   document.querySelectorAll('.x-tag.time').forEach(el => {
     const startMs = Number(el.dataset.start) || 0;
     const endMs = Number(el.dataset.end) || 0;
     const st = getFormattedTime(endMs, startMs);
     
-    // Update Text
     const textEl = el.querySelector('.time-text');
     if (textEl) textEl.textContent = st.t;
     
-    // Update Classes (Base status + Danger Blink)
     el.className = `x-tag time ${st.k}${st.isDanger ? ' danger' : ''}`;
   });
 }, 1000);
