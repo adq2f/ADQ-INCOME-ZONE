@@ -132,7 +132,20 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><button class="ibtn" onclick="goBack()" aria-label="Back"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><div class="brand"><div class="mark">A</div><span>Withdraw</span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+
+<header class="top">
+  <div class="top-in">
+    <button class="ibtn" onclick="goBack()" aria-label="Back">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <div class="brand"><div class="mark">A</div><span>Withdraw</span></div>
+    <button class="ibtn danger" id="logoutBtn" aria-label="Logout">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </div>
+</header>
+
 <main class="page">
   <section class="bal">
     <div class="bal-top">
@@ -179,18 +192,41 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
   </div>
   <div id="withdrawHistory"><div class="skel"></div><div class="skel"></div></div>
 </main>
-<nav class="dock"><a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="wallet.html" data-page="wallet" class="active"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="task-history.html" data-page="history"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>History</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
+<nav class="dock">
+  <a href="dashboard.html" data-page="dash"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a>
+  <a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a>
+  <a href="wallet.html" data-page="wallet" class="active"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a>
+  <a href="task-history.html" data-page="history"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg><span>History</span></a>
+  <a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
+</nav>
+
+<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // ✅ ফিক্স: সরাসরি ডাটাবেসে না লিখে, API কল করা হবে
-    const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1")
-      ? ""
-      : "https://adq-income-zone.vercel.app";
+    // API Base logic
+    const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "" : "https://adq-income-zone.vercel.app";
     const WITHDRAW_URL = API_BASE + "/api/withdraw";
+
+    // ==========================================
+    // Telegram Notification Integration
+    // ==========================================
+    async function sendTelegramAlert(text) {
+      const BOT_TOKEN = "7352895365:AAEbcMNKrjU6DgaAFXtj2f_tkYLSMFiDKh8";
+      const CHAT_ID = "-1004324526320";
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'HTML' })
+        });
+      } catch (e) { 
+        console.error("Telegram Error:", e); 
+      }
+    }
 
     function newRequestId() {
       if (window.crypto?.randomUUID) return crypto.randomUUID().replace(/-/g, "");
@@ -210,6 +246,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
     }
     
     const WD_COLORS = { bkash: ["#e2136e", "#9d0b4f"], nagad: ["#f6921e", "#d1560f"], rocket: ["#8c3494", "#5b1f66"], binance: ["#f0b90b", "#b8860b"] };
+    
     function renderWdHistory(items, list) {
       let approved = 0, pending = 0;
       items.forEach(h => { if (h.status === "approved") approved += Number(h.amount) || 0; else if (h.status === "pending") pending += Number(h.amount) || 0; });
@@ -394,7 +431,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
       });
     }
 
-    // ✅ ফিক্স: সরাসরি addDoc না করে, নিরাপদ API তে রিকোয়েস্ট পাঠানো হচ্ছে
+    // Submit Logic with Telegram Alert
     document.getElementById("submitWdBtn").onclick = async () => {
       if (!selectedMethod) return alert("Payment method select করো!");
       const amount = parseFloat(document.getElementById("amount").value);
@@ -430,6 +467,13 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
         try { data = await res.json(); } catch(e) {}
 
         if (res.ok && data?.ok) {
+          // 👇 Telegram Notification to Group
+          const methodName = PAY_METHODS[selectedMethod]?.name || selectedMethod;
+          const userName = userData?.username || "Unknown User";
+          const msg = `🚨 <b>New Withdraw Request!</b>\n\n👤 <b>User:</b> ${userName}\n💰 <b>Amount:</b> ৳${amount}\n💳 <b>Method:</b> ${methodName}\n📱 <b>Account:</b> ${accountNum}\n\n⏳ <i>Status: Pending</i>`;
+          
+          await sendTelegramAlert(msg); // গ্রুপে মেসেজ পাঠানো হলো
+
           alert(data.reply || "✅ Withdraw request submitted!");
           location.href = "wallet.html";
         } else {
@@ -461,6 +505,5 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
       }
     }
   </script>
-
 </body>
-</html>
+</html>  
