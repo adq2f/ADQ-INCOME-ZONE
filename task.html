@@ -55,7 +55,8 @@ svg{display:block}
 .hd-main{flex:1;min-width:0}
 .hd-title{font-size:15px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hd-sub{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
-.pr{font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a}
+.pr{font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a;cursor:pointer;transition:transform 0.2s}
+.pr:active{transform:scale(0.92)}
 .pr small{font-family:'Hind Siliguri';font-weight:600;font-size:11px;color:rgba(255,255,255,.75);margin-left:2px}
 .pl{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff}
 
@@ -68,21 +69,6 @@ svg{display:block}
 .hd-time.open{border-color:rgba(16,185,129,.4);box-shadow:0 0 15px rgba(16,185,129,.2)}
 .hd-time.upcoming{border-color:rgba(245,158,11,.45)}
 .hd-time.closed{border-color:rgba(239,68,68,.45)}
-
-/* RULES ACCORDION */
-.acc{border-radius:18px;margin-bottom:12px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.03));border:1px solid rgba(251,191,36,.32)}
-.acc summary{list-style:none;display:flex;align-items:center;gap:9px;padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:700;color:#fde68a;user-select:none}
-.acc summary::-webkit-details-marker{display:none}
-.acc summary svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 17px}
-.acc summary .sm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc summary .hint{font-size:11px;font-weight:600;color:rgba(253,230,138,.7);margin-left:auto}
-.acc summary .chev{width:8px;height:8px;border-right:2px solid #fde68a;border-bottom:2px solid #fde68a;transform:rotate(45deg);transition:.25s;flex:0 0 8px;margin:-3px 2px 0 4px}
-.acc[open] summary .chev{transform:rotate(-135deg);margin-top:3px}
-.acc-body{padding:0 14px 14px;font-size:13px;line-height:1.65;color:#fde9a8;word-break:break-word}
-.acc-body .rl{margin-bottom:8px}
-.acc-body ul{margin:0;padding-left:18px;color:#bae6fd}
-.acc-body .tm{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)}
-.acc-body .tm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* TABS */
 .tab-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
@@ -163,6 +149,22 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
 .closed-box{border-radius:20px;padding:18px;text-align:center;border:1.5px dashed rgba(239,68,68,.5);background:rgba(239,68,68,.08);margin-top:10px}
 .closed-box h3{margin:0 0 4px;font-size:16px;color:#fca5a5}
 .closed-box p{margin:0;font-size:12.5px;color:var(--muted)}
+
+/* Milestone Modal */
+.ms-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,3,10,.8);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .3s}
+.ms-modal.show{opacity:1;visibility:visible}
+.ms-sheet{width:100%;max-width:520px;background:linear-gradient(180deg,#17172f,#0d0d1f);border:1px solid rgba(255,255,255,.12);border-bottom:none;border-radius:28px 28px 0 0;transform:translateY(100%);transition:transform .4s cubic-bezier(.2,.8,.2,1);padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+.ms-modal.show .ms-sheet{transform:translateY(0)}
+.ms-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.ms-head h3{margin:0;font-size:18px;font-weight:700;color:#fff}
+.ms-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px}
+.ms-body{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.ms-item{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.05);padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.08)}
+.ms-item span{font-size:14px;font-weight:700;color:#dcdcf2}
+.ms-item b{font-size:15px;font-weight:900;color:#6ee7b7;font-family:'Inter'}
+.ms-item.highlight{background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(245,158,11,.05));border-color:rgba(251,191,36,.4)}
+.ms-item.highlight span{color:#fde68a}
+.ms-item.highlight b{color:#fbbf24}
 </style>
 </head>
 <body>
@@ -183,7 +185,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
 
   <main class="content">
     <div id="taskInfo"><div class="skel"></div></div>
-    <div id="rulesWrap"></div>
 
     <div id="submitSections" class="locked">
       <div class="tab-bar" role="tablist">
@@ -195,7 +196,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
         </button>
       </div>
 
-      <!-- Single Submit -->
       <div id="tab-single" class="tab-content active">
         <div class="fc glass">
           <div class="fc-h"><b>Single Submit</b><span class="fmt" id="singleFmt"></span></div>
@@ -205,7 +205,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
         </div>
       </div>
 
-      <!-- File Submit -->
       <div id="tab-file" class="tab-content">
         <div class="fc glass">
           <div class="fc-h"><b>File Submit</b></div>
@@ -214,20 +213,8 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
           <div class="sheet-guide">
             <h4>📊 Excel/CSV Format (নিচের মতো সাজিয়ে দিন)</h4>
             <table class="sheet-table" id="sheetFormatTable">
-              <thead>
-                <tr>
-                  <th>A</th>
-                  <th>B</th>
-                  <th>C</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>UID</td>
-                  <td>Password</td>
-                  <td>2FA</td>
-                </tr>
-              </tbody>
+              <thead><tr><th>A</th><th>B</th><th>C</th></tr></thead>
+              <tbody><tr><td>UID</td><td>Password</td><td>2FA</td></tr></tbody>
             </table>
           </div>
 
@@ -263,6 +250,17 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
   </button>
 </div>
 
+<!-- Milestone Modal -->
+<div class="ms-modal" id="msModal">
+  <div class="ms-sheet">
+    <div class="ms-head">
+      <h3 id="msTitle">Milestones</h3>
+      <button class="ms-close" onclick="document.getElementById('msModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="ms-body" id="msBody"></div>
+  </div>
+</div>
+
 <!-- Part 2 will start from here (JavaScript) -->
  <script type="module">
 import { auth, db } from "./firebase.js";
@@ -285,8 +283,6 @@ const PLATFORM_ICONS = {
   WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
   Other: { color: "linear-gradient(135deg,#64748b,#475569)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>` }
 };
-const ICON_BOOK = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
-const ICON_CLOCK = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
 const DEFAULT_FIELDS = [
   { key: "uid", label: "UID" },
@@ -372,39 +368,19 @@ onAuthStateChanged(auth, async (user) => {
   try { await loadExisting(); } catch (e) { console.warn("existing load failed", e); }
 
   const plat = PLATFORM_ICONS[task.platform] || PLATFORM_ICONS.Other;
-  const fmt = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
-  const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", fmt) : "";
-  const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", fmt) : "";
+  let clickAttr = (task.milestones && task.milestones.length > 0) ? `onclick="showMilestones(event)"` : "";
 
   $("taskInfo").innerHTML = `
     <div class="hd">
       <div class="hd-logo" style="background:${plat.color}">${plat.svg}</div>
       <div class="hd-main">
         <div class="hd-title">${esc(task.title)}</div>
-        <div class="hd-sub"><span class="pr">৳${esc(task.pricePerAccount)}<small>/ account</small></span><span class="pl">${esc(task.platform || "Task")}</span></div>
+        <div class="hd-sub"><span class="pr" ${clickAttr}>৳${esc(task.pricePerAccount)}<small>/ account</small></span><span class="pl">${esc(task.platform || "Task")}</span></div>
       </div>
       <div class="hd-time open" id="hdTime"><div class="t" id="hdT">--:--</div><div class="l" id="hdL">...</div></div>
     </div>`;
 
-  const rulesHtml = task.rules ? `<div class="rl">${esc(task.rules).replace(/\n/g, "<br>")}</div>` : "";
-  $("rulesWrap").innerHTML = `
-    <details class="acc">
-      <summary>${ICON_BOOK}<span class="sm">Rules ও নিয়ম</span><span class="hint">খুলুন</span><i class="chev"></i></summary>
-      <div class="acc-body">
-        ${taskStartTime && taskEndTime ? `<div class="tm">${ICON_CLOCK}<span>${startStr} → ${endStr}</span></div>` : ""}
-        ${rulesHtml}
-        <ul>
-          <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
-          <li>2FA কোড ভুল হলে অ্যাকাউন্ট বাদ পড়বে।</li>
-          <li>পুরো রো হুবহু আগের সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট।</li>
-        </ul>
-      </div>
-    </details>`;
-
   const fields = getFields();
-  const labels = fields.map(f => f.label || f.key);
-  
-  // Dynamic Form
   $("dynamicFields").innerHTML = fields.map(f => `
     <input type="text" id="dyn_${esc(f.key)}" class="inp" placeholder="${esc(f.label || f.key)}${f.optional ? " (ঐচ্ছিক)" : ""}" autocomplete="off">
   `).join("");
@@ -433,43 +409,23 @@ onAuthStateChanged(auth, async (user) => {
   window.adqReady && window.adqReady();
 });
 
-function colName(i) { return i < 26 ? String.fromCharCode(65 + i) : "#" + (i + 1); }
+window.showMilestones = function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  if(!task || !task.milestones || task.milestones.length === 0) return;
 
-function rowKey(item, cells) {
-  if (Array.isArray(task?.dupKeys) && task.dupKeys.length) {
-    const v = task.dupKeys.map(k => norm(item?.[k]));
-    return v.some(Boolean) ? v.join("\u00a7") : "";
-  }
-  const arr = (Array.isArray(cells) && cells.length) ? cells : getFields().map(f => item?.[f.key]);
-  const vals = arr.map(norm);
-  while (vals.length && !vals[vals.length - 1]) vals.pop();
-  return vals.some(Boolean) ? vals.join("\u00a7") : "";
-}
-
-async function loadExisting() {
-  const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", taskId)));
-  const set = new Set();
-  snap.forEach(d => { const x = d.data(); const k = rowKey(x, x.allCells); if (k) set.add(k); });
-  existingValues = set;
-}
-
-function analyze(rows) {
-  const seen = new Map();
-  return rows.map(r => {
-    const key = rowKey(r.item, r.cells);
-    let status = "ok", dupOf = "";
-    if (key && existingValues.has(key)) status = "dup-old";
-    else if (key && seen.has(key)) { status = "dup-file"; dupOf = seen.get(key); }
-    else if (key) seen.set(key, r.label);
-    return { ...r, status, dupOf };
-  });
-}
-
-function dupText(r) {
-  return r.status === "dup-old"
-    ? "পুরো রো আগেই submit হয়েছে"
-    : `রো ${r.dupOf}-এর সাথে পুরো একই`;
-}
+  $("msTitle").textContent = "Milestones - ৳" + task.pricePerAccount;
+  const body = $("msBody");
+  body.innerHTML = task.milestones.map((m, i) => {
+    const isHighest = i === task.milestones.length - 1;
+    return `<div class="ms-item ${isHighest ? 'highlight' : ''}">
+      <span>${m.target}+ Accounts (Good)</span>
+      <b>৳${m.price}/ea</b>
+    </div>`;
+  }).join("");
+  
+  $("msModal").classList.add("show");
+};
 
 /* ============ LIVE TIMER LOGIC ============ */
 function startCountdown() {
@@ -544,95 +500,44 @@ function verifyTime() {
   return true;
 }
 
-/* ============ Smart split ============ */
-function isSpaceProneField(field) {
-  const key = String(field?.key || "").toLowerCase();
-  const label = String(field?.label || "").toLowerCase();
-  const raw = key + " " + label;
-  const compact = raw.replace(/[\s_\-.:]+/g, "");
-
-  if (!/2fast|2face/.test(compact)) {
-    if (compact.includes("2fa")) return true;
-    if (compact.includes("twofa")) return true;
-    if (compact.includes("twofactor")) return true;
-    if (compact.includes("2factor")) return true;
-    if (compact.includes("2step") || compact.includes("twostep")) return true;
-    if (compact.includes("totp")) return true;
-    if (compact.includes("authenticator")) return true;
-    if (compact.includes("otp")) return true;
-    if (/2f$/.test(compact)) return true;
+/* ============ Core Duplicate Logic ============ */
+function rowKey(item, cells) {
+  if (Array.isArray(task?.dupKeys) && task.dupKeys.length) {
+    const v = task.dupKeys.map(k => norm(item?.[k]));
+    return v.some(Boolean) ? v.join("\u00a7") : "";
   }
-  if (compact.includes("token")) return true;
-  if (compact.includes("cookie")) return true;
-  if (compact.includes("session")) return true;
-  if (compact.includes("backupcode")) return true;
-  return false;
+  const arr = (Array.isArray(cells) && cells.length) ? cells : getFields().map(f => item?.[f.key]);
+  const vals = arr.map(norm);
+  while (vals.length && !vals[vals.length - 1]) vals.pop();
+  return vals.some(Boolean) ? vals.join("\u00a7") : "";
 }
 
-function mergeParts(parts, fields, joinChar) {
-  const cols = fields.length;
-  if (cols < 1 || parts.length <= cols) return parts;
-
-  const spaceProneIdxs = [];
-  fields.forEach((f, i) => { if (isSpaceProneField(f)) spaceProneIdxs.push(i); });
-
-  let targetIdx = spaceProneIdxs.length > 0 ? spaceProneIdxs[spaceProneIdxs.length - 1] : cols - 1;
-  if (targetIdx >= cols) targetIdx = cols - 1;
-
-  const beforeCount = targetIdx;
-  const afterCount = cols - 1 - targetIdx;
-
-  if (afterCount === 0) {
-    const head = parts.slice(0, beforeCount);
-    const tail = parts.slice(beforeCount).join(joinChar);
-    return [...head, tail];
-  }
-  const before = parts.slice(0, beforeCount);
-  const after = parts.slice(parts.length - afterCount);
-  const middle = parts.slice(beforeCount, parts.length - afterCount).join(joinChar);
-  return [...before, middle, ...after];
+async function loadExisting() {
+  const snap = await getDocs(query(collection(db, "submissions"), where("taskId", "==", taskId)));
+  const set = new Set();
+  snap.forEach(d => { const x = d.data(); const k = rowKey(x, x.allCells); if (k) set.add(k); });
+  existingValues = set;
 }
 
-function splitLine(line, expectedCols) {
-  const cols = Math.max(1, expectedCols || (getFields().length || 3));
-  const fields = getFields();
-
-  let delim, type;
-  if (line.includes("\t"))        { delim = "\t";    type = "strong"; }
-  else if (line.includes("|"))    { delim = "|";     type = "strong"; }
-  else if (line.includes(","))    { delim = ",";     type = "strong"; }
-  else if (/\s{2,}/.test(line))   { delim = /\s{2,}/; type = "multi-space"; }
-  else                            { delim = /\s+/;   type = "single-space"; }
-
-  let parts = line.split(delim).map(p => String(p ?? "").trim());
-
-  if (type === "multi-space" && parts.length < cols) {
-    parts = line.trim().split(/\s+/).map(p => String(p ?? "").trim());
-    type = "single-space";
-  }
-  if (parts.length > cols) {
-    const joinChar = (type === "strong") ? String(delim) : " ";
-    parts = mergeParts(parts, fields, joinChar);
-  }
-  return parts;
-}
-
-function buildRow(cells, label, strict = true) {
-  cells = cells.map(c => String(c ?? "").trim());
-  const fields = getFields();
-  const item = {};
-  const missing = [];
-  fields.forEach((f, i) => {
-    item[f.key] = cells[i] || "";
-    if (!item[f.key] && !f.optional) missing.push(f.label || f.key);
+function analyze(rows) {
+  const seen = new Map();
+  return rows.map(r => {
+    const key = rowKey(r.item, r.cells);
+    let status = "ok", dupOf = "";
+    if (key && existingValues.has(key)) status = "dup-old";
+    else if (key && seen.has(key)) { status = "dup-file"; dupOf = seen.get(key); }
+    else if (key) seen.set(key, r.label);
+    return { ...r, status, dupOf };
   });
-  if (strict && missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
-  while (cells.length && !cells[cells.length - 1]) cells.pop();
-  const clean = cells.slice(0, 40).map(c => c.slice(0, 300));
-  return { ok: true, row: { label: String(label), item, cells: clean } };
 }
 
-/* ============ Compact stats + collapsible preview ============ */
+function dupText(r) {
+  return r.status === "dup-old"
+    ? "পুরো রো আগেই submit হয়েছে"
+    : `রো ${r.dupOf}-এর সাথে পুরো একই`;
+}
+
+/* ============ Preview Rendering ============ */
 function renderChips(el, analyzed, incomplete) {
   if (!analyzed.length && !incomplete.length) { el.innerHTML = ""; return; }
   const ok = analyzed.filter(r => r.status === "ok").length;
@@ -665,6 +570,7 @@ function renderPreview(el, analyzed, incomplete) {
 
 $("togglePrevFile").onclick = () => $("filePreview").classList.toggle("open");
 
+/* ============ Payload & Commit ============ */
 function buildPayload(r, source) {
   const fallbackUid = r.item.uid || r.item[Object.keys(r.item)[0]] || (r.cells && r.cells[0]) || "";
   return {
@@ -769,7 +675,97 @@ async function runSubmit(rows, source, ui) {
   }
 }
 
-/* ============ Single ============ */
+/* ============ Smart Split (Space Prone Fields) ============ */
+function isSpaceProneField(field) {
+  const key = String(field?.key || "").toLowerCase();
+  const label = String(field?.label || "").toLowerCase();
+  const raw = key + " " + label;
+  const compact = raw.replace(/[\s_\-.:]+/g, "");
+
+  if (!/2fast|2face/.test(compact)) {
+    if (compact.includes("2fa")) return true;
+    if (compact.includes("twofa")) return true;
+    if (compact.includes("twofactor")) return true;
+    if (compact.includes("2factor")) return true;
+    if (compact.includes("2step") || compact.includes("twostep")) return true;
+    if (compact.includes("totp")) return true;
+    if (compact.includes("authenticator")) return true;
+    if (compact.includes("otp")) return true;
+    if (/2f$/.test(compact)) return true;
+  }
+  if (compact.includes("token")) return true;
+  if (compact.includes("cookie")) return true;
+  if (compact.includes("session")) return true;
+  if (compact.includes("backupcode")) return true;
+  return false;
+}
+
+function mergeParts(parts, fields, joinChar) {
+  const cols = fields.length;
+  if (cols < 1 || parts.length <= cols) return parts;
+
+  const spaceProneIdxs = [];
+  fields.forEach((f, i) => { if (isSpaceProneField(f)) spaceProneIdxs.push(i); });
+
+  let targetIdx = spaceProneIdxs.length > 0
+    ? spaceProneIdxs[spaceProneIdxs.length - 1]
+    : cols - 1;
+  if (targetIdx >= cols) targetIdx = cols - 1;
+
+  const beforeCount = targetIdx;
+  const afterCount = cols - 1 - targetIdx;
+
+  if (afterCount === 0) {
+    const head = parts.slice(0, beforeCount);
+    const tail = parts.slice(beforeCount).join(joinChar);
+    return [...head, tail];
+  }
+  const before = parts.slice(0, beforeCount);
+  const after = parts.slice(parts.length - afterCount);
+  const middle = parts.slice(beforeCount, parts.length - afterCount).join(joinChar);
+  return [...before, middle, ...after];
+}
+
+function splitLine(line, expectedCols) {
+  const cols = Math.max(1, expectedCols || (getFields().length || 3));
+  const fields = getFields();
+
+  let delim, type;
+  if (line.includes("\t"))        { delim = "\t";    type = "strong"; }
+  else if (line.includes("|"))    { delim = "|";     type = "strong"; }
+  else if (line.includes(","))    { delim = ",";     type = "strong"; }
+  else if (/\s{2,}/.test(line))   { delim = /\s{2,}/; type = "multi-space"; }
+  else                            { delim = /\s+/;   type = "single-space"; }
+
+  let parts = line.split(delim).map(p => String(p ?? "").trim());
+
+  if (type === "multi-space" && parts.length < cols) {
+    parts = line.trim().split(/\s+/).map(p => String(p ?? "").trim());
+    type = "single-space";
+  }
+  if (parts.length > cols) {
+    const joinChar = (type === "strong") ? String(delim) : " ";
+    parts = mergeParts(parts, fields, joinChar);
+  }
+  return parts;
+}
+
+function buildRow(cells, label, strict = true) {
+  cells = cells.map(c => String(c ?? "").trim());
+  const fields = getFields();
+  const item = {};
+  const missing = [];
+  fields.forEach((f, i) => {
+    item[f.key] = cells[i] || "";
+    if (!item[f.key] && !f.optional) missing.push(f.label || f.key);
+  });
+  if (strict && missing.length) return { ok: false, reason: `${missing.join(", ")} নেই` };
+  while (cells.length && !cells[cells.length - 1]) cells.pop();
+  const clean = cells.slice(0, 40).map(c => c.slice(0, 300));
+  return { ok: true, row: { label: String(label), item, cells: clean } };
+}
+
+/* ============ Single Submit ============ */
 function readSingle() {
   const item = {};
   const missing = [];
@@ -829,7 +825,7 @@ $("singleSubmitBtn").onclick = async () => {
   }
 };
 
-/* ============ File ============ */
+/* ============ File Handling ============ */
 const dropZone = $("dropZone");
 const fileInput = $("fileInput");
 const fileInfo = $("fileInfo");
