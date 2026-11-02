@@ -17,21 +17,26 @@
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
 html,body{background:var(--bg)!important;margin:0;padding:0;height:100vh;height:100dvh;overflow:hidden;font-family:'Hind Siliguri','Inter',sans-serif;color:var(--ink)}
 a{text-decoration:none;color:inherit} button{font-family:inherit}
+
+/* Background Glow */
 .bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .orb{position:absolute;border-radius:50%;filter:blur(90px);will-change:transform}
 .orb.o1{width:420px;height:420px;background:#4f46e5;top:-140px;left:-120px;opacity:.4;animation:dr1 20s ease-in-out infinite}
 .orb.o2{width:380px;height:380px;background:#9333ea;bottom:-160px;right:-120px;opacity:.3;animation:dr2 24s ease-in-out infinite}
 @keyframes dr1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(50px,40px) scale(1.1)}}
 @keyframes dr2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-40px,-50px) scale(1.08)}}
+
+/* Smooth Animations */
 @keyframes slideUpFade{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes marqueeNotice{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 
+/* App Layout (Strict No-Scroll) */
 .app{position:relative;z-index:1;max-width:520px;margin:0 auto;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:0 16px}
 
-/* Top Bar */
+/* Header */
 .top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 0 12px;animation:slideUpFade .5s ease both}
-.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.3px}
 .mark{width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font-family:'Inter';font-weight:900;font-size:16px;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}
 .actions{display:flex;gap:8px}
 .ibtn{width:36px;height:36px;border-radius:11px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 36px}
@@ -39,9 +44,11 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45);color:#fca5a5}
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
-/* Hero */
+/* Compact Hero Card */
 .hero{flex-shrink:0;position:relative;overflow:hidden;border-radius:24px;padding:16px;margin-bottom:12px;background:linear-gradient(135deg,#312e81 0%,#5b21b6 50%,#7e22ce 100%);box-shadow:0 20px 40px -15px rgba(124,58,237,.7),inset 0 1px 0 rgba(255,255,255,.2);animation:slideUpFade .6s cubic-bezier(.2,.8,.2,1) both}
 .hero::before{content:'';position:absolute;top:-50%;left:-30%;width:120%;height:150%;background:radial-gradient(circle,rgba(255,255,255,.15),transparent 60%);pointer-events:none}
+
+/* User Info (Top) */
 .h-top{display:flex;align-items:flex-start;justify-content:space-between;position:relative;z-index:1}
 .d-left{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
 .d-av{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font:800 16px 'Inter',sans-serif;margin-top:2px}
@@ -50,6 +57,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .d-name{display:flex;align-items:center;gap:6px;font-size:15px;font-weight:700;line-height:1.2;color:#fff}
 .d-name #username{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:inline-block;vertical-align:middle}
 
+/* Exact Profile Premium Badge (Dynamic Colors) */
 .premium-badge{width:20px;height:20px;flex-shrink:0;position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,#fceabb 0%,#f8b500 50%,#b47b00 100%);box-shadow:0 4px 10px rgba(245,158,11,.4),inset 0 -2px 4px rgba(0,0,0,.3),inset 0 2px 4px rgba(255,255,255,.8);animation:premiumPulse 2s ease-in-out infinite alternate;overflow:hidden;border:1px solid #ffd700}
 .premium-badge::before{content:'✓';color:#fff;font-size:10px;font-weight:900;position:relative;z-index:2;text-shadow:0 2px 4px rgba(180,123,0,.9)}
 .premium-badge::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:linear-gradient(45deg,rgba(255,255,255,0) 20%,rgba(255,255,255,.9) 50%,rgba(255,255,255,0) 80%);transform:rotate(45deg);animation:premiumShine 3s infinite ease-in-out}
@@ -62,10 +70,12 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .premium-badge.red{background:linear-gradient(135deg,#fca5a5,#ef4444,#b91c1c);border-color:#fecaca}
 .premium-badge.bronze{background:linear-gradient(135deg,#fdba74,#ea580c,#9a3412);border-color:#fed7aa}
 
+/* Green Tall Withdraw Button */
 .d-wd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 16px;border-radius:14px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 10px 22px -8px rgba(16,185,129,.8),inset 0 1px 0 rgba(255,255,255,.3);flex:0 0 auto;text-decoration:none;height:56px;transition:transform .2s;margin-top:4px}
 .d-wd:active{transform:scale(.95)}
 .d-wd svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5}
 
+/* Balance Area */
 .d-bal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:14px}
 .d-bl{font-size:11px;font-weight:600;opacity:.85}
 .d-ba{font:900 34px 'Inter',sans-serif;letter-spacing:-1px;line-height:1.05;text-shadow:0 6px 18px rgba(0,0,0,.25)}
@@ -74,12 +84,14 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .d-mi b{display:block;font:800 14px 'Inter',sans-serif;line-height:1.1}
 .d-mi span{font-size:10px;opacity:.8;font-weight:600}
 
+/* Notice Bar */
 .d-notice{flex-shrink:0;display:flex;align-items:center;gap:9px;width:100%;margin-top:10px;padding:9px 12px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(245,158,11,.04));color:#fde68a;font-size:12.5px;font-weight:600;cursor:pointer;text-align:left;overflow:hidden;animation:slideUpFade .6s ease .1s both}
 .d-notice svg{width:16px;height:16px;flex:0 0 16px}
 .notice-marquee{flex:1;min-width:0;overflow:hidden;display:flex;align-items:center;position:relative;height:18px}
 .notice-text{white-space:nowrap;display:inline-block;padding-left:100%;animation:marqueeNotice 12s linear infinite}
 .d-notice .chev{width:14px;height:14px;opacity:.7;flex:0 0 14px}
 
+/* Tabs */
 .seg{flex-shrink:0;display:flex;background:rgba(255,255,255,.04);padding:4px;border-radius:16px;margin-bottom:12px;position:relative;border:1px solid var(--line);animation:slideUpFade .8s ease both}
 .seg-btn{flex:1;padding:10px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.3s;position:relative;z-index:1}
 .seg-btn.active{color:#fff}
@@ -88,17 +100,18 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .seg.right .seg-bg{transform:translateX(100%)}
 .seg .count{font-family:'Inter';background:rgba(255,255,255,.2);padding:1px 6px;border-radius:999px;font-size:10px}
 
+/* Content Area (Only this scrolls) */
 .content-area{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-bottom:calc(100px + env(safe-area-inset-bottom,0px));animation:fadeIn .5s ease both}
 .content-area::-webkit-scrollbar{display:none}
 .hidden{display:none!important}
 
-/* Task Row */
+/* Task Rows */
 .x-rb{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
 .x-rs{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:nowrap;overflow:hidden;width:100%}
 .x-tag.time{width:86px;min-width:86px;flex-shrink:0;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',monospace;font-size:10px;padding:2px 0;white-space:nowrap;overflow:hidden}
 .x-go{flex-shrink:0}
 
-/* Price Clickable with Arrow Animation */
+/* PRICE WITH BOUNCING ARROW */
 .x-price{display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:transform 0.2s}
 .x-price:active{transform:scale(0.92)}
 .pr-arrow{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:arrowBounce 1.2s infinite ease-in-out;filter:drop-shadow(0 0 4px rgba(110,231,183,0.6))}
@@ -120,6 +133,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .ms-item.highlight span{color:#fde68a}
 .ms-item.highlight b{color:#fbbf24}
 
+/* Activity Rows */
 .act-row{display:flex;align-items:center;gap:11px;padding:10px 12px;margin-bottom:8px;border-radius:18px;background:linear-gradient(160deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid rgba(255,255,255,.09)}
 .act-row .x-rb{min-width:0}
 .act-chips{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
@@ -223,6 +237,7 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
   </div>
 </div>
 
+<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
 import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -236,6 +251,7 @@ $("bellBtn").innerHTML = S.bell;
 $("logoutBtn").innerHTML = S.logout;
 $("nsClose").innerHTML = S.close;
 
+// Badge Color Logic
 function getBadgeClass(color) {
   if (!color) return '';
   if (color.includes("#94a3b8") || color.includes("silver")) return 'silver';
@@ -244,7 +260,7 @@ function getBadgeClass(color) {
   if (color.includes("#10b981")) return 'green';
   if (color.includes("#ef4444")) return 'red';
   if (color.includes("#ea580c")) return 'bronze';
-  return '';
+  return ''; // Default Golden
 }
 
 const ready = { user: false, tasks: false, subs: false };
@@ -274,6 +290,7 @@ document.querySelectorAll(".seg-btn").forEach(btn => {
   };
 });
 
+/* ============ LIVE TIMER LOGIC ============ */
 function getFormattedTime(endMs, startMs) {
   const now = Date.now();
   if (startMs && now < startMs) {
@@ -294,6 +311,7 @@ function fmt(ms) {
   return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
+/* ============ MILESTONE MODAL ============ */
 window.showMilestones = function(event, taskId) {
   event.preventDefault();
   event.stopPropagation();
@@ -313,6 +331,7 @@ window.showMilestones = function(event, taskId) {
   $("msModal").classList.add("show");
 };
 
+/* ============ TASK ROW ============ */
 function customTaskRow(t) {
   let startMs = t.startTime?.toDate?.()?.getTime() || 0;
   let endMs = t.endTime?.toDate?.()?.getTime() || 0;
@@ -368,6 +387,7 @@ onAuthStateChanged(auth, (user) => {
   loadActivity(user.uid);
 });
 
+/* ============ NOTICE ============ */
 async function loadNotice() {
   try {
     const snap = await getDocs(query(collection(db, "notices"), where("active", "==", true)));
@@ -391,6 +411,7 @@ async function loadNotice() {
 $("nsClose").onclick = () => $("noticeSheet").classList.remove("show");
 $("noticeSheet").addEventListener("click", (e) => { if (e.target === $("noticeSheet")) $("noticeSheet").classList.remove("show"); });
 
+/* ============ TASKS ============ */
 window._tasksCache = {};
 
 function loadTasks() {
@@ -426,6 +447,7 @@ setInterval(() => {
   });
 }, 1000);
 
+/* ============ ACTIVITY ============ */
 function loadActivity(uid) {
   const list = $("pAct");
   onSnapshot(query(collection(db, "submissions"), where("userId", "==", uid)), (snap) => {
@@ -462,4 +484,4 @@ function loadActivity(uid) {
 }
 </script>
 </body>
-</html>
+</html>    
