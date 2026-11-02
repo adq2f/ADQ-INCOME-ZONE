@@ -29,7 +29,7 @@ svg{display:block}
 /* FIXED LAYOUT */
 .page-wrapper{position:relative;z-index:1;height:100vh;height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
 
-/* HEADER & BACK BUTTON ANIMATION */
+/* HEADER & BACK BUTTON */
 .top{flex:0 0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:rgba(6,6,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
 .top-in{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
@@ -70,6 +70,21 @@ svg{display:block}
 .hd-time.upcoming{border-color:rgba(245,158,11,.45)}
 .hd-time.closed{border-color:rgba(239,68,68,.45)}
 
+/* RULES ACCORDION */
+.acc{border-radius:18px;margin-bottom:12px;overflow:hidden;background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(245,158,11,.03));border:1px solid rgba(251,191,36,.32)}
+.acc summary{list-style:none;display:flex;align-items:center;gap:9px;padding:12px 14px;cursor:pointer;font-size:13.5px;font-weight:700;color:#fde68a;user-select:none}
+.acc summary::-webkit-details-marker{display:none}
+.acc summary svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 17px}
+.acc summary .sm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc summary .hint{font-size:11px;font-weight:600;color:rgba(253,230,138,.7);margin-left:auto}
+.acc summary .chev{width:8px;height:8px;border-right:2px solid #fde68a;border-bottom:2px solid #fde68a;transform:rotate(45deg);transition:.25s;flex:0 0 8px;margin:-3px 2px 0 4px}
+.acc[open] summary .chev{transform:rotate(-135deg);margin-top:3px}
+.acc-body{padding:0 14px 14px;font-size:13px;line-height:1.65;color:#fde9a8;word-break:break-word}
+.acc-body .rl{margin-bottom:8px}
+.acc-body ul{margin:0;padding-left:18px;color:#bae6fd}
+.acc-body .tm{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:600;color:var(--muted)}
+.acc-body .tm svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
 /* TABS */
 .tab-bar{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px;padding:4px;background:rgba(255,255,255,.04);border-radius:16px;border:1px solid var(--line)}
 .tab-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 4px;border-radius:12px;border:none;background:transparent;color:var(--muted);font-size:12.5px;font-weight:700;cursor:pointer;transition:.25s;white-space:nowrap}
@@ -90,14 +105,20 @@ svg{display:block}
 textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;font-size:13px;line-height:1.55;resize:vertical;margin-bottom:6px}
 .dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:12px;margin-bottom:8px;font-size:12.5px;font-weight:700;word-break:break-word}
 
-/* EXCEL SHEET FORMAT GUIDE */
-.sheet-guide{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:12px;margin-bottom:12px}
+/* EXCEL SHEET FORMAT GUIDE (SCROLLABLE) */
+.sheet-guide{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden}
 .sheet-guide h4{margin:0 0 8px;font-size:12px;color:#6ee7b7;font-weight:700;display:flex;align-items:center;gap:5px}
-.sheet-table{width:100%;border-collapse:collapse;font-family:'Inter',monospace;font-size:12px}
-.sheet-table th{background:rgba(255,255,255,.1);color:#fff;padding:6px;text-align:center;border:1px solid rgba(255,255,255,.15);font-weight:800}
-.sheet-table td{padding:6px;text-align:center;border:1px solid rgba(255,255,255,.1);color:#dcdcf2;font-weight:600}
+.sheet-scroll-wrapper{position:relative;width:100%;overflow:hidden;border-radius:12px;margin-bottom:4px}
+.sheet-scroll-container{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sheet-scroll-container::-webkit-scrollbar{display:none}
+.sheet-table{width:100%;border-collapse:collapse;font-family:'Inter',monospace;font-size:12px;white-space:nowrap;min-width:max-content}
+.sheet-table th{background:rgba(255,255,255,.1);color:#fff;padding:8px 12px;text-align:center;border:1px solid rgba(255,255,255,.15);font-weight:800}
+.sheet-table td{padding:8px 12px;text-align:center;border:1px solid rgba(255,255,255,.1);color:#dcdcf2;font-weight:600}
 .sheet-table td:first-child{color:#fcd34d;font-weight:800}
 .sheet-table td:last-child{color:#c4b5fd}
+.scroll-hint{position:absolute;top:0;right:0;bottom:0;width:35px;background:linear-gradient(to right,transparent,rgba(16,185,129,0.25));pointer-events:none;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;animation:pulseRight 1.5s infinite}
+.scroll-hint svg{width:14px;height:14px;fill:none;stroke:#6ee7b7;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+@keyframes pulseRight{0%,100%{opacity:0.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
 
 /* STATS & CHIPS */
 .statrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
@@ -185,6 +206,9 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
 
   <main class="content">
     <div id="taskInfo"><div class="skel"></div></div>
+    
+    <!-- Rules / Neom -->
+    <div id="rulesWrap"></div>
 
     <div id="submitSections" class="locked">
       <div class="tab-bar" role="tablist">
@@ -209,13 +233,20 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
         <div class="fc glass">
           <div class="fc-h"><b>File Submit</b></div>
           
-          <!-- Excel Sheet Format Guide -->
+          <!-- Excel Sheet Format Guide (Scrollable) -->
           <div class="sheet-guide">
             <h4>📊 Excel/CSV Format (নিচের মতো সাজিয়ে দিন)</h4>
-            <table class="sheet-table" id="sheetFormatTable">
-              <thead><tr><th>A</th><th>B</th><th>C</th></tr></thead>
-              <tbody><tr><td>UID</td><td>Password</td><td>2FA</td></tr></tbody>
-            </table>
+            <div class="sheet-scroll-wrapper">
+              <div class="sheet-scroll-container" id="sheetScrollContainer">
+                <table class="sheet-table" id="sheetFormatTable">
+                  <thead><tr><th>A</th><th>B</th><th>C</th></tr></thead>
+                  <tbody><tr><td>UID</td><td>Password</td><td>2FA</td></tr></tbody>
+                </table>
+              </div>
+              <div class="scroll-hint" id="scrollHint">
+                <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
           </div>
 
           <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
@@ -250,7 +281,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
   </button>
 </div>
 
-<!-- Milestone Modal -->
 <div class="ms-modal" id="msModal">
   <div class="ms-sheet">
     <div class="ms-head">
@@ -283,6 +313,8 @@ const PLATFORM_ICONS = {
   WhatsApp: { color: "#25D366", svg: `<svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>` },
   Other: { color: "linear-gradient(135deg,#64748b,#475569)", svg: `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>` }
 };
+const ICON_BOOK = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`;
+const ICON_CLOCK = `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 
 const DEFAULT_FIELDS = [
   { key: "uid", label: "UID" },
@@ -304,8 +336,9 @@ function esc(s) {
 const getFields = () => (task && Array.isArray(task.fields) && task.fields.length) ? task.fields : DEFAULT_FIELDS;
 const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 
-// Back Button with Animation
+// Back Button Logic
 document.getElementById("backBtn").onclick = () => {
+  // If there's a referrer from the same host, go back. Otherwise, go to tasks.html.
   if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
     history.back();
   } else {
@@ -368,6 +401,10 @@ onAuthStateChanged(auth, async (user) => {
   try { await loadExisting(); } catch (e) { console.warn("existing load failed", e); }
 
   const plat = PLATFORM_ICONS[task.platform] || PLATFORM_ICONS.Other;
+  const fmt = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
+  const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", fmt) : "";
+  const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", fmt) : "";
+  
   let clickAttr = (task.milestones && task.milestones.length > 0) ? `onclick="showMilestones(event)"` : "";
 
   $("taskInfo").innerHTML = `
@@ -380,6 +417,23 @@ onAuthStateChanged(auth, async (user) => {
       <div class="hd-time open" id="hdTime"><div class="t" id="hdT">--:--</div><div class="l" id="hdL">...</div></div>
     </div>`;
 
+  // Rules Section
+  const rulesHtml = task.rules ? `<div class="rl">${esc(task.rules).replace(/\n/g, "<br>")}</div>` : "";
+  $("rulesWrap").innerHTML = `
+    <details class="acc">
+      <summary>${ICON_BOOK}<span class="sm">Rules ও নিয়ম</span><span class="hint">খুলুন</span><i class="chev"></i></summary>
+      <div class="acc-body">
+        ${taskStartTime && taskEndTime ? `<div class="tm">${ICON_CLOCK}<span>${startStr} → ${endStr}</span></div>` : ""}
+        ${rulesHtml}
+        <ul>
+          <li>সব ফিল্ড সঠিকভাবে পূরণ করুন।</li>
+          <li>2FA কোড ভুল হলে অ্যাকাউন্ট বাদ পড়বে।</li>
+          <li>পুরো রো হুবহু আগের সাবমিশনের সাথে মিললে তবেই ডুপ্লিকেট।</li>
+        </ul>
+      </div>
+    </details>`;
+
+  // Dynamic Form
   const fields = getFields();
   $("dynamicFields").innerHTML = fields.map(f => `
     <input type="text" id="dyn_${esc(f.key)}" class="inp" placeholder="${esc(f.label || f.key)}${f.optional ? " (ঐচ্ছিক)" : ""}" autocomplete="off">
@@ -395,6 +449,17 @@ onAuthStateChanged(auth, async (user) => {
   });
   $("sheetFormatTable").querySelector("thead tr").innerHTML = thHtml;
   $("sheetFormatTable").querySelector("tbody tr").innerHTML = tdHtml;
+
+  // Check if table needs scrolling
+  setTimeout(() => {
+    const container = $("sheetScrollContainer");
+    const hint = $("scrollHint");
+    if (container.scrollWidth > container.clientWidth) {
+      hint.style.display = "flex";
+    } else {
+      hint.style.display = "none";
+    }
+  }, 100);
 
   let singleTimer = null;
   fields.forEach(f => {
@@ -707,9 +772,7 @@ function mergeParts(parts, fields, joinChar) {
   const spaceProneIdxs = [];
   fields.forEach((f, i) => { if (isSpaceProneField(f)) spaceProneIdxs.push(i); });
 
-  let targetIdx = spaceProneIdxs.length > 0
-    ? spaceProneIdxs[spaceProneIdxs.length - 1]
-    : cols - 1;
+  let targetIdx = spaceProneIdxs.length > 0 ? spaceProneIdxs[spaceProneIdxs.length - 1] : cols - 1;
   if (targetIdx >= cols) targetIdx = cols - 1;
 
   const beforeCount = targetIdx;
