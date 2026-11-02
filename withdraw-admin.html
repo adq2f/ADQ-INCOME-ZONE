@@ -114,7 +114,13 @@ select.inp option{background:#12122a;color:#fff}
 </style>
 </head>
 <body>
-<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div><header class="top"><div class="top-in"><div class="brand"><div class="mark">⚡</div><span>Withdraw Admin<em class="atag">ADMIN</em></span></div><button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div></header>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><div class="mark">⚡</div><span>Withdraw Admin<em class="atag">ADMIN</em></span></div>
+    <button class="ibtn danger" id="logoutBtn" aria-label="Logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  </div>
+</header>
 <main class="page">
   <div class="tabs2">
     <button id="tabRequests" class="active">📥 Requests</button>
@@ -141,13 +147,38 @@ select.inp option{background:#12122a;color:#fff}
     <div id="methodsList"><div class="skel"></div><div class="skel"></div></div>
   </div>
 </main>
-<nav class="dock"><a href="index.html" data-page="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a><a href="dashboard.html" data-page="dash" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a><a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a><a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a><a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a></nav>
 
+<nav class="dock">
+  <a href="index.html" data-page="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+  <a href="dashboard.html" data-page="dash" class="active"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Dashboard</span></a>
+  <a href="index.html#tasks" data-page="submit"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Submit</span></a>
+  <a href="wallet.html" data-page="wallet"><svg viewBox="0 0 24 24"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg><span>Wallet</span></a>
+  <a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
+</nav>
+
+<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     
+    // ==========================================
+    // Telegram Notification Integration
+    // ==========================================
+    async function sendTelegramAlert(text) {
+      const BOT_TOKEN = "7352895365:AAEbcMNcrjU6DgaAFXtj2f_tkYLSMFiDKh8";
+      const CHAT_ID = "-1004324526320";
+      try {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'HTML' })
+        });
+      } catch (e) { 
+        console.error("Telegram Error:", e); 
+      }
+    }
+
     function esc(s) {
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -281,28 +312,38 @@ select.inp option{background:#12122a;color:#fff}
       return { id, ...cur.data() };
     }
 
+    // Approve Logic with Telegram
     window.approveW = async (id, btn) => {
       if (!confirm("Approve করবে? (User-এর balance থেকে টাকা আগেই কাটা হয়েছে, শুধু approve mark হবে)")) return;
       btn.disabled = true;
       try {
         const w = await freshPending(id);
         if (!w) return;
+        
         await updateDoc(doc(db, "withdrawals", id), {
           status: "approved",
           approvedAt: new Date(),
           approvedBy: currentUser.uid
         });
+
+        // 👇 Telegram Notification
+        const methodName = PAY_METHODS[w.method]?.name || w.method;
+        const msg = `✅ <b>Withdraw Approved!</b>\n\n👤 <b>User:</b> ${w.userName || "User"}\n💰 <b>Amount:</b> ৳${w.amount}\n💳 <b>Method:</b> ${methodName}`;
+        await sendTelegramAlert(msg);
+
         alert("✅ Approved!");
         loadWithdrawals();
       } catch (e) { alert("❌ " + e.message); btn.disabled = false; }
     };
 
+    // Reject Logic with Telegram
     window.rejectW = async (id, btn) => {
       if (!confirm("Reject করবে? (টাকা user-এর balance-এ ফেরত যাবে)")) return;
       btn.disabled = true;
       try {
         const w = await freshPending(id);
         if (!w) return;
+        
         await updateDoc(doc(db, "withdrawals", id), {
           status: "rejected",
           rejectedAt: new Date(),
@@ -311,6 +352,12 @@ select.inp option{background:#12122a;color:#fff}
         await updateDoc(doc(db, "users", w.userId), {
           balance: increment(w.amount)
         });
+
+        // 👇 Telegram Notification
+        const methodName = PAY_METHODS[w.method]?.name || w.method;
+        const msg = `❌ <b>Withdraw Rejected!</b>\n\n👤 <b>User:</b> ${w.userName || "User"}\n💰 <b>Amount:</b> ৳${w.amount}\n💳 <b>Method:</b> ${methodName}\n<i>টাকা ইউজারের ব্যালেন্সে ফেরত দেওয়া হয়েছে।</i>`;
+        await sendTelegramAlert(msg);
+
         alert("✅ Rejected! টাকা ফেরত দেওয়া হয়েছে।");
         loadWithdrawals();
       } catch (e) { alert("❌ " + e.message); btn.disabled = false; }
@@ -361,6 +408,5 @@ select.inp option{background:#12122a;color:#fff}
       });
     }
   </script>
-
 </body>
-</html>
+</html>  
