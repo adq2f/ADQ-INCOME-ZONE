@@ -157,25 +157,27 @@ select.inp option{background:#12122a;color:#fff}
 </nav>
 
 <!-- Part 2 will start from here (JavaScript) -->
-<script type="module">
+  <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, updateDoc, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
     
     // ==========================================
-    // Telegram Notification Integration
+    // Telegram Notification (Correct Token)
     // ==========================================
     async function sendTelegramAlert(text) {
-      const BOT_TOKEN = "7352895365:AAEbcMNcrjU6DgaAFXtj2f_tkYLSMFiDKh8";
+      const BOT_TOKEN = "7352895365:AAEbcMNKrjU6DgaAFXtj2f_tkYLSMFiDKh8";
       const CHAT_ID = "-1004324526320";
       try {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'HTML' })
         });
+        const data = await res.json();
+        if(!data.ok) console.error("Telegram API Error:", data);
       } catch (e) { 
-        console.error("Telegram Error:", e); 
+        console.error("Telegram Network Error:", e); 
       }
     }
 
@@ -301,7 +303,7 @@ select.inp option{background:#12122a;color:#fff}
       });
     });
 
-    // ডাবল approve/reject (এবং ডাবল refund) আটকাতে server-এ status আবার চেক
+    // ✅ FIXED: ফ্রেশ ডেটা নেওয়ার সময় ইউজারের নামও নিয়ে আসা হচ্ছে
     async function freshPending(id) {
       const cur = await getDoc(doc(db, "withdrawals", id));
       if (!cur.exists() || cur.data().status !== "pending") {
@@ -309,12 +311,22 @@ select.inp option{background:#12122a;color:#fff}
         loadWithdrawals();
         return null;
       }
-      return { id, ...cur.data() };
+      const w = cur.data();
+      
+      // Fetch user name for the Telegram message
+      try {
+        const uSnap = await getDoc(doc(db, "users", w.userId));
+        if (uSnap.exists()) {
+          w.userName = uSnap.data().username;
+          w.userEmail = uSnap.data().email;
+        }
+      } catch(e) {}
+
+      return { id, ...w };
     }
 
-    // Approve Logic with Telegram
     window.approveW = async (id, btn) => {
-      if (!confirm("Approve করবে? (User-এর balance থেকে টাকা আগেই কাটা হয়েছে, শুধু approve mark হবে)")) return;
+      if (!confirm("Approve করবে?")) return;
       btn.disabled = true;
       try {
         const w = await freshPending(id);
@@ -326,9 +338,9 @@ select.inp option{background:#12122a;color:#fff}
           approvedBy: currentUser.uid
         });
 
-        // 👇 Telegram Notification
         const methodName = PAY_METHODS[w.method]?.name || w.method;
         const msg = `✅ <b>Withdraw Approved!</b>\n\n👤 <b>User:</b> ${w.userName || "User"}\n💰 <b>Amount:</b> ৳${w.amount}\n💳 <b>Method:</b> ${methodName}`;
+        
         await sendTelegramAlert(msg);
 
         alert("✅ Approved!");
@@ -336,9 +348,8 @@ select.inp option{background:#12122a;color:#fff}
       } catch (e) { alert("❌ " + e.message); btn.disabled = false; }
     };
 
-    // Reject Logic with Telegram
     window.rejectW = async (id, btn) => {
-      if (!confirm("Reject করবে? (টাকা user-এর balance-এ ফেরত যাবে)")) return;
+      if (!confirm("Reject করবে? (টাকা ইউজারের ব্যালেন্সে ফেরত যাবে)")) return;
       btn.disabled = true;
       try {
         const w = await freshPending(id);
@@ -353,9 +364,9 @@ select.inp option{background:#12122a;color:#fff}
           balance: increment(w.amount)
         });
 
-        // 👇 Telegram Notification
         const methodName = PAY_METHODS[w.method]?.name || w.method;
         const msg = `❌ <b>Withdraw Rejected!</b>\n\n👤 <b>User:</b> ${w.userName || "User"}\n💰 <b>Amount:</b> ৳${w.amount}\n💳 <b>Method:</b> ${methodName}\n<i>টাকা ইউজারের ব্যালেন্সে ফেরত দেওয়া হয়েছে।</i>`;
+        
         await sendTelegramAlert(msg);
 
         alert("✅ Rejected! টাকা ফেরত দেওয়া হয়েছে।");
@@ -409,4 +420,4 @@ select.inp option{background:#12122a;color:#fff}
     }
   </script>
 </body>
-</html>  
+</html>
