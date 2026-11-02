@@ -98,9 +98,11 @@ a{text-decoration:none;color:inherit} button{font-family:inherit}
 .x-tag.time{width:86px;min-width:86px;flex-shrink:0;justify-content:center;font-variant-numeric:tabular-nums;font-family:'Inter',monospace;font-size:10px;padding:2px 0;white-space:nowrap;overflow:hidden}
 .x-go{flex-shrink:0}
 
-/* Price Clickable */
-.x-price{cursor:pointer; position:relative; transition:transform 0.2s}
+/* Price Clickable with Arrow Animation */
+.x-price{display:inline-flex;align-items:center;gap:4px;cursor:pointer;transition:transform 0.2s}
 .x-price:active{transform:scale(0.92)}
+.pr-arrow{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:arrowBounce 1.2s infinite ease-in-out;filter:drop-shadow(0 0 4px rgba(110,231,183,0.6))}
+@keyframes arrowBounce{0%,100%{transform:translateX(0);opacity:0.6}50%{transform:translateX(4px);opacity:1}}
 
 /* Modal for Milestone */
 .ms-modal{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;background:rgba(3,3,10,.8);backdrop-filter:blur(8px);opacity:0;visibility:hidden;transition:opacity .3s}
@@ -292,7 +294,6 @@ function fmt(ms) {
   return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
 }
 
-// Show Milestone Modal
 window.showMilestones = function(event, taskId) {
   event.preventDefault();
   event.stopPropagation();
@@ -318,15 +319,17 @@ function customTaskRow(t) {
   let st = getFormattedTime(endMs, startMs);
   let fields = (t.fields || []).length;
   
-  let priceClass = (t.milestones && t.milestones.length > 0) ? "x-price" : "x-price";
-  let clickAttr = (t.milestones && t.milestones.length > 0) ? `onclick="showMilestones(event, '${t.id}')"` : "";
-  
+  // Arrow Logic for Milestone
+  let hasMilestones = (t.milestones && t.milestones.length > 0);
+  let clickAttr = hasMilestones ? `onclick="showMilestones(event, '${t.id}')"` : "";
+  let arrowSvg = hasMilestones ? `<svg class="pr-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>` : "";
+
   return `<a class="x-row" href="task.html?id=${esc(t.id)}">
     ${logo(t.platform)}
     <div class="x-rb">
       <div class="x-rt">${esc(t.title)}</div>
       <div class="x-rs">
-        <span class="${priceClass}" ${clickAttr}>৳${esc(t.pricePerAccount)}</span>
+        <span class="x-price" ${clickAttr}>৳${esc(t.pricePerAccount)}${arrowSvg}</span>
         <span class="x-tag time ${st.k}" data-start="${startMs}" data-end="${endMs}">
           <i></i><span class="time-text">${st.t}</span>
         </span>
