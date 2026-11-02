@@ -29,7 +29,7 @@ svg{display:block}
 /* FIXED LAYOUT */
 .page-wrapper{position:relative;z-index:1;height:100vh;height:100dvh;max-width:520px;margin:0 auto;display:flex;flex-direction:column;overflow:hidden}
 
-/* HEADER & BACK BUTTON */
+/* HEADER & BACK BUTTON ANIMATION */
 .top{flex:0 0 auto;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:rgba(6,6,15,.7);backdrop-filter:blur(20px);border-bottom:1px solid var(--line)}
 .top-in{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px}
@@ -55,9 +55,14 @@ svg{display:block}
 .hd-main{flex:1;min-width:0}
 .hd-title{font-size:15px;font-weight:700;line-height:1.3;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hd-sub{display:flex;align-items:center;gap:8px;margin-top:5px;flex-wrap:wrap}
-.pr{font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a;cursor:pointer;transition:transform 0.2s}
+
+/* PRICE WITH BOUNCING ARROW */
+.pr{display:inline-flex;align-items:center;gap:4px;font-family:'Inter';font-size:13px;font-weight:900;color:#fde68a;cursor:pointer;transition:transform 0.2s;user-select:none}
 .pr:active{transform:scale(0.92)}
 .pr small{font-family:'Hind Siliguri';font-weight:600;font-size:11px;color:rgba(255,255,255,.75);margin-left:2px}
+.pr-arrow{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;animation:arrowBounce 1.2s infinite ease-in-out;filter:drop-shadow(0 0 4px rgba(253,230,138,0.6))}
+@keyframes arrowBounce{0%,100%{transform:translateX(0);opacity:0.6}50%{transform:translateX(4px);opacity:1}}
+
 .pl{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.14);color:#fff}
 
 /* TIMER */
@@ -105,20 +110,35 @@ svg{display:block}
 textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;font-size:13px;line-height:1.55;resize:vertical;margin-bottom:6px}
 .dup{display:none;background:rgba(239,68,68,.14);border:1px solid rgba(239,68,68,.4);color:#fca5a5;padding:9px 12px;border-radius:12px;margin-bottom:8px;font-size:12.5px;font-weight:700;word-break:break-word}
 
-/* EXCEL SHEET FORMAT GUIDE (SCROLLABLE) */
-.sheet-guide{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:12px;margin-bottom:12px;overflow:hidden}
+/* EXCEL SHEET FORMAT GUIDE (SCROLLABLE & ANIMATED) */
+.sheet-guide{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:14px;padding:12px;margin-bottom:12px;position:relative}
 .sheet-guide h4{margin:0 0 8px;font-size:12px;color:#6ee7b7;font-weight:700;display:flex;align-items:center;gap:5px}
 .sheet-scroll-wrapper{position:relative;width:100%;overflow:hidden;border-radius:12px;margin-bottom:4px}
-.sheet-scroll-container{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sheet-scroll-container{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-radius:12px}
 .sheet-scroll-container::-webkit-scrollbar{display:none}
 .sheet-table{width:100%;border-collapse:collapse;font-family:'Inter',monospace;font-size:12px;white-space:nowrap;min-width:max-content}
 .sheet-table th{background:rgba(255,255,255,.1);color:#fff;padding:8px 12px;text-align:center;border:1px solid rgba(255,255,255,.15);font-weight:800}
 .sheet-table td{padding:8px 12px;text-align:center;border:1px solid rgba(255,255,255,.1);color:#dcdcf2;font-weight:600}
 .sheet-table td:first-child{color:#fcd34d;font-weight:800}
 .sheet-table td:last-child{color:#c4b5fd}
-.scroll-hint{position:absolute;top:0;right:0;bottom:0;width:35px;background:linear-gradient(to right,transparent,rgba(16,185,129,0.25));pointer-events:none;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;animation:pulseRight 1.5s infinite}
-.scroll-hint svg{width:14px;height:14px;fill:none;stroke:#6ee7b7;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-@keyframes pulseRight{0%,100%{opacity:0.4;transform:translateX(0)}50%{opacity:1;transform:translateX(3px)}}
+
+/* Scroll Hint Animation */
+.scroll-hint {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 45px;
+    background: linear-gradient(to right, transparent, rgba(16,185,129,0.6));
+    pointer-events: none; display: none;
+    align-items: center; justify-content: flex-end; padding-right: 8px;
+    border-radius: 0 12px 12px 0;
+}
+.scroll-hint svg {
+    width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 3;
+    animation: swipeRight 1.2s infinite ease-in-out;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.8));
+}
+@keyframes swipeRight {
+    0%, 100% { transform: translateX(0); opacity: 0.5; }
+    50% { transform: translateX(5px); opacity: 1; }
+}
 
 /* STATS & CHIPS */
 .statrow{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:30px}
@@ -207,7 +227,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
   <main class="content">
     <div id="taskInfo"><div class="skel"></div></div>
     
-    <!-- Rules / Neom -->
     <div id="rulesWrap"></div>
 
     <div id="submitSections" class="locked">
@@ -233,7 +252,6 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
         <div class="fc glass">
           <div class="fc-h"><b>File Submit</b></div>
           
-          <!-- Excel Sheet Format Guide (Scrollable) -->
           <div class="sheet-guide">
             <h4>📊 Excel/CSV Format (নিচের মতো সাজিয়ে দিন)</h4>
             <div class="sheet-scroll-wrapper">
@@ -247,6 +265,7 @@ textarea.inp{height:140px;min-height:100px;font-family:'Courier New',monospace;f
                 <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
               </div>
             </div>
+            <p style="font-size:10.5px; color:var(--muted); margin:4px 0 0; text-align:center;">👉 ডানে-বামে স্ক্রল করে সব কলাম দেখুন 👈</p>
           </div>
 
           <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="ফাইল নির্বাচন করুন">
@@ -338,7 +357,6 @@ const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 
 // Back Button Logic
 document.getElementById("backBtn").onclick = () => {
-  // If there's a referrer from the same host, go back. Otherwise, go to tasks.html.
   if (document.referrer && document.referrer.includes(window.location.hostname) && history.length > 1) {
     history.back();
   } else {
@@ -405,14 +423,20 @@ onAuthStateChanged(auth, async (user) => {
   const startStr = taskStartTime ? taskStartTime.toLocaleString("bn-BD", fmt) : "";
   const endStr = taskEndTime ? taskEndTime.toLocaleString("bn-BD", fmt) : "";
   
-  let clickAttr = (task.milestones && task.milestones.length > 0) ? `onclick="showMilestones(event)"` : "";
+  // Milestone Arrow Logic
+  let hasMilestones = (task.milestones && task.milestones.length > 0);
+  let milestoneArrow = hasMilestones ? `<svg class="pr-arrow" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>` : "";
+  let clickAttr = hasMilestones ? `onclick="showMilestones(event)"` : "";
 
   $("taskInfo").innerHTML = `
     <div class="hd">
       <div class="hd-logo" style="background:${plat.color}">${plat.svg}</div>
       <div class="hd-main">
         <div class="hd-title">${esc(task.title)}</div>
-        <div class="hd-sub"><span class="pr" ${clickAttr}>৳${esc(task.pricePerAccount)}<small>/ account</small></span><span class="pl">${esc(task.platform || "Task")}</span></div>
+        <div class="hd-sub">
+          <span class="pr" ${clickAttr}>৳${esc(task.pricePerAccount)}<small>/ account</small>${milestoneArrow}</span>
+          <span class="pl">${esc(task.platform || "Task")}</span>
+        </div>
       </div>
       <div class="hd-time open" id="hdTime"><div class="t" id="hdT">--:--</div><div class="l" id="hdL">...</div></div>
     </div>`;
@@ -450,16 +474,18 @@ onAuthStateChanged(auth, async (user) => {
   $("sheetFormatTable").querySelector("thead tr").innerHTML = thHtml;
   $("sheetFormatTable").querySelector("tbody tr").innerHTML = tdHtml;
 
-  // Check if table needs scrolling
+  // Check if table needs scrolling and show animation arrow
   setTimeout(() => {
     const container = $("sheetScrollContainer");
     const hint = $("scrollHint");
-    if (container.scrollWidth > container.clientWidth) {
-      hint.style.display = "flex";
-    } else {
-      hint.style.display = "none";
+    if (container && hint) {
+      if (container.scrollWidth > container.clientWidth) {
+        hint.style.display = "flex";
+      } else {
+        hint.style.display = "none";
+      }
     }
-  }, 100);
+  }, 150);
 
   let singleTimer = null;
   fields.forEach(f => {
