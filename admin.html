@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="alerts.js"></script> <!-- ✅ Premium Alert System -->
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -189,8 +190,7 @@ select.inp option{background:#12122a;color:#fff}
 </style>
 </head>
 <body>
-<!-- Part 2 will start from here (HTML) -->
- <div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
+<div class="bg" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="grid"></div></div>
 <header class="top">
   <div class="top-in">
     <div class="brand"><div class="mark">⚡</div><span>Admin Panel<em class="atag">ADMIN</em></span></div>
@@ -239,7 +239,7 @@ select.inp option{background:#12122a;color:#fff}
     </div>
   </div>
 
-  <!-- 2. TASK TAB (Milestone Format Added) -->
+  <!-- 2. TASK TAB -->
   <div id="taskTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3 id="taskFormTitle">➕ নতুন Task</h3>
@@ -261,7 +261,7 @@ select.inp option{background:#12122a;color:#fff}
         </div>
       </div>
       <p style="font-size:11.5px; color:var(--muted); margin-top:-6px; margin-bottom:12px;">
-        * মাইলস্টোন ফরম্যাট: <b>অ্যাকাউন্ট_সংখ্যা:রেট</b> (কমা দিয়ে আলাদা করুন)। <br>
+        * মাইলস্টোন ফরম্যাট: <b>অ্যাকাউন্ট_সংখ্যা:রেট</b> (কমা দিয়ে আলাদা করুন)। <br>
         * শুধু ফাইলের ওপর নির্ভর করবে। ৫০০ পূর্ণ হলে ৭৳, ১০০০ পূর্ণ হলে ৮৳।
       </p>
 
@@ -285,8 +285,7 @@ select.inp option{background:#12122a;color:#fff}
     <div class="sec"><span>📋 All Tasks</span></div>
     <div id="taskList"><div class="skel"></div><div class="skel"></div></div>
   </div>
-
-  <!-- 3. RESULT PROCESS TAB -->
+    <!-- 3. RESULT PROCESS TAB -->
   <div id="resultTab" class="admin-section" style="display:none">
     <div class="acard glass">
       <h3>📥 Result Process</h3>
@@ -347,7 +346,7 @@ select.inp option{background:#12122a;color:#fff}
     <div class="acard glass" style="text-align:center;padding:30px">
       <div style="font-size:46px;margin-bottom:10px">🧹</div>
       <h3 style="justify-content:center;font-size:20px">Data Cleanup Center</h3>
-      <p class="sub">সব ধরনের ডেটা ডিলিট এক জায়গায়। প্রতিটা অপশনে লেখা আছে কী মুছবে।</p>
+      <p class="sub">সব ধরনের ডেটা ডিলিট এক জায়গায়। প্রতিটা অপশনে লেখা আছে কী মুছবে।</p>
       <a href="admin-cleanup.html" class="cta red" style="margin-top:10px">🧹 Data Cleanup খুলুন →</a>
     </div>
   </div>
@@ -417,8 +416,7 @@ select.inp option{background:#12122a;color:#fff}
   <button id="deleteSelectedBtn">🗑️ Delete Selected</button>
 </div>
 
-<!-- Part 3 will start from here (JavaScript Part 1) -->
- <script type="module">
+<script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, setDoc, collection, addDoc, updateDoc, deleteDoc, query, where, getDocs, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -431,18 +429,20 @@ select.inp option{background:#12122a;color:#fff}
     const DONE_STATUSES = new Set(["good", "bad", "processed", "completed", "approved", "success", "done", "accepted", "rejected"]);
     const isPendingSub = (s) => !DONE_STATUSES.has(String(s.status || "").toLowerCase().trim());
 
-    // Session Check
-    const SESSION_DURATION = 12 * 60 * 60 * 1000;
-    const sessionTime = sessionStorage.getItem("admin_verified");
+    // ✅ 24 HOUR SESSION CHECK (localStorage)
+    const SESSION_DURATION = 24 * 60 * 60 * 1000;
+    const sessionTime = localStorage.getItem("admin_verified");
+    
     if (!sessionTime || (Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
-      sessionStorage.removeItem("admin_verified");
+      localStorage.removeItem("admin_verified");
+      sessionStorage.setItem("admin_return", location.pathname + location.search);
       location.href = "admin-login.html";
     }
 
-    // Logout
     document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট?")) return;
-      sessionStorage.removeItem("admin_verified");
+      if (!(await window.showCustomConfirm("আপনি কি লগআউট করতে চান?", { title: "লগআউট" }))) return;
+      
+      localStorage.removeItem("admin_verified"); // ✅ Clear 24h session
       try { await setDoc(doc(db, "settings", "online_status"), { adminOnline: false, adminLastSeen: new Date() }, { merge: true }); } catch (e) {}
       await signOut(auth);
       location.href = "index.html";
@@ -471,7 +471,7 @@ select.inp option{background:#12122a;color:#fff}
       const on = e.target.checked;
       paintOnline(on);
       try { await setDoc(doc(db, "settings", "online_status"), { adminOnline: on, adminLastSeen: new Date(), adminName }, { merge: true }); }
-      catch (err) { e.target.checked = !on; paintOnline(!on); alert("❌ " + err.message); }
+      catch (err) { e.target.checked = !on; paintOnline(!on); await window.showError(err.message); }
     };
 
     // Platform Picker
@@ -562,13 +562,11 @@ select.inp option{background:#12122a;color:#fff}
       ["taskTitle","taskDesc","taskPrice","taskMilestones","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
       resetFields();
     };
-
-    document.getElementById("addTaskBtn").onclick = async () => {
+     document.getElementById("addTaskBtn").onclick = async () => {
       const title = document.getElementById("taskTitle").value.trim();
       const description = document.getElementById("taskDesc").value.trim();
       const pricePerAccount = parseFloat(document.getElementById("taskPrice").value);
       
-      // Parse Milestones "500:7, 1000:8"
       const mStr = document.getElementById("taskMilestones").value.trim();
       let milestones = [];
       if (mStr) {
@@ -588,11 +586,11 @@ select.inp option{background:#12122a;color:#fff}
       const rules = document.getElementById("taskRules").value.trim();
       const btn = document.getElementById("addTaskBtn");
 
-      if (!title || !pricePerAccount) return alert("Title & Price দাও!");
-      if (!startVal || !endVal) return alert("Start & End Time দাও!");
-      if (new Date(startVal) >= new Date(endVal)) return alert("End time পরে হতে হবে!");
+      if (!title || !pricePerAccount) return window.showWarning("Title & Price দাও!");
+      if (!startVal || !endVal) return window.showWarning("Start & End Time দাও!");
+      if (new Date(startVal) >= new Date(endVal)) return window.showWarning("End time পরে হতে হবে!");
       const fields = collectFields();
-      if (fields.length === 0) return alert("কমপক্ষে একটা field!");
+      if (fields.length === 0) return window.showWarning("কমপক্ষে একটা field!");
 
       btn.disabled = true; btn.textContent = "Saving...";
       try {
@@ -601,7 +599,7 @@ select.inp option{background:#12122a;color:#fff}
             title, description, pricePerAccount, milestones, platform: selectedPlatform, fields, rules,
             startTime: new Date(startVal), endTime: new Date(endVal), updatedAt: new Date()
           });
-          alert("✅ Updated!");
+          await window.showSuccess("Task Updated!");
           document.getElementById("cancelEditBtn").click();
         } else {
           await addDoc(collection(db, "tasks"), {
@@ -609,12 +607,12 @@ select.inp option{background:#12122a;color:#fff}
             startTime: new Date(startVal), endTime: new Date(endVal),
             active: true, createdAt: new Date()
           });
-          alert("✅ Added!");
+          await window.showSuccess("Task Added!");
           ["taskTitle","taskDesc","taskPrice","taskMilestones","taskStartTime","taskEndTime","taskRules"].forEach(id => document.getElementById(id).value = "");
           resetFields();
         }
         loadTasks(); loadDropdowns(); loadStats();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) { await window.showError(e.message); }
       btn.disabled = false;
       btn.textContent = editTaskId ? "💾 Update" : "Add Task";
     };
@@ -697,12 +695,13 @@ select.inp option{background:#12122a;color:#fff}
     }
 
     window.deleteTask = async (id) => {
-      if (!confirm("Delete?")) return;
+      if (!(await window.showCustomConfirm("আপনি কি এই Task ডিলিট করতে চান?", { title: "Task Delete" }))) return;
       await updateDoc(doc(db, "tasks", id), { active: false });
+      window.showSuccess("Task Deleted!");
       loadTasks(); loadDropdowns(); loadStats();
     };
 
-    // Loading pending submissions for process
+    // Result Process
     let loadedTask = null;
     let pendingGroups = {};
 
@@ -722,30 +721,24 @@ select.inp option{background:#12122a;color:#fff}
 
     document.getElementById("loadBtn").onclick = async () => {
       const taskId = document.getElementById("resultTask").value;
-      if (!taskId) return alert("Task select করো!");
+      if (!taskId) return window.showWarning("Task select করো!");
       const btn = document.getElementById("loadBtn");
       btn.disabled = true; btn.textContent = "Loading...";
       try {
         const taskSnap = await getDoc(doc(db, "tasks", taskId));
-        if (!taskSnap.exists()) { alert("Task পাওয়া যায়নি!"); btn.disabled = false; btn.textContent = "🔍 Load Pending Submissions"; return; }
+        if (!taskSnap.exists()) { window.showError("Task পাওয়া যায়নি!"); btn.disabled = false; btn.textContent = "🔍 Load Pending Submissions"; return; }
         loadedTask = { id: taskId, ...taskSnap.data() };
 
         const q = query(collection(db, "submissions"), where("taskId", "==", taskId));
         const snap = await getDocs(q);
         const allDocs = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-
         let subs = allDocs.filter(isPendingSub);
 
         subs = subs.map(s => {
           let t = s.submittedAt?.toDate?.() || null;
-          if (!t) {
-            if (s.createdAt?.toDate) t = s.createdAt.toDate();
-            else if (s.time?.toDate) t = s.time.toDate();
-            else t = new Date();
-          }
+          if (!t) t = s.createdAt?.toDate?.() || new Date();
           return { ...s, __dt: t };
         });
-
         subs.sort((a, b) => a.__dt.getTime() - b.__dt.getTime());
 
         pendingGroups = {};
@@ -763,15 +756,13 @@ select.inp option{background:#12122a;color:#fff}
         });
 
         renderPendingGroups();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) { window.showError(e.message); }
       btn.disabled = false; btn.textContent = "🔍 Load Pending Submissions";
     };
 
     function renderPendingGroups() {
       const gDiv = document.getElementById("taskGroups");
-      const keys = Object.keys(pendingGroups)
-        .filter(k => Array.isArray(pendingGroups[k]) && pendingGroups[k].length > 0)
-        .sort().reverse();
+      const keys = Object.keys(pendingGroups).filter(k => pendingGroups[k].length > 0).sort().reverse();
 
       if (keys.length === 0) {
         gDiv.innerHTML = `<div class="empty"><div class="em">🎉</div>কোনো pending submission নেই! সব প্রসেস করা হয়েছে।</div>`;
@@ -799,7 +790,7 @@ select.inp option{background:#12122a;color:#fff}
 
     window.downloadPendingXLSX = function(key) {
       const items = pendingGroups[key] || [];
-      if (!items.length || !loadedTask) return alert("No data");
+      if (!items.length || !loadedTask) return;
       const fields = loadedTask.fields || [{ key: "uid", label: "UID" }];
       const sheetData = items.map((s, idx) => {
         const row = { "#": idx + 1 };
@@ -824,8 +815,7 @@ select.inp option{background:#12122a;color:#fff}
       XLSX.writeFile(wb, `${loadedTask.title.replace(/\s+/g, "_")}_${key.replace(/[: ]/g, "-")}.xlsx`);
     };
 
-// Part 4 will start from here (Result Process Logic & Final Init)
-     let modalKey = null, processing = false;
+    let modalKey = null, processing = false;
 
     function parseBad(text) {
       const set = new Set();
@@ -870,14 +860,13 @@ select.inp option{background:#12122a;color:#fff}
       $("badModal").classList.add("show");
     };
 
-    $("badConfirm").onclick = () => {
+    $("badConfirm").onclick = async () => {
       const bad = +$("pvBad").textContent, good = +$("pvGood").textContent;
-      if (!confirm(`❌ Bad ${bad} • ✅ Good ${good}\nProcess করবে?`)) return;
+      if (!(await window.showCustomConfirm(`❌ Bad ${bad} • ✅ Good ${good}\nProcess করবে?`))) return;
       $("badModal").classList.remove("show");
       processGroup(modalKey, $("badText").value);
     };
 
-    // Milestone Logic Implemented Exactly as requested (File-based evaluation)
     async function processGroup(key, badText) {
       if (processing) return;
       processing = true;
@@ -891,8 +880,7 @@ select.inp option{background:#12122a;color:#fff}
         const normalPrice = Number(loadedTask.pricePerAccount) || 0;
         const milestones = loadedTask.milestones || []; 
         
-        // ১. এই ফাইলে ইউজার কতগুলো Good এবং Bad দিয়েছে তা একবারে ক্যালকুলেট করা
-        const userTotals = {}; // { uid: { good: count, bad: count, goodItems: [], badItems: [] } }
+        const userTotals = {}; 
         let totalGood = 0, totalBad = 0;
 
         for (const s of pending) {
@@ -909,14 +897,10 @@ select.inp option{background:#12122a;color:#fff}
         let batch = writeBatch(db);
         let batchCount = 0;
 
-        // ২. প্রতিটি ইউজারের জন্য ফাইলের Good সংখ্যা অনুযায়ী রেট বের করা এবং ডাটাবেস আপডেট
         for (const [uid, p] of Object.entries(userTotals)) {
           if (!uid || uid === "undefined" || uid === "null") continue;
           
-          // ডিফল্ট রেট
           let appliedPrice = normalPrice;
-
-          // মাইলস্টোন চেক (এই ফাইলে ইউজারের মোট Good সংখ্যা p.g)
           for (const m of milestones) {
             if (p.g >= m.target) {
               appliedPrice = m.price;
@@ -926,7 +910,6 @@ select.inp option{background:#12122a;color:#fff}
           const earnedAmount = p.g * appliedPrice;
           totalPayout += earnedAmount;
 
-          // Good সাবমিশন আপডেট
           for (const id of p.goodItems) {
             batch.set(doc(db, "submissions", id), {
               status: "good", earned: appliedPrice, checkedAt: new Date(), processedBy: auth.currentUser?.uid || null
@@ -934,7 +917,6 @@ select.inp option{background:#12122a;color:#fff}
             batchCount++;
             if (batchCount >= 400) { await batch.commit(); batch = writeBatch(db); batchCount = 0; }
           }
-          // Bad সাবমিশন আপডেট
           for (const id of p.badItems) {
             batch.set(doc(db, "submissions", id), {
               status: "bad", earned: 0, checkedAt: new Date(), processedBy: auth.currentUser?.uid || null
@@ -943,7 +925,6 @@ select.inp option{background:#12122a;color:#fff}
             if (batchCount >= 400) { await batch.commit(); batch = writeBatch(db); batchCount = 0; }
           }
 
-          // ইউজার ব্যালেন্স আপডেট
           if (p.g > 0 || p.b > 0) {
             batch.set(doc(db, "users", uid), {
               balance: increment(earnedAmount),
@@ -958,7 +939,6 @@ select.inp option{background:#12122a;color:#fff}
 
         if (batchCount > 0) await batch.commit();
 
-        // Daily Reports
         try {
           await addDoc(collection(db, "reports"), {
             taskId: loadedTask.id,
@@ -994,7 +974,7 @@ select.inp option{background:#12122a;color:#fff}
       }
     }
 
-    // PUBLISHED RESULTS
+    // Published Results
     let allPublishedGroups = {};
     async function loadPublishedResults() {
       const container = document.getElementById("publishedGroups");
@@ -1063,10 +1043,9 @@ select.inp option{background:#12122a;color:#fff}
           </div>`;
       }).join("");
     }
-
-    window.downloadPublishedXLSX = function(key) {
+     window.downloadPublishedXLSX = function(key) {
       const items = allPublishedGroups[key] || [];
-      if (!items.length) return alert("No data");
+      if (!items.length) return;
       const sheetData = items.map((s, idx) => ({
         "#": idx + 1, "UID": s.uid || "", "Task": s.taskTitle || "", "Status": s.status || "",
         "Earned": "৳" + (s.earned || 0), "Processed At": s.checkedAt?.toDate?.().toLocaleString("en-GB") || ""
@@ -1080,7 +1059,7 @@ select.inp option{background:#12122a;color:#fff}
     window.deletePublishedGroup = async function(key) {
       const items = allPublishedGroups[key] || [];
       if (!items.length) return;
-      if (!confirm(`⚠️ আপনি ${items.length} টি সাবমিশন ডিলিট করতে যাচ্ছেন। নিশ্চিত?`)) return;
+      if (!(await window.showCustomConfirm(`⚠️ আপনি ${items.length} টি সাবমিশন ডিলিট করতে যাচ্ছেন। নিশ্চিত?`, { title: "Delete Results" }))) return;
       try {
         let batch = writeBatch(db), count = 0;
         for (const s of items) {
@@ -1089,21 +1068,23 @@ select.inp option{background:#12122a;color:#fff}
           if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
         }
         if (count > 0) await batch.commit();
-        alert(`✅ ${items.length} টি সাবমিশন ডিলিট হয়েছে।`);
+        await window.showSuccess(`✅ ${items.length} টি সাবমিশন ডিলিট হয়েছে।`);
         delete allPublishedGroups[key];
         renderPublishedGroups();
         loadStats();
-      } catch (e) { alert("❌ ডিলিট সমস্যা: " + e.message); }
+      } catch (e) { window.showError("❌ ডিলিট সমস্যা: " + e.message); }
     };
 
     document.getElementById("btnDeleteAllPublished").onclick = async () => {
       const keys = Object.keys(allPublishedGroups);
-      if (!keys.length) return alert("মুছার মতো কিছু নেই!");
+      if (!keys.length) return window.showWarning("মুছার মতো কিছু নেই!");
       let totalCount = 0;
       keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
-      if (!confirm(`🚨 মোট ${totalCount} টি রেজাল্ট মুছে ফেলা হবে! নিশ্চিত?`)) return;
+      if (!(await window.showCustomConfirm(`🚨 মোট ${totalCount} টি রেজাল্ট মুছে ফেলা হবে! নিশ্চিত?`, { title: "Delete All" }))) return;
+      
       const delTxt = await window.showCustomPrompt("নিশ্চিত করতে DELETE লিখুন:", "", "DELETE লিখুন...");
-if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
+      if (delTxt !== "DELETE") return window.showInfo("বাতিল।");
+      
       try {
         let batch = writeBatch(db), count = 0;
         for (const k of keys) {
@@ -1114,11 +1095,11 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
           }
         }
         if (count > 0) await batch.commit();
-        alert(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
+        await window.showSuccess(`✅ সব প্রকাশিত রেজাল্ট (${totalCount} টি) মুছে ফেলা হয়েছে।`);
         allPublishedGroups = {};
         renderPublishedGroups();
         loadStats();
-      } catch (e) { alert("❌ ডিলিট সমস্যা: " + e.message); }
+      } catch (e) { window.showError("❌ ডিলিট সমস্যা: " + e.message); }
     };
 
     // NOTICE LOGIC
@@ -1127,19 +1108,19 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
       const message = document.getElementById("noticeMsg").value.trim();
       const apkUrl = document.getElementById("noticeApk").value.trim() || null;
       const linkUrl = document.getElementById("noticeLink").value.trim() || null;
-      if (!title || !message) return alert("সব ঘর!");
+      if (!title || !message) return window.showWarning("সব ঘর পূরণ করুন!");
       try {
         const oldQ = query(collection(db, "notices"), where("active", "==", true));
         const oldSnap = await getDocs(oldQ);
         for (const d of oldSnap.docs) await updateDoc(doc(db, "notices", d.id), { active: false });
         await addDoc(collection(db, "notices"), { title, message, apkUrl, linkUrl, active: true, createdAt: new Date() });
-        alert("✅ Published!");
+        await window.showSuccess("✅ Published!");
         document.getElementById("noticeTitle").value = "";
         document.getElementById("noticeMsg").value = "";
         document.getElementById("noticeApk").value = "";
         document.getElementById("noticeLink").value = "";
         loadNotices();
-      } catch (e) { alert("❌ " + e.message); }
+      } catch (e) { window.showError("❌ " + e.message); }
     };
 
     async function loadNotices() {
@@ -1158,6 +1139,7 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
         </div>`;
       }).join("");
     }
+    
     window.deleteNotice = async (id) => {
       await updateDoc(doc(db, "notices", id), { active: false });
       loadNotices();
@@ -1274,12 +1256,138 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
       const maxWithdraw = parseFloat(document.getElementById("maxWithdraw").value) || 50000;
       const processingTime = document.getElementById("processingTime").value.trim() || "24 hours";
       const withdrawEnabled = document.getElementById("withdrawEnabled").value === "true";
-      if (minWithdraw < 0) return alert("Minimum cannot be negative!");
-      if (maxWithdraw < minWithdraw) return alert("Maximum must be ≥ Minimum!");
+      if (minWithdraw < 0) return window.showWarning("Minimum cannot be negative!");
+      if (maxWithdraw < minWithdraw) return window.showWarning("Maximum must be ≥ Minimum!");
       try {
         await setDoc(doc(db, "settings", "withdraw_config"), { minWithdraw, maxWithdraw, processingTime, withdrawEnabled, updatedAt: new Date() }, { merge: true });
-        alert("✅ Withdraw settings saved!");
-      } catch (e) { alert("❌ " + e.message); }
+        window.showSuccess("✅ Withdraw settings saved!");
+      } catch (e) { window.showError("❌ " + e.message); }
+    };
+
+    // BADGE LOGIC
+    let badgeUsers = [];
+    let selectedBadgeUser = null;
+
+    async function loadBadgeUsers() {
+      const box = document.getElementById("badgeUserResults");
+      box.innerHTML = `<div class="skel" style="height:60px;margin-bottom:8px"></div><div class="skel" style="height:60px"></div>`;
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        badgeUsers = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+        renderBadgeUsers();
+      } catch (e) { box.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`; }
+    }
+
+    function renderBadgeUsers() {
+      const box = document.getElementById("badgeUserResults");
+      const search = (document.getElementById("badgeUserSearch").value || "").trim().toLowerCase();
+      let filtered = badgeUsers;
+      if (search) {
+        filtered = badgeUsers.filter(u => (u.username || "").toLowerCase().includes(search) || (u.email || "").toLowerCase().includes(search));
+      }
+      if (filtered.length === 0) { box.innerHTML = `<div class="empty"><div class="em">📭</div>কোনো user নেই</div>`; return; }
+      box.innerHTML = filtered.map(u => {
+        const isSel = selectedBadgeUser && selectedBadgeUser.id === u.id;
+        const badgeHtml = u.customBadge ? `<span class="bdg" style="background:${esc(u.customBadgeColor || '#6366f1')}">🎖️ ${esc(u.customBadge)}</span>` : '';
+        return `
+          <div class="brow ${isSel ? 'sel' : ''}" data-uid="${u.id}">
+            <div class="user-avatar ${u.role === 'admin' ? 'admin' : 'user'}" style="width:36px;height:36px;font-size:14px;flex-basis:36px">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
+            <div style="flex:1;min-width:0">
+              <h4 style="margin:0 0 2px;font-size:13.5px;font-weight:700">${esc(u.username || "User")} ${badgeHtml}</h4>
+              <p style="margin:0;font-size:11.5px;color:var(--muted)">${esc(u.email || "")}</p>
+            </div>
+          </div>`;
+      }).join("");
+
+      box.querySelectorAll(".brow").forEach(el => {
+        el.onclick = () => {
+          selectedBadgeUser = badgeUsers.find(u => u.id === el.dataset.uid);
+          document.getElementById("badgeUserSearch").value = selectedBadgeUser.username || "";
+          renderBadgeUsers();
+          const sbox = document.getElementById("selectedBadgeUser");
+          sbox.style.display = "block";
+          document.getElementById("selectedBadgeUserName").textContent = selectedBadgeUser.username || "User";
+          document.getElementById("selectedBadgeUserEmail").textContent = selectedBadgeUser.email || "";
+          document.getElementById("badgeName").value = selectedBadgeUser.customBadge || "";
+          document.getElementById("badgeCustomColor").value = selectedBadgeUser.customBadgeColor || "#6366f1";
+        };
+      });
+    }
+
+    document.getElementById("badgeUserSearch").oninput = renderBadgeUsers;
+
+    document.querySelectorAll(".badge-color-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".badge-color-btn").forEach(b => b.classList.remove("on"));
+        btn.classList.add("on");
+        document.getElementById("badgeCustomColor").value = btn.dataset.color;
+      };
+    });
+
+    document.getElementById("saveBadgeBtn").onclick = async () => {
+      if (!selectedBadgeUser) return window.showWarning("আগে user সিলেক্ট করুন!");
+      const badgeName = document.getElementById("badgeName").value.trim().toUpperCase();
+      const color = document.getElementById("badgeCustomColor").value.trim() || "#6366f1";
+      if (!badgeName) return window.showWarning("Badge name দাও!");
+      try {
+        await updateDoc(doc(db, "users", selectedBadgeUser.id), { customBadge: badgeName, customBadgeColor: color });
+        window.showSuccess(`✅ Badge assigned to ${selectedBadgeUser.username}`);
+        loadBadgeUsers();
+        loadBadgedUsers();
+      } catch (e) { window.showError("❌ " + e.message); }
+    };
+
+    document.getElementById("removeBadgeBtn").onclick = async () => {
+      if (!selectedBadgeUser) return window.showWarning("আগে user সিলেক্ট করুন!");
+      try {
+        await updateDoc(doc(db, "users", selectedBadgeUser.id), { customBadge: null, customBadgeColor: null });
+        window.showSuccess("✅ Badge removed!");
+        loadBadgeUsers();
+        loadBadgedUsers();
+      } catch (e) { window.showError("❌ " + e.message); }
+    };
+
+    async function loadBadgedUsers() {
+      const list = document.getElementById("badgedUsersList");
+      try {
+        const snap = await getDocs(collection(db, "users"));
+        const badged = snap.docs.map(d => ({ ...d.data(), id: d.id })).filter(u => u.customBadge);
+        if (badged.length === 0) { list.innerHTML = `<div class="empty"><div class="em">🎖️</div>কোনো badged user নেই</div>`; return; }
+        list.innerHTML = badged.map(u => {
+          const color = u.customBadgeColor || "#6366f1";
+          return `
+            <div class="user-card glass">
+              <div class="user-avatar user">${esc((u.username || "U").charAt(0).toUpperCase())}</div>
+              <div class="user-info" onclick="editUser('${u.id}')">
+                <h4>${esc(u.username || "User")} <span class="bdg" style="background:${esc(color)}">🎖️ ${esc(u.customBadge)}</span></h4>
+                <p>${esc(u.email || "")}</p>
+              </div>
+            </div>`;
+        }).join("");
+      } catch (e) { list.innerHTML = `<div class="empty" style="color:#fca5a5">${esc(e.message)}</div>`; }
+    }
+
+    // DELETE SELECTED USERS
+    document.getElementById("deleteSelectedBtn").onclick = async () => {
+      if (selectedUsers.size === 0) return;
+      if (!(await window.showCustomConfirm(`আপনি ${selectedUsers.size} জন user ডিলিট করতে যাচ্ছেন। নিশ্চিত?`, { title: "Delete Users" }))) return;
+      const delTxt = await window.showCustomPrompt("নিশ্চিত করতে DELETE USERS লিখুন:", "", "DELETE USERS");
+      if (delTxt !== "DELETE USERS") return window.showInfo("বাতিল।");
+      
+      try {
+        let batch = writeBatch(db), count = 0;
+        for (const uid of selectedUsers) {
+          batch.delete(doc(db, "users", uid));
+          count++;
+          if (count >= 400) { await batch.commit(); batch = writeBatch(db); count = 0; }
+        }
+        if (count > 0) await batch.commit();
+        window.showSuccess(`✅ ${selectedUsers.size} জন ডিলিট হয়েছে!`);
+        selectedUsers.clear();
+        updateActionBar();
+        loadUsers();
+        loadStats();
+      } catch (e) { window.showError("❌ " + e.message); }
     };
 
     // INIT
@@ -1287,7 +1395,7 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
       if (!user) { location.href = "login.html"; return; }
       const snap = await getDoc(doc(db, "users", user.uid));
       if (!snap.exists() || snap.data().role !== "admin") {
-        alert("❌ Admin না!");
+        await window.showError("Admin না!", { title: "প্রবেশাধিকার নেই" });
         location.href = "dashboard.html";
         return;
       }
@@ -1300,4 +1408,4 @@ if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
     });
   </script>
 </body>
-</html> 
+</html>
