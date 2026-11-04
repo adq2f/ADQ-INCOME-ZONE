@@ -1,5 +1,5 @@
 /* ==================================================
-   app-shell.js — ADQ Income Zone (Custom Logo & Premium Loading)
+   app-shell.js — ADQ Income Zone (Final Version)
    ================================================== */
 (function () {
   if (window.__adqShell) return;
@@ -14,24 +14,15 @@
 
   root.classList.add("adq-loading");
 
-  /* ---------------- CUSTOM LOGO URL ---------------- */
+  /* ---------------- LOGO URL ---------------- */
   var LOGO_SRC = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhr_c5nsCUKOjGAE5E6FoFz8ayOWVjW5Rbi3ovv6yO8O0Vc-0hdBcKh6-UhhbKaB34YbRw8DE_wyCh6PHshqUYDmJ1qflbJJKNr1ZatTDD0zhi6EVEnSus9U4UEhfbx_ipzl_aTnKdx_CyC8PMRl4Td32mq-6e2wIMUhBc4B8VcwY3f-vQ4jO7Em92i0JnQ/s718/IMG_20260825_013750.JPG";
 
   /* ---------------- PAGE NAMES FOR LOADING TEXT ---------------- */
   var pageNames = {
-    "index": "Home",
-    "dashboard": "Dashboard",
-    "tasks": "Submit Task",
-    "task": "Task Details",
-    "wallet": "Wallet",
-    "withdraw": "Withdraw",
-    "leaderboard": "Leaderboard",
-    "profile": "Profile",
-    "task-history": "Task History",
-    "notifications": "Notifications",
-    "admin": "Admin Panel",
-    "admin-login": "Admin Login",
-    "admin-cleanup": "Cleanup Center"
+    "index": "Home", "dashboard": "Dashboard", "tasks": "Submit Task", "task": "Task Details",
+    "wallet": "Wallet", "withdraw": "Withdraw", "leaderboard": "Leaderboard", "profile": "Profile",
+    "task-history": "Task History", "notifications": "Notifications", "admin": "Admin Panel",
+    "admin-login": "Admin Login", "admin-cleanup": "Cleanup Center"
   };
   var currentPageName = pageNames[cleanFile] || "ADQ Income Zone";
 
@@ -150,27 +141,125 @@
       document.body.appendChild(overlay);
 
       setTimeout(() => {
-        overlay.style.opacity = "1";
-        overlay.style.visibility = "visible";
-        box.style.transform = "scale(1)";
+        overlay.style.opacity = "1"; overlay.style.visibility = "visible"; box.style.transform = "scale(1)";
       }, 10);
 
       const closeAlert = () => {
-        overlay.style.opacity = "0";
-        overlay.style.visibility = "hidden";
-        box.style.transform = "scale(0.9)";
+        overlay.style.opacity = "0"; overlay.style.visibility = "hidden"; box.style.transform = "scale(0.9)";
         setTimeout(() => { overlay.remove(); resolve(); }, 300);
       };
 
-      const btn = document.getElementById("adqAlertOkBtn");
-      btn.onclick = closeAlert;
-      btn.onmouseenter = () => btn.style.transform = "translateY(-2px)";
-      btn.onmouseleave = () => btn.style.transform = "translateY(0)";
+      document.getElementById("adqAlertOkBtn").onclick = closeAlert;
     });
   };
 
-  window.alert = function(msg) {
-    window.showCustomAlert(msg);
+  // ✅ Global Alert Override
+  window.alert = function(msg) { window.showCustomAlert(msg); };
+
+  /* ---------------- CUSTOM PREMIUM CONFIRM (Yes/No) ---------------- */
+  window.showCustomConfirm = function(title) {
+    return new Promise((resolve) => {
+      const old = document.getElementById("adqCustomConfirm");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "adqCustomConfirm";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 2147483647;
+        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
+      `;
+
+      const box = document.createElement("div");
+      box.style.cssText = `
+        background: linear-gradient(180deg, #17172f, #0d0d1f);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 24px; padding: 24px; width: 100%; max-width: 320px;
+        text-align: center; transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      `;
+
+      box.innerHTML = `
+        <div style="width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(245,158,11,0.5), inset 0 2px 0 rgba(255,255,255,0.3);">
+          <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div style="color: #e7e5f4; font-size: 15px; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap; font-weight: 500;">${title}</div>
+        <div style="display: flex; gap: 10px;">
+          <button id="adqConfirmCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer;">Cancel</button>
+          <button id="adqConfirmOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;">OK</button>
+        </div>
+      `;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        overlay.style.opacity = "1"; overlay.style.visibility = "visible"; box.style.transform = "scale(1)";
+      }, 10);
+
+      const close = (val) => {
+        overlay.style.opacity = "0"; overlay.style.visibility = "hidden"; box.style.transform = "scale(0.9)";
+        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
+      };
+
+      document.getElementById("adqConfirmOk").onclick = () => close(true);
+      document.getElementById("adqConfirmCancel").onclick = () => close(false);
+    });
+  };
+
+  /* ---------------- CUSTOM PREMIUM PROMPT (Input) ---------------- */
+  window.showCustomPrompt = function(title, defaultValue = "", placeholder = "") {
+    return new Promise((resolve) => {
+      const old = document.getElementById("adqCustomPrompt");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "adqCustomPrompt";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 2147483647;
+        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
+      `;
+
+      const box = document.createElement("div");
+      box.style.cssText = `
+        background: linear-gradient(180deg, #17172f, #0d0d1f);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 24px; padding: 24px; width: 100%; max-width: 340px;
+        transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      `;
+
+      box.innerHTML = `
+        <h3 style="margin: 0 0 16px; font-size: 17px; color: #fff; font-weight: 700; text-align: left;">${title}</h3>
+        <input type="text" id="adqPromptInput" value="${defaultValue}" placeholder="${placeholder}" style="width:100%; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #fff; font-size: 15px; outline: none; margin-bottom: 20px; font-family: 'Hind Siliguri', sans-serif;">
+        <div style="display: flex; gap: 10px;">
+          <button id="adqPromptCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer;">Cancel</button>
+          <button id="adqPromptOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;">OK</button>
+        </div>
+      `;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      const input = document.getElementById("adqPromptInput");
+      setTimeout(() => {
+        overlay.style.opacity = "1"; overlay.style.visibility = "visible"; box.style.transform = "scale(1)"; input.focus();
+      }, 10);
+
+      const close = (val) => {
+        overlay.style.opacity = "0"; overlay.style.visibility = "hidden"; box.style.transform = "scale(0.9)";
+        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
+      };
+
+      document.getElementById("adqPromptOk").onclick = () => close(input.value.trim());
+      document.getElementById("adqPromptCancel").onclick = () => close(null);
+      input.onkeydown = (e) => { if (e.key === "Enter") close(input.value.trim()); };
+    });
   };
 
   window.ADQ = { platforms: P, svg: S, esc: esc, tstatus: tstatus, logo: logo, taskRow: taskRow, fmtMs: fmtMs, showAlert: window.showCustomAlert };
@@ -179,11 +268,11 @@
   var css = [
     "html.adq-loading body{visibility:hidden}",
 
-    /* ✅ GLOBAL LOGO OVERRIDE (Replaces 'A' with your image everywhere) */
+    /* ✅ GLOBAL LOGO OVERRIDE */
     ".mark, .x-mark, .p-mark {",
     "  color: transparent !important;",
     "  background: url('" + LOGO_SRC + "') center/cover no-repeat !important;",
-    "  font-size: 0 !important; /* Hides the 'A' text */",
+    "  font-size: 0 !important;",
     "  border: none !important;",
     "  box-shadow: 0 8px 20px -6px rgba(139,92,246,.8), inset 0 1px 0 rgba(255,255,255,.35) !important;",
     "}",
@@ -320,13 +409,12 @@
   /* ---------------- SPLASH HTML ---------------- */
   var sp = document.createElement("div");
   sp.id = "adqSplash";
-  // Injecting the custom image logo into the splash screen
   sp.innerHTML = `
     <div class="sp-in">
       <div class="sp-logo-wrap">
         <div class="sp-ring-1"></div>
         <div class="sp-ring-2"></div>
-        <div class="sp-logo" style="background:transparent; box-shadow:none; padding:0; overflow:hidden;">
+        <div class="sp-logo">
           <img src="${LOGO_SRC}" alt="Logo">
         </div>
       </div>
@@ -372,17 +460,8 @@
     if (noDock) return;
 
     var map = {
-      "dashboard": "dash", 
-      "task-history": "dash", 
-      "my-submissions": "dash",
-      "notifications": "dash", 
-      "reports": "dash",
-      "tasks": "submit", 
-      "task": "submit",
-      "leaderboard": "leaders",
-      "wallet": "wallet", 
-      "withdraw": "wallet",
-      "profile": "profile"
+      "dashboard": "dash", "task-history": "dash", "my-submissions": "dash", "notifications": "dash", "reports": "dash",
+      "tasks": "submit", "task": "submit", "leaderboard": "leaders", "wallet": "wallet", "withdraw": "wallet", "profile": "profile"
     };
     var cur = map[cleanFile] || "";
     var items = [
@@ -402,118 +481,3 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildDock);
   else buildDock();
 })();
-  /* ---------------- CUSTOM PREMIUM PROMPT (Input) ---------------- */
-  window.showCustomPrompt = function(title, defaultValue = "", placeholder = "") {
-    return new Promise((resolve) => {
-      const old = document.getElementById("adqCustomPrompt");
-      if (old) old.remove();
-
-      const overlay = document.createElement("div");
-      overlay.id = "adqCustomPrompt";
-      overlay.style.cssText = `
-        position: fixed; inset: 0; z-index: 2147483647;
-        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        display: flex; align-items: center; justify-content: center;
-        opacity: 0; visibility: hidden; transition: all 0.3s ease;
-        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
-      `;
-
-      const box = document.createElement("div");
-      box.style.cssText = `
-        background: linear-gradient(180deg, #17172f, #0d0d1f);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 24px; padding: 24px; width: 100%; max-width: 340px;
-        transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
-      `;
-
-      box.innerHTML = `
-        <h3 style="margin: 0 0 16px; font-size: 17px; color: #fff; font-weight: 700; text-align: left;">${title}</h3>
-        <input type="text" id="adqPromptInput" value="${defaultValue}" placeholder="${placeholder}" style="width:100%; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #fff; font-size: 15px; outline: none; margin-bottom: 20px; font-family: 'Hind Siliguri', sans-serif;">
-        <div style="display: flex; gap: 10px;">
-          <button id="adqPromptCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">Cancel</button>
-          <button id="adqPromptOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">OK</button>
-        </div>
-      `;
-
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-
-      const input = document.getElementById("adqPromptInput");
-      
-      setTimeout(() => {
-        overlay.style.opacity = "1";
-        overlay.style.visibility = "visible";
-        box.style.transform = "scale(1)";
-        input.focus();
-      }, 10);
-
-      const close = (val) => {
-        overlay.style.opacity = "0";
-        overlay.style.visibility = "hidden";
-        box.style.transform = "scale(0.9)";
-        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
-      };
-
-      document.getElementById("adqPromptOk").onclick = () => close(input.value.trim());
-      document.getElementById("adqPromptCancel").onclick = () => close(null);
-      input.onkeydown = (e) => { if (e.key === "Enter") close(input.value.trim()); };
-    });
-  };
-
-  /* ---------------- CUSTOM PREMIUM CONFIRM (Yes/No) ---------------- */
-  window.showCustomConfirm = function(title) {
-    return new Promise((resolve) => {
-      const old = document.getElementById("adqCustomConfirm");
-      if (old) old.remove();
-
-      const overlay = document.createElement("div");
-      overlay.id = "adqCustomConfirm";
-      overlay.style.cssText = `
-        position: fixed; inset: 0; z-index: 2147483647;
-        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-        display: flex; align-items: center; justify-content: center;
-        opacity: 0; visibility: hidden; transition: all 0.3s ease;
-        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
-      `;
-
-      const box = document.createElement("div");
-      box.style.cssText = `
-        background: linear-gradient(180deg, #17172f, #0d0d1f);
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 24px; padding: 24px; width: 100%; max-width: 320px;
-        text-align: center; transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
-      `;
-
-      box.innerHTML = `
-        <div style="width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(245,158,11,0.5), inset 0 2px 0 rgba(255,255,255,0.3);">
-          <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        </div>
-        <div style="color: #e7e5f4; font-size: 15px; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap; font-weight: 500;">${title}</div>
-        <div style="display: flex; gap: 10px;">
-          <button id="adqConfirmCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">Cancel</button>
-          <button id="adqConfirmOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">OK</button>
-        </div>
-      `;
-
-      overlay.appendChild(box);
-      document.body.appendChild(overlay);
-
-      setTimeout(() => {
-        overlay.style.opacity = "1";
-        overlay.style.visibility = "visible";
-        box.style.transform = "scale(1)";
-      }, 10);
-
-      const close = (val) => {
-        overlay.style.opacity = "0";
-        overlay.style.visibility = "hidden";
-        box.style.transform = "scale(0.9)";
-        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
-      };
-
-      document.getElementById("adqConfirmOk").onclick = () => close(true);
-      document.getElementById("adqConfirmCancel").onclick = () => close(false);
-    });
-  };
