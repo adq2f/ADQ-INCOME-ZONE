@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="alerts.js"></script> <!-- ✅ Premium Alert System -->
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -119,14 +120,19 @@ select.inp option{background:#12122a;color:#fff}
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
-    const SESSION_DURATION = 12 * 60 * 60 * 1000;
+    // ✅ 24 HOUR SESSION CHECK
+    const SESSION_DURATION = 24 * 60 * 60 * 1000;
     async function requireAdmin(user) {
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") { alert("❌ Admin না!"); location.href = "dashboard.html"; return null; }
-      const sessionTime = sessionStorage.getItem("admin_verified");
+      if (!snap.exists() || snap.data().role !== "admin") { 
+        await window.showError("Admin ছাড়া এই পেজে ঢোকা যাবে না।"); 
+        location.href = "dashboard.html"; 
+        return null; 
+      }
+      const sessionTime = localStorage.getItem("admin_verified");
       if (!sessionTime || (Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
         sessionStorage.setItem("admin_return", location.pathname + location.search);
-        sessionStorage.removeItem("admin_verified");
+        localStorage.removeItem("admin_verified");
         location.href = "admin-login.html";
         return null;
       }
@@ -277,12 +283,12 @@ select.inp option{background:#12122a;color:#fff}
         document.getElementById("saveBasicBtn").onclick = async () => {
           const username = document.getElementById("editUsername").value.trim();
           const newRole = document.getElementById("editRole").value;
-          if (!username) return alert("Username দাও!");
-          if (userId === currentAdmin.uid && newRole !== "admin") return alert("নিজের role user করা যাবে না!");
+          if (!username) return window.showWarning("Username দাও!");
+          if (userId === currentAdmin.uid && newRole !== "admin") return window.showWarning("নিজের role user করা যাবে না!");
           try {
             await updateDoc(doc(db, "users", userId), { username, role: newRole });
-            alert("✅ Saved!");
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Basic Info Saved!");
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         // Save Balance
@@ -293,8 +299,8 @@ select.inp option{background:#12122a;color:#fff}
           const totalPending = parseInt(document.getElementById("editPending").value) || 0;
           try {
             await updateDoc(doc(db, "users", userId), { balance, totalGood, totalBad, totalPending });
-            alert("✅ Saved!");
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Balance & Stats Saved!");
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         // Badge live preview + color picker
@@ -324,67 +330,67 @@ select.inp option{background:#12122a;color:#fff}
         document.getElementById("saveBadgeBtn").onclick = async () => {
           const badgeName = document.getElementById("editBadgeName").value.trim().toUpperCase();
           const badgeColor = document.getElementById("editBadgeColor").value.trim() || "#6366f1";
-          if (!badgeName) return alert("Badge name দাও!");
+          if (!badgeName) return window.showWarning("Badge name দাও!");
           try {
             await updateDoc(doc(db, "users", userId), { customBadge: badgeName, customBadgeColor: badgeColor });
-            alert("✅ Badge saved!");
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Badge Saved!");
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         document.getElementById("removeBadgeBtn").onclick = async () => {
-          if (!confirm("Badge remove করবে?")) return;
+          if (!(await window.showCustomConfirm("Badge remove করবে?", { title: "Remove Badge" }))) return;
           try {
             await updateDoc(doc(db, "users", userId), { customBadge: null, customBadgeColor: null });
-            alert("✅ Badge removed!");
-            location.reload();
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Badge Removed!");
+            setTimeout(() => location.reload(), 1000);
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         // Custom Refer Commission
         document.getElementById("saveCustomReferBtn").onclick = async () => {
           const val = document.getElementById("editCustomReferCommission").value.trim();
           const customRef = val === "" ? null : parseFloat(val);
-          if (customRef !== null && (isNaN(customRef) || customRef < 0)) return alert("সঠিক value দাও!");
+          if (customRef !== null && (isNaN(customRef) || customRef < 0)) return window.showWarning("সঠিক value দাও!");
           try {
             await updateDoc(doc(db, "users", userId), { customReferCommission: customRef });
-            alert("✅ Custom refer commission saved!");
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Custom refer commission saved!");
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         document.getElementById("removeCustomReferBtn").onclick = async () => {
           try {
             await updateDoc(doc(db, "users", userId), { customReferCommission: null });
             document.getElementById("editCustomReferCommission").value = "";
-            alert("✅ Override removed! এখন task-এর default প্রযোজ্য।");
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ Override removed! এখন task-এর default প্রযোজ্য।");
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         // Delete History (শুধু এই user-এর submissions)
         document.getElementById("deleteHistoryBtn").onclick = async () => {
-          if (!confirm("এই user-এর সব submission delete হবে। চালিয়ে যাবে?")) return;
-          if (!confirm("💀 সত্যিই? Undo হবে না!")) return;
+          if (!(await window.showCustomConfirm("এই user-এর সব submission delete হবে। চালিয়ে যাবে?", { title: "Delete History" }))) return;
+          if (!(await window.showCustomConfirm("💀 সত্যিই? Undo হবে না!", { title: "Final Warning", okText: "Yes, Delete", okClass: "adq-alert-btn-danger" }))) return;
           try {
             const s = await getDocs(query(collection(db, "submissions"), where("userId", "==", userId)));
             await batchDelete(s.docs.map(d => d.ref));
-            alert(`✅ ${s.size} টা delete!`);
-            location.reload();
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess(`✅ ${s.size} টা submission delete হয়েছে!`);
+            setTimeout(() => location.reload(), 1000);
+          } catch (e) { window.showError("❌ " + e.message); }
         };
 
         // Delete User (user + submissions + withdrawals)
         document.getElementById("deleteUserBtn").onclick = async () => {
-          if (userId === currentAdmin.uid) return alert("নিজেকে delete করা যাবে না!");
-          if (!confirm("সম্পূর্ণ user delete? (account + submissions + withdrawals)")) return;
-          if (!confirm("💀 সত্যিই? Undo হবে না!")) return;
+          if (userId === currentAdmin.uid) return window.showWarning("নিজেকে delete করা যাবে না!");
+          if (!(await window.showCustomConfirm("সম্পূর্ণ user delete? (account + submissions + withdrawals)", { title: "Delete User", okClass: "adq-alert-btn-danger" }))) return;
+          if (!(await window.showCustomConfirm("💀 সত্যিই? Undo হবে না!", { title: "Final Warning", okText: "Yes, Delete", okClass: "adq-alert-btn-danger" }))) return;
           try {
             const s1 = await getDocs(query(collection(db, "submissions"), where("userId", "==", userId)));
             await batchDelete(s1.docs.map(d => d.ref));
             const s2 = await getDocs(query(collection(db, "withdrawals"), where("userId", "==", userId)));
             await batchDelete(s2.docs.map(d => d.ref));
             await deleteDoc(doc(db, "users", userId));
-            alert("✅ User deleted!");
-            location.href = "admin.html";
-          } catch (e) { alert("❌ " + e.message); }
+            window.showSuccess("✅ User Deleted!");
+            setTimeout(() => location.href = "admin.html", 1000);
+          } catch (e) { window.showError("❌ " + e.message); }
         };
       } catch (e) {
         document.getElementById("content").innerHTML = `<div class="empty" style="color:#fca5a5">❌ ${esc(e.message)}</div><button class="cta purple" style="margin-top:14px" onclick="goBack()">← Back</button>`;
