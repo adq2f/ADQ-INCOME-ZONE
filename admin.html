@@ -1102,7 +1102,8 @@ select.inp option{background:#12122a;color:#fff}
       let totalCount = 0;
       keys.forEach(k => totalCount += (allPublishedGroups[k] || []).length);
       if (!confirm(`🚨 মোট ${totalCount} টি রেজাল্ট মুছে ফেলা হবে! নিশ্চিত?`)) return;
-      if (prompt("নিশ্চিত করতে DELETE লিখুন:") !== "DELETE") return alert("বাতিল।");
+      const delTxt = await window.showCustomPrompt("নিশ্চিত করতে DELETE লিখুন:", "", "DELETE লিখুন...");
+if (delTxt !== "DELETE") return window.showCustomAlert("বাতিল।");
       try {
         let batch = writeBatch(db), count = 0;
         for (const k of keys) {
