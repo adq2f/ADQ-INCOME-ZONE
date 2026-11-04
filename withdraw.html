@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="alerts.js"></script> <!-- ✅ Premium Alert Added -->
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -201,19 +202,14 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
   <a href="profile.html" data-page="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Profile</span></a>
 </nav>
 
-<!-- Part 2 will start from here (JavaScript) -->
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-    // API Base logic
     const API_BASE = (location.hostname.endsWith("vercel.app") || location.hostname === "localhost" || location.hostname === "127.0.0.1") ? "" : "https://adq-income-zone.vercel.app";
     const WITHDRAW_URL = API_BASE + "/api/withdraw";
 
-    // ==========================================
-    // Telegram Notification Integration
-    // ==========================================
     async function sendTelegramAlert(text) {
       const BOT_TOKEN = "7352895365:AAEbcMNKrjU6DgaAFXtj2f_tkYLSMFiDKh8";
       const CHAT_ID = "-1004324526320";
@@ -223,9 +219,7 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: CHAT_ID, text: text, parse_mode: 'HTML' })
         });
-      } catch (e) { 
-        console.error("Telegram Error:", e); 
-      }
+      } catch (e) { console.error("Telegram Error:", e); }
     }
 
     function newRequestId() {
@@ -274,7 +268,8 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
     }
 
     document.getElementById("logoutBtn").onclick = async () => {
-      if (!confirm("লগআউট?")) return;
+      // ✅ Premium Confirm
+      if (!(await window.showCustomConfirm("আপনি কি লগআউট করতে চান?", { title: "লগআউট" }))) return;
       await signOut(auth);
       location.href = "index.html";
     };
@@ -431,17 +426,17 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
       });
     }
 
-    // Submit Logic with Telegram Alert
     document.getElementById("submitWdBtn").onclick = async () => {
-      if (!selectedMethod) return alert("Payment method select করো!");
+      // ✅ Premium Alerts
+      if (!selectedMethod) return window.showWarning("Payment method select করো!");
       const amount = parseFloat(document.getElementById("amount").value);
       const accountNum = document.getElementById("accountNum").value.trim();
       const confirmPass = document.getElementById("confirmPass").value;
 
-      if (!amount || amount < minWithdraw) return alert(`Minimum ৳${minWithdraw}!`);
-      if (amount > userBalance) return alert(`তোমার balance ৳${userBalance}!`);
-      if (!accountNum) return alert("Account number দাও!");
-      if (!confirmPass) return alert("Account password দাও!");
+      if (!amount || amount < minWithdraw) return window.showWarning(`Minimum ৳${minWithdraw}!`);
+      if (amount > userBalance) return window.showWarning(`তোমার balance ৳${userBalance}!`);
+      if (!accountNum) return window.showWarning("Account number দাও!");
+      if (!confirmPass) return window.showWarning("Account password দাও!");
 
       const btn = document.getElementById("submitWdBtn");
       btn.disabled = true;
@@ -467,22 +462,23 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
         try { data = await res.json(); } catch(e) {}
 
         if (res.ok && data?.ok) {
-          // 👇 Telegram Notification to Group
           const methodName = PAY_METHODS[selectedMethod]?.name || selectedMethod;
           const userName = userData?.username || "Unknown User";
           const msg = `🚨 <b>New Withdraw Request!</b>\n\n👤 <b>User:</b> ${userName}\n💰 <b>Amount:</b> ৳${amount}\n💳 <b>Method:</b> ${methodName}\n📱 <b>Account:</b> ${accountNum}\n\n⏳ <i>Status: Pending</i>`;
           
-          await sendTelegramAlert(msg); // গ্রুপে মেসেজ পাঠানো হলো
+          await sendTelegramAlert(msg);
 
-          alert(data.reply || "✅ Withdraw request submitted!");
+          // ✅ Premium Success
+          await window.showSuccess(data.reply || "✅ Withdraw request submitted!", { title: "Request Submitted" });
           location.href = "wallet.html";
         } else {
-          alert(data?.reply || "❌ রিকোয়েস্ট সফল হয়নি। আবার চেষ্টা করুন।");
+          // ✅ Premium Error
+          window.showError(data?.reply || "❌ রিকোয়েস্ট সফল হয়নি। আবার চেষ্টা করুন।");
           btn.disabled = false;
           btn.textContent = "🚀 Submit Withdraw";
         }
       } catch (e) {
-        alert("⚠️ নেটওয়ার্ক সমস্যা! ইন্টারনেট চেক করে আবার চেষ্টা করুন।");
+        window.showError("⚠️ নেটওয়ার্ক সমস্যা! ইন্টারনেট চেক করে আবার চেষ্টা করুন।");
         btn.disabled = false;
         btn.textContent = "🚀 Submit Withdraw";
       }
@@ -506,4 +502,4 @@ a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(-
     }
   </script>
 </body>
-</html>  
+</html>
