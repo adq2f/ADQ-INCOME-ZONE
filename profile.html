@@ -288,26 +288,25 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
     }
 
     document.getElementById("changeUsernameBtn").onclick = async () => {
-      const newName = prompt("নতুন নাম লিখুন:", userData.username);
-      if (!newName || newName.trim().length < 3) { 
-        if (newName !== null) alert("নাম কমপক্ষে ৩ অক্ষর হতে হবে!"); 
-        return; 
-      }
-      
-      try {
-        const cleanName = newName.trim();
-        await updateDoc(doc(db, "users", currentUser.uid), { username: cleanName });
-        await updateProfile(currentUser, { displayName: cleanName });
-        
-        document.getElementById("username").textContent = cleanName;
-        document.getElementById("avatar").textContent = cleanName.charAt(0).toUpperCase();
-        userData.username = cleanName;
-        
-        alert("✅ নাম সফলভাবে পরিবর্তন হয়েছে!");
-      } catch (e) { 
-        alert("❌ সমস্যা হয়েছে: " + e.message); 
-      }
-    };
+  const newName = await window.showCustomPrompt("নতুন নাম লিখুন:", userData.username || "");
+  if (newName === null) return; // Cancel বাটনে ক্লিক করলে কিছু হবে না
+  
+  if (newName.trim().length < 3) { 
+    return window.showCustomAlert("নাম কমপক্ষে ৩ অক্ষর হতে হবে!"); 
+  }
+  
+  try {
+    const cleanName = newName.trim();
+    await updateDoc(doc(db, "users", currentUser.uid), { username: cleanName });
+    await updateProfile(currentUser, { displayName: cleanName });
+    document.getElementById("username").textContent = cleanName;
+    document.getElementById("avatar").textContent = cleanName.charAt(0).toUpperCase();
+    userData.username = cleanName;
+    window.showCustomAlert("✅ নাম সফলভাবে পরিবর্তন হয়েছে!");
+  } catch (e) { 
+    window.showCustomAlert("❌ সমস্যা হয়েছে: " + e.message); 
+  }
+};
   </script>
 </body>
 </html>
