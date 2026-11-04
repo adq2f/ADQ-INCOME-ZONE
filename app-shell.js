@@ -1,5 +1,5 @@
 /* ==================================================
-   app-shell.js — ADQ Income Zone (Global Layout & Fixes)
+   app-shell.js — ADQ Income Zone (Premium Loading & Global Layout)
    ================================================== */
 (function () {
   if (window.__adqShell) return;
@@ -12,6 +12,23 @@
   try { firstVisit = !sessionStorage.getItem("adq_seen"); sessionStorage.setItem("adq_seen", "1"); } catch (e) {}
 
   root.classList.add("adq-loading");
+
+  /* ---------------- PAGE NAMES FOR LOADING TEXT ---------------- */
+  var pageNames = {
+    "index.html": "Home",
+    "dashboard.html": "Dashboard",
+    "tasks.html": "Submit Task",
+    "task.html": "Task Details",
+    "wallet.html": "Wallet",
+    "withdraw.html": "Withdraw",
+    "leaderboard.html": "Leaderboard",
+    "profile.html": "Profile",
+    "task-history.html": "Task History",
+    "notifications.html": "Notifications",
+    "admin.html": "Admin Panel",
+    "admin-login.html": "Admin Login"
+  };
+  var currentPageName = pageNames[file] || "ADQ Income Zone";
 
   /* ---------------- ICONS ---------------- */
   var P = {
@@ -157,18 +174,33 @@
   /* ---------------- CSS ---------------- */
   var css = [
     "html.adq-loading body{visibility:hidden}",
-    "#adqSplash{position:fixed;inset:0;z-index:2147483000;background:#06060f;display:flex;align-items:center;justify-content:center;transition:opacity .45s ease,visibility .45s}",
-    "#adqSplash::before{content:'';position:absolute;inset:0;background:radial-gradient(520px 380px at 12% 8%,rgba(99,102,241,.5),transparent 60%),radial-gradient(480px 380px at 90% 92%,rgba(168,85,247,.45),transparent 60%),radial-gradient(300px 240px at 80% 18%,rgba(34,211,238,.2),transparent 60%)}",
+    
+    /* Premium Splash Screen CSS */
+    "#adqSplash{position:fixed;inset:0;z-index:2147483000;background:#06060f;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s}",
+    "#adqSplash::before{content:'';position:absolute;inset:0;background:radial-gradient(600px 400px at 50% 30%,rgba(99,102,241,.15),transparent 70%)}",
     "#adqSplash.out{opacity:0;visibility:hidden;pointer-events:none}",
-    "#adqSplash .sp-in{position:relative;text-align:center;font-family:'Hind Siliguri','Inter',system-ui,sans-serif;color:#f4f4ff}",
-    "#adqSplash .sp-logo{width:76px;height:76px;margin:0 auto 16px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:900 34px 'Inter',sans-serif;color:#fff;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);box-shadow:0 18px 44px -8px rgba(139,92,246,.85),inset 0 2px 0 rgba(255,255,255,.35);animation:spPulse 1.6s ease-in-out infinite;position:relative}",
-    "#adqSplash .sp-logo::after{content:'';position:absolute;inset:-7px;border-radius:29px;border:1px solid rgba(139,92,246,.4)}",
-    "#adqSplash .sp-name{font-size:18px;font-weight:700;letter-spacing:-.2px}",
-    "#adqSplash .sp-sub{margin-top:3px;font-size:12px;color:#9a9bb8;font-weight:500}",
-    "#adqSplash .sp-bar{width:150px;height:4px;margin:20px auto 0;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}",
-    "#adqSplash .sp-bar i{display:block;width:45%;height:100%;border-radius:4px;background:linear-gradient(90deg,#6366f1,#22d3ee);animation:spBar 1.15s ease-in-out infinite}",
-    "@keyframes spPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}",
-    "@keyframes spBar{0%{transform:translateX(-110%)}100%{transform:translateX(330%)}}",
+    "#adqSplash .sp-in{position:relative;text-align:center;font-family:'Hind Siliguri','Inter',sans-serif;color:#f4f4ff;display:flex;flex-direction:column;align-items:center}",
+    
+    /* Rotating Rings & Logo */
+    "#adqSplash .sp-logo-wrap{position:relative;width:90px;height:90px;margin-bottom:24px;display:flex;align-items:center;justify-content:center}",
+    "#adqSplash .sp-ring-1{position:absolute;inset:-8px;border-radius:50%;border:2px solid transparent;border-top-color:#6366f1;border-bottom-color:#22d3ee;animation:spin 1.5s linear infinite}",
+    "#adqSplash .sp-ring-2{position:absolute;inset:-18px;border-radius:50%;border:1.5px solid transparent;border-left-color:#8b5cf6;border-right-color:#22d3ee;animation:spinReverse 2s linear infinite;opacity:0.6}",
+    "#adqSplash .sp-logo{width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:900 36px 'Inter',sans-serif;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed 50%,#c026d3);box-shadow:0 15px 35px -5px rgba(124,58,237,.6),inset 0 2px 0 rgba(255,255,255,.3);animation:pulseGlow 2s ease-in-out infinite}",
+    
+    /* Text */
+    "#adqSplash .sp-name{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px;background:linear-gradient(90deg,#fff,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}",
+    "#adqSplash .sp-sub{font-size:14px;color:#9a9bb8;font-weight:600;display:flex;align-items:center;gap:6px}",
+    "#adqSplash .sp-page{color:#22d3ee;font-weight:800;text-transform:uppercase;letter-spacing:0.5px}",
+    
+    /* Progress Bar */
+    "#adqSplash .sp-bar{width:180px;height:6px;margin-top:24px;border-radius:10px;background:rgba(255,255,255,.08);overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}",
+    "#adqSplash .sp-bar i{display:block;width:40%;height:100%;border-radius:10px;background:linear-gradient(90deg,#6366f1,#22d3ee);animation:loadBar 1.2s ease-in-out infinite}",
+    
+    /* Animations */
+    "@keyframes spin{100%{transform:rotate(360deg)}}",
+    "@keyframes spinReverse{100%{transform:rotate(-360deg)}}",
+    "@keyframes pulseGlow{0%,100%{box-shadow:0 15px 35px -5px rgba(124,58,237,.6),inset 0 2px 0 rgba(255,255,255,.3);transform:scale(1)}50%{box-shadow:0 20px 45px 0px rgba(124,58,237,.8),inset 0 2px 0 rgba(255,255,255,.3);transform:scale(1.05)}}",
+    "@keyframes loadBar{0%{transform:translateX(-100%)}100%{transform:translateX(300%)}}",
 
     ".x-dock{position:fixed;z-index:60;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);width:calc(100% - 24px);max-width:500px;display:grid;grid-template-columns:repeat(5,1fr);gap:2px;padding:6px;background:rgba(18,18,40,.84);backdrop-filter:blur(24px) saturate(170%);-webkit-backdrop-filter:blur(24px) saturate(170%);border:1px solid rgba(255,255,255,.12);border-radius:24px;box-shadow:0 20px 50px -10px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.1);font-family:'Hind Siliguri','Inter',sans-serif}",
     ".x-dock a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px 5px;border-radius:17px;color:#6f7090;font-size:10.5px;font-weight:600;transition:.25s;text-decoration:none}",
@@ -264,7 +296,7 @@
     "body:not(.x-body) .lr{padding:9px 12px!important;margin-bottom:6px!important}",
     "body:not(.x-body) .wdi,body:not(.x-body) .hrow,body:not(.x-body) .ni,body:not(.x-body) .sr{padding:11px!important;margin-bottom:7px!important}",
     "body:not(.x-body) .wdi-hint{display:none!important}",
-    "@media(prefers-reduced-motion:reduce){#adqSplash .sp-logo,#adqSplash .sp-bar i{animation:none}}"
+    "@media(prefers-reduced-motion:reduce){#adqSplash .sp-logo,#adqSplash .sp-bar i,#adqSplash .sp-ring-1,#adqSplash .sp-ring-2{animation:none}}"
   ].join("\n");
 
   var st = document.createElement("style");
@@ -272,10 +304,22 @@
   st.textContent = css;
   (document.head || root).appendChild(st);
 
-  /* ---------------- SPLASH ---------------- */
+  /* ---------------- SPLASH HTML ---------------- */
   var sp = document.createElement("div");
   sp.id = "adqSplash";
-  sp.innerHTML = '<div class="sp-in"><div class="sp-logo">A</div><div class="sp-name">ADQ Income Zone</div><div class="sp-sub">লোড হচ্ছে...</div><div class="sp-bar"><i></i></div></div>';
+  // Inject Dynamic Page Name Here
+  sp.innerHTML = `
+    <div class="sp-in">
+      <div class="sp-logo-wrap">
+        <div class="sp-ring-1"></div>
+        <div class="sp-ring-2"></div>
+        <div class="sp-logo">A</div>
+      </div>
+      <div class="sp-name">ADQ Income Zone</div>
+      <div class="sp-sub"><span class="sp-page">${currentPageName}</span> Loading...</div>
+      <div class="sp-bar"><i></i></div>
+    </div>
+  `;
   root.appendChild(sp);
 
   var done = false, minDone = false, loaded = document.readyState === "complete", authDone = false;
@@ -291,9 +335,10 @@
   }
   window.adqReady = function () { window.adqHold = false; check(); };
 
-  setTimeout(function () { minDone = true; check(); }, firstVisit ? 900 : 120);
+  // ⚡ সুপার ফাস্ট লোডিং (মাত্র ২০০ মিলি সেকেন্ড)
+  setTimeout(function () { minDone = true; check(); }, 200);
   window.addEventListener("load", function () { loaded = true; check(); });
-  setTimeout(hide, 8000); 
+  setTimeout(hide, 5000); // fallback
 
   try {
     Promise.all([
