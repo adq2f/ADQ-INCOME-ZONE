@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="alerts.js"></script> <!-- ✅ Premium Alert System -->
 <style>
 :root{--bg:#06060f;--ink:#f4f4ff;--muted:#9a9bb8;--dim:#6f7090;--line:rgba(255,255,255,.09);--cyan:#22d3ee}
 *{-webkit-tap-highlight-color:transparent;box-sizing:border-box}
@@ -131,7 +132,6 @@ select.inp option{background:#12122a;color:#fff}
 
 <div class="p-modal" id="cModal"><div class="p-sheet"><div class="p-body" id="cBody"></div></div></div>
 
-
 <script type="module">
     import { auth, db } from "./firebase.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -141,14 +141,19 @@ select.inp option{background:#12122a;color:#fff}
       return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
 
-    const SESSION_DURATION = 12 * 60 * 60 * 1000;
+    // ✅ 24 HOUR SESSION CHECK
+    const SESSION_DURATION = 24 * 60 * 60 * 1000;
     async function requireAdmin(user) {
       const snap = await getDoc(doc(db, "users", user.uid));
-      if (!snap.exists() || snap.data().role !== "admin") { alert("❌ Admin না!"); location.href = "dashboard.html"; return null; }
-      const sessionTime = sessionStorage.getItem("admin_verified");
+      if (!snap.exists() || snap.data().role !== "admin") { 
+        await window.showError("Admin ছাড়া এই পেজে ঢোকা যাবে না।"); 
+        location.href = "dashboard.html"; 
+        return null; 
+      }
+      const sessionTime = localStorage.getItem("admin_verified");
       if (!sessionTime || (Date.now() - parseInt(sessionTime)) > SESSION_DURATION) {
         sessionStorage.setItem("admin_return", location.pathname + location.search);
-        sessionStorage.removeItem("admin_verified");
+        localStorage.removeItem("admin_verified");
         location.href = "admin-login.html";
         return null;
       }
@@ -158,28 +163,18 @@ select.inp option{background:#12122a;color:#fff}
     window.goBack = () => { location.href = "admin.html"; };
     let currentAdmin = null;
 
-    // ---------- helpers ----------
     const C = (name) => collection(db, name);
     
-    // ✅ ফিক্স ১: কাউন্ট বের করার নিরাপদ ফাংশন
     async function cnt(q) {
-      try { 
-        const snap = await getCountFromServer(q); 
-        return snap.data().count; 
-      } catch (e) { 
-        try { return (await getDocs(q)).size; } catch(e2) { return 0; }
-      }
+      try { const snap = await getCountFromServer(q); return snap.data().count; } 
+      catch (e) { try { return (await getDocs(q)).size; } catch(e2) { return 0; } }
     }
     
-    // ✅ ফিক্স ২: refs বের করার নিরাপদ ফাংশন
     const refsOf = async (q) => {
-      try {
-        const snap = await getDocs(q);
-        return snap.docs.map(d => d.ref);
-      } catch(e) { return []; }
+      try { const snap = await getDocs(q); return snap.docs.map(d => d.ref); } 
+      catch(e) { return []; }
     };
 
-    // ✅ ফিক্স ৩: টাস্ক ডকুমেন্ট চেক (স্ট্রিং বা টাইমস্ট্যাম্প দুটোই হ্যান্ডেল করবে)
     async function completedTaskDocs() {
       try {
         const now = new Date();
@@ -193,7 +188,6 @@ select.inp option{background:#12122a;color:#fff}
       } catch(e) { return []; }
     }
 
-    // ✅ ফিক্স ৪: চ্যাট ও মেসেজ ডিলিট (সাব-কলেকশন সহ)
     async function chatRefs() {
       const refs = [];
       try {
@@ -207,9 +201,7 @@ select.inp option{background:#12122a;color:#fff}
       return refs;
     }
     
-    async function chatCount() {
-      return cnt(C("chats")); // শুধু চ্যাট সংখ্যা
-    }
+    async function chatCount() { return cnt(C("chats")); }
     
     async function nonAdminUserDocs() {
       try {
@@ -218,7 +210,6 @@ select.inp option{background:#12122a;color:#fff}
       } catch(e) { return []; }
     }
 
-    // ---------- definitions ----------
     const GROUPS = [
       {
         id: "wd", icon: "💸", title: "Withdraw History",
@@ -309,7 +300,6 @@ select.inp option{background:#12122a;color:#fff}
     const selected = {};
     const counts = {};
 
-    // ---------- render ----------
     function render() {
       const box = document.getElementById("groups");
       let html = "";
@@ -365,7 +355,6 @@ select.inp option{background:#12122a;color:#fff}
       render();
     }
 
-    // ---------- confirm modal ----------
     const modal = document.getElementById("cModal");
     const cBody = document.getElementById("cBody");
     modal.addEventListener("click", (e) => { if (e.target === modal && !modal.dataset.busy) modal.classList.remove("show"); });
@@ -429,8 +418,7 @@ select.inp option{background:#12122a;color:#fff}
       };
     }
 
-    // ---------- clicks ----------
-    document.getElementById("groups").addEventListener("click", (e) => {
+    document.getElementById("groups").addEventListener("click", async (e) => {
       const opt = e.target.closest(".opt");
       if (opt) { selected[opt.dataset.g] = opt.dataset.o; render(); return; }
 
@@ -454,7 +442,7 @@ select.inp option{background:#12122a;color:#fff}
           const n = counts[p.g + ":" + p.o] || 0; total += n;
           return `${p.label} — <b>${n}</b> টা`;
         });
-        if (!total) return alert("মুছার মতো কোনো history নেই।");
+        if (!total) return window.showWarning("মুছার মতো কোনো history নেই।");
         confirmDelete({
           icon: "🧹", title: "সব History Delete", total, deletes,
           keeps: "User account, balance, চালু Task, Pending Withdraw, Admin settings, Payment method setting।",
@@ -465,7 +453,7 @@ select.inp option{background:#12122a;color:#fff}
 
       if (e.target.closest("#btnUsers")) {
         const n = counts["users"] || 0;
-        if (!n) return alert("মুছার মতো কোনো user নেই।");
+        if (!n) return window.showWarning("মুছার মতো কোনো user নেই।");
         confirmDelete({
           icon: "☠️", title: "সব User Delete", total: n,
           deletes: [`Admin ছাড়া সব user-এর account document (${n} জন)`],
