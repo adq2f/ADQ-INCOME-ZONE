@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@500;700;800;900&display=swap" rel="stylesheet">
 <script src="app-shell.js"></script>
+<script src="alerts.js"></script> <!-- ✅ Premium Alert Added -->
 <style>
 :root {
   --bg: #06060f; --ink: #f4f4ff; --muted: #9a9bb8; --dim: #6f7090;
@@ -19,7 +20,6 @@ body { font-family: 'Hind Siliguri', 'Inter', system-ui, sans-serif !important; 
 a { text-decoration: none; color: inherit; }
 button { font-family: inherit; }
 
-/* Background */
 .p-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
 .p-orb { position: absolute; border-radius: 50%; filter: blur(90px); will-change: transform; }
 .p-orb.o1 { width: 420px; height: 420px; background: #4f46e5; top: -140px; left: -120px; opacity: .5; animation: pDrift1 20s ease-in-out infinite; }
@@ -28,7 +28,6 @@ button { font-family: inherit; }
 @keyframes pDrift2 { 0%,100% { transform: translate(0,0) scale(1); } 50% { transform: translate(-40px,-50px) scale(1.08); } }
 .p-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 70%); }
 
-/* Top bar */
 .p-top { position: sticky; top: 0; z-index: 50; padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px; background: rgba(6,6,15,.75); backdrop-filter: blur(20px) saturate(160%); -webkit-backdrop-filter: blur(20px) saturate(160%); border-bottom: 1px solid var(--line); }
 .p-top-in { max-width: 520px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .p-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
@@ -40,7 +39,6 @@ button { font-family: inherit; }
 
 .p-page { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 16px 16px calc(100px + env(safe-area-inset-bottom, 0px)); }
 
-/* Hero (Compact) */
 .p-hero { text-align: center; margin-bottom: 14px; }
 .p-ring { width: 72px; height: 72px; margin: 0 auto 10px; padding: 2.5px; border-radius: 50%; background: conic-gradient(from 200deg, #6366f1, #22d3ee, #a855f7, #f472b6, #6366f1); box-shadow: 0 0 30px -6px rgba(139,92,246,.75); }
 .p-avatar { width: 100%; height: 100%; border-radius: 50%; background: #12122a; border: 2.5px solid var(--bg); display: flex; align-items: center; justify-content: center; font-family: 'Inter'; font-size: 28px; font-weight: 900; color: #fff; }
@@ -49,7 +47,6 @@ button { font-family: inherit; }
 .p-name::-webkit-scrollbar { display: none; }
 .p-email { margin-top: 2px; font-size: 12.5px; color: var(--muted); font-weight: 500; }
 
-/* Stats (Compact) */
 .p-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .p-stat { position: relative; overflow: hidden; padding: 10px 4px 8px; border-radius: 16px; text-align: center; background: linear-gradient(160deg, rgba(255,255,255,.075), rgba(255,255,255,.025)); border: 1px solid var(--line); }
 .p-stat::before { content: ''; position: absolute; top: 0; left: 22%; right: 22%; height: 2px; border-radius: 0 0 4px 4px; background: var(--c); box-shadow: 0 0 10px var(--c); }
@@ -57,10 +54,8 @@ button { font-family: inherit; }
 .p-stat .lbl { font-size: 10.5px; color: var(--muted); font-weight: 600; margin-top: 2px; }
 .p-stat.s1 { --c: #818cf8; } .p-stat.s2 { --c: #34d399; } .p-stat.s3 { --c: #fbbf24; }
 
-/* Section head */
 .p-sec { margin: 18px 2px 8px; font-size: 15px; font-weight: 700; letter-spacing: -.2px; display: flex; align-items: center; justify-content: space-between; }
 
-/* Achievements (Ultra Compact Pills) */
 .p-ach { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
 .p-ach::-webkit-scrollbar { display: none; }
 .p-ach-card { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.04); border: 1px solid var(--line); transition: .3s; }
@@ -71,7 +66,6 @@ button { font-family: inherit; }
 .p-ach-card.unlocked .p-ach-ic { color: #fbbf24; }
 .p-ach-card.unlocked .p-ach-t { color: #fde68a; }
 
-/* Menu (Compact) */
 .p-menu-group { border-radius: 20px; overflow: hidden; background: linear-gradient(160deg, rgba(255,255,255,.065), rgba(255,255,255,.025)); border: 1px solid var(--line); }
 .p-menu { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: transparent; border: none; border-bottom: 1px solid var(--line); color: var(--ink); text-align: left; cursor: pointer; transition: background .2s; }
 .p-menu:last-child { border-bottom: none; }
@@ -91,7 +85,6 @@ button { font-family: inherit; }
 .p-logout:hover { background: rgba(239,68,68,.2); }
 .p-logout h4 { color: #fca5a5; }
 
-/* Premium Badge (Dynamic) */
 .premium-badge { width: 20px; height: 20px; flex-shrink: 0; position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: linear-gradient(135deg, #fceabb 0%, #f8b500 50%, #b47b00 100%); box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4), inset 0 -2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8); animation: premiumPulse 2s ease-in-out infinite alternate; overflow: hidden; border: 1px solid #ffd700; }
 .premium-badge::before { content: '✓'; color: #ffffff; font-size: 11px; font-weight: 900; position: relative; z-index: 2; text-shadow: 0 2px 4px rgba(180, 123, 0, 0.9); transform: translateY(-0.5px); }
 .premium-badge::after { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(45deg, rgba(255,255,255,0) 20%, rgba(255,255,255,0.9) 50%, rgba(255,255,255,0) 80%); transform: rotate(45deg); animation: premiumShine 3s infinite ease-in-out; }
@@ -226,7 +219,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
     document.getElementById("logoutMenuBtn").onclick = doLogout;
 
     async function doLogout() {
-      if (!confirm("লগআউট?")) return;
+      // ✅ Premium Confirm Added
+      const confirmed = await window.showCustomConfirm("আপনি কি সত্যিই লগআউট করতে চান?", { title: "লগআউট" });
+      if (!confirmed) return;
       await signOut(auth);
       location.href = "index.html";
     }
@@ -257,7 +252,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
         const subSnap = await getDocs(q);
         document.getElementById("statSubs").textContent = subSnap.size;
 
-        // Load Achievements
         loadAchievements(userData.totalGood || 0, userData.balance || 0, subSnap.size);
 
       } catch (e) {
@@ -265,10 +259,8 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
       }
     });
 
-    // 🏆 Achievements Logic (Compact Pill style with SVGs)
     function loadAchievements(good, balance, totalSubs) {
       const list = document.getElementById("achievementsList");
-      
       const iconMedal = `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`;
 
       const achievements = [
@@ -288,25 +280,31 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-
     }
 
     document.getElementById("changeUsernameBtn").onclick = async () => {
-  const newName = await window.showCustomPrompt("নতুন নাম লিখুন:", userData.username || "");
-  if (newName === null) return; // Cancel বাটনে ক্লিক করলে কিছু হবে না
-  
-  if (newName.trim().length < 3) { 
-    return window.showCustomAlert("নাম কমপক্ষে ৩ অক্ষর হতে হবে!"); 
-  }
-  
-  try {
-    const cleanName = newName.trim();
-    await updateDoc(doc(db, "users", currentUser.uid), { username: cleanName });
-    await updateProfile(currentUser, { displayName: cleanName });
-    document.getElementById("username").textContent = cleanName;
-    document.getElementById("avatar").textContent = cleanName.charAt(0).toUpperCase();
-    userData.username = cleanName;
-    window.showCustomAlert("✅ নাম সফলভাবে পরিবর্তন হয়েছে!");
-  } catch (e) { 
-    window.showCustomAlert("❌ সমস্যা হয়েছে: " + e.message); 
-  }
-};
-  </script>
+      // ✅ Premium Prompt Added
+      const newName = await window.showCustomPrompt("আপনার নতুন নামটি লিখুন:", userData.username || "", "নতুন নাম", { title: "নাম পরিবর্তন" });
+      
+      if (newName === null) return; // Cancel চাপলে বন্ধ হবে
+      
+      if (newName.trim().length < 3) { 
+        return window.showWarning("নাম কমপক্ষে ৩ অক্ষর হতে হবে!"); 
+      }
+      
+      try {
+        const cleanName = newName.trim();
+        await updateDoc(doc(db, "users", currentUser.uid), { username: cleanName });
+        await updateProfile(currentUser, { displayName: cleanName });
+        
+        document.getElementById("username").textContent = cleanName;
+        document.getElementById("avatar").textContent = cleanName.charAt(0).toUpperCase();
+        userData.username = cleanName;
+        
+        // ✅ Premium Success
+        window.showSuccess("আপনার নাম সফলভাবে পরিবর্তন হয়েছে!");
+      } catch (e) { 
+        // ✅ Premium Error
+        window.showError("সমস্যা হয়েছে: " + e.message); 
+      }
+    };
+</script>
 </body>
 </html>
