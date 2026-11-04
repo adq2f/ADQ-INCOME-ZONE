@@ -402,3 +402,118 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", buildDock);
   else buildDock();
 })();
+  /* ---------------- CUSTOM PREMIUM PROMPT (Input) ---------------- */
+  window.showCustomPrompt = function(title, defaultValue = "", placeholder = "") {
+    return new Promise((resolve) => {
+      const old = document.getElementById("adqCustomPrompt");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "adqCustomPrompt";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 2147483647;
+        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
+      `;
+
+      const box = document.createElement("div");
+      box.style.cssText = `
+        background: linear-gradient(180deg, #17172f, #0d0d1f);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 24px; padding: 24px; width: 100%; max-width: 340px;
+        transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      `;
+
+      box.innerHTML = `
+        <h3 style="margin: 0 0 16px; font-size: 17px; color: #fff; font-weight: 700; text-align: left;">${title}</h3>
+        <input type="text" id="adqPromptInput" value="${defaultValue}" placeholder="${placeholder}" style="width:100%; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: #fff; font-size: 15px; outline: none; margin-bottom: 20px; font-family: 'Hind Siliguri', sans-serif;">
+        <div style="display: flex; gap: 10px;">
+          <button id="adqPromptCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">Cancel</button>
+          <button id="adqPromptOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">OK</button>
+        </div>
+      `;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      const input = document.getElementById("adqPromptInput");
+      
+      setTimeout(() => {
+        overlay.style.opacity = "1";
+        overlay.style.visibility = "visible";
+        box.style.transform = "scale(1)";
+        input.focus();
+      }, 10);
+
+      const close = (val) => {
+        overlay.style.opacity = "0";
+        overlay.style.visibility = "hidden";
+        box.style.transform = "scale(0.9)";
+        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
+      };
+
+      document.getElementById("adqPromptOk").onclick = () => close(input.value.trim());
+      document.getElementById("adqPromptCancel").onclick = () => close(null);
+      input.onkeydown = (e) => { if (e.key === "Enter") close(input.value.trim()); };
+    });
+  };
+
+  /* ---------------- CUSTOM PREMIUM CONFIRM (Yes/No) ---------------- */
+  window.showCustomConfirm = function(title) {
+    return new Promise((resolve) => {
+      const old = document.getElementById("adqCustomConfirm");
+      if (old) old.remove();
+
+      const overlay = document.createElement("div");
+      overlay.id = "adqCustomConfirm";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 2147483647;
+        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        font-family: 'Hind Siliguri', sans-serif; padding: 20px;
+      `;
+
+      const box = document.createElement("div");
+      box.style.cssText = `
+        background: linear-gradient(180deg, #17172f, #0d0d1f);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 24px; padding: 24px; width: 100%; max-width: 320px;
+        text-align: center; transform: scale(0.9); transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.1);
+      `;
+
+      box.innerHTML = `
+        <div style="width: 54px; height: 54px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, #f59e0b, #d97706); display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(245,158,11,0.5), inset 0 2px 0 rgba(255,255,255,0.3);">
+          <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div style="color: #e7e5f4; font-size: 15px; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap; font-weight: 500;">${title}</div>
+        <div style="display: flex; gap: 10px;">
+          <button id="adqConfirmCancel" style="flex: 1; padding: 14px; border-radius: 14px; border: 1.5px solid rgba(255,255,255,0.2); background: transparent; color: #cbd5e1; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">Cancel</button>
+          <button id="adqConfirmOk" style="flex: 1; padding: 14px; border-radius: 14px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s;">OK</button>
+        </div>
+      `;
+
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+
+      setTimeout(() => {
+        overlay.style.opacity = "1";
+        overlay.style.visibility = "visible";
+        box.style.transform = "scale(1)";
+      }, 10);
+
+      const close = (val) => {
+        overlay.style.opacity = "0";
+        overlay.style.visibility = "hidden";
+        box.style.transform = "scale(0.9)";
+        setTimeout(() => { overlay.remove(); resolve(val); }, 300);
+      };
+
+      document.getElementById("adqConfirmOk").onclick = () => close(true);
+      document.getElementById("adqConfirmCancel").onclick = () => close(false);
+    });
+  };
