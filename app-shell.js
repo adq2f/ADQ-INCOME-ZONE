@@ -1,5 +1,5 @@
 /* ==================================================
-   app-shell.js — ADQ Income Zone (Premium Loading & Global Layout)
+   app-shell.js — ADQ Income Zone (Custom Logo & Premium Loading)
    ================================================== */
 (function () {
   if (window.__adqShell) return;
@@ -7,28 +7,33 @@
 
   var root = document.documentElement;
   var file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  var cleanFile = file.replace(/\.html$/, "");
   var noDock = /^(login|signup|reset-|admin|index)/.test(file);
   var firstVisit = true;
   try { firstVisit = !sessionStorage.getItem("adq_seen"); sessionStorage.setItem("adq_seen", "1"); } catch (e) {}
 
   root.classList.add("adq-loading");
 
+  /* ---------------- CUSTOM LOGO URL ---------------- */
+  var LOGO_SRC = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhr_c5nsCUKOjGAE5E6FoFz8ayOWVjW5Rbi3ovv6yO8O0Vc-0hdBcKh6-UhhbKaB34YbRw8DE_wyCh6PHshqUYDmJ1qflbJJKNr1ZatTDD0zhi6EVEnSus9U4UEhfbx_ipzl_aTnKdx_CyC8PMRl4Td32mq-6e2wIMUhBc4B8VcwY3f-vQ4jO7Em92i0JnQ/s718/IMG_20260825_013750.JPG";
+
   /* ---------------- PAGE NAMES FOR LOADING TEXT ---------------- */
   var pageNames = {
-    "index.html": "Home",
-    "dashboard.html": "Dashboard",
-    "tasks.html": "Submit Task",
-    "task.html": "Task Details",
-    "wallet.html": "Wallet",
-    "withdraw.html": "Withdraw",
-    "leaderboard.html": "Leaderboard",
-    "profile.html": "Profile",
-    "task-history.html": "Task History",
-    "notifications.html": "Notifications",
-    "admin.html": "Admin Panel",
-    "admin-login.html": "Admin Login"
+    "index": "Home",
+    "dashboard": "Dashboard",
+    "tasks": "Submit Task",
+    "task": "Task Details",
+    "wallet": "Wallet",
+    "withdraw": "Withdraw",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "task-history": "Task History",
+    "notifications": "Notifications",
+    "admin": "Admin Panel",
+    "admin-login": "Admin Login",
+    "admin-cleanup": "Cleanup Center"
   };
-  var currentPageName = pageNames[file] || "ADQ Income Zone";
+  var currentPageName = pageNames[cleanFile] || "ADQ Income Zone";
 
   /* ---------------- ICONS ---------------- */
   var P = {
@@ -116,7 +121,7 @@
       overlay.id = "adqCustomAlert";
       overlay.style.cssText = `
         position: fixed; inset: 0; z-index: 2147483647;
-        background: rgba(3, 3, 10, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        background: rgba(3, 3, 10, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         display: flex; align-items: center; justify-content: center;
         opacity: 0; visibility: hidden; transition: all 0.3s ease;
         font-family: 'Hind Siliguri', sans-serif; padding: 20px;
@@ -164,7 +169,6 @@
     });
   };
 
-  // ✅ ওভাররাইড ডিফল্ট alert() ফাংশন
   window.alert = function(msg) {
     window.showCustomAlert(msg);
   };
@@ -174,6 +178,15 @@
   /* ---------------- CSS ---------------- */
   var css = [
     "html.adq-loading body{visibility:hidden}",
+
+    /* ✅ GLOBAL LOGO OVERRIDE (Replaces 'A' with your image everywhere) */
+    ".mark, .x-mark, .p-mark {",
+    "  color: transparent !important;",
+    "  background: url('" + LOGO_SRC + "') center/cover no-repeat !important;",
+    "  font-size: 0 !important; /* Hides the 'A' text */",
+    "  border: none !important;",
+    "  box-shadow: 0 8px 20px -6px rgba(139,92,246,.8), inset 0 1px 0 rgba(255,255,255,.35) !important;",
+    "}",
     
     /* Premium Splash Screen CSS */
     "#adqSplash{position:fixed;inset:0;z-index:2147483000;background:#06060f;display:flex;align-items:center;justify-content:center;transition:opacity .5s ease,visibility .5s}",
@@ -185,7 +198,8 @@
     "#adqSplash .sp-logo-wrap{position:relative;width:90px;height:90px;margin-bottom:24px;display:flex;align-items:center;justify-content:center}",
     "#adqSplash .sp-ring-1{position:absolute;inset:-8px;border-radius:50%;border:2px solid transparent;border-top-color:#6366f1;border-bottom-color:#22d3ee;animation:spin 1.5s linear infinite}",
     "#adqSplash .sp-ring-2{position:absolute;inset:-18px;border-radius:50%;border:1.5px solid transparent;border-left-color:#8b5cf6;border-right-color:#22d3ee;animation:spinReverse 2s linear infinite;opacity:0.6}",
-    "#adqSplash .sp-logo{width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center;font:900 36px 'Inter',sans-serif;color:#fff;background:linear-gradient(135deg,#4f46e5,#7c3aed 50%,#c026d3);box-shadow:0 15px 35px -5px rgba(124,58,237,.6),inset 0 2px 0 rgba(255,255,255,.3);animation:pulseGlow 2s ease-in-out infinite}",
+    "#adqSplash .sp-logo{width:80px;height:80px;border-radius:24px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 15px 35px -5px rgba(124,58,237,.6),inset 0 2px 0 rgba(255,255,255,.3);animation:pulseGlow 2s ease-in-out infinite}",
+    "#adqSplash .sp-logo img{width:100%;height:100%;object-fit:cover}",
     
     /* Text */
     "#adqSplash .sp-name{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px;background:linear-gradient(90deg,#fff,#c4b5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent}",
@@ -220,7 +234,6 @@
     ".x-app{position:relative;z-index:1;height:100vh;height:100dvh;max-width:520px;margin:0 auto;padding:0 14px calc(86px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column}",
     ".x-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 10px) 0 10px}",
     ".x-brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15.5px}",
-    ".x-mark{width:32px;height:32px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#6366f1,#8b5cf6 55%,#22d3ee);color:#fff;font:900 15px 'Inter',sans-serif;box-shadow:0 8px 20px -6px rgba(139,92,246,.8),inset 0 1px 0 rgba(255,255,255,.35)}",
     ".x-actions{display:flex;gap:8px}",
     ".x-ibtn{position:relative;width:38px;height:38px;border-radius:13px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.05);color:#9a9bb8;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.2s;flex:0 0 38px}",
     ".x-ibtn:hover{color:#fff;background:rgba(255,255,255,.1)}.x-ibtn.danger:hover{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.45)}",
@@ -307,13 +320,15 @@
   /* ---------------- SPLASH HTML ---------------- */
   var sp = document.createElement("div");
   sp.id = "adqSplash";
-  // Inject Dynamic Page Name Here
+  // Injecting the custom image logo into the splash screen
   sp.innerHTML = `
     <div class="sp-in">
       <div class="sp-logo-wrap">
         <div class="sp-ring-1"></div>
         <div class="sp-ring-2"></div>
-        <div class="sp-logo">A</div>
+        <div class="sp-logo" style="background:transparent; box-shadow:none; padding:0; overflow:hidden;">
+          <img src="${LOGO_SRC}" alt="Logo">
+        </div>
       </div>
       <div class="sp-name">ADQ Income Zone</div>
       <div class="sp-sub"><span class="sp-page">${currentPageName}</span> Loading...</div>
@@ -335,10 +350,9 @@
   }
   window.adqReady = function () { window.adqHold = false; check(); };
 
-  // ⚡ সুপার ফাস্ট লোডিং (মাত্র ২০০ মিলি সেকেন্ড)
   setTimeout(function () { minDone = true; check(); }, 200);
   window.addEventListener("load", function () { loaded = true; check(); });
-  setTimeout(hide, 5000); // fallback
+  setTimeout(hide, 5000); 
 
   try {
     Promise.all([
@@ -358,19 +372,19 @@
     if (noDock) return;
 
     var map = {
-      "dashboard.html": "dash", 
-      "task-history.html": "dash", 
-      "my-submissions.html": "dash",
-      "notifications.html": "dash", 
-      "reports.html": "dash",
-      "tasks.html": "submit", 
-      "task.html": "submit",
-      "leaderboard.html": "leaders",
-      "wallet.html": "wallet", 
-      "withdraw.html": "wallet",
-      "profile.html": "profile"
+      "dashboard": "dash", 
+      "task-history": "dash", 
+      "my-submissions": "dash",
+      "notifications": "dash", 
+      "reports": "dash",
+      "tasks": "submit", 
+      "task": "submit",
+      "leaderboard": "leaders",
+      "wallet": "wallet", 
+      "withdraw": "wallet",
+      "profile": "profile"
     };
-    var cur = map[file] || "";
+    var cur = map[cleanFile] || "";
     var items = [
       ["dash", "dashboard.html", "Dashboard", '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>'],
       ["submit", "tasks.html", "Submit", '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'],
