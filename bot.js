@@ -64,28 +64,45 @@ const bot = new Telegraf(BOT_TOKEN, { handlerTimeout: Infinity });
 /*  CONSTANTS                                                          */
 /* ------------------------------------------------------------------ */
 const BTN = {
-  task: "🟢 📋 Task Submit",
-  balance: "🔵 💰 Balance",
-  withdraw: "🟡 💸 Withdraw",
-  leaderboard: "🟣 🏆 Leaderboard",
-  profile: "🔵 👤 Profile",
-  history: "🟡 📜 History",
-  refer: "🟢 🎁 Refer",
-  wallet: "🔵 💳 Wallet",
-  help: "⚪ ❓ Help",
+  task: "📋 Task Submit",
+  balance: "💰 Balance",
+  withdraw: "💸 Withdraw",
+  leaderboard: "🏆 Leaderboard",
+  profile: "👤 Profile",
+  history: "📜 History",
+  refer: "🎁 Refer",
+  help: "❓ Help",
 };
 const ABTN = {
-  stats: "🟢 📊 Stats",
-  users: "🔵 👥 Users",
-  files: "🔴 📥 All Files",
-  bad: "🔴 🎯 Process Bad",
-  wd: "🟡 💸 Withdrawals",
-  badges: "🟣 🎖️ Badges",
-  bc: "🟣 📢 Broadcast",
+  stats: "📊 Stats",
+  users: "👥 Users",
+  files: "📥 All Files",
+  bad: "🎯 Process Good", // (key আগের মতোই; এখন Good file দিয়ে প্রসেস হয়)
+  wd: "💸 Withdrawals",
+  badges: "🎖️ Badges",
+  bc: "📢 Broadcast",
   settings: "⚙️ Settings",
-  tasks: "🟢 🎯 Tasks",
-  back: "⚪ 🔙 User Menu",
+  tasks: "🎯 Tasks",
+  manage: "👤 User Manage",
+  back: "🔙 User Menu",
 };
+
+// Telegram-এর নিজস্ব button রঙ (Bot API 9.4+): "success" = সবুজ, "danger" = লাল, "primary" = নীল
+const STYLE = {
+  [BTN.task]: "success",
+  [BTN.balance]: "primary",
+  [BTN.profile]: "primary",
+  [BTN.refer]: "success",
+  [ABTN.stats]: "success",
+  [ABTN.users]: "primary",
+  [ABTN.files]: "danger",
+  [ABTN.bad]: "success",
+  [ABTN.tasks]: "success",
+  [ABTN.manage]: "primary",
+};
+const kbBtn = (label) => (STYLE[label] ? { text: label, style: STYLE[label] } : label);
+// inline button (রঙসহ)
+const ib = (text, data, style) => ({ text, callback_data: data, ...(style ? { style } : {}) });
 const ALL_LABELS = new Set([...Object.values(BTN), ...Object.values(ABTN)]);
 
 const METHODS = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
@@ -93,21 +110,25 @@ const FILE_EXTS = ["xlsx", "xls", "csv", "txt", "tsv"];
 const MAX_FILE = 15 * 1024 * 1024;
 const ERR_MSG = "❌ কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।";
 
-const mainMenu = Markup.keyboard([
-  [BTN.task, BTN.balance],
-  [BTN.withdraw, BTN.leaderboard],
-  [BTN.profile, BTN.history],
-  [BTN.refer, BTN.wallet],
-  [BTN.help],
-]).resize();
+const mainMenu = Markup.keyboard(
+  [
+    [BTN.task, BTN.balance],
+    [BTN.withdraw, BTN.leaderboard],
+    [BTN.profile, BTN.history],
+    [BTN.refer, BTN.help],
+  ].map((row) => row.map(kbBtn))
+).resize();
 
-const adminMenu = Markup.keyboard([
-  [ABTN.stats, ABTN.users],
-  [ABTN.files, ABTN.bad],
-  [ABTN.wd, ABTN.badges],
-  [ABTN.bc, ABTN.settings],
-  [ABTN.tasks, ABTN.back],
-]).resize();
+const adminMenu = Markup.keyboard(
+  [
+    [ABTN.stats, ABTN.users],
+    [ABTN.files, ABTN.bad],
+    [ABTN.wd, ABTN.badges],
+    [ABTN.bc, ABTN.settings],
+    [ABTN.tasks, ABTN.manage],
+    [ABTN.back],
+  ].map((row) => row.map(kbBtn))
+).resize();
 
 /* ------------------------------------------------------------------ */
 /*  HELPERS                                                            */
@@ -314,10 +335,7 @@ function taskListKb(tasks) {
     tasks
       .slice(0, 50)
       .map((t) => [
-        Markup.button.callback(
-          `${stateEmoji[taskState(t)]} ${String(t.title || "").slice(0, 25)} — ৳${money(t.pricePerAccount)}`,
-          `task:${t.id}`
-        ),
+        ib(`${String(t.title || "").slice(0, 25)} — ৳${money(t.pricePerAccount)}`, `task:${t.id}`, { open: "success", closed: "danger" }[taskState(t)]),
       ])
   );
 }
@@ -502,7 +520,7 @@ async function cmdStart(ctx) {
     try {
       await userRef(f.id).create(doc);
       return ctx.reply(
-        `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"🟢 Task Submit" বাটন থেকে আয় শুরু করুন।`,
+        `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"Task Submit" বাটন থেকে আয় শুরু করুন।`,
         kbx(mainMenu)
       );
     } catch (e) {
@@ -553,6 +571,15 @@ async function getWdConfig() {
   };
 }
 
+function normAccount(method, raw) {
+  const n = String(raw || "").replace(/[\s-]/g, "");
+  if (method === "binance") return n.length >= 4 ? n : null;
+  const m = n.match(/^(?:\+?88)?(01[3-9]\d{8})$/);
+  return m ? m[1] : null;
+}
+const accountPrompt = (method) =>
+  method === "binance" ? "Binance ID / Wallet লিখুন (কমপক্ষে ৪ অক্ষর):" : `${METHODS[method]} নম্বর লিখুন (01XXXXXXXXX):`;
+
 async function cmdWithdraw(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
@@ -562,12 +589,16 @@ async function cmdWithdraw(ctx) {
   if (bal < cfg.minWithdraw) {
     return ctx.reply(`🔴 Minimum ${tk(cfg.minWithdraw)} দরকার। আছে ${tk(bal)}।`);
   }
-  const hasWallet = Object.entries(u.wallets || {}).some(([m, w]) => METHODS[m] && w?.number && cfg.methods[m] !== false);
-  if (!hasWallet) return ctx.reply("❌ আগে wallet সেট করুন: /setwallet bkash 01XXXXXXXXX");
-  await setSession(ctx.from.id, { action: "wd_amount" });
+  const on = Object.keys(METHODS).filter((m) => cfg.methods[m] !== false);
+  if (!on.length) return ctx.reply("🔴 এখন কোনো payment method চালু নেই।");
+  const rows = on.map((m) => {
+    const n = u.wallets?.[m]?.number;
+    return [ib(n ? `${METHODS[m]} — ${n}` : `${METHODS[m]} — নম্বর সেট করুন`, `wd_pick:${m}`, "primary")];
+  });
+  rows.push([ib("Cancel", "wd_no", "danger")]);
   return ctx.reply(
-    `💸 <b>Withdraw</b>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}\n\nকত টাকা তুলবেন? (শুধু সংখ্যা):`,
-    { parse_mode: "HTML" }
+    `💸 <b>Withdraw</b>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}\n\nকোন method-এ তুলবেন? নম্বর সেট না থাকলে এখানেই সেট করতে পারবেন।`,
+    kbx(Markup.inlineKeyboard(rows))
   );
 }
 
@@ -641,7 +672,7 @@ async function cmdWallet(ctx) {
 
 async function cmdHelp(ctx) {
   return ctx.reply(
-    "❓ <b>সাহায্য</b>\n\n🚀 /start — অ্যাকাউন্ট তৈরি\n📱 /menu — মেইন মেনু\n📋 /tasks — টাস্ক লিস্ট\n💰 /balance — ব্যালেন্স\n💸 /withdraw — টাকা তোলা\n📜 /history — হিস্টোরি\n🏆 /leaderboard — টপ\n👤 /profile — প্রোফাইল\n💳 /wallet — ওয়ালেট\n🎁 /refer — রেফার",
+    "❓ <b>সাহায্য</b>\n\n🚀 /start — অ্যাকাউন্ট তৈরি\n📱 /menu — মেইন মেনু\n📋 /tasks — টাস্ক লিস্ট\n💰 /balance — ব্যালেন্স\n💸 /withdraw — টাকা তোলা\n📜 /history — হিস্টোরি\n🏆 /leaderboard — টপ\n👤 /profile — প্রোফাইল\n🎁 /refer — রেফার",
     { parse_mode: "HTML" }
   );
 }
@@ -677,7 +708,7 @@ const USER_ROUTES = [
   ["profile", BTN.profile, cmdProfile],
   ["history", BTN.history, cmdHistory],
   ["refer", BTN.refer, cmdRefer],
-  ["wallet", BTN.wallet, cmdWallet],
+  ["wallet", null, cmdWallet],
   ["help", BTN.help, cmdHelp],
 ];
 for (const [cmd, label, fn] of USER_ROUTES) {
@@ -697,8 +728,8 @@ bot.action(
     if (!snap.exists) return ctx.reply("❌ টাস্কটি পাওয়া যায়নি।");
     const t = { id: snap.id, ...snap.data() };
     const kb = Markup.inlineKeyboard([
-      [Markup.button.callback("🟢 Submit File", `sub:${t.id}`)],
-      [Markup.button.callback("⚪ Back", "tasks:back")],
+      [ib("Submit File", `sub:${t.id}`, "success")],
+      [ib("⬅️ Back", "tasks:back")],
     ]);
     return edit(ctx, taskText(t), kb);
   })
@@ -766,15 +797,25 @@ async function submitFile(ctx, session) {
   await ctx.reply("📥 ফাইল প্রসেস হচ্ছে...");
   const buf = await downloadTg(ctx, doc.file_id);
   let rows = parseTable(buf, ext);
-  if (rows.length && String(rows[0][0] || "").toLowerCase().includes("uid")) rows = rows.slice(1);
+  let rowBase = 1;
+  if (rows.length && String(rows[0][0] || "").toLowerCase().includes("uid")) {
+    rows = rows.slice(1);
+    rowBase = 2;
+  }
 
   const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
   const parsed = [];
   let invalid = 0;
-  for (const rawRow of rows) {
+  let blank = 0;
+  const badRows = [];
+  for (let ri = 0; ri < rows.length; ri++) {
+    const rawRow = rows[ri];
     const cells0 = rawRow.map((c) => String(c ?? "").trim());
     const nonEmpty = cells0.filter(Boolean);
-    if (!nonEmpty.length) continue;
+    if (!nonEmpty.length) {
+      blank++; // মাঝে ফাঁকা রো — বাদ, পরের account আগেরটার সাথে মিশবে না
+      continue;
+    }
     let cells = cells0;
     if (nonEmpty.length === 1 && fields.length > 1) cells = splitLine(nonEmpty[0], fields.length, fields);
     cells = cells.map((c) => String(c ?? "").trim());
@@ -783,6 +824,7 @@ async function submitFile(ctx, session) {
     const uid = item.uid || item[fields[0].key] || cells[0] || "";
     if (!uid) {
       invalid++;
+      if (badRows.length < 15) badRows.push(ri + rowBase);
       continue;
     }
     while (cells.length && !cells[cells.length - 1]) cells.pop();
@@ -888,7 +930,8 @@ async function submitFile(ctx, session) {
   await clearSession(ctx.from.id);
 
   let msg = `✅ <b>File Submit সম্পন্ন!</b>\n\n📋 Task: ${esc(task.title)}\n📄 ফাইল: ${esc(filename)}\n\n🟢 Submit হয়েছে: ${okCount}\n🔴 Duplicate বাদ: ${dupCount}`;
-  if (invalid) msg += `\n⚠️ ভুল রো বাদ: ${invalid}`;
+  if (blank) msg += `\n⚪ ফাঁকা রো বাদ: ${blank}`;
+  if (invalid) msg += `\n⚠️ UID নেই (বাদ): ${invalid} — রো ${badRows.join(", ")}${invalid > badRows.length ? " …" : ""}`;
   msg += "\n\n🟡 Admin রেজাল্ট প্রসেস করবেন।";
   return ctx.reply(msg, kbx(mainMenu));
 }
@@ -896,29 +939,39 @@ async function submitFile(ctx, session) {
 /* ------------------------------------------------------------------ */
 /*  WITHDRAW CALLBACKS                                                 */
 /* ------------------------------------------------------------------ */
+const wdAmountText = (method, account, cfg, bal) =>
+  `💳 <b>${METHODS[method]}</b> — <code>${esc(account)}</code>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}  📈 Max: ${tk(cfg.maxWithdraw)}\n\nকত টাকা তুলবেন? (শুধু সংখ্যা):`;
+const wdAmountKb = (method) =>
+  Markup.inlineKeyboard([[ib("✏️ নম্বর বদলান", `wd_chg:${method}`), ib("Cancel", "wd_no", "danger")]]);
+
 bot.action(
-  /^wd_m:(.+)$/,
+  /^wd_pick:(.+)$/,
   safe(async (ctx) => {
-    const s = await getSession(ctx.from.id);
-    if (!s || s.action !== "wd_method") {
-      return ctx.answerCbQuery("⚠️ সেশন শেষ। আবার /withdraw দিন।", { show_alert: true });
-    }
     const method = ctx.match[1];
-    const u = await getUser(ctx.from.id);
-    const account = u?.wallets?.[method]?.number;
-    if (!METHODS[method] || !account) {
-      return ctx.answerCbQuery("❌ এই wallet পাওয়া যায়নি।", { show_alert: true });
-    }
+    if (!METHODS[method]) return ctx.answerCbQuery("❌ method সঠিক নয়।", { show_alert: true });
+    const [u, cfg] = await Promise.all([getUser(ctx.from.id), getWdConfig()]);
+    if (!u) return ctx.answerCbQuery("আগে /start দিন।", { show_alert: true });
+    if (!cfg.withdrawEnabled) return ctx.answerCbQuery("🔴 এখন withdraw বন্ধ।", { show_alert: true });
+    if (cfg.methods[method] === false) return ctx.answerCbQuery("🔴 এই method এখন বন্ধ।", { show_alert: true });
     await ctx.answerCbQuery();
-    await setSession(ctx.from.id, { action: "wd_confirm", amount: s.amount, method, account });
-    const kb = Markup.inlineKeyboard([
-      [Markup.button.callback("🟢 Confirm", "wd_ok"), Markup.button.callback("🔴 Cancel", "wd_no")],
-    ]);
-    return edit(
-      ctx,
-      `💸 <b>Confirm Withdraw</b>\n\n💰 Amount: ${tk(s.amount)}\n💳 Method: ${method.toUpperCase()}\n📱 Account: <code>${esc(account)}</code>\n\n🟢 Confirm করলে balance থেকে কাটা হবে।`,
-      kb
-    );
+    const account = u.wallets?.[method]?.number;
+    if (account) {
+      await setSession(ctx.from.id, { action: "wd_amount", method, account });
+      return edit(ctx, wdAmountText(method, account, cfg, Number(u.balance) || 0), wdAmountKb(method));
+    }
+    await setSession(ctx.from.id, { action: "wd_account", method });
+    return edit(ctx, `💳 <b>${METHODS[method]}</b>\n\n${accountPrompt(method)}`, Markup.inlineKeyboard([[ib("Cancel", "wd_no", "danger")]]));
+  })
+);
+
+bot.action(
+  /^wd_chg:(.+)$/,
+  safe(async (ctx) => {
+    const method = ctx.match[1];
+    if (!METHODS[method]) return ctx.answerCbQuery("❌ method সঠিক নয়।", { show_alert: true });
+    await ctx.answerCbQuery();
+    await setSession(ctx.from.id, { action: "wd_account", method });
+    return edit(ctx, `✏️ <b>${METHODS[method]}</b> — নতুন নম্বর\n\n${accountPrompt(method)}`, Markup.inlineKeyboard([[ib("Cancel", "wd_no", "danger")]]));
   })
 );
 
@@ -1048,7 +1101,7 @@ bot.hears(
     }
     const kb = Markup.inlineKeyboard(
       groups.slice(0, 50).map((g) => [
-        Markup.button.callback(`🔴 ${String(g.title || "").slice(0, 30)} (${g.files.length} files)`, `af_task:${g.taskId}`),
+        ib(`${String(g.title || "").slice(0, 30)} (${g.files.length} files)`, `af_task:${g.taskId}`, "danger"),
       ])
     );
     return ctx.reply(msg.slice(0, 4000), kbx(kb));
@@ -1076,8 +1129,8 @@ bot.action(
     });
     if (files.length > shown.length) msg += `\n… আরও ${files.length - shown.length}টি ফাইল`;
     const kb = Markup.inlineKeyboard([
-      [Markup.button.callback("🟢 Download All (Combined)", `af_dl:${taskId}`)],
-      [Markup.button.callback("🔴 Process Bad File", `pb_start:${taskId}`)],
+      [ib("Download All (Combined)", `af_dl:${taskId}`, "success")],
+      [ib("Process Good File", `pb_start:${taskId}`, "success")],
     ]);
     return edit(ctx, msg.slice(0, 4000), kb);
   })
@@ -1127,10 +1180,10 @@ bot.hears(
     if (!total) return ctx.reply("📭 কোনো pending file নেই।");
     const kb = Markup.inlineKeyboard(
       groups.slice(0, 50).map((g) => [
-        Markup.button.callback(`🔴 ${String(g.title || "").slice(0, 30)} (${g.files.length})`, `pb_start:${g.taskId}`),
+        ib(`${String(g.title || "").slice(0, 30)} (${g.files.length})`, `pb_start:${g.taskId}`, "primary"),
       ])
     );
-    return ctx.reply("🎯 <b>Process Bad</b>\n\nকোন task-এর bad file প্রসেস করবেন?", kbx(kb));
+    return ctx.reply("🎯 <b>Process Good</b>\n\nকোন task-এর good file প্রসেস করবেন?", kbx(kb));
   })
 );
 
@@ -1141,7 +1194,7 @@ bot.action(
     await setSession(ctx.from.id, { action: "pb_wait_file", taskId: ctx.match[1] });
     return edit(
       ctx,
-      "🎯 <b>Process Bad File</b>\n\n📤 এখন bad file পাঠান।\n\n📋 ফরম্যাট: এক কলামে bad UID (প্রতি লাইনে একটি)\nঅথবা Excel/CSV যেখানে প্রথম কলামে UID আছে।\n\n🟢 বাকি সব Good হিসেবে গণনা হবে।"
+      "🎯 <b>Process Good File</b>\n\n📤 এখন good file পাঠান।\n\n📋 ফরম্যাট: এক কলামে good UID (প্রতি লাইনে একটি)\nঅথবা Excel/CSV যেখানে প্রথম কলামে UID আছে।\n\n🟢 শুধু এই ফাইলের account Good হয়ে balance পাবে।\n🔴 বাকি সব pending account Bad হবে।"
     );
   })
 );
@@ -1154,11 +1207,11 @@ async function processBad(ctx, session) {
   if (!FILE_EXTS.includes(ext)) return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
   if ((doc.file_size || 0) > MAX_FILE) return ctx.reply("❌ ফাইল ১৫MB-এর বেশি হতে পারবে না।");
 
-  await ctx.reply("⏳ Bad file প্রসেস হচ্ছে...");
+  await ctx.reply("⏳ Good file প্রসেস হচ্ছে...");
   const taskId = session.taskId;
   const buf = await downloadTg(ctx, doc.file_id);
-  const badSet = extractBadValues(buf, ext);
-  if (!badSet.size) return ctx.reply("❌ ফাইলে কোনো ডাটা পাওয়া যায়নি।");
+  const goodSet = extractBadValues(buf, ext); // ফাইলের সব value (যে কলাম/রো-তেই থাকুক)
+  if (!goodSet.size) return ctx.reply("❌ ফাইলে কোনো ডাটা পাওয়া যায়নি।");
 
   const tSnap = await db.collection("tasks").doc(taskId).get();
   if (!tSnap.exists) {
@@ -1176,8 +1229,6 @@ async function processBad(ctx, session) {
     return ctx.reply("📭 এই task-এ কোনো pending submission নেই।");
   }
 
-  await clearSession(adminId);
-
   // classify
   const groups = new Map();
   const verdict = new Map();
@@ -1189,12 +1240,21 @@ async function processBad(ctx, session) {
       vals = Array.isArray(s.allCells) && s.allCells.length ? s.allCells : [s.uid, s.password, s.twoFA];
     }
     const cells = vals.map(norm).filter(Boolean);
-    const bad = cells.some((c) => badSet.has(c));
+    const isGood = cells.some((c) => goodSet.has(c));
+    const bad = !isGood; // ফাইলে যেটা আছে = Good, বাকি সব = Bad
     verdict.set(d.id, bad ? "bad" : "good");
     const uid = String(s.userId);
     if (!groups.has(uid)) groups.set(uid, { userId: uid, username: s.username, good: 0, bad: 0, earned: 0, price: 0 });
     groups.get(uid)[bad ? "bad" : "good"]++;
   }
+
+  // ভুল ফাইল দিলে সবকিছু Bad হয়ে যাওয়া ঠেকাতে
+  if (![...verdict.values()].some((v) => v === "good")) {
+    return ctx.reply(
+      "⚠️ Good file-এর কোনো account এই task-এর pending submission-এর সাথে মেলেনি।\nফাইল ভুল হতে পারে — কিছুই প্রসেস হয়নি। সঠিক ফাইল আবার পাঠান (বাতিল: /menu)।"
+    );
+  }
+  await clearSession(adminId);
 
   // pricing
   const normal = Number(task.pricePerAccount) || 0;
@@ -1302,7 +1362,7 @@ bot.hears(
     for (const d of docs) {
       const w = d.data();
       const kb = Markup.inlineKeyboard([
-        [Markup.button.callback("🟢 Approve", `wdp_ok:${d.id}`), Markup.button.callback("🔴 Reject", `wdp_no:${d.id}`)],
+        [ib("Approve", `wdp_ok:${d.id}`, "success"), ib("Reject", `wdp_no:${d.id}`, "danger")],
       ]);
       await ctx.reply(
         `💸 Withdraw Request\n\n👤 ${w.username}\n🆔 ${w.userId}\n💰 ${tk(w.amount)}\n💳 ${String(w.method).toUpperCase()}\n📱 ${w.accountNum}\n🕐 ${fmtDate(w.requestedAt)}`,
@@ -1501,6 +1561,143 @@ bot.command(
 );
 
 /* ------------------------------------------------------------------ */
+/*  ADMIN: USER MANAGE (খোঁজা · balance +/- · নতুন Telegram ID-তে সরানো) */
+/* ------------------------------------------------------------------ */
+const userCard = (u) => {
+  const w = Object.entries(u.wallets || {})
+    .filter(([m, x]) => METHODS[m] && x?.number)
+    .map(([m, x]) => `${METHODS[m]}: ${x.number}`)
+    .join(", ");
+  return (
+    `👤 <b>${esc(u.username)}</b>\n🆔 UID: <code>${u.id}</code>\n` +
+    (u.telegramUsername ? `📛 @${esc(u.telegramUsername)}\n` : "") +
+    `💰 Balance: ${tk(u.balance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}\n💳 Wallet: ${esc(w || "নেই")}`
+  );
+};
+const userCardKb = (id) =>
+  Markup.inlineKeyboard([
+    [ib("➕ Balance যোগ", `um_add:${id}`, "success"), ib("➖ Balance কাটুন", `um_sub:${id}`, "danger")],
+    [ib("🔁 নতুন Telegram ID-তে সরান", `um_mv:${id}`, "primary")],
+  ]);
+
+bot.hears(
+  ABTN.manage,
+  adminOnly(async (ctx) => {
+    await setSession(ctx.from.id, { action: "um_search" });
+    return ctx.reply("🔎 <b>User Manage</b>\n\nUsername / Telegram ID (UID) / @telegram-username লিখুন:\n\nবাতিল: /menu", {
+      parse_mode: "HTML",
+    });
+  })
+);
+
+bot.action(
+  /^um_sel:(.+)$/,
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    const u = await getUser(ctx.match[1]);
+    if (!u) return edit(ctx, "❌ user পাওয়া যায়নি।");
+    return edit(ctx, userCard(u), userCardKb(u.id));
+  })
+);
+
+bot.action(
+  /^um_(add|sub):(.+)$/,
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    const [, op, uid] = ctx.match;
+    const u = await getUser(uid);
+    if (!u) return edit(ctx, "❌ user পাওয়া যায়নি।");
+    await setSession(ctx.from.id, { action: "um_amount", op, uid });
+    return ctx.reply(
+      `${op === "add" ? "➕ যোগ" : "➖ কাটা"} — <b>${esc(u.username)}</b> (এখন ${tk(u.balance)})\n\nকত টাকা? (শুধু সংখ্যা, বাতিল: /menu)`,
+      { parse_mode: "HTML" }
+    );
+  })
+);
+
+bot.action(
+  /^um_mv:(.+)$/,
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    const u = await getUser(ctx.match[1]);
+    if (!u) return edit(ctx, "❌ user পাওয়া যায়নি।");
+    await setSession(ctx.from.id, { action: "um_newid", oldId: u.id });
+    return ctx.reply(
+      `🔁 <b>${esc(u.username)}</b> (UID <code>${u.id}</code>)-এর সব ডাটা নতুন Telegram ID-তে যাবে।\n\n1️⃣ ইউজারকে নতুন অ্যাকাউন্টে বট /start দিতে বলুন\n2️⃣ তার নতুন Telegram ID (শুধু সংখ্যা) এখানে লিখুন:\n\nবাতিল: /menu`,
+      { parse_mode: "HTML" }
+    );
+  })
+);
+
+bot.action(
+  "um_no",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    await clearSession(ctx.from.id);
+    return edit(ctx, "⚪ বাতিল হয়েছে।");
+  })
+);
+
+bot.action(
+  "um_mv_ok",
+  adminCb(async (ctx) => {
+    const s = await getSession(ctx.from.id);
+    if (!s || s.action !== "um_mv_confirm") {
+      return ctx.answerCbQuery("⚠️ সেশন শেষ। আবার চেষ্টা করুন।", { show_alert: true });
+    }
+    await ctx.answerCbQuery();
+    await clearSession(ctx.from.id);
+    await edit(ctx, "⏳ ডাটা সরানো হচ্ছে...");
+    return runBg(ctx, () => moveUser(ctx, s.oldId, s.newId));
+  })
+);
+
+async function isEmptyAccount(uid, data) {
+  if (!data) return true;
+  if ((Number(data.balance) || 0) > 0 || (Number(data.totalGood) || 0) > 0 || (Number(data.totalBad) || 0) > 0 || (Number(data.totalPending) || 0) > 0) return false;
+  const sub = await db.collection("submissions").where("userId", "==", String(uid)).limit(1).get();
+  return sub.empty;
+}
+
+async function moveUser(ctx, oldId, newId) {
+  const [oldSnap, newSnap] = await Promise.all([userRef(oldId).get(), userRef(newId).get()]);
+  if (!oldSnap.exists) return ctx.reply("❌ পুরনো user পাওয়া যায়নি।");
+  const old = oldSnap.data();
+  const nu = newSnap.exists ? newSnap.data() : null;
+  if (!(await isEmptyAccount(newId, nu))) {
+    return ctx.reply("⚠️ নতুন ID-তে আগে থেকেই ডাটা/balance আছে, তাই সরানো হয়নি।");
+  }
+  const data = {
+    ...old,
+    telegramId: Number(newId),
+    telegramUsername: nu?.telegramUsername ?? null,
+    telegramLinkedAt: Timestamp.now(),
+    role: nu?.role || old.role || "user",
+  };
+  const [subs, wds, files, refd] = await Promise.all([
+    db.collection("submissions").where("userId", "==", String(oldId)).select().get(),
+    db.collection("withdrawals").where("userId", "==", String(oldId)).select().get(),
+    db.collection("submitted_files").where("userId", "==", String(oldId)).select().get(),
+    db.collection("users").where("referredBy", "==", String(oldId)).select().get(),
+  ]);
+  const ops = [(b) => b.set(userRef(newId), data)];
+  [...subs.docs, ...wds.docs, ...files.docs].forEach((d) => ops.push((b) => b.update(d.ref, { userId: String(newId) })));
+  refd.docs.forEach((d) => ops.push((b) => b.update(d.ref, { referredBy: String(newId) })));
+  ops.push((b) => b.delete(sessRef(oldId)));
+  ops.push((b) => b.delete(userRef(oldId)));
+  await commitOps(ops);
+
+  await ctx.reply(
+    `✅ <b>সরানো সম্পন্ন!</b>\n\n👤 ${esc(old.username)}\n🆔 ${oldId} ➜ <code>${newId}</code>\n💰 Balance: ${tk(old.balance)}\n📋 ${subs.size} submissions • 💸 ${wds.size} withdrawals`,
+    { parse_mode: "HTML", reply_markup: adminMenu.reply_markup }
+  );
+  await dm(
+    newId,
+    `✅ <b>আপনার অ্যাকাউন্ট এই Telegram ID-তে সরানো হয়েছে!</b>\n\n💰 Balance: ${tk(old.balance)}\n🟢 Good: ${old.totalGood || 0}  🔴 Bad: ${old.totalBad || 0}\n\nমেনু দেখতে /menu দিন।`
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  ADMIN: TASKS  (website না থাকলে task এখান থেকেই বানাতে হবে)         */
 /* ------------------------------------------------------------------ */
 const PLATFORMS = ["Facebook", "Twitter", "Instagram", "LinkedIn", "TikTok", "Gmail", "WhatsApp", "Other"];
@@ -1602,7 +1799,7 @@ bot.hears(
       (t, i) => `${i + 1}. ${stateEmoji[taskState(t)]} ${esc(t.title)} — ৳${money(t.pricePerAccount)}`
     );
     const kb = Markup.inlineKeyboard(
-      tasks.map((t) => [Markup.button.callback(`🔴 Close — ${String(t.title || "").slice(0, 25)}`, `tk_close:${t.id}`)])
+      tasks.map((t) => [ib(`Close — ${String(t.title || "").slice(0, 25)}`, `tk_close:${t.id}`, "danger")])
     );
     return ctx.reply(`${head}\n${lines.join("\n")}`, kbx(kb));
   })
@@ -1669,7 +1866,7 @@ bot.command(
     await ctx.reply("🔍 স্ক্যান হচ্ছে...");
     const r = await scanWebsiteData();
     const kb = Markup.inlineKeyboard([
-      [Markup.button.callback("🔴 হ্যাঁ, মুছুন", "cw_yes"), Markup.button.callback("⚪ বাতিল", "cw_no")],
+      [ib("হ্যাঁ, মুছুন", "cw_yes", "danger"), ib("বাতিল", "cw_no")],
     ]);
     return ctx.reply(
       `🧹 <b>Website Data Cleanup</b>\n\n👥 Website users: ${r.users.length}\n📤 তাদের Submissions: ${r.subs.length}\n💸 তাদের Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 withdraw_security: ${r.sec.length}\n🎁 refer_earnings: ${r.refs.length}\n⚙️ settings (admin_pass, online_status): ${r.settings.length}\n🔑 Firebase Auth login account: ${r.authUids.length}\n\n✅ <b>থাকবে:</b> Telegram users (numeric ID) ও তাদের সব ডাটা, tasks, notices, reports, withdraw_config, payment_methods।\n\n⚠️ <b>আগে নিশ্চিত করুন:</b> আপনার নিজের Telegram ID-র user doc-এ <code>role: "admin"</code> আছে (Firebase Console থেকে সেট করুন)। Website user-দের balance আর ফেরত আসবে না।`,
@@ -1907,6 +2104,20 @@ bot.on(
     const id = ctx.from.id;
 
     switch (s.action) {
+      case "wd_account": {
+        const method = s.method;
+        const acc = normAccount(method, text);
+        if (!METHODS[method]) return ctx.reply("⚠️ আবার /withdraw দিন।");
+        if (!acc) {
+          return ctx.reply(method === "binance" ? "🔴 Binance ID কমপক্ষে ৪ অক্ষরের হতে হবে।" : "🔴 সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)।");
+        }
+        const [u, cfg] = await Promise.all([getUser(id), getWdConfig()]);
+        if (!u) return ctx.reply("⚠️ আগে /start দিন।");
+        await userRef(id).update({ [`wallets.${method}.number`]: acc });
+        await setSession(id, { action: "wd_amount", method, account: acc });
+        return ctx.reply(`✅ ${METHODS[method]} নম্বর সেভ হয়েছে।\n\n` + wdAmountText(method, acc, cfg, Number(u.balance) || 0), kbx(wdAmountKb(method)));
+      }
+
       case "wd_amount": {
         const u = await getUser(id);
         if (!u) return ctx.reply("⚠️ আগে /start দিন।");
@@ -1916,13 +2127,14 @@ bot.on(
         if (amount < cfg.minWithdraw) return ctx.reply(`🔴 Minimum ${tk(cfg.minWithdraw)} তুলতে হবে।`);
         if (amount > cfg.maxWithdraw) return ctx.reply(`🔴 Maximum ${tk(cfg.maxWithdraw)} তুলতে পারবেন।`);
         if (amount > (Number(u.balance) || 0)) return ctx.reply(`🔴 যথেষ্ট balance নেই। আছে ${tk(u.balance)}।`);
-        const rows = Object.entries(u.wallets || {})
-          .filter(([m, w]) => METHODS[m] && w?.number && cfg.methods[m] !== false)
-          .map(([m, w]) => [Markup.button.callback(`🔵 ${m.toUpperCase()} — ${w.number}`, `wd_m:${m}`)]);
-        if (!rows.length) return ctx.reply("❌ আগে wallet সেট করুন: /setwallet bkash 01XXXXXXXXX");
-        rows.push([Markup.button.callback("🔴 Cancel", "wd_no")]);
-        await setSession(id, { action: "wd_method", amount: round2(amount) });
-        return ctx.reply(`💳 <b>${tk(amount)}</b> কোন wallet-এ নেবেন?`, kbx(Markup.inlineKeyboard(rows)));
+        if (!METHODS[s.method] || !s.account) return ctx.reply("⚠️ আবার /withdraw দিন।");
+        if (cfg.methods[s.method] === false) return ctx.reply("🔴 এই method এখন বন্ধ।");
+        await setSession(id, { action: "wd_confirm", amount: round2(amount), method: s.method, account: s.account });
+        const kb = Markup.inlineKeyboard([[ib("Confirm", "wd_ok", "success"), ib("Cancel", "wd_no", "danger")]]);
+        return ctx.reply(
+          `💸 <b>Confirm Withdraw</b>\n\n💰 Amount: ${tk(amount)}\n💳 Method: ${s.method.toUpperCase()}\n📱 Account: <code>${esc(s.account)}</code>\n\n🟢 Confirm করলে balance থেকে কাটা হবে।`,
+          kbx(kb)
+        );
       }
 
       case "badge_username": {
@@ -1954,9 +2166,114 @@ bot.on(
         }
         await setSession(id, { action: "bc_confirm", message: ctx.message.text });
         const kb = Markup.inlineKeyboard([
-          [Markup.button.callback("🟢 Send All", "bc_yes"), Markup.button.callback("🔴 Cancel", "bc_no")],
+          [ib("Send All", "bc_yes", "success"), ib("Cancel", "bc_no", "danger")],
         ]);
         return ctx.reply(`📢 <b>Preview:</b>\n\n${esc(ctx.message.text)}\n\nসব user-কে পাঠাবেন?`, kbx(kb));
+      }
+
+      case "um_search": {
+        if (!(await isAdmin(id))) {
+          await clearSession(id);
+          return ctx.reply("❌ Unknown command.");
+        }
+        const q = text.replace(/^@/, "").trim();
+        const ql = q.toLowerCase();
+        let found = [];
+        if (/^\d+$/.test(q)) {
+          const u = await getUser(q);
+          if (u) found.push({ id: u.id, username: u.username, telegramUsername: u.telegramUsername });
+        }
+        if (!found.length) {
+          const snap = await db.collection("users").select("username", "telegramUsername").get();
+          found = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .filter(
+              (u) =>
+                u.id.toLowerCase() === ql ||
+                String(u.username || "").toLowerCase().includes(ql) ||
+                String(u.telegramUsername || "").toLowerCase().includes(ql)
+            )
+            .slice(0, 10);
+        }
+        if (!found.length) return ctx.reply("❌ কোনো user পাওয়া যায়নি। আবার লিখুন (বাতিল: /menu):");
+        await clearSession(id);
+        if (found.length === 1) {
+          const full = await getUser(found[0].id);
+          return ctx.reply(userCard(full), kbx(userCardKb(full.id)));
+        }
+        const kb = Markup.inlineKeyboard(
+          found.map((u) => [
+            ib(`${String(u.username || "User").slice(0, 20)}${u.telegramUsername ? ` @${u.telegramUsername}` : ""} — ${u.id}`, `um_sel:${u.id}`),
+          ])
+        );
+        return ctx.reply(`🔎 ${found.length}টি ফল — একজন বাছুন:`, kbx(kb));
+      }
+
+      case "um_amount": {
+        if (!(await isAdmin(id))) {
+          await clearSession(id);
+          return ctx.reply("❌ Unknown command.");
+        }
+        const amt = Number(bn2en(text).replace(/,/g, ""));
+        if (!Number.isFinite(amt) || amt <= 0) return ctx.reply("⚠️ শুধু সংখ্যা লিখুন। যেমন: 100");
+        const uref = userRef(s.uid);
+        let after = 0;
+        try {
+          await db.runTransaction(async (tx) => {
+            const sn = await tx.get(uref);
+            if (!sn.exists) throw new Error("NO_USER");
+            const bal = Number(sn.get("balance")) || 0;
+            const nb = s.op === "add" ? bal + amt : bal - amt;
+            if (nb < 0) {
+              const e = new Error("LOW");
+              e.bal = bal;
+              throw e;
+            }
+            after = round2(nb);
+            tx.update(uref, { balance: after });
+          });
+        } catch (e) {
+          if (e.message === "LOW") {
+            await clearSession(id);
+            return ctx.reply(`🔴 ইউজারের balance ${tk(e.bal)} — এর বেশি কাটা যাবে না।`);
+          }
+          if (e.message === "NO_USER") {
+            await clearSession(id);
+            return ctx.reply("❌ user পাওয়া যায়নি।");
+          }
+          throw e;
+        }
+        await clearSession(id);
+        await ctx.reply(`✅ ${s.op === "add" ? "যোগ" : "কাটা"} হয়েছে: ${tk(amt)}\n💰 নতুন balance: ${tk(after)}`, kbx(adminMenu));
+        await dm(
+          s.uid,
+          `💰 <b>Balance আপডেট</b>\n\nAdmin আপনার ব্যালেন্সে ${tk(amt)} ${s.op === "add" ? "যোগ করেছে" : "কেটে নিয়েছে"}।\nনতুন Balance: ${tk(after)}`
+        );
+        return;
+      }
+
+      case "um_newid": {
+        if (!(await isAdmin(id))) {
+          await clearSession(id);
+          return ctx.reply("❌ Unknown command.");
+        }
+        const nid = text.trim();
+        if (!/^\d{5,15}$/.test(nid)) return ctx.reply("⚠️ সঠিক Telegram ID (শুধু সংখ্যা) লিখুন।");
+        if (nid === s.oldId) return ctx.reply("⚠️ এটা তো আগের ID-ই। নতুন ID লিখুন।");
+        const [oldU, newU] = await Promise.all([getUser(s.oldId), getUser(nid)]);
+        if (!oldU) {
+          await clearSession(id);
+          return ctx.reply("❌ পুরনো user পাওয়া যায়নি।");
+        }
+        if (!(await isEmptyAccount(nid, newU))) {
+          return ctx.reply("⚠️ এই নতুন ID-তে আগে থেকেই ডাটা/balance আছে, তাই সরানো যাবে না। অন্য ID দিন।");
+        }
+        await setSession(id, { action: "um_mv_confirm", oldId: s.oldId, newId: nid });
+        const kb = Markup.inlineKeyboard([[ib("হ্যাঁ, সরান", "um_mv_ok", "success"), ib("বাতিল", "um_no", "danger")]]);
+        return ctx.reply(
+          `🔁 <b>নিশ্চিত করুন</b>\n\n👤 ${esc(oldU.username)}\n🆔 ${s.oldId} ➜ <code>${nid}</code>\n💰 Balance: ${tk(oldU.balance)}\n\nপুরনো ID-র সব ডাটা (balance, submissions, withdrawals) নতুন ID-তে যাবে, আর পুরনো অ্যাকাউন্ট মুছে যাবে।`,
+          kbx(kb)
+        );
       }
 
       case "cw_confirm": {
@@ -2037,7 +2354,6 @@ bot.launch({ dropPendingUpdates: true }).catch((e) => {
       { command: "history", description: "হিস্টোরি" },
       { command: "leaderboard", description: "টপ ইউজার" },
       { command: "profile", description: "প্রোফাইল" },
-      { command: "wallet", description: "ওয়ালেট" },
       { command: "refer", description: "রেফার" },
       { command: "help", description: "সাহায্য" },
     ]);
