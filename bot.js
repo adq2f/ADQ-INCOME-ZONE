@@ -478,86 +478,27 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- GoFile helpers (নতুন GoFile API) ----
-   - Token থাকলে: আপনার account-এ একটা public folder বানিয়ে সেখানে আপলোড হয়,
-     আর সেই folder-এর লিংক পাঠানো হয় (সবাই খুলতে পারবে, ফাইল আপনার account-এ জমা থাকবে)।
-   - Token কাজ না করলে বা না থাকলে: guest হিসেবে আপলোড (fallback)। */
-let gofileRootCache = null;
-
-async function gofileRootFolder(token) {
-  if (gofileRootCache) return gofileRootCache;
-  const auth = { Authorization: `Bearer ${token}` };
-  const idRes = await axios.get("https://api.gofile.io/accounts/getid", { headers: auth, timeout: 30000 });
-  const accId = idRes.data?.data?.id;
-  if (!accId) throw new Error("GoFile account id পাওয়া যায়নি (token ভুল হতে পারে)");
-  const accRes = await axios.get(`https://api.gofile.io/accounts/${accId}`, { headers: auth, timeout: 30000 });
-  const root = accRes.data?.data?.rootFolder;
-  if (!root) throw new Error("GoFile rootFolder পাওয়া যায়নি");
-  gofileRootCache = root;
-  return root;
-}
-
-async function gofileUploadOnce(buffer, filename, token) {
-  const form = new FormData();
-  const headers = {};
-  let folderCode = null;
-
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-    const root = await gofileRootFolder(token);
-    const folderName = String(filename).replace(/\.[^.]+$/, "").slice(0, 60) || "report";
-    const fr = await axios.post(
-      "https://api.gofile.io/contents/createFolder",
-      { parentFolderId: root, folderName, public: true },
-      { headers, timeout: 30000 }
-    );
-    if (fr.data?.status !== "ok") throw new Error("createFolder failed: " + JSON.stringify(fr.data));
-    const folderId = fr.data.data.id;
-    folderCode = fr.data.data.code;
-    // নিশ্চিত করা যে folder public
-    try {
-      await axios.put(
-        `https://api.gofile.io/contents/${folderId}/update`,
-        { attribute: "public", attributeValue: true },
-        { headers, timeout: 30000 }
-      );
-    } catch (e) {
-      console.error("GoFile public set warn:", e.response?.status, e.message);
-    }
-    form.append("folderId", folderId);
-  }
-
-  form.append("file", buffer, filename);
-  const res = await axios.post("https://upload.gofile.io/uploadfile", form, {
-    headers: { ...form.getHeaders(), ...headers },
-    maxContentLength: Infinity,
-    maxBodyLength: Infinity,
-    timeout: 120000,
-  });
-  if (res.data?.status !== "ok") throw new Error("Upload failed: " + JSON.stringify(res.data));
-
-  const link = folderCode ? `https://gofile.io/d/${folderCode}` : res.data.data.downloadPage;
-  return { link, contentId: res.data.data.id };
-}
-
-async function uploadToGoFile(buffer, filename) {
-  const token = (process.env.GOFILE_TOKEN || "").trim();
-  if (token) {
-    try {
-      return await gofileUploadOnce(buffer, filename, token);
-    } catch (e) {
-      gofileRootCache = null;
-      console.error(
-        "GoFile (account) upload error:",
-        e.response?.status,
-        JSON.stringify(e.response?.data) || e.message
-      );
-    }
-  }
+/* ---- Litterbox (Catbox) Helper for Direct Links ---- */
+async function uploadToLitterbox(buffer, filename) {
   try {
-    return await gofileUploadOnce(buffer, filename, null); // guest fallback
-  } catch (e) {
-    console.error("GoFile (guest) upload error:", e.response?.status, JSON.stringify(e.response?.data) || e.message);
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('time', '72h'); // ৭২ ঘণ্টা পর অটো ডিলিট
+    form.append('fileToUpload', buffer, filename);
+
+    const res = await axios.post('https://litterbox.catbox.moe/resources/internals/api.php', form, {
+      headers: form.getHeaders(),
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      timeout: 120000 
+    });
+
+    if (res.data && res.data.startsWith('http')) {
+      return { link: res.data.trim() }; 
+    }
+    throw new Error('Upload failed: ' + res.data);
+  } catch (error) {
+    console.error("Litterbox Upload Error:", error.message);
     return null;
   }
 }
@@ -1378,12 +1319,12 @@ bot.action(
       const buf = Buffer.from(await wb.xlsx.writeBuffer());
       const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
-      await ctx.reply("⏳ ফাইল GoFile-এ আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadToGoFile(buf, fileName);
-      if (!uploaded) throw new Error("GoFile upload failed (Render logs দেখুন)");
+      await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
+      const uploaded = await uploadToLitterbox(buf, fileName);
+      if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
 
       await ctx.reply(
-        `🔗 <b>All Files Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Total Rows: ${subs.length}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`,
+        `🔗 <b>All Files Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Total Rows: ${subs.length}\n\n<i>⚠️ লিংকটি ৩ দিন (৭২ ঘণ্টা) সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`,
         { parse_mode: "HTML", disable_web_page_preview: true }
       );
     } catch (e) {
@@ -1569,7 +1510,7 @@ async function processBad(ctx, session) {
   const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n📅 ${fmtDate(now)}\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
   await sendLong(ctx, report, { reply_markup: adminMenu.reply_markup });
 
-  // প্রতিটা user-কে GoFile লিংক সহ রিপোর্ট পাঠানো
+  // প্রতিটা user-কে Litterbox লিংক সহ রিপোর্ট পাঠানো
   const fieldsList = task.fields?.length ? task.fields : DEFAULT_FIELDS;
   const stamp = fmtDate(new Date());
   const dateStr = stampForFile();
@@ -1584,10 +1525,10 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToGoFile(rbuf, fileName);
+      const uploaded = await uploadToLitterbox(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
-      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
+      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৩ দিন (৭২ ঘণ্টা) সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
       await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
     } catch (e) {
       console.error(`report link failed (${g.userId}):`, e.message);
