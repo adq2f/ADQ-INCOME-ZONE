@@ -478,17 +478,26 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- PutPut Helper (Cloudflare R2-based, never blocked by Render) ---- */
-async function uploadToPutPut(buffer, filename) {
+/* ---- transfer.sh Helper for Direct Links ---- */
+async function uploadToTransfer(buffer, filename) {
   try {
-    const { PutPutClient } = await import('putput');
-    const pp = new PutPutClient();
-    const { token } = await pp.createGuestToken();
-    pp.setToken(token);
-    const file = await pp.upload(buffer, filename, 'application/octet-stream');
-    return { link: file.url };
+    const res = await axios.put(`https://transfer.sh/${encodeURIComponent(filename)}`, buffer, {
+      headers: {
+        'Content-Type': 'application/octet-stream',
+        'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      timeout: 120000
+    });
+
+    // transfer.sh সরাসরি ডাউনলোড URL রেসপন্স হিসেবে দেয়
+    if (res.data && typeof res.data === 'string' && res.data.startsWith('http')) {
+      return { link: res.data.trim() };
+    }
+    throw new Error('Upload failed: ' + res.data);
   } catch (error) {
-    console.error("PutPut Upload Error:", error.message);
+    console.error("transfer.sh Upload Error:", error.response?.status, error.message);
     return null;
   }
 }
@@ -1310,7 +1319,7 @@ bot.action(
       const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
       await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadToPutPut(buf, fileName);
+      const uploaded = await uploadToTransfer(buf, fileName);
       if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
 
       await ctx.reply(
@@ -1515,7 +1524,7 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToPutPut(rbuf, fileName);
+      const uploaded = await uploadToTransfer(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
       const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
