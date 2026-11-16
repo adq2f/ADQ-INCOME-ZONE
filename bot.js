@@ -484,8 +484,8 @@ async function uploadToTfLink(buffer, filename) {
     const form = new FormData();
     form.append('file', buffer, filename);
 
-    // tfLink API endpoint
-    const res = await axios.post('https://tflink.net/api/upload', form, {
+    // সঠিক এন্ডপয়েন্ট: tmpfile.link (tflink.net নয়)
+    const res = await axios.post('https://tmpfile.link/api/upload', form, {
       headers: {
         ...form.getHeaders(),
         'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
@@ -495,9 +495,9 @@ async function uploadToTfLink(buffer, filename) {
       timeout: 120000
     });
 
-    // tfLink সরাসরি ডাউনলোড URL রেসপন্স হিসেবে দেয়
-    if (res.data && res.data.url) {
-      return { link: res.data.url };
+    // সঠিক রেসপন্স ফিল্ড: downloadLink (url নয়)
+    if (res.data && res.data.downloadLink) {
+      return { link: res.data.downloadLink };
     }
     throw new Error('Upload failed: ' + JSON.stringify(res.data));
   } catch (error) {
