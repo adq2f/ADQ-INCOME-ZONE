@@ -974,7 +974,7 @@ bot.action(
     }
     return edit(
       ctx,
-      `✅ <b>Withdraw Submitted</b>\n\💰 ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
+      `✅ <b>Withdraw Submitted</b>\n💰 ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
     );
   })
 );
@@ -1188,10 +1188,23 @@ async function buildUserReport(task, fields, g, items) {
   hr.alignment = { horizontal: "center", vertical: "middle" };
   const ordered = [...items.filter((x) => x.good), ...items.filter((x) => !x.good)];
   ordered.forEach(({ s: sub, good }, i) => {
-    const row = ws.addRow([i + 1, ...subValues(sub, fields), good ? "GOOD" : "BAD", good ? g.price : 0]);
-    for (let c = 2; c <= 1 + fields.length; c++) {
+    const vals = subValues(sub, fields);
+    const row = ws.addRow([i + 1, ...vals, good ? "GOOD" : "BAD", good ? g.price : 0]);
+    
+    // ডাটা কততম কলাম পর্যন্ত আছে, তা বের করা হচ্ছে
+    let lastDataCol = 1; // '# ' কলামটি বাদ দিয়ে
+    for (let j = 0; j < vals.length; j++) {
+      if (String(vals[j] ?? "").trim() !== "") {
+        lastDataCol = j + 2; // +2 কারণ ১ম কলামটি '#', আর অ্যারে ০ থেকে শুরু
+      }
+    }
+    
+    // শুধু ডাটা থাকা কলাম পর্যন্ত রঙ করা হবে
+    for (let c = 2; c <= lastDataCol; c++) {
       row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: good ? "FFBBF7D0" : "FFFECACA" } };
     }
+    
+    // Status (GOOD/BAD) টেক্সটের রঙ
     row.getCell(2 + fields.length).font = { bold: true, color: { argb: good ? "FF047857" : "FFB91C1C" } };
   });
   ws.addRow([]);
