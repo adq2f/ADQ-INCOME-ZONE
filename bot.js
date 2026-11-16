@@ -478,12 +478,16 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- transfer.sh Helper for Direct Links ---- */
-async function uploadToTransfer(buffer, filename) {
+/* ---- ZeroStorage Helper for Direct Links (Unlimited & No Render Block) ---- */
+async function uploadToZeroStorage(buffer, filename) {
   try {
-    const res = await axios.put(`https://transfer.sh/${encodeURIComponent(filename)}`, buffer, {
+    const form = new FormData();
+    form.append('file', buffer, filename);
+
+    // ZeroStorage API endpoint
+    const res = await axios.post('https://zerostorage.net/api/upload', form, {
       headers: {
-        'Content-Type': 'application/octet-stream',
+        ...form.getHeaders(),
         'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
       },
       maxContentLength: Infinity,
@@ -491,13 +495,13 @@ async function uploadToTransfer(buffer, filename) {
       timeout: 120000
     });
 
-    // transfer.sh সরাসরি ডাউনলোড URL রেসপন্স হিসেবে দেয়
-    if (res.data && typeof res.data === 'string' && res.data.startsWith('http')) {
-      return { link: res.data.trim() };
+    // API রেসপন্স ফরম্যাট: { link: "..." } (যদি ফরম্যাট ভিন্ন হয়, ডকুমেন্টেশন দেখে নেবেন)
+    if (res.data && (res.data.link || (res.data.data && res.data.data.link))) {
+      return { link: res.data.link || res.data.data.link };
     }
-    throw new Error('Upload failed: ' + res.data);
+    throw new Error('Upload failed: ' + JSON.stringify(res.data));
   } catch (error) {
-    console.error("transfer.sh Upload Error:", error.response?.status, error.message);
+    console.error("ZeroStorage Upload Error:", error.response?.status, error.message);
     return null;
   }
 }
@@ -696,7 +700,7 @@ async function cmdWithdraw(ctx) {
 async function cmdLeaderboard(ctx) {
   const snap = await db.collection("users").orderBy("totalGood", "desc").limit(40).get();
   const rows = snap.docs.map((d) => d.data()).filter((u) => u.role !== "admin").slice(0, 20);
-  if (!rows.length) return ctx.reply("📭 এখনো কেউ নেই।");
+  if (!rows.length) return ctx.reply("?? এখনো কেউ নেই।");
   const medals = ["🥇", "🥈", "🥉"];
   const lines = rows.map(
     (u, i) => `${medals[i] || `${i + 1}.`} ${esc(u.username)} — 🟢 ${u.totalGood || 0}`
@@ -1319,7 +1323,7 @@ bot.action(
       const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
       await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadToTransfer(buf, fileName);
+      const uploaded = await uploadToZeroStorage(buf, fileName);
       if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
 
       await ctx.reply(
@@ -1524,7 +1528,7 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToTransfer(rbuf, fileName);
+      const uploaded = await uploadToZeroStorage(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
       const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
