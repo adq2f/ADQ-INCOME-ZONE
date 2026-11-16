@@ -12,10 +12,12 @@
        BOT_TOKEN                = BotFather token
        FIREBASE_SERVICE_ACCOUNT = service account JSON (এক লাইনে)
        EXPORT_SECRET            = (optional) /export ফাইল sign করার secret
+       GOFILE_TOKEN             = GoFile account token (রিপোর্ট ফাইলের লিংকের জন্য)
   4. Deploy শেষে Render URL কপি করে UptimeRobot-এ HTTP(s) monitor বানান
      (৫ মিনিট interval) — bot জেগে থাকবে।
-  5. Firestore-এ নিজের users/{telegramId} ডক-এ role = "admin" সেট করুন,
-     তারপর বটে /adqincomezone লিখুন।
+  5. Firestore-এ নিজের users/{telegramId} ডক-এ role = "admin" সেট করুন।
+     এরপর /menu বা /start দিলে মেইন মেনুর নিচে "🛠️ Admin Panel" বাটন আসবে।
+     (role সরালে বাটন ও সব admin কমান্ড সাথে সাথে বন্ধ হয়ে যাবে।)
 
   NOTE: Firestore-এ কিছু query-র জন্য composite index লাগতে পারে। লগে index
   লিংক এলে ক্লিক করে বানিয়ে নিন (bot fallback দিয়ে চলবে)।
@@ -28,6 +30,8 @@ import { Telegraf, Markup } from "telegraf";
 import admin from "firebase-admin";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
+import axios from "axios";
+import FormData from "form-data";
 
 /* ------------------------------------------------------------------ */
 /*  KEEP-ALIVE HTTP SERVER (Render + UptimeRobot)                      */
@@ -86,6 +90,7 @@ const ABTN = {
   tasks: "🎯 Tasks",
   manage: "👤 User Manage",
   back: "🔙 User Menu",
+  panel: "🛠️ Admin Panel", // শুধু role=admin হলে মেইন মেনুতে দেখায়
 };
 
 // Telegram-এর নিজস্ব button রঙ (Bot API 9.4+): "success" = সবুজ, "danger" = লাল, "primary" = নীল
@@ -109,6 +114,7 @@ const STYLE = {
   [ABTN.tasks]: "success",
   [ABTN.manage]: "primary",
   [ABTN.back]: "danger",
+  [ABTN.panel]: "danger",
 };
 // প্রতিটা button-এ রঙ থাকবে (নির্দিষ্ট না থাকলে নীল)
 const kbBtn = (label) => ({ text: label, style: STYLE[label] || "primary" });
@@ -120,14 +126,17 @@ const FILE_EXTS = ["xlsx", "xls", "csv", "txt", "tsv"];
 const MAX_FILE = 15 * 1024 * 1024;
 const ERR_MSG = "❌ কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।";
 
-const mainMenu = Markup.keyboard(
-  [
+// মেইন মেনু — admin হলে নিচে "🛠️ Admin Panel" বাটন যোগ হয়
+const buildMainMenu = (isAdm) => {
+  const rows = [
     [BTN.task, BTN.balance],
     [BTN.withdraw, BTN.leaderboard],
     [BTN.profile, BTN.history],
     [BTN.refer, BTN.help],
-  ].map((row) => row.map(kbBtn))
-).resize();
+  ];
+  if (isAdm) rows.push([ABTN.panel]);
+  return Markup.keyboard(rows.map((row) => row.map(kbBtn))).resize();
+};
 
 const adminMenu = Markup.keyboard(
   [
@@ -256,6 +265,9 @@ const getUser = async (id) => {
 };
 const isAdmin = async (id) => (await getUser(id))?.role === "admin";
 
+// ইউজারের বর্তমান role দেখে সঠিক মেইন মেনু বানায় (admin হলে Admin Panel বাটন সহ)
+const userKb = async (id) => kbx(buildMainMenu(await isAdmin(id)));
+
 async function needUser(ctx) {
   const u = await getUser(ctx.from.id);
   if (!u) {
@@ -280,10 +292,13 @@ const safe = (fn) => async (ctx, next) => {
   }
 };
 
-// Admin check on EVERY action
+// Admin check on EVERY action — role সরানো হলে পুরনো admin কিবোর্ড থাকলেও কাজ করবে না,
+// আর ইউজারকে সাথে সাথে সাধারণ মেনু ফেরত দেওয়া হবে
 const adminOnly = (fn) =>
   safe(async (ctx, next) => {
-    if (!(await isAdmin(ctx.from.id))) return ctx.reply("❌ Unknown command.");
+    if (!(await isAdmin(ctx.from.id))) {
+      return ctx.reply("❌ Unknown command.", await userKb(ctx.from.id));
+    }
     return fn(ctx, next);
   });
 
@@ -463,6 +478,52 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+/* ---- GoFile helpers ---- */
+async function uploadToGoFile(buffer, filename) {
+  try {
+    const serverRes = await axios.get("https://api.gofile.io/getServer");
+    const server = serverRes.data.data.server;
+    const form = new FormData();
+    form.append("file", buffer, filename);
+
+    // Add token to save to user's account
+    if (process.env.GOFILE_TOKEN) {
+      form.append("token", process.env.GOFILE_TOKEN);
+    }
+
+    const uploadRes = await axios.post(`https://${server}.gofile.io/uploadFile`, form, {
+      headers: form.getHeaders(),
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      timeout: 120000,
+    });
+
+    if (uploadRes.data.status === "ok") {
+      return {
+        link: uploadRes.data.data.downloadPage,
+        contentId: uploadRes.data.data.contentId,
+      };
+    }
+    throw new Error("Upload failed");
+  } catch (error) {
+    console.error("GoFile Upload Error:", error.message);
+    return null;
+  }
+}
+
+async function setFilePrivate(contentId) {
+  if (!process.env.GOFILE_TOKEN || !contentId) return;
+  try {
+    await axios.put(`https://api.gofile.io/contents/${contentId}/update`, {
+      token: process.env.GOFILE_TOKEN,
+      attribute: "public",
+      attributeValue: false,
+    });
+  } catch (e) {
+    console.error("Could not set file to private:", e.message);
+  }
+}
+
 function rowKeyOf(task, item, cells) {
   if (Array.isArray(task?.dupKeys) && task.dupKeys.length) {
     const v = task.dupKeys.map((k) => norm(item?.[k]));
@@ -573,7 +634,7 @@ async function cmdStart(ctx) {
       await userRef(f.id).create(doc);
       return ctx.reply(
         `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"Task Submit" বাটন থেকে আয় শুরু করুন।`,
-        kbx(mainMenu)
+        await userKb(f.id)
       );
     } catch (e) {
       if (e.code !== 6) throw e; // 6 = ALREADY_EXISTS (race) -> fall through
@@ -582,12 +643,12 @@ async function cmdStart(ctx) {
   }
   return ctx.reply(
     `👋 <b>স্বাগতম ${esc(u.username)}!</b>\n\n💰 Balance: ${tk(u.balance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}`,
-    kbx(mainMenu)
+    await userKb(f.id)
   );
 }
 
 async function cmdMenu(ctx) {
-  return ctx.reply("📱 <b>মেইন মেনু</b>", kbx(mainMenu));
+  return ctx.reply("📱 <b>মেইন মেনু</b>", await userKb(ctx.from.id));
 }
 
 /* ------------------------------------------------------------------ */
@@ -831,10 +892,13 @@ async function submitFile(ctx, session) {
   if (!FILE_EXTS.includes(ext)) {
     return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
   }
-  if ((doc.file_size || 0) > MAX_FILE) return ctx.reply("❌ ফাইল ১৫MB-এর বেশি হতে পারবে না।");
+  if ((doc.file_size || 0) > 19 * 1024 * 1024) {
+    return ctx.reply("❌ ফাইল ১৯MB-এর বেশি হতে পারবে না। দয়া করে ছোট ফাইলে ভাগ করে পাঠান।");
+  }
 
   const user = await getUser(ctx.from.id);
   if (!user) return ctx.reply("⚠️ আগে /start দিয়ে অ্যাকাউন্ট তৈরি করুন।");
+
   const tSnap = await db.collection("tasks").doc(session.taskId).get();
   if (!tSnap.exists) {
     await clearSession(ctx.from.id);
@@ -847,147 +911,143 @@ async function submitFile(ctx, session) {
     return ctx.reply(st === "upcoming" ? "⏳ টাস্ক এখনো শুরু হয়নি।" : "🔴 টাস্ক শেষ হয়েছে।");
   }
 
-  const waitMsg = await ctx.reply("📥 ফাইল প্রসেস হচ্ছে...");
-  const buf = await downloadTg(ctx, doc.file_id);
-  let rows = parseTable(buf, ext);
-  let rowBase = 1;
-  if (rows.length && String(rows[0][0] || "").toLowerCase().includes("uid")) {
-    rows = rows.slice(1);
-    rowBase = 2;
-  }
+  const progressMsg = await ctx.reply("⏳ ফাইল প্রসেস হচ্ছে... 0%");
+  let progressInterval = null;
 
-  const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
-  const parsed = [];
-  let invalid = 0;
-  let blank = 0;
-  const badRows = [];
-  for (let ri = 0; ri < rows.length; ri++) {
-    const rawRow = rows[ri];
-    const cells0 = rawRow.map((c) => String(c ?? "").trim());
-    const nonEmpty = cells0.filter(Boolean);
-    if (!nonEmpty.length) {
-      blank++; // মাঝে ফাঁকা রো — বাদ, পরের account আগেরটার সাথে মিশবে না
-      continue;
-    }
-    let cells = cells0;
-    if (nonEmpty.length === 1 && fields.length > 1) cells = splitLine(nonEmpty[0], fields.length, fields);
-    cells = cells.map((c) => String(c ?? "").trim());
-    const item = {};
-    fields.forEach((f, i) => { item[f.key] = cells[i] ?? ""; });
-    const uid = item.uid || item[fields[0].key] || cells[0] || "";
-    if (!uid) {
-      invalid++;
-      if (badRows.length < 15) badRows.push(ri + rowBase);
-      continue;
-    }
-    while (cells.length && !cells[cells.length - 1]) cells.pop();
-    parsed.push({
-      item,
-      uid,
-      password: item.password ?? cells[1] ?? "",
-      twoFA: item.twoFA ?? item["2fa_key"] ?? cells[2] ?? "",
-      allCells: cells.slice(0, 40).map((c) => c.slice(0, 300)),
-    });
-  }
-  if (!parsed.length) {
-    return ctx.reply("❌ ফাইলে কোনো valid রো পাওয়া যায়নি। Format ঠিক আছে কিনা দেখুন।");
-  }
-
-  // dedup (against DB + inside the file)
-  const exQ = db.collection("submissions").where("taskId", "==", task.id);
-  const existing = Array.isArray(task.dupKeys) && task.dupKeys.length ? await exQ.get() : await exQ.select("allCells").get();
-  const seen = new Set();
-  existing.docs.forEach((d) => {
-    const x = d.data();
-    const k = rowKeyOf(task, x, x.allCells);
-    if (k) seen.add(k);
-  });
-  const fresh = [];
-  let dupCount = 0;
-  for (const r of parsed) {
-    const k = rowKeyOf(task, r.item, r.allCells);
-    if (k && seen.has(k)) {
-      dupCount++;
-      continue;
-    }
-    if (k) seen.add(k);
-    fresh.push(r);
-  }
-  const okCount = fresh.length;
-  if (!okCount) {
-    await clearSession(ctx.from.id);
-    return ctx.reply(
-      `⚠️ সব রো Duplicate!\n\n📄 ফাইল: ${esc(filename)}\n🔴 Duplicate বাদ: ${dupCount}`,
-      kbx(mainMenu)
-    );
-  }
-
-  // upload raw file to Storage
-  const ts = Date.now();
-  const storagePath = `submitted_files/${task.id}/${ctx.from.id}_${ts}.${ext}`;
-  let savedPath = "";
   try {
-    await bucket.file(storagePath).save(buf, { contentType: "application/octet-stream", resumable: false });
-    savedPath = storagePath;
-  } catch (e) {
-    console.error("storage upload failed:", e.message);
-  }
+    const buf = await downloadTg(ctx, doc.file_id);
 
-  const now = Timestamp.now();
-  const fileRef = db.collection("submitted_files").doc();
-  const ops = [];
-  ops.push((b) =>
-    b.set(fileRef, {
-      userId: String(ctx.from.id),
-      username: user.username,
-      taskId: task.id,
-      taskTitle: task.title || "",
-      taskPlatform: task.platform || "",
-      filename,
-      storagePath: savedPath,
-      rowCount: parsed.length,
-      okCount,
-      dupCount,
-      status: "pending",
-      uploadedAt: now,
-      processedAt: null,
-    })
-  );
-  for (const r of fresh) {
-    const ref = db.collection("submissions").doc();
-    ops.push((b) =>
-      b.set(ref, {
-        ...r.item,
-        uid: r.uid,
-        password: r.password,
-        twoFA: r.twoFA,
-        allCells: r.allCells,
-        taskId: task.id,
-        taskTitle: task.title || "",
-        taskPlatform: task.platform || "",
-        userId: String(ctx.from.id),
-        username: user.username,
-        fileId: fileRef.id,
-        source: "telegram_file",
-        status: "pending",
-        price: Number(task.pricePerAccount) || 0,
-        earned: 0,
-        submittedAt: now,
-        checkedAt: null,
-        processedBy: null,
-      })
-    );
-  }
-  ops.push((b) => b.update(userRef(ctx.from.id), { totalPending: FieldValue.increment(okCount) }));
-  await commitOps(ops);
-  await clearSession(ctx.from.id);
+    let progress = 30;
+    await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `⏳ ডাটা পড়া হচ্ছে... ${progress}%`);
 
-  let msg = `✅ <b>File Submit সম্পন্ন!</b>\n\n📋 Task: ${esc(task.title)}\n📄 ফাইল: ${esc(filename)}\n\n🟢 Submit হয়েছে: ${okCount}\n🔴 Duplicate বাদ: ${dupCount}`;
-  if (blank) msg += `\n⚪ ফাঁকা রো বাদ: ${blank}`;
-  if (invalid) msg += `\n⚠️ UID নেই (বাদ): ${invalid} — রো ${badRows.join(", ")}${invalid > badRows.length ? " …" : ""}`;
-  msg += "\n\n🟡 Admin রেজাল্ট প্রসেস করবেন।";
-  ctx.telegram.deleteMessage(ctx.chat.id, waitMsg.message_id).catch(() => {});
-  return ctx.reply(msg, kbx(mainMenu));
+    progressInterval = setInterval(async () => {
+      progress += 20;
+      if (progress > 90) progress = 90;
+      try {
+        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `⏳ ডাটাবেসে সেভ হচ্ছে... ${progress}%`);
+      } catch (e) { /* ignore */ }
+    }, 2000);
+
+    let rows = parseTable(buf, ext);
+    let rowBase = 1;
+    if (rows.length && String(rows[0][0] || "").toLowerCase().includes("uid")) {
+      rows = rows.slice(1);
+      rowBase = 2;
+    }
+
+    const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
+    const parsed = [];
+    let invalid = 0;
+    let blank = 0;
+
+    for (let ri = 0; ri < rows.length; ri++) {
+      const rawRow = rows[ri];
+      const cells0 = rawRow.map((c) => String(c ?? "").trim());
+      const nonEmpty = cells0.filter(Boolean);
+
+      if (!nonEmpty.length) {
+        blank++;
+        continue;
+      }
+
+      let cells = cells0;
+      if (nonEmpty.length === 1 && fields.length > 1) {
+        cells = splitLine(nonEmpty[0], fields.length, fields);
+      }
+      cells = cells.map((c) => String(c ?? "").trim());
+
+      const item = {};
+      fields.forEach((f, i) => { item[f.key] = cells[i] ?? ""; });
+
+      const uid = item.uid || item[fields[0].key] || cells[0] || "";
+      if (!uid) {
+        invalid++;
+        continue;
+      }
+
+      while (cells.length && !cells[cells.length - 1]) cells.pop();
+
+      parsed.push({
+        item,
+        uid,
+        password: item.password ?? cells[1] ?? "",
+        twoFA: item.twoFA ?? item["2fa_key"] ?? cells[2] ?? "",
+        allCells: cells.slice(0, 50).map((c) => c.slice(0, 500)),
+      });
+    }
+
+    if (!parsed.length) {
+      clearInterval(progressInterval);
+      return ctx.reply("❌ ফাইলে কোনো valid রো পাওয়া যায়নি।");
+    }
+
+    // dedup (against DB + inside the file)
+    const exQ = db.collection("submissions").where("taskId", "==", task.id);
+    const existing = Array.isArray(task.dupKeys) && task.dupKeys.length ? await exQ.get() : await exQ.select("allCells").get();
+    const seen = new Set();
+    existing.docs.forEach((d) => {
+      const x = d.data();
+      const k = rowKeyOf(task, x, x.allCells);
+      if (k) seen.add(k);
+    });
+    const fresh = [];
+    let dupCount = 0;
+    for (const r of parsed) {
+      const k = rowKeyOf(task, r.item, r.allCells);
+      if (k && seen.has(k)) { dupCount++; continue; }
+      if (k) seen.add(k);
+      fresh.push(r);
+    }
+    const okCount = fresh.length;
+    if (!okCount) {
+      clearInterval(progressInterval);
+      await clearSession(ctx.from.id);
+      return ctx.reply(`⚠️ সব রো Duplicate!\n\n📄 ফাইল: ${esc(filename)}\n🔴 Duplicate বাদ: ${dupCount}`, await userKb(ctx.from.id));
+    }
+
+    const now = Timestamp.now();
+    const fileRef = db.collection("submitted_files").doc();
+    const ops = [];
+    ops.push((b) => b.set(fileRef, {
+      userId: String(ctx.from.id), username: user.username, taskId: task.id,
+      taskTitle: task.title || "", taskPlatform: task.platform || "", filename,
+      storagePath: doc.file_id, rowCount: parsed.length, okCount, dupCount,
+      status: "pending", uploadedAt: now, processedAt: null,
+    }));
+
+    for (const r of fresh) {
+      const ref = db.collection("submissions").doc();
+      ops.push((b) => b.set(ref, {
+        ...r.item, uid: r.uid, password: r.password, twoFA: r.twoFA, allCells: r.allCells,
+        taskId: task.id, taskTitle: task.title || "", taskPlatform: task.platform || "",
+        userId: String(ctx.from.id), username: user.username, fileId: fileRef.id,
+        source: "telegram_file", status: "pending", price: Number(task.pricePerAccount) || 0,
+        earned: 0, submittedAt: now, checkedAt: null, processedBy: null,
+      }));
+    }
+    ops.push((b) => b.update(userRef(ctx.from.id), { totalPending: FieldValue.increment(okCount) }));
+    await commitOps(ops);
+    await clearSession(ctx.from.id);
+
+    clearInterval(progressInterval);
+    await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `✅ ফাইল সফলভাবে সাবমিট হয়েছে! 100%`);
+
+    let msg = `✅ <b>File Submit সম্পন্ন!</b>\n\n📋 Task: ${esc(task.title)}\n📄 ফাইল: ${esc(filename)}\n\n🟢 Submit হয়েছে: ${okCount}\n🔴 Duplicate বাদ: ${dupCount}`;
+    if (blank) msg += `\n⚪ ফাঁকা রো বাদ: ${blank}`;
+    if (invalid) msg += `\n⚠️ UID নেই (বাদ): ${invalid}`;
+    msg += "\n\n🟡 Admin রেজাল্ট প্রসেস করবেন।";
+    return ctx.reply(msg, await userKb(ctx.from.id));
+
+  } catch (err) {
+    console.error("Submit error:", err);
+    try {
+      await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, "❌ ফাইল সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+    } catch (e) {
+      await ctx.reply("❌ ফাইল সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+    }
+  } finally {
+    if (progressInterval) clearInterval(progressInterval);
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -1087,15 +1147,31 @@ bot.action(
 /* ------------------------------------------------------------------ */
 /*  ADMIN PANEL                                                        */
 /* ------------------------------------------------------------------ */
+// /adqincomezone কমান্ড আগের মতোই কাজ করবে (শুধু admin)
 bot.command(
   "adqincomezone",
   safe(async (ctx) => {
-    if (!(await isAdmin(ctx.from.id))) return ctx.reply("❌ Unknown command.");
+    if (!(await isAdmin(ctx.from.id))) return ctx.reply("❌ Unknown command.", await userKb(ctx.from.id));
     return ctx.reply("🛠️ <b>Admin Panel</b>", kbx(adminMenu));
   })
 );
 
-bot.hears(ABTN.back, adminOnly((ctx) => ctx.reply("📱 <b>মেইন মেনু</b>", kbx(mainMenu))));
+// মেইন মেনুর "🛠️ Admin Panel" বাটন — শুধু role=admin হলে খুলবে
+bot.hears(
+  ABTN.panel,
+  safe(async (ctx) => {
+    if (!(await isAdmin(ctx.from.id))) {
+      return ctx.reply("❌ Unknown command.", await userKb(ctx.from.id));
+    }
+    return ctx.reply("🛠️ <b>Admin Panel</b>", kbx(adminMenu));
+  })
+);
+
+// Admin Panel থেকে ইউজার মেনুতে ফেরা (admin হলে মেনুতে Admin Panel বাটনও থাকবে)
+bot.hears(
+  ABTN.back,
+  safe(async (ctx) => ctx.reply("📱 <b>মেইন মেনু</b>", await userKb(ctx.from.id)))
+);
 
 /* ---- Stats ---- */
 bot.hears(
@@ -1225,6 +1301,7 @@ bot.action(
         db.collection("submissions").where("taskId", "==", taskId).where("status", "==", "pending").get(),
       ]);
       if (snap.empty) return ctx.reply("📭 কোনো pending submission নেই।");
+
       const task = tSnap.exists ? tSnap.data() : {};
       const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
       const subs = snap.docs
@@ -1234,34 +1311,37 @@ bot.action(
       const wb = new ExcelJS.Workbook();
       wb.creator = "ADQ Income Zone";
       const ws = wb.addWorksheet("Pending");
-      ws.addRow(["#", ...fields.map((f) => f.label || f.key), "User", "User ID", "Submitted At"]);
-      const hr = ws.getRow(1);
+
+      const hr = ws.addRow(["#", ...fields.map((f) => f.label || f.key), "User", "User ID", "Submitted At"]);
       hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
       hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4338CA" } };
-      hr.alignment = { horizontal: "center", vertical: "middle" };
+
       subs.forEach((sub, i) => {
         ws.addRow([i + 1, ...subValues(sub, fields), sub.username || "", String(sub.userId || ""), fmtDate(sub.submittedAt)]);
       });
-      ws.addRow([]);
-      [["TOTAL SUBMIT", subs.length], ["TOTAL GOOD", 0], ["TOTAL BAD", 0], ["TOTAL EARN", 0]].forEach((r) => {
-        ws.addRow(r).font = { bold: true };
-      });
+
       const n = fields.length;
       for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
-      ws.views = [{ state: "frozen", ySplit: 1 }];
+
       const buf = Buffer.from(await wb.xlsx.writeBuffer());
 
-      const caption =
-        `📥 ${String(task.title || "Task").slice(0, 120)}\n📅 ${fmtDate(new Date())}\n\n` +
-        `${totalsBlock(subs.length, 0, 0, 0)}`;
-      await ctx.telegram.sendDocument(
-        ctx.chat.id,
-        { source: buf, filename: `${slugOf(task.title)}_pending_${stampForFile()}.xlsx` },
-        { caption }
+      const dateStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Dhaka" }).replace(" ", "_").replace(/:/g, "").slice(0, 15);
+      const fileName = `${slugOf(task.title)}_ALL_PENDING_${dateStr}.xlsx`;
+
+      await ctx.reply("⏳ ফাইল GoFile-এ আপলোড হচ্ছে, অপেক্ষা করুন...");
+      const uploaded = await uploadToGoFile(buf, fileName);
+
+      if (!uploaded) throw new Error("GoFile upload failed");
+
+      await setFilePrivate(uploaded.contentId);
+
+      await ctx.reply(
+        `🔗 <b>All Files Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Total Rows: ${subs.length}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`,
+        { parse_mode: "HTML", disable_web_page_preview: true }
       );
     } catch (e) {
       console.error("af_dl failed:", e);
-      return ctx.reply(`⚠️ ফাইল বানানো/পাঠানো যায়নি: ${e.description || e.message}`);
+      return ctx.reply(`⚠️ ফাইল বানানো/পাঠানো যায়নি: ${e.message}`);
     }
   })
 );
@@ -1332,12 +1412,12 @@ async function processBad(ctx, session) {
   const doc = ctx.message.document;
   const ext = extOf(doc.file_name);
   if (!FILE_EXTS.includes(ext)) return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
-  if ((doc.file_size || 0) > MAX_FILE) return ctx.reply("❌ ফাইল ১৫MB-এর বেশি হতে পারবে না।");
+  if ((doc.file_size || 0) > 19 * 1024 * 1024) return ctx.reply("❌ ফাইল ১৯MB-এর বেশি হতে পারবে না।");
 
   const waitMsg = await ctx.reply("⏳ Good file প্রসেস হচ্ছে...");
   const taskId = session.taskId;
   const buf = await downloadTg(ctx, doc.file_id);
-  const goodSet = extractBadValues(buf, ext); // ফাইলের সব value (যে কলাম/রো-তেই থাকুক)
+  const goodSet = extractBadValues(buf, ext);
   if (!goodSet.size) return ctx.reply("❌ ফাইলে কোনো ডাটা পাওয়া যায়নি।");
 
   const tSnap = await db.collection("tasks").doc(taskId).get();
@@ -1346,11 +1426,7 @@ async function processBad(ctx, session) {
     return ctx.reply("❌ টাস্কটি পাওয়া যায়নি।");
   }
   const task = tSnap.data();
-  const subsSnap = await db
-    .collection("submissions")
-    .where("taskId", "==", taskId)
-    .where("status", "==", "pending")
-    .get();
+  const subsSnap = await db.collection("submissions").where("taskId", "==", taskId).where("status", "==", "pending").get();
   if (subsSnap.empty) {
     await clearSession(adminId);
     return ctx.reply("📭 এই task-এ কোনো pending submission নেই।");
@@ -1369,7 +1445,7 @@ async function processBad(ctx, session) {
     }
     const cells = vals.map(norm).filter(Boolean);
     const isGood = cells.some((c) => goodSet.has(c));
-    const bad = !isGood; // ফাইলে যেটা আছে = Good, বাকি সব = Bad
+    const bad = !isGood;
     verdict.set(d.id, bad ? "bad" : "good");
     const uid = String(s.userId);
     if (!groups.has(uid)) groups.set(uid, { userId: uid, username: s.username, good: 0, bad: 0, earned: 0, price: 0 });
@@ -1378,11 +1454,8 @@ async function processBad(ctx, session) {
     userItems.get(uid).push({ s, good: !bad });
   }
 
-  // ভুল ফাইল দিলে সবকিছু Bad হয়ে যাওয়া ঠেকাতে
   if (![...verdict.values()].some((v) => v === "good")) {
-    return ctx.reply(
-      "⚠️ Good file-এর কোনো account এই task-এর pending submission-এর সাথে মেলেনি।\nফাইল ভুল হতে পারে — কিছুই প্রসেস হয়নি। সঠিক ফাইল আবার পাঠান (বাতিল: /menu)।"
-    );
+    return ctx.reply("⚠️ Good file-এর কোনো account এই task-এর pending submission-এর সাথে মেলেনি।\nফাইল ভুল হতে পারে — কিছুই প্রসেস হয়নি।");
   }
   await clearSession(adminId);
 
@@ -1416,93 +1489,69 @@ async function processBad(ctx, session) {
     const s = d.data();
     const v = verdict.get(d.id);
     const price = groups.get(String(s.userId)).price;
-    ops.push((b) =>
-      b.update(d.ref, { status: v, earned: v === "good" ? price : 0, checkedAt: now, processedBy: adminId })
-    );
+    ops.push((b) => b.update(d.ref, { status: v, earned: v === "good" ? price : 0, checkedAt: now, processedBy: adminId }));
   }
   for (const g of gl) {
     if (!existingUsers.has(g.userId)) continue;
-    ops.push((b) =>
-      b.update(userRef(g.userId), {
-        balance: FieldValue.increment(g.earned),
-        totalGood: FieldValue.increment(g.good),
-        totalBad: FieldValue.increment(g.bad),
-        totalPending: FieldValue.increment(-(g.good + g.bad)),
-      })
-    );
+    ops.push((b) => b.update(userRef(g.userId), {
+      balance: FieldValue.increment(g.earned),
+      totalGood: FieldValue.increment(g.good),
+      totalBad: FieldValue.increment(g.bad),
+      totalPending: FieldValue.increment(-(g.good + g.bad)),
+    }));
   }
-  const filesSnap = await db
-    .collection("submitted_files")
-    .where("taskId", "==", taskId)
-    .where("status", "==", "pending")
-    .get();
+  const filesSnap = await db.collection("submitted_files").where("taskId", "==", taskId).where("status", "==", "pending").get();
   filesSnap.docs.forEach((d) => ops.push((b) => b.update(d.ref, { status: "processed", processedAt: now })));
 
   const totalGood = gl.reduce((s, g) => s + g.good, 0);
   const totalBad = gl.reduce((s, g) => s + g.bad, 0);
   const totalPayout = round2(gl.reduce((s, g) => s + g.earned, 0));
-  ops.push((b) =>
-    b.set(db.collection("reports").doc(), {
-      taskId,
-      taskTitle: task.title || "",
-      platform: task.platform || "",
-      pricePerAccount: normal,
-      goodCount: totalGood,
-      badCount: totalBad,
-      totalPayout,
-      totalEarned: totalPayout,
-      pendingCount: 0,
-      date: new Date().toISOString(),
-      publishedAt: now,
-      perUser: gl.map((g) => ({
-        userId: g.userId,
-        username: g.username,
-        good: g.good,
-        bad: g.bad,
-        earned: g.earned,
-      })),
-    })
-  );
+
+  ops.push((b) => b.set(db.collection("reports").doc(), {
+    taskId, taskTitle: task.title || "", platform: task.platform || "", pricePerAccount: normal,
+    goodCount: totalGood, badCount: totalBad, totalPayout, totalEarned: totalPayout, pendingCount: 0,
+    date: new Date().toISOString(), publishedAt: now,
+    perUser: gl.map((g) => ({ userId: g.userId, username: g.username, good: g.good, bad: g.bad, earned: g.earned })),
+  }));
+
   await commitOps(ops);
   ctx.telegram.deleteMessage(ctx.chat.id, waitMsg.message_id).catch(() => {});
 
-  // balance যোগ হয়ে গেছে — এবার Firebase Storage থেকে সাবমিট করা ফাইল মুছে ফেলা (Storage ভরে না যাওয়ার জন্য)
-  let freed = 0;
-  for (const d of filesSnap.docs) {
-    const path = d.get("storagePath");
-    if (!path) continue;
-    try {
-      await bucket.file(path).delete();
-      await d.ref.update({ storagePath: "" });
-      freed++;
-    } catch (e) {
-      console.error("storage delete:", e.message);
-    }
-  }
-
   // admin report
   const lines = gl.map((g) => `👤 ${esc(g.username)}: 🟢${g.good} 🔴${g.bad} — ${tk(g.earned)}`);
-  const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n📅 ${fmtDate(now)}\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n🧹 Storage থেকে ফাইল মুছেছে: ${freed}টি\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
+  const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n📅 ${fmtDate(now)}\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
   await sendLong(ctx, report, { reply_markup: adminMenu.reply_markup });
 
-  // প্রতিটা user-কে রিপোর্ট ফাইল + নিচে TOTAL লেখা (এই ফাইল চ্যাট থেকে কখনো মুছে না)
+  // প্রতিটা user-কে GoFile লিংক সহ রিপোর্ট পাঠানো
   const fieldsList = task.fields?.length ? task.fields : DEFAULT_FIELDS;
   const stamp = fmtDate(new Date());
+  const dateStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Dhaka" }).replace(" ", "_").replace(/:/g, "").slice(0, 15);
+
+  await ctx.reply("⏳ ইউজারদের রিপোর্ট ফাইল আপলোড করে লিংক পাঠানো হচ্ছে...");
+
   for (const g of gl) {
     if (!/^\d+$/.test(g.userId)) continue;
     const totals = totalsBlock(g.good + g.bad, g.good, g.bad, g.earned);
+
     try {
       const buf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
-      await bot.telegram.sendDocument(
-        Number(g.userId),
-        { source: buf, filename: `${slugOf(task.title)}_result_${stampForFile()}.xlsx` },
-        { caption: `📄 ${String(task.title || "").slice(0, 120)}\n📅 ${stamp}\n\n${totals}` }
-      );
+      const fileName = `${slugOf(task.title)}_result_${dateStr}.xlsx`;
+
+      const uploaded = await uploadToGoFile(buf, fileName);
+
+      if (uploaded) {
+        await setFilePrivate(uploaded.contentId);
+
+        const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
+        await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
+      } else {
+        throw new Error("Link generation failed");
+      }
     } catch (e) {
-      console.error(`report file failed (${g.userId}):`, e.description || e.message);
-      await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}`);
+      console.error(`report link failed (${g.userId}):`, e.message);
+      await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}\n\n⚠️ ফাইল লিংক তৈরি করতে সমস্যা হয়েছে।`);
     }
-    await sleep(80);
+    await sleep(3000);
   }
 }
 
@@ -2252,7 +2301,7 @@ async function importBackup(ctx) {
     await clearSession(newId);
     return ctx.reply(
       `✅ <b>Import সফল!</b>\n\n👤 ${esc(uname)}\n💰 Balance: ${tk(newUser.balance)}\n📋 ${subs.length} submissions\n💸 ${wds.length} withdrawals\n\n🆔 নতুন UID: <code>${newId}</code>`,
-      kbx(mainMenu)
+      await userKb(ctx.from.id)
     );
   } catch (e) {
     await logRef.delete().catch(() => {});
@@ -2309,7 +2358,7 @@ bot.on(
       case "badge_username": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         const q = await db.collection("users").where("username", "==", text).limit(1).get();
         if (q.empty) return ctx.reply("❌ এই username-এর কোনো user পাওয়া যায়নি। আবার লিখুন:");
@@ -2320,7 +2369,7 @@ bot.on(
       case "badge_name": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         const badge = text.toUpperCase().slice(0, 20);
         await userRef(s.targetUid).update({ customBadge: badge, customBadgeColor: "#fbbf24" });
@@ -2331,7 +2380,7 @@ bot.on(
       case "bc_compose": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         await setSession(id, { action: "bc_confirm", message: ctx.message.text });
         const kb = Markup.inlineKeyboard([
@@ -2343,7 +2392,7 @@ bot.on(
       case "um_search": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         const q = text.replace(/^@/, "").trim();
         const ql = q.toLowerCase();
@@ -2381,7 +2430,7 @@ bot.on(
       case "um_amount": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         const amt = Number(bn2en(text).replace(/,/g, ""));
         if (!Number.isFinite(amt) || amt <= 0) return ctx.reply("⚠️ শুধু সংখ্যা লিখুন। যেমন: 100");
@@ -2424,7 +2473,7 @@ bot.on(
       case "um_newid": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         const nid = text.trim();
         if (!/^\d{5,15}$/.test(nid)) return ctx.reply("⚠️ সঠিক Telegram ID (শুধু সংখ্যা) লিখুন।");
@@ -2445,7 +2494,7 @@ bot.on(
       case "cw_confirm": {
         if (!(await isAdmin(id))) {
           await clearSession(id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(id));
         }
         await clearSession(id);
         if (text !== "DELETE WEBSITE") return ctx.reply("⚪ মেলেনি, Cleanup বাতিল হয়েছে।");
@@ -2476,7 +2525,7 @@ bot.on(
       case "pb_wait_file":
         if (!(await isAdmin(ctx.from.id))) {
           await clearSession(ctx.from.id);
-          return ctx.reply("❌ Unknown command.");
+          return ctx.reply("❌ Unknown command.", await userKb(ctx.from.id));
         }
         return runBg(ctx, () => processBad(ctx, s));
       case "import_wait_file":
@@ -2491,7 +2540,7 @@ bot.on(
 bot.on(
   "text",
   safe(async (ctx) => {
-    return ctx.reply("🤔 বুঝতে পারিনি। নিচের মেনু ব্যবহার করুন অথবা /menu দিন।", kbx(mainMenu));
+    return ctx.reply("🤔 বুঝতে পারিনি। নিচের মেনু ব্যবহার করুন অথবা /menu দিন।", await userKb(ctx.from.id));
   })
 );
 
