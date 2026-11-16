@@ -974,7 +974,7 @@ bot.action(
     }
     return edit(
       ctx,
-      `✅ <b>Withdraw Submitted</b>\n\n?? ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
+      `✅ <b>Withdraw Submitted</b>\n\💰 ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
     );
   })
 );
@@ -1145,57 +1145,6 @@ bot.action(
       [ib("Process Good File", `pb_start:${taskId}`, "success")],
     ]);
     return edit(ctx, msg.slice(0, 4000), kb);
-  })
-);
-
-bot.action(
-  /^af_dl:(.+)$/,
-  adminCb(async (ctx) => {
-    await ctx.answerCbQuery("⏳ Excel তৈরি হচ্ছে...");
-    const taskId = ctx.match[1];
-    try {
-      const [tSnap, snap] = await Promise.all([
-        db.collection("tasks").doc(taskId).get(),
-        db.collection("submissions").where("taskId", "==", taskId).where("status", "==", "pending").get(),
-      ]);
-      if (snap.empty) return ctx.reply("📭 কোনো pending submission নেই।");
-
-      const task = tSnap.exists ? tSnap.data() : {};
-      const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
-      const subs = snap.docs
-        .map((d) => d.data())
-        .sort((a, b) => (toDate(a.submittedAt)?.getTime() || 0) - (toDate(b.submittedAt)?.getTime() || 0));
-
-      const wb = new ExcelJS.Workbook();
-      wb.creator = "ADQ Income Zone";
-      const ws = wb.addWorksheet("Pending");
-
-      const hr = ws.addRow(["#", ...fields.map((f) => f.label || f.key), "User", "User ID", "Submitted At"]);
-      hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4338CA" } };
-
-      subs.forEach((sub, i) => {
-        ws.addRow([i + 1, ...subValues(sub, fields), sub.username || "", String(sub.userId || ""), fmtDate(sub.submittedAt)]);
-      });
-
-      const n = fields.length;
-      for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
-
-      const buf = Buffer.from(await wb.xlsx.writeBuffer());
-      const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
-
-      await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadToZeroStorage(buf, fileName);
-      if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
-
-      await ctx.reply(
-        `🔗 <b>All Files Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Total Rows: ${subs.length}\n\n<i>⚠️ লিংকটি ৩ দিন (৭২ ঘণ্টা) সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`,
-        { parse_mode: "HTML", disable_web_page_preview: true }
-      );
-    } catch (e) {
-      console.error("af_dl failed:", e);
-      return ctx.reply(`⚠️ ফাইল বানানো/পাঠানো যায়নি: ${e.message}`);
-    }
   })
 );
 
@@ -1390,7 +1339,7 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToZeroStorage(rbuf, fileName);
+      const uploaded = await uploadToTfLink(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
       const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
