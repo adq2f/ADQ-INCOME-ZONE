@@ -478,29 +478,17 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- 0x0.st Helper for Direct Links ---- */
-async function uploadTo0x0(buffer, filename) {
+/* ---- PutPut Helper (Cloudflare R2-based, never blocked by Render) ---- */
+async function uploadToPutPut(buffer, filename) {
   try {
-    const form = new FormData();
-    form.append('file', buffer, filename);
-
-    // 0x0.st এর জন্য সঠিক ইউজার-এজেন্ট প্রয়োজন
-    const res = await axios.post('https://0x0.st', form, {
-      headers: { 
-        ...form.getHeaders(),
-        'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
-      },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      timeout: 120000 
-    });
-
-    if (res.data && res.data.startsWith('http')) {
-      return { link: res.data.trim() }; 
-    }
-    throw new Error('Upload failed: ' + res.data);
+    const { PutPutClient } = await import('putput');
+    const pp = new PutPutClient();
+    const { token } = await pp.createGuestToken();
+    pp.setToken(token);
+    const file = await pp.upload(buffer, filename, 'application/octet-stream');
+    return { link: file.url };
   } catch (error) {
-    console.error("0x0.st Upload Error:", error.response?.status, error.message);
+    console.error("PutPut Upload Error:", error.message);
     return null;
   }
 }
@@ -1322,7 +1310,7 @@ bot.action(
       const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
       await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadTo0x0(buf, fileName);
+      const uploaded = await uploadToPutPut(buf, fileName);
       if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
 
       await ctx.reply(
@@ -1527,7 +1515,7 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadTo0x0(rbuf, fileName);
+      const uploaded = await uploadToPutPut(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
       const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
@@ -2120,7 +2108,7 @@ async function doCleanWeb(ctx) {
     authDeleted += res.successCount;
   }
   await ctx.reply(
-    `✅ <b>Cleanup সম্পন্ন!</b>\n\n👥 Users: ${r.users.length}\n📤 Submissions: ${r.subs.length}\n💸 Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 Security: ${r.sec.length}\n🎁 Refer earnings: ${r.refs.length}\n⚙️ Settings: ${r.settings.length}\n🔑 Auth accounts: ${authDeleted}`,
+    `✅ <b>Cleanup সম্পন্ন!</b>\n\n👥 Users: ${r.users.length}\n📤 Submissions: ${r.subs.length}\n?? Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 Security: ${r.sec.length}\n🎁 Refer earnings: ${r.refs.length}\n⚙️ Settings: ${r.settings.length}\n🔑 Auth accounts: ${authDeleted}`,
     { parse_mode: "HTML", reply_markup: adminMenu.reply_markup }
   );
 }
