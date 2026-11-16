@@ -478,13 +478,14 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- ZeroStorage Helper for Direct Links ---- */
-async function uploadToZeroStorage(buffer, filename) {
+/* ---- tfLink Helper for Direct Links (Safe, No Ads, 100MB Limit) ---- */
+async function uploadToTfLink(buffer, filename) {
   try {
     const form = new FormData();
     form.append('file', buffer, filename);
-    
-    const res = await axios.post('https://zerostorage.net/api/upload', form, {
+
+    // tfLink API endpoint
+    const res = await axios.post('https://tflink.net/api/upload', form, {
       headers: {
         ...form.getHeaders(),
         'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
@@ -494,13 +495,13 @@ async function uploadToZeroStorage(buffer, filename) {
       timeout: 120000
     });
 
-    // এখানে পরিবর্তন করা হয়েছে: ZeroStorage 'viewUrl' রিটার্ন করে, 'link' নয়
-    if (res.data && res.data.success && res.data.viewUrl) {
-      return { link: res.data.viewUrl };
+    // tfLink সরাসরি ডাউনলোড URL রেসপন্স হিসেবে দেয়
+    if (res.data && res.data.url) {
+      return { link: res.data.url };
     }
     throw new Error('Upload failed: ' + JSON.stringify(res.data));
   } catch (error) {
-    console.error("ZeroStorage Upload Error:", error.response?.status, error.message);
+    console.error("tfLink Upload Error:", error.response?.status, error.message);
     return null;
   }
 }
@@ -816,220 +817,82 @@ bot.command("setwallet", safe(cmdSetWallet));
 /*  TASK CALLBACKS                                                     */
 /* ------------------------------------------------------------------ */
 bot.action(
-  /^task:(.+)$/,
-  safe(async (ctx) => {
-    await ctx.answerCbQuery();
-    const snap = await db.collection("tasks").doc(ctx.match[1]).get();
-    if (!snap.exists) return ctx.reply("❌ টাস্কটি পাওয়া যায়নি।");
-    const t = { id: snap.id, ...snap.data() };
-    const kb = Markup.inlineKeyboard([
-      [ib("Submit File", `sub:${t.id}`, "success")],
-      [ib("⬅️ Back", "tasks:back")],
-    ]);
-    return edit(ctx, taskText(t), kb);
-  })
-);
-
-bot.action(
-  "tasks:back",
-  safe(async (ctx) => {
-    await ctx.answerCbQuery();
-    const tasks = await fetchOpenTasks();
-    if (!tasks.length) return edit(ctx, "📭 এখন কোনো task নেই।");
-    return edit(ctx, "📋 <b>Available Tasks</b>\n\nনিচের বাটন থেকে টাস্ক সিলেক্ট করুন:", taskListKb(tasks));
-  })
-);
-
-bot.action(
-  /^sub:(.+)$/,
-  safe(async (ctx) => {
-    const snap = await db.collection("tasks").doc(ctx.match[1]).get();
-    if (!snap.exists) return ctx.answerCbQuery("❌ টাস্কটি পাওয়া যায়নি।", { show_alert: true });
-    const t = { id: snap.id, ...snap.data() };
-    const st = taskState(t);
-    if (st === "upcoming") return ctx.answerCbQuery("এখনো শুরু হয়নি।", { show_alert: true });
-    if (st === "closed" || t.active === false) {
-      return ctx.answerCbQuery("টাস্ক শেষ হয়েছে।", { show_alert: true });
-    }
-    if (!(await getUser(ctx.from.id))) {
-      return ctx.answerCbQuery("আগে /start দিন।", { show_alert: true });
-    }
-    await ctx.answerCbQuery();
-    await setSession(ctx.from.id, { action: "submit_file", taskId: t.id });
-    const fields = t.fields?.length ? t.fields : DEFAULT_FIELDS;
-    const fmt = fields.map((f) => f.label || f.key).join(" | ");
-    return ctx.reply(
-      `📤 <b>Submit File</b>\n\n📋 Task: ${esc(t.title)}\n💰 Rate: ৳${money(t.pricePerAccount)}/account\n\n📊 Format:\n<code>${esc(fmt)}</code>\n\n📎 Excel (.xlsx/.xls), CSV, বা TXT file পাঠান।\nপ্রতি রো = ১ অ্যাকাউন্ট\n\n❌ বাতিল: /menu`,
-      { parse_mode: "HTML" }
-    );
-  })
-);
-
-/* ---- file submission ---- */
-async function submitFile(ctx, session) {
-  const doc = ctx.message.document;
-  const filename = doc.file_name || "file.txt";
-  const ext = extOf(filename);
-  if (!FILE_EXTS.includes(ext)) {
-    return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
-  }
-  if ((doc.file_size || 0) > 19 * 1024 * 1024) {
-    return ctx.reply("❌ ফাইল ১৯MB-এর বেশি হতে পারবে না। দয়া করে ছোট ফাইলে ভাগ করে পাঠান।");
-  }
-
-  const user = await getUser(ctx.from.id);
-  if (!user) return ctx.reply("⚠️ আগে /start দিয়ে অ্যাকাউন্ট তৈরি করুন।");
-
-  const tSnap = await db.collection("tasks").doc(session.taskId).get();
-  if (!tSnap.exists) {
-    await clearSession(ctx.from.id);
-    return ctx.reply("❌ টাস্কটি পাওয়া যায়নি।");
-  }
-  const task = { id: tSnap.id, ...tSnap.data() };
-  const st = taskState(task);
-  if (st !== "open" || task.active === false) {
-    await clearSession(ctx.from.id);
-    return ctx.reply(st === "upcoming" ? "⏳ টাস্ক এখনো শুরু হয়নি।" : "🔴 টাস্ক শেষ হয়েছে।");
-  }
-
-  const progressMsg = await ctx.reply("⏳ ফাইল প্রসেস হচ্ছে... 0%");
-  let progressInterval = null;
-
-  try {
-    const buf = await downloadTg(ctx, doc.file_id);
-
-    let progress = 30;
-    await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `⏳ ডাটা পড়া হচ্ছে... ${progress}%`);
-
-    progressInterval = setInterval(async () => {
-      progress += 20;
-      if (progress > 90) progress = 90;
-      try {
-        await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `⏳ ডাটাবেসে সেভ হচ্ছে... ${progress}%`);
-      } catch (e) { /* ignore */ }
-    }, 2000);
-
-    let rows = parseTable(buf, ext);
-    let rowBase = 1;
-    if (rows.length && String(rows[0][0] || "").toLowerCase().includes("uid")) {
-      rows = rows.slice(1);
-      rowBase = 2;
-    }
-
-    const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
-    const parsed = [];
-    let invalid = 0;
-    let blank = 0;
-
-    for (let ri = 0; ri < rows.length; ri++) {
-      const rawRow = rows[ri];
-      const cells0 = rawRow.map((c) => String(c ?? "").trim());
-      const nonEmpty = cells0.filter(Boolean);
-
-      if (!nonEmpty.length) {
-        blank++;
-        continue;
-      }
-
-      let cells = cells0;
-      if (nonEmpty.length === 1 && fields.length > 1) {
-        cells = splitLine(nonEmpty[0], fields.length, fields);
-      }
-      cells = cells.map((c) => String(c ?? "").trim());
-
-      const item = {};
-      fields.forEach((f, i) => { item[f.key] = cells[i] ?? ""; });
-
-      const uid = item.uid || item[fields[0].key] || cells[0] || "";
-      if (!uid) {
-        invalid++;
-        continue;
-      }
-
-      while (cells.length && !cells[cells.length - 1]) cells.pop();
-
-      parsed.push({
-        item,
-        uid,
-        password: item.password ?? cells[1] ?? "",
-        twoFA: item.twoFA ?? item["2fa_key"] ?? cells[2] ?? "",
-        allCells: cells.slice(0, 50).map((c) => c.slice(0, 500)),
-      });
-    }
-
-    if (!parsed.length) {
-      clearInterval(progressInterval);
-      return ctx.reply("❌ ফাইলে কোনো valid রো পাওয়া যায়নি।");
-    }
-
-    // dedup (against DB + inside the file)
-    const exQ = db.collection("submissions").where("taskId", "==", task.id);
-    const existing = Array.isArray(task.dupKeys) && task.dupKeys.length ? await exQ.get() : await exQ.select("allCells").get();
-    const seen = new Set();
-    existing.docs.forEach((d) => {
-      const x = d.data();
-      const k = rowKeyOf(task, x, x.allCells);
-      if (k) seen.add(k);
-    });
-    const fresh = [];
-    let dupCount = 0;
-    for (const r of parsed) {
-      const k = rowKeyOf(task, r.item, r.allCells);
-      if (k && seen.has(k)) { dupCount++; continue; }
-      if (k) seen.add(k);
-      fresh.push(r);
-    }
-    const okCount = fresh.length;
-    if (!okCount) {
-      clearInterval(progressInterval);
-      await clearSession(ctx.from.id);
-      return ctx.reply(`⚠️ সব রো Duplicate!\n\n📄 ফাইল: ${esc(filename)}\n🔴 Duplicate বাদ: ${dupCount}`, await userKb(ctx.from.id));
-    }
-
-    const now = Timestamp.now();
-    const fileRef = db.collection("submitted_files").doc();
-    const ops = [];
-    ops.push((b) => b.set(fileRef, {
-      userId: String(ctx.from.id), username: user.username, taskId: task.id,
-      taskTitle: task.title || "", taskPlatform: task.platform || "", filename,
-      storagePath: doc.file_id, rowCount: parsed.length, okCount, dupCount,
-      status: "pending", uploadedAt: now, processedAt: null,
-    }));
-
-    for (const r of fresh) {
-      const ref = db.collection("submissions").doc();
-      ops.push((b) => b.set(ref, {
-        ...r.item, uid: r.uid, password: r.password, twoFA: r.twoFA, allCells: r.allCells,
-        taskId: task.id, taskTitle: task.title || "", taskPlatform: task.platform || "",
-        userId: String(ctx.from.id), username: user.username, fileId: fileRef.id,
-        source: "telegram_file", status: "pending", price: Number(task.pricePerAccount) || 0,
-        earned: 0, submittedAt: now, checkedAt: null, processedBy: null,
-      }));
-    }
-    ops.push((b) => b.update(userRef(ctx.from.id), { totalPending: FieldValue.increment(okCount) }));
-    await commitOps(ops);
-    await clearSession(ctx.from.id);
-
-    clearInterval(progressInterval);
-    await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, `✅ ফাইল সফলভাবে সাবমিট হয়েছে! 100%`);
-
-    let msg = `✅ <b>File Submit সম্পন্ন!</b>\n\n📋 Task: ${esc(task.title)}\n📄 ফাইল: ${esc(filename)}\n\n🟢 Submit হয়েছে: ${okCount}\n🔴 Duplicate বাদ: ${dupCount}`;
-    if (blank) msg += `\n⚪ ফাঁকা রো বাদ: ${blank}`;
-    if (invalid) msg += `\n⚠️ UID নেই (বাদ): ${invalid}`;
-    msg += "\n\n🟡 Admin রেজাল্ট প্রসেস করবেন।";
-    return ctx.reply(msg, await userKb(ctx.from.id));
-
-  } catch (err) {
-    console.error("Submit error:", err);
+  /^af_dl:(.+)$/,
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery("⏳ Excel তৈরি হচ্ছে...");
+    const taskId = ctx.match[1];
     try {
-      await ctx.telegram.editMessageText(ctx.chat.id, progressMsg.message_id, undefined, "❌ ফাইল সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      const [tSnap, snap] = await Promise.all([
+        db.collection("tasks").doc(taskId).get(),
+        db.collection("submissions").where("taskId", "==", taskId).where("status", "==", "pending").get(),
+      ]);
+      if (snap.empty) return ctx.reply("📭 কোনো pending submission নেই।");
+
+      const task = tSnap.exists ? tSnap.data() : {};
+      const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
+      const subs = snap.docs
+        .map((d) => d.data())
+        .sort((a, b) => (toDate(a.submittedAt)?.getTime() || 0) - (toDate(b.submittedAt)?.getTime() || 0));
+
+      const CHUNK_SIZE = 50000; // প্রতি ফাইলে ৫০,০০০ রো
+      let chunkIndex = 1;
+      let wb = new ExcelJS.Workbook();
+      wb.creator = "ADQ Income Zone";
+      let ws = wb.addWorksheet("Pending");
+
+      const addHeader = () => {
+        const hr = ws.addRow(["#", ...fields.map((f) => f.label || f.key), "User", "User ID", "Submitted At"]);
+        hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4338CA" } };
+      };
+      addHeader();
+      
+      const n = fields.length;
+      for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
+      ws.views = [{ state: "frozen", ySplit: 1 }];
+
+      await ctx.reply("⏳ ফাইল তৈরি ও আপলোড হচ্ছে, অপেক্ষা করুন...");
+
+      for (let i = 0; i < subs.length; i++) {
+        const sub = subs[i];
+        ws.addRow([i + 1, ...subValues(sub, fields), sub.username || "", String(sub.userId || ""), fmtDate(sub.submittedAt)]);
+
+        if ((i + 1) % CHUNK_SIZE === 0 || i === subs.length - 1) {
+          const buf = Buffer.from(await wb.xlsx.writeBuffer());
+          const fileName = `${slugOf(task.title)}_ALL_PENDING_Part${chunkIndex}_${stampForFile()}.xlsx`;
+
+          const uploaded = await uploadToTfLink(buf, fileName);
+          
+          if (uploaded) {
+            await ctx.reply(
+              `🔗 <b>All Files Download Link (Part ${chunkIndex}):</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Rows in this part: ${(i + 1) % CHUNK_SIZE === 0 ? CHUNK_SIZE : (i + 1) % CHUNK_SIZE}\n\n<i>⚠️ লিংকটি ৭ দিন সচল থাকবে। ফাইলটি ডাউনলোড করে সেভ করে রাখুন।</i>`,
+              { parse_mode: "HTML", disable_web_page_preview: true }
+            );
+          } else {
+            await ctx.reply(`⚠️ Part ${chunkIndex} আপলোড করতে সমস্যা হয়েছে।`);
+          }
+
+          chunkIndex++;
+          wb = new ExcelJS.Workbook();
+          ws = wb.addWorksheet("Pending");
+          addHeader();
+          for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
+          ws.views = [{ state: "frozen", ySplit: 1 }];
+          
+          await sleep(2000);
+        }
+      }
+      
+      if (chunkIndex === 1) {
+         return ctx.reply("📭 কোনো ডাটা পাওয়া যায়নি।");
+      }
+
     } catch (e) {
-      await ctx.reply("❌ ফাইল সাবমিট করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।");
+      console.error("af_dl failed:", e);
+      return ctx.reply(`⚠️ ফাইল বানানো/পাঠানো যায়নি: ${e.message}`);
     }
-  } finally {
-    if (progressInterval) clearInterval(progressInterval);
-  }
-}
+  })
+);
 
 /* ------------------------------------------------------------------ */
 /*  WITHDRAW CALLBACKS                                                 */
@@ -1111,7 +974,7 @@ bot.action(
     }
     return edit(
       ctx,
-      `✅ <b>Withdraw Submitted</b>\n\n💰 ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
+      `✅ <b>Withdraw Submitted</b>\n\n?? ${tk(amount)}\n💳 ${method.toUpperCase()}\n📱 <code>${esc(account)}</code>\n\n🟡 Admin approve করার অপেক্ষায়।`
     );
   })
 );
