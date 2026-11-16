@@ -12,7 +12,7 @@
        BOT_TOKEN                = BotFather token
        FIREBASE_SERVICE_ACCOUNT = service account JSON (এক লাইনে)
        EXPORT_SECRET            = (optional) /export ফাইল sign করার secret
-       GOFILE_TOKEN             = GoFile account token (রিপোর্ট ফাইলের লিংকের জন্য)
+       GOFILE_TOKEN             = GoFile account API token (profile page থেকে)
   4. Deploy শেষে Render URL কপি করে UptimeRobot-এ HTTP(s) monitor বানান
      (৫ মিনিট interval) — bot জেগে থাকবে।
   5. Firestore-এ নিজের users/{telegramId} ডক-এ role = "admin" সেট করুন।
@@ -478,49 +478,87 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- GoFile helpers ---- */
-async function uploadToGoFile(buffer, filename) {
-  try {
-    const serverRes = await axios.get("https://api.gofile.io/getServer");
-    const server = serverRes.data.data.server;
-    const form = new FormData();
-    form.append("file", buffer, filename);
+/* ---- GoFile helpers (নতুন GoFile API) ----
+   - Token থাকলে: আপনার account-এ একটা public folder বানিয়ে সেখানে আপলোড হয়,
+     আর সেই folder-এর লিংক পাঠানো হয় (সবাই খুলতে পারবে, ফাইল আপনার account-এ জমা থাকবে)।
+   - Token কাজ না করলে বা না থাকলে: guest হিসেবে আপলোড (fallback)। */
+let gofileRootCache = null;
 
-    // Add token to save to user's account
-    if (process.env.GOFILE_TOKEN) {
-      form.append("token", process.env.GOFILE_TOKEN);
-    }
-
-    const uploadRes = await axios.post(`https://${server}.gofile.io/uploadFile`, form, {
-      headers: form.getHeaders(),
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-      timeout: 120000,
-    });
-
-    if (uploadRes.data.status === "ok") {
-      return {
-        link: uploadRes.data.data.downloadPage,
-        contentId: uploadRes.data.data.contentId,
-      };
-    }
-    throw new Error("Upload failed");
-  } catch (error) {
-    console.error("GoFile Upload Error:", error.message);
-    return null;
-  }
+async function gofileRootFolder(token) {
+  if (gofileRootCache) return gofileRootCache;
+  const auth = { Authorization: `Bearer ${token}` };
+  const idRes = await axios.get("https://api.gofile.io/accounts/getid", { headers: auth, timeout: 30000 });
+  const accId = idRes.data?.data?.id;
+  if (!accId) throw new Error("GoFile account id পাওয়া যায়নি (token ভুল হতে পারে)");
+  const accRes = await axios.get(`https://api.gofile.io/accounts/${accId}`, { headers: auth, timeout: 30000 });
+  const root = accRes.data?.data?.rootFolder;
+  if (!root) throw new Error("GoFile rootFolder পাওয়া যায়নি");
+  gofileRootCache = root;
+  return root;
 }
 
-async function setFilePrivate(contentId) {
-  if (!process.env.GOFILE_TOKEN || !contentId) return;
+async function gofileUploadOnce(buffer, filename, token) {
+  const form = new FormData();
+  const headers = {};
+  let folderCode = null;
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+    const root = await gofileRootFolder(token);
+    const folderName = String(filename).replace(/\.[^.]+$/, "").slice(0, 60) || "report";
+    const fr = await axios.post(
+      "https://api.gofile.io/contents/createFolder",
+      { parentFolderId: root, folderName, public: true },
+      { headers, timeout: 30000 }
+    );
+    if (fr.data?.status !== "ok") throw new Error("createFolder failed: " + JSON.stringify(fr.data));
+    const folderId = fr.data.data.id;
+    folderCode = fr.data.data.code;
+    // নিশ্চিত করা যে folder public
+    try {
+      await axios.put(
+        `https://api.gofile.io/contents/${folderId}/update`,
+        { attribute: "public", attributeValue: true },
+        { headers, timeout: 30000 }
+      );
+    } catch (e) {
+      console.error("GoFile public set warn:", e.response?.status, e.message);
+    }
+    form.append("folderId", folderId);
+  }
+
+  form.append("file", buffer, filename);
+  const res = await axios.post("https://upload.gofile.io/uploadfile", form, {
+    headers: { ...form.getHeaders(), ...headers },
+    maxContentLength: Infinity,
+    maxBodyLength: Infinity,
+    timeout: 120000,
+  });
+  if (res.data?.status !== "ok") throw new Error("Upload failed: " + JSON.stringify(res.data));
+
+  const link = folderCode ? `https://gofile.io/d/${folderCode}` : res.data.data.downloadPage;
+  return { link, contentId: res.data.data.id };
+}
+
+async function uploadToGoFile(buffer, filename) {
+  const token = (process.env.GOFILE_TOKEN || "").trim();
+  if (token) {
+    try {
+      return await gofileUploadOnce(buffer, filename, token);
+    } catch (e) {
+      gofileRootCache = null;
+      console.error(
+        "GoFile (account) upload error:",
+        e.response?.status,
+        JSON.stringify(e.response?.data) || e.message
+      );
+    }
+  }
   try {
-    await axios.put(`https://api.gofile.io/contents/${contentId}/update`, {
-      token: process.env.GOFILE_TOKEN,
-      attribute: "public",
-      attributeValue: false,
-    });
+    return await gofileUploadOnce(buffer, filename, null); // guest fallback
   } catch (e) {
-    console.error("Could not set file to private:", e.message);
+    console.error("GoFile (guest) upload error:", e.response?.status, JSON.stringify(e.response?.data) || e.message);
+    return null;
   }
 }
 
@@ -1249,7 +1287,8 @@ bot.hears(
     for (const g of groups) {
       const rows = g.files.reduce((x, f) => x + (Number(f.rowCount) || 0), 0);
       allRows += rows;
-      list += `\n📋 <b>${esc(g.title)}</b>\n   📄 ${g.files.length} ফাইল • ${rows} submissions\n   📅 ${dateRange(g.files)}\n`;
+      const users = new Set(g.files.map((f) => f.userId)).size;
+      list += `\n📋 <b>${esc(g.title)}</b>\n   👥 ${users} জন • 📄 ${g.files.length} ফাইল • ${rows} submissions\n   📅 ${dateRange(g.files)}\n`;
     }
     const msg = `📥 <b>All Pending Files</b>\n\nমোট ${total}টি ফাইল (${groups.length}টা task)\n\n${totalsBlock(allRows, 0, 0, 0)}\n━━━━━━━━━━━━━━${list}`;
     const kb = Markup.inlineKeyboard(
@@ -1261,6 +1300,7 @@ bot.hears(
   })
 );
 
+// এক ইউজারের সব ফাইল এক লাইনে গ্রুপ হয়ে দেখাবে
 bot.action(
   /^af_task:(.+)$/,
   adminCb(async (ctx) => {
@@ -1275,13 +1315,25 @@ bot.action(
     const files = snap.docs
       .map((d) => d.data())
       .sort((a, b) => (toDate(a.uploadedAt)?.getTime() || 0) - (toDate(b.uploadedAt)?.getTime() || 0));
-    const shown = files.slice(0, 25);
+
+    const byUser = new Map();
+    for (const f of files) {
+      const key = String(f.userId);
+      if (!byUser.has(key)) byUser.set(key, { username: f.username, count: 0, rows: 0, last: f.uploadedAt });
+      const e = byUser.get(key);
+      e.count++;
+      e.rows += Number(f.rowCount) || 0;
+      if ((toDate(f.uploadedAt)?.getTime() || 0) >= (toDate(e.last)?.getTime() || 0)) e.last = f.uploadedAt;
+    }
+    const usersList = [...byUser.values()];
+    const shown = usersList.slice(0, 30);
     const allRows = files.reduce((x, f) => x + (Number(f.rowCount) || 0), 0);
+
     let msg = `📥 <b>${esc(files[0].taskTitle)}</b>\n📅 ${dateRange(files)}\n\n${totalsBlock(allRows, 0, 0, 0)}\n━━━━━━━━━━━━━━\n`;
-    shown.forEach((f, i) => {
-      msg += `\n${i + 1}. 👤 <b>${esc(f.username)}</b>\n   📄 ${esc(f.filename)}\n   📊 ${f.rowCount} rows • 🕐 ${fmtDate(f.uploadedAt)}\n`;
+    shown.forEach((u, i) => {
+      msg += `\n${i + 1}. 👤 <b>${esc(u.username)}</b>\n   📄 ${u.count} ফাইল • 📊 ${u.rows} rows\n   🕐 ${fmtDate(u.last)}\n`;
     });
-    if (files.length > shown.length) msg += `\n… আরও ${files.length - shown.length}টি ফাইল`;
+    if (usersList.length > shown.length) msg += `\n… আরও ${usersList.length - shown.length} জন ইউজার`;
     const kb = Markup.inlineKeyboard([
       [ib("Download All (Combined)", `af_dl:${taskId}`, "success")],
       [ib("Process Good File", `pb_start:${taskId}`, "success")],
@@ -1324,16 +1376,11 @@ bot.action(
       for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
 
       const buf = Buffer.from(await wb.xlsx.writeBuffer());
-
-      const dateStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Dhaka" }).replace(" ", "_").replace(/:/g, "").slice(0, 15);
-      const fileName = `${slugOf(task.title)}_ALL_PENDING_${dateStr}.xlsx`;
+      const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
       await ctx.reply("⏳ ফাইল GoFile-এ আপলোড হচ্ছে, অপেক্ষা করুন...");
       const uploaded = await uploadToGoFile(buf, fileName);
-
-      if (!uploaded) throw new Error("GoFile upload failed");
-
-      await setFilePrivate(uploaded.contentId);
+      if (!uploaded) throw new Error("GoFile upload failed (Render logs দেখুন)");
 
       await ctx.reply(
         `🔗 <b>All Files Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Total Rows: ${subs.length}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`,
@@ -1346,7 +1393,7 @@ bot.action(
   })
 );
 
-/* ---- Process Bad ---- */
+/* ---- Process Good ---- */
 bot.hears(
   ABTN.bad,
   adminOnly(async (ctx) => {
@@ -1525,7 +1572,7 @@ async function processBad(ctx, session) {
   // প্রতিটা user-কে GoFile লিংক সহ রিপোর্ট পাঠানো
   const fieldsList = task.fields?.length ? task.fields : DEFAULT_FIELDS;
   const stamp = fmtDate(new Date());
-  const dateStr = new Date().toLocaleString("sv-SE", { timeZone: "Asia/Dhaka" }).replace(" ", "_").replace(/:/g, "").slice(0, 15);
+  const dateStr = stampForFile();
 
   await ctx.reply("⏳ ইউজারদের রিপোর্ট ফাইল আপলোড করে লিংক পাঠানো হচ্ছে...");
 
@@ -1534,19 +1581,14 @@ async function processBad(ctx, session) {
     const totals = totalsBlock(g.good + g.bad, g.good, g.bad, g.earned);
 
     try {
-      const buf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
-      const fileName = `${slugOf(task.title)}_result_${dateStr}.xlsx`;
+      const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
+      const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToGoFile(buf, fileName);
+      const uploaded = await uploadToGoFile(rbuf, fileName);
+      if (!uploaded) throw new Error("Link generation failed");
 
-      if (uploaded) {
-        await setFilePrivate(uploaded.contentId);
-
-        const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
-        await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
-      } else {
-        throw new Error("Link generation failed");
-      }
+      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৭-১০ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
+      await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
     } catch (e) {
       console.error(`report link failed (${g.userId}):`, e.message);
       await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}\n\n⚠️ ফাইল লিংক তৈরি করতে সমস্যা হয়েছে।`);
@@ -2003,11 +2045,24 @@ bot.command(
   })
 );
 
+// সময় শেষ হওয়া task অটো active:false হয়ে যায় এবং লিস্ট থেকে সরে যায়
 bot.hears(
   ABTN.tasks,
   adminOnly(async (ctx) => {
     const snap = await db.collection("tasks").where("active", "==", true).get();
+    const nowMs = Date.now();
+    const isExpired = (d) => {
+      const e = toDate(d.get("endTime"));
+      return !!e && e.getTime() <= nowMs;
+    };
+    const expiredDocs = snap.docs.filter(isExpired);
+    if (expiredDocs.length) {
+      await commitOps(
+        expiredDocs.map((d) => (b) => b.update(d.ref, { active: false, updatedAt: Timestamp.now() }))
+      );
+    }
     const tasks = snap.docs
+      .filter((d) => !isExpired(d))
       .map((d) => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (toDate(b.createdAt)?.getTime() || 0) - (toDate(a.createdAt)?.getTime() || 0))
       .slice(0, 30);
