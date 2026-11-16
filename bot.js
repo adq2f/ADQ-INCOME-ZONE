@@ -583,6 +583,8 @@ bot.use(async (ctx, next) => {
 async function cmdStart(ctx) {
   const f = ctx.from;
   let u = await getUser(f.id);
+  const payload = ctx.startPayload; // রেফারেল লিংকের পেছনের কোড
+
   if (!u) {
     let code = genReferCode();
     for (let i = 0; i < 5; i++) {
@@ -590,6 +592,16 @@ async function cmdStart(ctx) {
       if (dup.empty) break;
       code = genReferCode();
     }
+    
+    let referrerId = null;
+    if (payload) {
+      const refSnap = await db.collection("users").where("myReferCode", "==", payload).limit(1).get();
+      if (!refSnap.empty) {
+        referrerId = refSnap.docs[0].id;
+        if (referrerId === String(f.id)) referrerId = null; // নিজের লিংকে নিজে ক্লিক করলে বাদ যাবে
+      }
+    }
+
     const now = Timestamp.now();
     const doc = {
       username: f.first_name || f.username || "User",
@@ -603,7 +615,7 @@ async function cmdStart(ctx) {
       totalBad: 0,
       totalPending: 0,
       myReferCode: code,
-      referredBy: null,
+      referredBy: referrerId, // এখানে রেফারার এর আইডি সেভ হবে
       referCount: 0,
       totalReferEarning: 0,
       wallets: {},
@@ -612,14 +624,22 @@ async function cmdStart(ctx) {
       createdAt: now,
       telegramLinkedAt: now,
     };
+    
     try {
       await userRef(f.id).create(doc);
+      
+      // রেফারার এর কাউন্ট ১ বাড়িয়ে দেওয়া
+      if (referrerId) {
+        await userRef(referrerId).update({ referCount: FieldValue.increment(1) }).catch(() => {});
+        await dm(referrerId, `🎉 <b>নতুন রেফার!</b>\n\nআপনার লিংক দিয়ে <b>${esc(doc.username)}</b> বটে জয়েন করেছে।`);
+      }
+      
       return ctx.reply(
         `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"Task Submit" বাটন থেকে আয় শুরু করুন।`,
         await userKb(f.id)
       );
     } catch (e) {
-      if (e.code !== 6) throw e; // 6 = ALREADY_EXISTS (race) -> fall through
+      if (e.code !== 6) throw e;
       u = await getUser(f.id);
     }
   }
@@ -628,7 +648,6 @@ async function cmdStart(ctx) {
     await userKb(f.id)
   );
 }
-
 async function cmdMenu(ctx) {
   return ctx.reply("📱 <b>মেইন মেনু</b>", await userKb(ctx.from.id));
 }
@@ -650,6 +669,11 @@ async function cmdBalance(ctx) {
     `💰 <b>ব্যালেন্স</b>\n\nAvailable: <b>${tk(u.balance)}</b>\n\n🟢 Good: ${u.totalGood || 0}\n🔴 Bad: ${u.totalBad || 0}\n🟡 Pending: ${u.totalPending || 0}`,
     { parse_mode: "HTML" }
   );
+}
+
+async function getReferCommission() {
+  const s = await db.collection("settings").doc("referral_config").get();
+  return s.exists ? Number(s.data().commissionRate ?? 0) : 0;
 }
 
 async function getWdConfig() {
@@ -746,9 +770,12 @@ async function cmdHistory(ctx) {
 async function cmdRefer(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
+  const rate = await getReferCommission();
+  const link = `https://t.me/${ctx.botInfo.username}?start=${u.myReferCode}`;
+  
   return ctx.reply(
-    `🎁 <b>Refer &amp; Earn</b>\n\n🔗 আপনার কোড: <code>${esc(u.myReferCode)}</code>\n👥 Refer: ${u.referCount || 0} জন\n💰 মোট আয়: ${tk(u.totalReferEarning)}\n\nবন্ধুকে আপনার কোড দিন — সে আয় করলে আপনি কমিশন পান!`,
-    { parse_mode: "HTML" }
+    `🎁 <b>Refer &amp; Earn</b>\n\n🔗 <b>Refer Link:</b>\n<code>${link}</code>\n\n👥 Total Refer: ${u.referCount || 0} জন\n📈 Commission Rate: <b>${rate}%</b>\n💰 Total Refer Commission: ${tk(u.totalReferEarning)}\n\n<i>বন্ধুকে আপনার লিংক দিন — সে Good Account দিলে আপনি কমিশন পাবেন!</i>`,
+    { parse_mode: "HTML", disable_web_page_preview: true }
   );
 }
 
@@ -1293,7 +1320,10 @@ async function processBad(ctx, session) {
       if (s.exists) {
         existingUsers.add(s.id);
         const g = groups.get(s.id);
-        if (g && s.get("username")) g.username = s.get("username");
+        if (g) {
+          if (s.get("username")) g.username = s.get("username");
+          g.referredBy = s.get("referredBy"); // রেফারার আইডি নেওয়া হচ্ছে
+        }
       }
     });
   }
@@ -1306,14 +1336,33 @@ async function processBad(ctx, session) {
     const price = groups.get(String(s.userId)).price;
     ops.push((b) => b.update(d.ref, { status: v, earned: v === "good" ? price : 0, checkedAt: now, processedBy: adminId }));
   }
+
   for (const g of gl) {
     if (!existingUsers.has(g.userId)) continue;
+    
+    // ইউজারের ব্যালেন্স আপডেট
     ops.push((b) => b.update(userRef(g.userId), {
       balance: FieldValue.increment(g.earned),
       totalGood: FieldValue.increment(g.good),
       totalBad: FieldValue.increment(g.bad),
       totalPending: FieldValue.increment(-(g.good + g.bad)),
     }));
+
+    // রেফারেল কমিশন লজিক
+    if (g.earned > 0 && g.referredBy) {
+      const rate = await getReferCommission();
+      const comm = round2(g.earned * (rate / 100));
+      
+      if (comm > 0) {
+        ops.push((b) => b.update(userRef(g.referredBy), {
+          balance: FieldValue.increment(comm),
+          totalReferEarning: FieldValue.increment(comm)
+        }));
+        
+        // রেফারারকে মেসেজ পাঠানো
+        await dm(g.referredBy, `🎉 <b>Refer Commission!</b>\n\nআপনার রেফার করা ইউজার <b>${esc(g.username)}</b> Good Account দিয়েছে।\n💰 আপনি পেয়েছেন: <b>${tk(comm)}</b> (${rate}%)`);
+      }
+    }
   }
   const filesSnap = await db.collection("submitted_files").where("taskId", "==", taskId).where("status", "==", "pending").get();
   filesSnap.docs.forEach((d) => ops.push((b) => b.update(d.ref, { status: "processed", processedAt: now })));
@@ -1475,23 +1524,24 @@ bot.action(
   "bc_yes",
   adminCb(async (ctx) => {
     const s = await getSession(ctx.from.id);
-    if (!s || s.action !== "bc_confirm" || !s.message) {
+    if (!s || s.action !== "bc_confirm" || !s.msgId) {
       return ctx.answerCbQuery("⚠️ কোনো pending broadcast নেই।", { show_alert: true });
     }
     await ctx.answerCbQuery();
     await clearSession(ctx.from.id);
-    const message = s.message;
+    
+    const { msgId, chatId: adminChatId } = s;
     const chatId = ctx.callbackQuery.message.chat.id;
-    const msgId = ctx.callbackQuery.message.message_id;
+    const callbackMsgId = ctx.callbackQuery.message.message_id;
     const upd = (text) =>
-      ctx.telegram.editMessageText(chatId, msgId, undefined, text, { parse_mode: "HTML" }).catch(() => {});
+      ctx.telegram.editMessageText(chatId, callbackMsgId, undefined, text, { parse_mode: "HTML" }).catch(() => {});
 
     runBg(
       ctx,
       async () => {
         await db.collection("notices").add({
           title: "📢 Admin Broadcast",
-          message,
+          message: "Media/Text Broadcast",
           apkUrl: null,
           linkUrl: null,
           active: true,
@@ -1507,14 +1557,15 @@ bot.action(
         for (let i = 0; i < total; i++) {
           const chat = Number(targets[i].get("telegramId")) || targets[i].id;
           try {
-            await ctx.telegram.sendMessage(chat, message);
+            // copyMessage ব্যবহার করে হুবহু মেসেজটি পাঠানো হচ্ছে
+            await ctx.telegram.copyMessage(chat, adminChatId, msgId);
             sent++;
           } catch (e) {
             const retry = e.response?.parameters?.retry_after;
             if (retry) {
               await sleep((retry + 1) * 1000);
               try {
-                await ctx.telegram.sendMessage(chat, message);
+                await ctx.telegram.copyMessage(chat, adminChatId, msgId);
                 sent++;
               } catch {
                 failed++;
@@ -1572,6 +1623,19 @@ bot.command(
     else val = raw;
     await db.collection("settings").doc("withdraw_config").set({ [key]: val }, { merge: true });
     return ctx.reply(`🟢 ${key} = ${val} সেট হয়েছে।`);
+  })
+);
+
+bot.command(
+  "setref",
+  adminOnly(async (ctx) => {
+    const parts = ctx.message.text.trim().split(/\s+/);
+    const rate = parseFloat(parts[1]);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      return ctx.reply("⚠️ ব্যবহার: /setref <rate>\nযেমন: /setref 5 (অথবা 3.5, 2.451)");
+    }
+    await db.collection("settings").doc("referral_config").set({ commissionRate: rate }, { merge: true });
+    return ctx.reply(`🟢 Referral Commission সফলভাবে ${rate}% সেট করা হয়েছে।`);
   })
 );
 
@@ -2205,11 +2269,12 @@ bot.on(
           await clearSession(id);
           return ctx.reply("❌ Unknown command.", await userKb(id));
         }
-        await setSession(id, { action: "bc_confirm", message: ctx.message.text });
+        // মেসেজের আইডি সেভ করা হচ্ছে যাতে copyMessage করা যায়
+        await setSession(id, { action: "bc_confirm", msgId: ctx.message.message_id, chatId: ctx.chat.id });
         const kb = Markup.inlineKeyboard([
           [ib("Send All", "bc_yes", "success"), ib("Cancel", "bc_no", "danger")],
         ]);
-        return ctx.reply(`📢 <b>Preview:</b>\n\n${esc(ctx.message.text)}\n\nসব user-কে পাঠাবেন?`, kbx(kb));
+        return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মেসেজটি (টেক্সট/ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
       }
 
       case "um_search": {
@@ -2334,7 +2399,22 @@ bot.on(
     }
   })
 );
+// ব্রডকাস্টের জন্য ভিডিও বা ছবি রিসিভ করা
+bot.on(["video", "photo"], safe(async (ctx, next) => {
+  const s = await getSession(ctx.from.id);
+  if (!s || s.action !== "bc_compose") return next();
+  
+  if (!(await isAdmin(ctx.from.id))) {
+    await clearSession(ctx.from.id);
+    return ctx.reply("❌ Unknown command.", await userKb(ctx.from.id));
+  }
 
+  await setSession(ctx.from.id, { action: "bc_confirm", msgId: ctx.message.message_id, chatId: ctx.chat.id });
+  const kb = Markup.inlineKeyboard([
+    [ib("Send All", "bc_yes", "success"), ib("Cancel", "bc_no", "danger")],
+  ]);
+  return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মিডিয়া (ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
+}));
 bot.on(
   "document",
   safe(async (ctx) => {
