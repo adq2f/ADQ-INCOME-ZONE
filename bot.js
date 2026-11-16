@@ -478,16 +478,18 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- Litterbox (Catbox) Helper for Direct Links ---- */
-async function uploadToLitterbox(buffer, filename) {
+/* ---- 0x0.st Helper for Direct Links ---- */
+async function uploadTo0x0(buffer, filename) {
   try {
     const form = new FormData();
-    form.append('reqtype', 'fileupload');
-    form.append('time', '72h'); // ৭২ ঘণ্টা পর অটো ডিলিট
-    form.append('fileToUpload', buffer, filename);
+    form.append('file', buffer, filename);
 
-    const res = await axios.post('https://litterbox.catbox.moe/resources/internals/api.php', form, {
-      headers: form.getHeaders(),
+    // 0x0.st এর জন্য সঠিক ইউজার-এজেন্ট প্রয়োজন
+    const res = await axios.post('https://0x0.st', form, {
+      headers: { 
+        ...form.getHeaders(),
+        'User-Agent': 'ADQ-Bot/1.0 (Telegram Bot)'
+      },
       maxContentLength: Infinity,
       maxBodyLength: Infinity,
       timeout: 120000 
@@ -498,7 +500,7 @@ async function uploadToLitterbox(buffer, filename) {
     }
     throw new Error('Upload failed: ' + res.data);
   } catch (error) {
-    console.error("Litterbox Upload Error:", error.message);
+    console.error("0x0.st Upload Error:", error.response?.status, error.message);
     return null;
   }
 }
@@ -1320,7 +1322,7 @@ bot.action(
       const fileName = `${slugOf(task.title)}_ALL_PENDING_${stampForFile()}.xlsx`;
 
       await ctx.reply("⏳ ফাইল আপলোড হচ্ছে, অপেক্ষা করুন...");
-      const uploaded = await uploadToLitterbox(buf, fileName);
+      const uploaded = await uploadTo0x0(buf, fileName);
       if (!uploaded) throw new Error("Upload failed (Render logs দেখুন)");
 
       await ctx.reply(
@@ -1525,10 +1527,10 @@ async function processBad(ctx, session) {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
 
-      const uploaded = await uploadToLitterbox(rbuf, fileName);
+      const uploaded = await uploadTo0x0(rbuf, fileName);
       if (!uploaded) throw new Error("Link generation failed");
 
-      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ লিংকটি ৩ দিন (৭২ ঘণ্টা) সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
+      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন অথবা রিপোর্ট দেখুন।</i>`;
       await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
     } catch (e) {
       console.error(`report link failed (${g.userId}):`, e.message);
