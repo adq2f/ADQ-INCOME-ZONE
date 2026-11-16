@@ -27,6 +27,7 @@ import crypto from "crypto";
 import { Telegraf, Markup } from "telegraf";
 import admin from "firebase-admin";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 
 /* ------------------------------------------------------------------ */
 /*  KEEP-ALIVE HTTP SERVER (Render + UptimeRobot)                      */
@@ -91,18 +92,27 @@ const ABTN = {
 const STYLE = {
   [BTN.task]: "success",
   [BTN.balance]: "primary",
+  [BTN.withdraw]: "success",
+  [BTN.leaderboard]: "primary",
   [BTN.profile]: "primary",
+  [BTN.history]: "primary",
   [BTN.refer]: "success",
+  [BTN.help]: "primary",
   [ABTN.stats]: "success",
   [ABTN.users]: "primary",
   [ABTN.files]: "danger",
   [ABTN.bad]: "success",
+  [ABTN.wd]: "success",
+  [ABTN.badges]: "primary",
+  [ABTN.bc]: "danger",
+  [ABTN.settings]: "primary",
   [ABTN.tasks]: "success",
   [ABTN.manage]: "primary",
+  [ABTN.back]: "danger",
 };
-const kbBtn = (label) => (STYLE[label] ? { text: label, style: STYLE[label] } : label);
-// inline button (রঙসহ)
-const ib = (text, data, style) => ({ text, callback_data: data, ...(style ? { style } : {}) });
+// প্রতিটা button-এ রঙ থাকবে (নির্দিষ্ট না থাকলে নীল)
+const kbBtn = (label) => ({ text: label, style: STYLE[label] || "primary" });
+const ib = (text, data, style = "primary") => ({ text, callback_data: data, style });
 const ALL_LABELS = new Set([...Object.values(BTN), ...Object.values(ABTN)]);
 
 const METHODS = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
@@ -122,11 +132,10 @@ const mainMenu = Markup.keyboard(
 const adminMenu = Markup.keyboard(
   [
     [ABTN.stats, ABTN.users],
-    [ABTN.files, ABTN.bad],
-    [ABTN.wd, ABTN.badges],
-    [ABTN.bc, ABTN.settings],
-    [ABTN.tasks, ABTN.manage],
-    [ABTN.back],
+    [ABTN.files, ABTN.wd],
+    [ABTN.badges, ABTN.bc],
+    [ABTN.settings, ABTN.tasks],
+    [ABTN.manage, ABTN.back],
   ].map((row) => row.map(kbBtn))
 ).resize();
 
@@ -469,14 +478,57 @@ function rowKeyOf(task, item, cells) {
 /* ------------------------------------------------------------------ */
 /*  GLOBAL MIDDLEWARE                                                  */
 /* ------------------------------------------------------------------ */
+// ---- চ্যাট পরিষ্কার রাখা: নতুন মেনু-ট্যাপে আগের মেসেজ মুছে যায় ----
+// (ফাইল/ডকুমেন্ট — ইউজারের সাবমিট করা ফাইল ও বটের পাঠানো রিপোর্ট ফাইল — কখনো মুছে না)
+const screens = new Map(); // chatId -> [message_id]
+const kbMsg = new Map(); // chatId -> যে মেসেজে মেনু keyboard আছে (সেটা মুছলে keyboard চলে যায়)
+const trackMsg = (chatId, mid) => {
+  const a = screens.get(chatId) || [];
+  a.push(mid);
+  if (a.length > 80) a.shift();
+  screens.set(chatId, a);
+};
+async function wipeScreens(ctx) {
+  const chatId = ctx.chat.id;
+  const ids = screens.get(chatId) || [];
+  screens.delete(chatId);
+  await Promise.all(ids.map((mid) => ctx.telegram.deleteMessage(chatId, mid).catch(() => {})));
+}
+
 bot.use(async (ctx, next) => {
   if (ctx.chat && ctx.chat.type !== "private") return;
   const t = ctx.message?.text;
-  if (t && (t.startsWith("/") || ALL_LABELS.has(t))) {
+  const isMenu = !!t && (t.startsWith("/") || ALL_LABELS.has(t));
+  if (isMenu) {
     try {
       await clearSession(ctx.from.id);
     } catch (e) {
       console.error("clearSession:", e.message);
+    }
+  }
+  if (ctx.chat && ctx.from && !ctx.message?.document) {
+    try {
+      if (isMenu) {
+        await wipeScreens(ctx);
+        await ctx.deleteMessage().catch(() => {});
+      } else if (t) {
+        trackMsg(ctx.chat.id, ctx.message.message_id);
+      }
+      const origReply = ctx.reply.bind(ctx);
+      ctx.reply = async (text, extra) => {
+        const m = await origReply(text, extra);
+        const chatId = ctx.chat.id;
+        if (extra?.reply_markup?.keyboard) {
+          const prev = kbMsg.get(chatId);
+          kbMsg.set(chatId, m.message_id);
+          if (prev) ctx.telegram.deleteMessage(chatId, prev).catch(() => {});
+        } else {
+          trackMsg(chatId, m.message_id);
+        }
+        return m;
+      };
+    } catch (e) {
+      console.error("cleaner:", e.message);
     }
   }
   return next();
@@ -640,11 +692,12 @@ async function recentSubmissions(uid, n) {
 }
 
 async function cmdHistory(ctx) {
-  if (!(await needUser(ctx))) return;
-  const subs = await recentSubmissions(ctx.from.id, 10);
-  if (!subs.length) return ctx.reply("📭 কোনো হিস্টোরি নেই।");
-  const lines = subs.map((s, i) => `${i + 1}. ${statusIcon(s.status)} ${esc(s.uid)} — ${esc(s.taskTitle)}`);
-  return ctx.reply(`📜 <b>History (শেষ ১০টি)</b>\n\n${lines.join("\n")}`, { parse_mode: "HTML" });
+  const u = await needUser(ctx);
+  if (!u) return;
+  return ctx.reply(
+    `📜 <b>History</b>\n\n✅ TOTAL GOOD = ${u.totalGood || 0}\n❌ TOTAL BAD = ${u.totalBad || 0}\n⏳ TOTAL PENDING = ${u.totalPending || 0}`,
+    { parse_mode: "HTML" }
+  );
 }
 
 async function cmdRefer(ctx) {
@@ -794,7 +847,7 @@ async function submitFile(ctx, session) {
     return ctx.reply(st === "upcoming" ? "⏳ টাস্ক এখনো শুরু হয়নি।" : "🔴 টাস্ক শেষ হয়েছে।");
   }
 
-  await ctx.reply("📥 ফাইল প্রসেস হচ্ছে...");
+  const waitMsg = await ctx.reply("📥 ফাইল প্রসেস হচ্ছে...");
   const buf = await downloadTg(ctx, doc.file_id);
   let rows = parseTable(buf, ext);
   let rowBase = 1;
@@ -933,6 +986,7 @@ async function submitFile(ctx, session) {
   if (blank) msg += `\n⚪ ফাঁকা রো বাদ: ${blank}`;
   if (invalid) msg += `\n⚠️ UID নেই (বাদ): ${invalid} — রো ${badRows.join(", ")}${invalid > badRows.length ? " …" : ""}`;
   msg += "\n\n🟡 Admin রেজাল্ট প্রসেস করবেন।";
+  ctx.telegram.deleteMessage(ctx.chat.id, waitMsg.message_id).catch(() => {});
   return ctx.reply(msg, kbx(mainMenu));
 }
 
@@ -1076,6 +1130,26 @@ bot.hears(
   })
 );
 
+const totalsBlock = (submit, good, bad, earn) =>
+  `📝 TOTAL SUBMIT = ${submit}\n✅ TOTAL GOOD = ${good}\n❌ TOTAL BAD = ${bad}\n💸 TOTAL EARN = ${tk(earn)}`;
+const dateRange = (files) => {
+  const t = files.map((f) => toDate(f.uploadedAt)?.getTime()).filter(Boolean).sort((x, y) => x - y);
+  if (!t.length) return "—";
+  const x = fmtDate(new Date(t[0]));
+  const y = fmtDate(new Date(t[t.length - 1]));
+  return x === y ? x : `${x} → ${y}`;
+};
+const stampForFile = () =>
+  new Date().toLocaleString("sv-SE", { timeZone: "Asia/Dhaka" }).replace(" ", "_").replace(/:/g, "").slice(0, 15);
+const slugOf = (t) => String(t || "task").replace(/\s+/g, "_").replace(/[^A-Za-z0-9_-]/g, "") || "task";
+function subValues(sub, fields) {
+  return fields.map((f, idx) => {
+    let v = sub[f.key];
+    if ((v === undefined || v === null || v === "") && Array.isArray(sub.allCells)) v = sub.allCells[idx];
+    return v === undefined || v === null ? "" : String(v);
+  });
+}
+
 /* ---- pending files grouped by task ---- */
 async function pendingFilesByTask() {
   const snap = await db.collection("submitted_files").where("status", "==", "pending").get();
@@ -1094,11 +1168,14 @@ bot.hears(
   adminOnly(async (ctx) => {
     const { total, groups } = await pendingFilesByTask();
     if (!total) return ctx.reply("📭 কোনো pending file নেই।");
-    let msg = `📥 <b>All Pending Files</b>\n\nমোট ${total}টি ফাইল (${groups.length}টা task)\n`;
+    let allRows = 0;
+    let list = "";
     for (const g of groups) {
-      const rows = g.files.reduce((s, f) => s + (Number(f.rowCount) || 0), 0);
-      msg += `\n📋 <b>${esc(g.title)}</b>\n   📄 ${g.files.length} ফাইল, ${rows} submissions\n`;
+      const rows = g.files.reduce((x, f) => x + (Number(f.rowCount) || 0), 0);
+      allRows += rows;
+      list += `\n📋 <b>${esc(g.title)}</b>\n   📄 ${g.files.length} ফাইল • ${rows} submissions\n   📅 ${dateRange(g.files)}\n`;
     }
+    const msg = `📥 <b>All Pending Files</b>\n\nমোট ${total}টি ফাইল (${groups.length}টা task)\n\n${totalsBlock(allRows, 0, 0, 0)}\n━━━━━━━━━━━━━━${list}`;
     const kb = Markup.inlineKeyboard(
       groups.slice(0, 50).map((g) => [
         ib(`${String(g.title || "").slice(0, 30)} (${g.files.length} files)`, `af_task:${g.taskId}`, "danger"),
@@ -1122,10 +1199,11 @@ bot.action(
     const files = snap.docs
       .map((d) => d.data())
       .sort((a, b) => (toDate(a.uploadedAt)?.getTime() || 0) - (toDate(b.uploadedAt)?.getTime() || 0));
-    const shown = files.slice(0, 30);
-    let msg = `📥 <b>Files for task</b>\n📋 ${esc(files[0].taskTitle)}\n`;
+    const shown = files.slice(0, 25);
+    const allRows = files.reduce((x, f) => x + (Number(f.rowCount) || 0), 0);
+    let msg = `📥 <b>${esc(files[0].taskTitle)}</b>\n📅 ${dateRange(files)}\n\n${totalsBlock(allRows, 0, 0, 0)}\n━━━━━━━━━━━━━━\n`;
     shown.forEach((f, i) => {
-      msg += `\n${i + 1}. 👤 ${esc(f.username)}\n   📄 ${esc(f.filename)}\n   📊 ${f.rowCount} rows • ${fmtDate(f.uploadedAt)}\n`;
+      msg += `\n${i + 1}. 👤 <b>${esc(f.username)}</b>\n   📄 ${esc(f.filename)}\n   📊 ${f.rowCount} rows • 🕐 ${fmtDate(f.uploadedAt)}\n`;
     });
     if (files.length > shown.length) msg += `\n… আরও ${files.length - shown.length}টি ফাইল`;
     const kb = Markup.inlineKeyboard([
@@ -1141,34 +1219,50 @@ bot.action(
   adminCb(async (ctx) => {
     await ctx.answerCbQuery("⏳ Excel তৈরি হচ্ছে...");
     const taskId = ctx.match[1];
-    const snap = await db
-      .collection("submissions")
-      .where("taskId", "==", taskId)
-      .where("status", "==", "pending")
-      .get();
-    if (snap.empty) return ctx.reply("📭 কোনো pending submission নেই।");
-    const rows = snap.docs.map((d) => {
-      const s = d.data();
-      return {
-        UID: s.uid,
-        Password: s.password,
-        "2FA": s.twoFA,
-        User: s.username,
-        UserID: s.userId,
-        SubmittedAt: fmtDate(s.submittedAt),
-        FileID: s.fileId,
-      };
-    });
-    const ws = XLSX.utils.json_to_sheet(rows, {
-      header: ["UID", "Password", "2FA", "User", "UserID", "SubmittedAt", "FileID"],
-    });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Pending");
-    const out = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
-    return ctx.replyWithDocument(
-      { source: out, filename: `pending_${taskId}_${Date.now()}.xlsx` },
-      { caption: `📊 ${rows.length}টি pending submission` }
-    );
+    try {
+      const [tSnap, snap] = await Promise.all([
+        db.collection("tasks").doc(taskId).get(),
+        db.collection("submissions").where("taskId", "==", taskId).where("status", "==", "pending").get(),
+      ]);
+      if (snap.empty) return ctx.reply("📭 কোনো pending submission নেই।");
+      const task = tSnap.exists ? tSnap.data() : {};
+      const fields = task.fields?.length ? task.fields : DEFAULT_FIELDS;
+      const subs = snap.docs
+        .map((d) => d.data())
+        .sort((a, b) => (toDate(a.submittedAt)?.getTime() || 0) - (toDate(b.submittedAt)?.getTime() || 0));
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = "ADQ Income Zone";
+      const ws = wb.addWorksheet("Pending");
+      ws.addRow(["#", ...fields.map((f) => f.label || f.key), "User", "User ID", "Submitted At"]);
+      const hr = ws.getRow(1);
+      hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4338CA" } };
+      hr.alignment = { horizontal: "center", vertical: "middle" };
+      subs.forEach((sub, i) => {
+        ws.addRow([i + 1, ...subValues(sub, fields), sub.username || "", String(sub.userId || ""), fmtDate(sub.submittedAt)]);
+      });
+      ws.addRow([]);
+      [["TOTAL SUBMIT", subs.length], ["TOTAL GOOD", 0], ["TOTAL BAD", 0], ["TOTAL EARN", 0]].forEach((r) => {
+        ws.addRow(r).font = { bold: true };
+      });
+      const n = fields.length;
+      for (let c = 1; c <= n + 4; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= n + 1 ? 26 : 22;
+      ws.views = [{ state: "frozen", ySplit: 1 }];
+      const buf = Buffer.from(await wb.xlsx.writeBuffer());
+
+      const caption =
+        `📥 ${String(task.title || "Task").slice(0, 120)}\n📅 ${fmtDate(new Date())}\n\n` +
+        `${totalsBlock(subs.length, 0, 0, 0)}`;
+      await ctx.telegram.sendDocument(
+        ctx.chat.id,
+        { source: buf, filename: `${slugOf(task.title)}_pending_${stampForFile()}.xlsx` },
+        { caption }
+      );
+    } catch (e) {
+      console.error("af_dl failed:", e);
+      return ctx.reply(`⚠️ ফাইল বানানো/পাঠানো যায়নি: ${e.description || e.message}`);
+    }
   })
 );
 
@@ -1199,6 +1293,39 @@ bot.action(
   })
 );
 
+// প্রতিটা user-এর নিজের রিপোর্ট ফাইল — এক শিটে: Good রো সবুজ, Bad রো লাল
+async function buildUserReport(task, fields, g, items) {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "ADQ Income Zone";
+  wb.created = new Date();
+  const ws = wb.addWorksheet("Report");
+  ws.addRow(["#", ...fields.map((f) => f.label || f.key), "Status", "Earned (৳)"]);
+  const hr = ws.getRow(1);
+  hr.font = { bold: true, color: { argb: "FFFFFFFF" } };
+  hr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4338CA" } };
+  hr.alignment = { horizontal: "center", vertical: "middle" };
+  const ordered = [...items.filter((x) => x.good), ...items.filter((x) => !x.good)];
+  ordered.forEach(({ s: sub, good }, i) => {
+    const row = ws.addRow([i + 1, ...subValues(sub, fields), good ? "GOOD" : "BAD", good ? g.price : 0]);
+    for (let c = 2; c <= 1 + fields.length; c++) {
+      row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: good ? "FFBBF7D0" : "FFFECACA" } };
+    }
+    row.getCell(2 + fields.length).font = { bold: true, color: { argb: good ? "FF047857" : "FFB91C1C" } };
+  });
+  ws.addRow([]);
+  [
+    ["TOTAL SUBMIT", g.good + g.bad],
+    ["TOTAL GOOD", g.good],
+    ["TOTAL BAD", g.bad],
+    ["TOTAL EARN", g.earned],
+  ].forEach((r) => {
+    ws.addRow(r).font = { bold: true };
+  });
+  for (let c = 1; c <= fields.length + 3; c++) ws.getColumn(c).width = c === 1 ? 6 : c <= fields.length + 1 ? 26 : 14;
+  ws.views = [{ state: "frozen", ySplit: 1 }];
+  return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
 async function processBad(ctx, session) {
   const adminId = ctx.from.id;
   if (!(await isAdmin(adminId))) return ctx.reply("❌ Unknown command.");
@@ -1207,7 +1334,7 @@ async function processBad(ctx, session) {
   if (!FILE_EXTS.includes(ext)) return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
   if ((doc.file_size || 0) > MAX_FILE) return ctx.reply("❌ ফাইল ১৫MB-এর বেশি হতে পারবে না।");
 
-  await ctx.reply("⏳ Good file প্রসেস হচ্ছে...");
+  const waitMsg = await ctx.reply("⏳ Good file প্রসেস হচ্ছে...");
   const taskId = session.taskId;
   const buf = await downloadTg(ctx, doc.file_id);
   const goodSet = extractBadValues(buf, ext); // ফাইলের সব value (যে কলাম/রো-তেই থাকুক)
@@ -1232,6 +1359,7 @@ async function processBad(ctx, session) {
   // classify
   const groups = new Map();
   const verdict = new Map();
+  const userItems = new Map();
   for (const d of subsSnap.docs) {
     const s = d.data();
     const tf = task.fields?.length ? task.fields : DEFAULT_FIELDS;
@@ -1246,6 +1374,8 @@ async function processBad(ctx, session) {
     const uid = String(s.userId);
     if (!groups.has(uid)) groups.set(uid, { userId: uid, username: s.username, good: 0, bad: 0, earned: 0, price: 0 });
     groups.get(uid)[bad ? "bad" : "good"]++;
+    if (!userItems.has(uid)) userItems.set(uid, []);
+    userItems.get(uid).push({ s, good: !bad });
   }
 
   // ভুল ফাইল দিলে সবকিছু Bad হয়ে যাওয়া ঠেকাতে
@@ -1334,19 +1464,45 @@ async function processBad(ctx, session) {
     })
   );
   await commitOps(ops);
+  ctx.telegram.deleteMessage(ctx.chat.id, waitMsg.message_id).catch(() => {});
+
+  // balance যোগ হয়ে গেছে — এবার Firebase Storage থেকে সাবমিট করা ফাইল মুছে ফেলা (Storage ভরে না যাওয়ার জন্য)
+  let freed = 0;
+  for (const d of filesSnap.docs) {
+    const path = d.get("storagePath");
+    if (!path) continue;
+    try {
+      await bucket.file(path).delete();
+      await d.ref.update({ storagePath: "" });
+      freed++;
+    } catch (e) {
+      console.error("storage delete:", e.message);
+    }
+  }
 
   // admin report
   const lines = gl.map((g) => `👤 ${esc(g.username)}: 🟢${g.good} 🔴${g.bad} — ${tk(g.earned)}`);
-  const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
+  const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n📅 ${fmtDate(now)}\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n🧹 Storage থেকে ফাইল মুছেছে: ${freed}টি\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
   await sendLong(ctx, report, { reply_markup: adminMenu.reply_markup });
 
-  // DM users
+  // প্রতিটা user-কে রিপোর্ট ফাইল + নিচে TOTAL লেখা (এই ফাইল চ্যাট থেকে কখনো মুছে না)
+  const fieldsList = task.fields?.length ? task.fields : DEFAULT_FIELDS;
+  const stamp = fmtDate(new Date());
   for (const g of gl) {
-    await dm(
-      g.userId,
-      `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 Task: ${esc(task.title)}\n\n🟢 Good: ${g.good}\n🔴 Bad: ${g.bad}\n💰 আয়: ${tk(g.earned)}\n\nব্যালেন্স চেক করুন!`
-    );
-    await sleep(60);
+    if (!/^\d+$/.test(g.userId)) continue;
+    const totals = totalsBlock(g.good + g.bad, g.good, g.bad, g.earned);
+    try {
+      const buf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
+      await bot.telegram.sendDocument(
+        Number(g.userId),
+        { source: buf, filename: `${slugOf(task.title)}_result_${stampForFile()}.xlsx` },
+        { caption: `📄 ${String(task.title || "").slice(0, 120)}\n📅 ${stamp}\n\n${totals}` }
+      );
+    } catch (e) {
+      console.error(`report file failed (${g.userId}):`, e.description || e.message);
+      await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}`);
+    }
+    await sleep(80);
   }
 }
 
@@ -1663,16 +1819,29 @@ async function moveUser(ctx, oldId, newId) {
   const [oldSnap, newSnap] = await Promise.all([userRef(oldId).get(), userRef(newId).get()]);
   if (!oldSnap.exists) return ctx.reply("❌ পুরনো user পাওয়া যায়নি।");
   const old = oldSnap.data();
-  const nu = newSnap.exists ? newSnap.data() : null;
-  if (!(await isEmptyAccount(newId, nu))) {
-    return ctx.reply("⚠️ নতুন ID-তে আগে থেকেই ডাটা/balance আছে, তাই সরানো হয়নি।");
-  }
+  const nu = newSnap.exists ? newSnap.data() : null; // নতুন ID-তে আগে থেকে অ্যাকাউন্ট থাকলে মার্জ হবে
+  const now = Timestamp.now();
+  const sum = (k) => (Number(old[k]) || 0) + (Number(nu?.[k]) || 0);
+  const earlier = [old.createdAt, nu?.createdAt]
+    .filter(Boolean)
+    .sort((x, y) => (toDate(x)?.getTime() || 0) - (toDate(y)?.getTime() || 0))[0];
   const data = {
     ...old,
     telegramId: Number(newId),
     telegramUsername: nu?.telegramUsername ?? null,
-    telegramLinkedAt: Timestamp.now(),
-    role: nu?.role || old.role || "user",
+    telegramLinkedAt: now,
+    role: old.role === "admin" || nu?.role === "admin" ? "admin" : "user",
+    balance: round2(sum("balance")),
+    totalGood: sum("totalGood"),
+    totalBad: sum("totalBad"),
+    totalPending: sum("totalPending"),
+    referCount: sum("referCount"),
+    totalReferEarning: round2(sum("totalReferEarning")),
+    wallets: { ...(old.wallets || {}), ...(nu?.wallets || {}) },
+    customBadge: nu?.customBadge ?? old.customBadge ?? null,
+    customBadgeColor: nu?.customBadgeColor ?? old.customBadgeColor ?? null,
+    referredBy: nu?.referredBy ?? old.referredBy ?? null,
+    createdAt: earlier ?? now,
   };
   const [subs, wds, files, refd] = await Promise.all([
     db.collection("submissions").where("userId", "==", String(oldId)).select().get(),
@@ -1688,12 +1857,12 @@ async function moveUser(ctx, oldId, newId) {
   await commitOps(ops);
 
   await ctx.reply(
-    `✅ <b>সরানো সম্পন্ন!</b>\n\n👤 ${esc(old.username)}\n🆔 ${oldId} ➜ <code>${newId}</code>\n💰 Balance: ${tk(old.balance)}\n📋 ${subs.size} submissions • 💸 ${wds.size} withdrawals`,
+    `✅ <b>${nu ? "মার্জ সম্পন্ন!" : "সরানো সম্পন্ন!"}</b>\n\n👤 ${esc(old.username)}\n🆔 ${oldId} ➜ <code>${newId}</code>\n💰 Balance: ${nu ? `${tk(old.balance)} + ${tk(nu.balance)} = ${tk(data.balance)}` : tk(old.balance)}\n📋 ${subs.size} submissions • 💸 ${wds.size} withdrawals`,
     { parse_mode: "HTML", reply_markup: adminMenu.reply_markup }
   );
   await dm(
     newId,
-    `✅ <b>আপনার অ্যাকাউন্ট এই Telegram ID-তে সরানো হয়েছে!</b>\n\n💰 Balance: ${tk(old.balance)}\n🟢 Good: ${old.totalGood || 0}  🔴 Bad: ${old.totalBad || 0}\n\nমেনু দেখতে /menu দিন।`
+    `✅ <b>আপনার অ্যাকাউন্ট এই Telegram ID-তে সরানো হয়েছে!</b>\n\n💰 Balance: ${tk(data.balance)}\n🟢 Good: ${data.totalGood || 0}  🔴 Bad: ${data.totalBad || 0}\n\nমেনু দেখতে /menu দিন।`
   );
 }
 
@@ -1866,7 +2035,7 @@ bot.command(
     await ctx.reply("🔍 স্ক্যান হচ্ছে...");
     const r = await scanWebsiteData();
     const kb = Markup.inlineKeyboard([
-      [ib("হ্যাঁ, মুছুন", "cw_yes", "danger"), ib("বাতিল", "cw_no")],
+      [ib("হ্যাঁ, মুছুন", "cw_yes", "danger"), ib("বাতিল", "cw_no", "danger")],
     ]);
     return ctx.reply(
       `🧹 <b>Website Data Cleanup</b>\n\n👥 Website users: ${r.users.length}\n📤 তাদের Submissions: ${r.subs.length}\n💸 তাদের Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 withdraw_security: ${r.sec.length}\n🎁 refer_earnings: ${r.refs.length}\n⚙️ settings (admin_pass, online_status): ${r.settings.length}\n🔑 Firebase Auth login account: ${r.authUids.length}\n\n✅ <b>থাকবে:</b> Telegram users (numeric ID) ও তাদের সব ডাটা, tasks, notices, reports, withdraw_config, payment_methods।\n\n⚠️ <b>আগে নিশ্চিত করুন:</b> আপনার নিজের Telegram ID-র user doc-এ <code>role: "admin"</code> আছে (Firebase Console থেকে সেট করুন)। Website user-দের balance আর ফেরত আসবে না।`,
@@ -2265,13 +2434,10 @@ bot.on(
           await clearSession(id);
           return ctx.reply("❌ পুরনো user পাওয়া যায়নি।");
         }
-        if (!(await isEmptyAccount(nid, newU))) {
-          return ctx.reply("⚠️ এই নতুন ID-তে আগে থেকেই ডাটা/balance আছে, তাই সরানো যাবে না। অন্য ID দিন।");
-        }
         await setSession(id, { action: "um_mv_confirm", oldId: s.oldId, newId: nid });
         const kb = Markup.inlineKeyboard([[ib("হ্যাঁ, সরান", "um_mv_ok", "success"), ib("বাতিল", "um_no", "danger")]]);
         return ctx.reply(
-          `🔁 <b>নিশ্চিত করুন</b>\n\n👤 ${esc(oldU.username)}\n🆔 ${s.oldId} ➜ <code>${nid}</code>\n💰 Balance: ${tk(oldU.balance)}\n\nপুরনো ID-র সব ডাটা (balance, submissions, withdrawals) নতুন ID-তে যাবে, আর পুরনো অ্যাকাউন্ট মুছে যাবে।`,
+          `🔁 <b>নিশ্চিত করুন</b>\n\n👤 ${esc(oldU.username)}\n🆔 ${s.oldId} ➜ <code>${nid}</code>\n💰 Balance: ${newU ? `${tk(oldU.balance)} + ${tk(newU.balance)} = ${tk((Number(oldU.balance) || 0) + (Number(newU.balance) || 0))}` : tk(oldU.balance)}\n\n${newU ? "নতুন ID-তে আগে থেকেই অ্যাকাউন্ট আছে — দুটো মার্জ হবে (balance, Good/Bad, submissions, withdrawals সব যোগ হবে)। " : ""}পুরনো ID-র সব ডাটা নতুন ID-তে যাবে, আর পুরনো অ্যাকাউন্ট মুছে যাবে।`,
           kbx(kb)
         );
       }
