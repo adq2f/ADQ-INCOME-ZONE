@@ -478,13 +478,12 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- ZeroStorage Helper for Direct Links (Unlimited & No Render Block) ---- */
+/* ---- ZeroStorage Helper for Direct Links ---- */
 async function uploadToZeroStorage(buffer, filename) {
   try {
     const form = new FormData();
     form.append('file', buffer, filename);
-
-    // ZeroStorage API endpoint
+    
     const res = await axios.post('https://zerostorage.net/api/upload', form, {
       headers: {
         ...form.getHeaders(),
@@ -495,9 +494,9 @@ async function uploadToZeroStorage(buffer, filename) {
       timeout: 120000
     });
 
-    // API রেসপন্স ফরম্যাট: { link: "..." } (যদি ফরম্যাট ভিন্ন হয়, ডকুমেন্টেশন দেখে নেবেন)
-    if (res.data && (res.data.link || (res.data.data && res.data.data.link))) {
-      return { link: res.data.link || res.data.data.link };
+    // এখানে পরিবর্তন করা হয়েছে: ZeroStorage 'viewUrl' রিটার্ন করে, 'link' নয়
+    if (res.data && res.data.success && res.data.viewUrl) {
+      return { link: res.data.viewUrl };
     }
     throw new Error('Upload failed: ' + JSON.stringify(res.data));
   } catch (error) {
