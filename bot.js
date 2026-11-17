@@ -1600,10 +1600,25 @@ bot.hears(
   ABTN.settings,
   adminOnly(async (ctx) => {
     const c = await getWdConfig();
+    const rate = await getReferCommission();
+    
+    const kb = Markup.inlineKeyboard([
+      [ib(`🎁 Referral Commission বদলান (এখন ${rate}%)`, "setref_prompt", "primary")],
+    ]);
+    
     return ctx.reply(
-      `⚙️ <b>Settings</b>\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🟢 Enabled: ${c.withdrawEnabled ? "হ্যাঁ" : "না"}\n\nআপডেট:\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000\n/setcfg withdrawEnabled true`,
-      { parse_mode: "HTML" }
+      `⚙️ <b>Settings</b>\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🟢 Withdraw Enabled: ${c.withdrawEnabled ? "হ্যাঁ" : "না"}\n🎁 Referral Rate: <b>${rate}%</b>\n\n<i>Withdraw সেটিংস বদলাতে কমান্ড ব্যবহার করুন:</i>\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000\n/setcfg withdrawEnabled true`,
+      { parse_mode: "HTML", reply_markup: kb.reply_markup }
     );
+  })
+);
+
+bot.action(
+  "setref_prompt",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    await setSession(ctx.from.id, { action: "setref_wait" });
+    return edit(ctx, "🎁 <b>নতুন Referral Commission কত পার্সেন্ট (%) দিতে চান?</b>\n\nশুধু সংখ্যা লিখে পাঠান।\nযেমন: <code>5</code> অথবা <code>3.5</code>\n\nবাতিল: /menu");
   })
 );
 
@@ -2240,6 +2255,20 @@ bot.on(
           `💸 <b>Confirm Withdraw</b>\n\n💰 Amount: ${tk(amount)}\n💳 Method: ${s.method.toUpperCase()}\n📱 Account: <code>${esc(s.account)}</code>\n\n🟢 Confirm করলে balance থেকে কাটা হবে।`,
           kbx(kb)
         );
+      }
+
+case "setref_wait": {
+        if (!(await isAdmin(id))) {
+          await clearSession(id);
+          return ctx.reply("❌ Unknown command.", await userKb(id));
+        }
+        const rate = parseFloat(text);
+        if (isNaN(rate) || rate < 0 || rate > 100) {
+          return ctx.reply("⚠️ সঠিক সংখ্যা লিখুন (০ থেকে ১০০ এর মধ্যে)। যেমন: 5 বা 3.5");
+        }
+        await db.collection("settings").doc("referral_config").set({ commissionRate: rate }, { merge: true });
+        await clearSession(id);
+        return ctx.reply(`🟢 Referral Commission সফলভাবে <b>${rate}%</b> সেট করা হয়েছে।`, { parse_mode: "HTML", ...kbx(adminMenu) });
       }
 
       case "badge_username": {
