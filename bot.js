@@ -2,26 +2,6 @@
  ============================================================================
   ADQ INCOME ZONE — TELEGRAM BOT  (single file)
  ============================================================================
-  DEPLOY (Render.com free tier + UptimeRobot)
-  1. GitHub repo-তে bot.js + package.json push করুন।
-  2. Render → New → Web Service → repo select।
-       Build Command : npm install
-       Start Command : npm start
-       Node version  : 20+
-  3. Render → Environment-এ এগুলো দিন:
-       BOT_TOKEN                = BotFather token
-       FIREBASE_SERVICE_ACCOUNT = service account JSON (এক লাইনে)
-       EXPORT_SECRET            = (optional) /export ফাইল sign করার secret
-       GOFILE_TOKEN             = GoFile account API token (profile page থেকে)
-  4. Deploy শেষে Render URL কপি করে UptimeRobot-এ HTTP(s) monitor বানান
-     (৫ মিনিট interval) — bot জেগে থাকবে।
-  5. Firestore-এ নিজের users/{telegramId} ডক-এ role = "admin" সেট করুন।
-     এরপর /menu বা /start দিলে মেইন মেনুর নিচে "🛠️ Admin Panel" বাটন আসবে।
-     (role সরালে বাটন ও সব admin কমান্ড সাথে সাথে বন্ধ হয়ে যাবে।)
-
-  NOTE: Firestore-এ কিছু query-র জন্য composite index লাগতে পারে। লগে index
-  লিংক এলে ক্লিক করে বানিয়ে নিন (bot fallback দিয়ে চলবে)।
- ============================================================================
 */
 
 import http from "http";
@@ -33,6 +13,9 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import FormData from "form-data";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
 /* ------------------------------------------------------------------ */
 /*  KEEP-ALIVE HTTP SERVER (Render + UptimeRobot)                      */
 /* ------------------------------------------------------------------ */
@@ -53,8 +36,12 @@ if (!BOT_TOKEN) {
 }
 const EXPORT_SECRET = process.env.EXPORT_SECRET || BOT_TOKEN;
 
-// ফাইল থেকে সরাসরি Firebase JSON রিড করা হচ্ছে
-const sa = JSON.parse(fs.readFileSync("./firebase-key.json", "utf8"));
+// ফাইলের সঠিক পাথ বের করা হচ্ছে
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const saPath = path.join(__dirname, "firebase-key.json");
+
+const sa = JSON.parse(fs.readFileSync(saPath, "utf8"));
 sa.private_key = sa.private_key.replace(/\\n/g, "\n");
 admin.initializeApp({
   credential: admin.credential.cert(sa),
@@ -83,7 +70,7 @@ const ABTN = {
   stats: "📊 Stats",
   users: "👥 Users",
   files: "📥 All Files",
-  bad: "🎯 Process Good", // (key আগের মতোই; এখন Good file দিয়ে প্রসেস হয়)
+  bad: "🎯 Process Good",
   wd: "💸 Withdrawals",
   badges: "🎖️ Badges",
   bc: "📢 Broadcast",
@@ -91,11 +78,9 @@ const ABTN = {
   tasks: "🎯 Tasks",
   manage: "👤 User Manage",
   back: "🔙 User Menu",
-  panel: "🛠️ Admin Panel", // শুধু role=admin হলে মেইন মেনুতে দেখায়
+  panel: "🛠️ Admin Panel",
 };
 
-// Telegram-এর নিজস্ব button রঙ (Bot API 9.4+): "success" = সবুজ, "danger" = লাল, "primary" = নীল
-// র‍্যান্ডম কালার জেনারেটর
 const COLORS = ["primary", "success", "danger"];
 const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
 const kbBtn = (label) => ({ text: label, style: getRandomColor() });
@@ -107,7 +92,6 @@ const FILE_EXTS = ["xlsx", "xls", "csv", "txt", "tsv"];
 const MAX_FILE = 15 * 1024 * 1024;
 const ERR_MSG = "❌ কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।";
 
-// মেইন মেনু — admin হলে নিচে "🛠️ Admin Panel" বাটন যোগ হয়
 const buildMainMenu = (isAdm) => {
   const rows = [
     [BTN.task, BTN.balance],
@@ -211,7 +195,7 @@ async function sendLong(ctx, text, extra = {}) {
 }
 
 async function dm(userId, text) {
-  if (!/^\d+$/.test(String(userId))) return false; // website (Firebase UID) users have no Telegram chat
+  if (!/^\d+$/.test(String(userId))) return false;
   try {
     await bot.telegram.sendMessage(Number(userId) || userId, text, { parse_mode: "HTML" });
     return true;
@@ -245,8 +229,6 @@ const getUser = async (id) => {
   return s.exists ? { id: s.id, ...s.data() } : null;
 };
 const isAdmin = async (id) => (await getUser(id))?.role === "admin";
-
-// ইউজারের বর্তমান role দেখে সঠিক মেইন মেনু বানায় (admin হলে Admin Panel বাটন সহ)
 const userKb = async (id) => kbx(buildMainMenu(await isAdmin(id)));
 
 async function needUser(ctx) {
@@ -273,8 +255,6 @@ const safe = (fn) => async (ctx, next) => {
   }
 };
 
-// Admin check on EVERY action — role সরানো হলে পুরনো admin কিবোর্ড থাকলেও কাজ করবে না,
-// আর ইউজারকে সাথে সাথে সাধারণ মেনু ফেরত দেওয়া হবে
 const adminOnly = (fn) =>
   safe(async (ctx, next) => {
     if (!(await isAdmin(ctx.from.id))) {
@@ -363,7 +343,6 @@ const DEFAULT_FIELDS = [
 ];
 
 /* ---- file parsing ---- */
-// ---- same smart splitting the website uses for single-cell lines ----
 function isSpaceProneField(field) {
   const raw = (String(field?.key || "") + " " + String(field?.label || "")).toLowerCase();
   const compact = raw.replace(/[\s_\-.:]+/g, "");
@@ -459,13 +438,11 @@ async function downloadTg(ctx, fileId) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-/* ---- tfLink Helper for Direct Links (Safe, No Ads, 100MB Limit) ---- */
 async function uploadToTfLink(buffer, filename) {
   try {
     const form = new FormData();
     form.append('file', buffer, filename);
 
-    // সঠিক এন্ডপয়েন্ট: tmpfile.link (tflink.net নয়)
     const res = await axios.post('https://tmpfile.link/api/upload', form, {
       headers: {
         ...form.getHeaders(),
@@ -476,7 +453,6 @@ async function uploadToTfLink(buffer, filename) {
       timeout: 120000
     });
 
-    // সঠিক রেসপন্স ফিল্ড: downloadLink (url নয়)
     if (res.data && res.data.downloadLink) {
       return { link: res.data.downloadLink };
     }
@@ -502,10 +478,8 @@ function rowKeyOf(task, item, cells) {
 /* ------------------------------------------------------------------ */
 /*  GLOBAL MIDDLEWARE                                                  */
 /* ------------------------------------------------------------------ */
-// ---- চ্যাট পরিষ্কার রাখা: নতুন মেনু-ট্যাপে আগের মেসেজ মুছে যায় ----
-// (ফাইল/ডকুমেন্ট — ইউজারের সাবমিট করা ফাইল ও বটের পাঠানো রিপোর্ট ফাইল — কখনো মুছে না)
-const screens = new Map(); // chatId -> [message_id]
-const kbMsg = new Map(); // chatId -> যে মেসেজে মেনু keyboard আছে (সেটা মুছলে keyboard চলে যায়)
+const screens = new Map();
+const kbMsg = new Map();
 const trackMsg = (chatId, mid) => {
   const a = screens.get(chatId) || [];
   a.push(mid);
@@ -564,7 +538,7 @@ bot.use(async (ctx, next) => {
 async function cmdStart(ctx) {
   const f = ctx.from;
   let u = await getUser(f.id);
-  const payload = ctx.startPayload; // রেফারেল লিংকের পেছনের কোড
+  const payload = ctx.startPayload;
 
   if (!u) {
     let code = genReferCode();
@@ -579,7 +553,7 @@ async function cmdStart(ctx) {
       const refSnap = await db.collection("users").where("myReferCode", "==", payload).limit(1).get();
       if (!refSnap.empty) {
         referrerId = refSnap.docs[0].id;
-        if (referrerId === String(f.id)) referrerId = null; // নিজের লিংকে নিজে ক্লিক করলে বাদ যাবে
+        if (referrerId === String(f.id)) referrerId = null;
       }
     }
 
@@ -596,7 +570,7 @@ async function cmdStart(ctx) {
       totalBad: 0,
       totalPending: 0,
       myReferCode: code,
-      referredBy: referrerId, // এখানে রেফারার এর আইডি সেভ হবে
+      referredBy: referrerId,
       referCount: 0,
       totalReferEarning: 0,
       wallets: {},
@@ -609,10 +583,9 @@ async function cmdStart(ctx) {
     try {
       await userRef(f.id).create(doc);
       
-      // রেফারার এর কাউন্ট ১ বাড়িয়ে দেওয়া
       if (referrerId) {
         await userRef(referrerId).update({ referCount: FieldValue.increment(1) }).catch(() => {});
-        await dm(referrerId, `🎉 <b>নতুন রেফার!</b>\n\nআপনার লিংক দিয়ে <b>${esc(doc.username)}</b> বটে জয়েন করেছে।`);
+        await dm(referrerId, `🎉 <b>নতুন রেফার!</b>\n\nআপনার লিংক দিয়ে <b>${esc(doc.username)}</b> বটে জয়েন করেছে।`);
       }
       
       return ctx.reply(
@@ -641,7 +614,6 @@ async function cmdTasks(ctx) {
   const tasks = await fetchOpenTasks();
   if (!tasks.length) return ctx.reply("📭 এখন কোনো task নেই।");
   
-  // ইউনিক প্ল্যাটফর্ম (Facebook, Instagram) বের করা হচ্ছে
   const platforms = [...new Set(tasks.map(t => t.platform || "Other"))];
   
   const kb = Markup.inlineKeyboard(
@@ -912,7 +884,7 @@ bot.action(
         .map((d) => d.data())
         .sort((a, b) => (toDate(a.submittedAt)?.getTime() || 0) - (toDate(b.submittedAt)?.getTime() || 0));
 
-      const CHUNK_SIZE = 50000; // প্রতি ফাইলে ৫০,০০০ রো
+      const CHUNK_SIZE = 50000;
       let chunkIndex = 1;
       let wb = new ExcelJS.Workbook();
       wb.creator = "ADQ Income Zone";
@@ -947,7 +919,7 @@ bot.action(
               { parse_mode: "HTML", disable_web_page_preview: true }
             );
           } else {
-            await ctx.reply(`⚠️ Part ${chunkIndex} আপলোড করতে সমস্যা হয়েছে।`);
+            await ctx.reply(`⚠️ Part ${chunkIndex} আপলোড করতে সমস্যা হয়েছে।`);
           }
 
           chunkIndex++;
@@ -962,7 +934,7 @@ bot.action(
       }
       
       if (chunkIndex === 1) {
-         return ctx.reply("📭 কোনো ডাটা পাওয়া যায়নি।");
+         return ctx.reply("📭 কোনো ডাটা পাওয়া যায়নি।");
       }
 
     } catch (e) {
@@ -1019,7 +991,7 @@ bot.action(
       return ctx.answerCbQuery("⚠️ সেশন শেষ। আবার /withdraw দিন।", { show_alert: true });
     }
     await ctx.answerCbQuery();
-    await clearSession(ctx.from.id); // prevents double-tap
+    await clearSession(ctx.from.id);
     const { amount, method, account } = s;
     const cfg = await getWdConfig();
     if (!cfg.withdrawEnabled) return edit(ctx, "🔴 এখন withdraw বন্ধ।");
@@ -1069,7 +1041,6 @@ bot.action(
 /* ------------------------------------------------------------------ */
 /*  ADMIN PANEL                                                        */
 /* ------------------------------------------------------------------ */
-// /adqincomezone কমান্ড আগের মতোই কাজ করবে (শুধু admin)
 bot.command(
   "adqincomezone",
   safe(async (ctx) => {
@@ -1078,7 +1049,6 @@ bot.command(
   })
 );
 
-// মেইন মেনুর "🛠️ Admin Panel" বাটন — শুধু role=admin হলে খুলবে
 bot.hears(
   ABTN.panel,
   safe(async (ctx) => {
@@ -1089,7 +1059,6 @@ bot.hears(
   })
 );
 
-// Admin Panel থেকে ইউজার মেনুতে ফেরা (admin হলে মেনুতে Admin Panel বাটনও থাকবে)
 bot.hears(
   ABTN.back,
   safe(async (ctx) => ctx.reply("📱 <b>মেইন মেনু</b>", await userKb(ctx.from.id)))
@@ -1184,7 +1153,6 @@ bot.hears(
   })
 );
 
-// এক ইউজারের সব ফাইল এক লাইনে গ্রুপ হয়ে দেখাবে
 bot.action(
   /^af_task:(.+)$/,
   adminCb(async (ctx) => {
@@ -1253,7 +1221,6 @@ bot.action(
   })
 );
 
-// প্রতিটা user-এর নিজের রিপোর্ট ফাইল — এক শিটে: Good রো সবুজ, Bad রো লাল
 async function buildUserReport(task, fields, g, items) {
   const wb = new ExcelJS.Workbook();
   wb.creator = "ADQ Income Zone";
@@ -1269,20 +1236,17 @@ async function buildUserReport(task, fields, g, items) {
     const vals = subValues(sub, fields);
     const row = ws.addRow([i + 1, ...vals, good ? "GOOD" : "BAD", good ? g.price : 0]);
     
-    // ডাটা কততম কলাম পর্যন্ত আছে, তা বের করা হচ্ছে
-    let lastDataCol = 1; // '# ' কলামটি বাদ দিয়ে
+    let lastDataCol = 1;
     for (let j = 0; j < vals.length; j++) {
       if (String(vals[j] ?? "").trim() !== "") {
-        lastDataCol = j + 2; // +2 কারণ ১ম কলামটি '#', আর অ্যারে ০ থেকে শুরু
+        lastDataCol = j + 2;
       }
     }
     
-    // শুধু ডাটা থাকা কলাম পর্যন্ত রঙ করা হবে
     for (let c = 2; c <= lastDataCol; c++) {
       row.getCell(c).fill = { type: "pattern", pattern: "solid", fgColor: { argb: good ? "FFBBF7D0" : "FFFECACA" } };
     }
     
-    // Status (GOOD/BAD) টেক্সটের রঙ
     row.getCell(2 + fields.length).font = { bold: true, color: { argb: good ? "FF047857" : "FFB91C1C" } };
   });
   ws.addRow([]);
@@ -1325,7 +1289,6 @@ async function processBad(ctx, session) {
     return ctx.reply("📭 এই task-এ কোনো pending submission নেই।");
   }
 
-  // classify
   const groups = new Map();
   const verdict = new Map();
   const userItems = new Map();
@@ -1352,7 +1315,6 @@ async function processBad(ctx, session) {
   }
   await clearSession(adminId);
 
-  // pricing
   const normal = Number(task.pricePerAccount) || 0;
   const milestones = [...(task.milestones || [])].sort((a, b) => a.target - b.target);
   for (const g of groups.values()) {
@@ -1362,7 +1324,6 @@ async function processBad(ctx, session) {
     g.earned = round2(g.good * price);
   }
 
-  // existing users
   const gl = [...groups.values()];
   const existingUsers = new Set();
   for (let i = 0; i < gl.length; i += 100) {
@@ -1373,7 +1334,7 @@ async function processBad(ctx, session) {
         const g = groups.get(s.id);
         if (g) {
           if (s.get("username")) g.username = s.get("username");
-          g.referredBy = s.get("referredBy"); // রেফারার আইডি নেওয়া হচ্ছে
+          g.referredBy = s.get("referredBy");
         }
       }
     });
@@ -1391,7 +1352,6 @@ async function processBad(ctx, session) {
   for (const g of gl) {
     if (!existingUsers.has(g.userId)) continue;
     
-    // ইউজারের ব্যালেন্স আপডেট
     ops.push((b) => b.update(userRef(g.userId), {
       balance: FieldValue.increment(g.earned),
       totalGood: FieldValue.increment(g.good),
@@ -1399,7 +1359,6 @@ async function processBad(ctx, session) {
       totalPending: FieldValue.increment(-(g.good + g.bad)),
     }));
 
-    // রেফারেল কমিশন লজিক
     if (g.earned > 0 && g.referredBy) {
       const rate = await getReferCommission();
       const comm = round2(g.earned * (rate / 100));
@@ -1410,8 +1369,7 @@ async function processBad(ctx, session) {
           totalReferEarning: FieldValue.increment(comm)
         }));
         
-        // রেফারারকে মেসেজ পাঠানো
-        await dm(g.referredBy, `🎉 <b>Refer Commission!</b>\n\nআপনার রেফার করা ইউজার <b>${esc(g.username)}</b> Good Account দিয়েছে।\n💰 আপনি পেয়েছেন: <b>${tk(comm)}</b> (${rate}%)`);
+        await dm(g.referredBy, `🎉 <b>Refer Commission!</b>\n\nআপনার রেফার করা ইউজার <b>${esc(g.username)}</b> Good Account দিয়েছে।\n💰 আপনি পেয়েছেন: <b>${tk(comm)}</b> (${rate}%)`);
       }
     }
   }
@@ -1432,12 +1390,10 @@ async function processBad(ctx, session) {
   await commitOps(ops);
   ctx.telegram.deleteMessage(ctx.chat.id, waitMsg.message_id).catch(() => {});
 
-  // admin report
   const lines = gl.map((g) => `👤 ${esc(g.username)}: 🟢${g.good} 🔴${g.bad} — ${tk(g.earned)}`);
   const report = `✅ <b>Processing Complete!</b>\n\n📋 Task: <b>${esc(task.title)}</b>\n📅 ${fmtDate(now)}\n\n📊 <b>Summary:</b>\n🟢 Good: ${totalGood}\n🔴 Bad: ${totalBad}\n📦 Total: ${totalGood + totalBad}\n💰 Payout: ${tk(totalPayout)}\n\n👥 <b>Per User:</b>\n${lines.join("\n")}`;
   await sendLong(ctx, report, { reply_markup: adminMenu.reply_markup });
 
-  // প্রতিটা user-কে Litterbox লিংক সহ রিপোর্ট পাঠানো
   const fieldsList = task.fields?.length ? task.fields : DEFAULT_FIELDS;
   const stamp = fmtDate(new Date());
   const dateStr = stampForFile();
@@ -1608,7 +1564,6 @@ bot.action(
         for (let i = 0; i < total; i++) {
           const chat = Number(targets[i].get("telegramId")) || targets[i].id;
           try {
-            // copyMessage ব্যবহার করে হুবহু মেসেজটি পাঠানো হচ্ছে
             await ctx.telegram.copyMessage(chat, adminChatId, msgId);
             sent++;
           } catch (e) {
@@ -1701,12 +1656,12 @@ bot.command(
       return ctx.reply("⚠️ ব্যবহার: /setref <rate>\nযেমন: /setref 5 (অথবা 3.5, 2.451)");
     }
     await db.collection("settings").doc("referral_config").set({ commissionRate: rate }, { merge: true });
-    return ctx.reply(`🟢 Referral Commission সফলভাবে ${rate}% সেট করা হয়েছে।`);
+    return ctx.reply(`🟢 Referral Commission সফলভাবে ${rate}% সেট করা হয়েছে।`);
   })
 );
 
 /* ------------------------------------------------------------------ */
-/*  ADMIN: USER MANAGE (খোঁজা · balance +/- · নতুন Telegram ID-তে সরানো) */
+/*  ADMIN: USER MANAGE                                                 */
 /* ------------------------------------------------------------------ */
 const userCard = (u) => {
   const w = Object.entries(u.wallets || {})
@@ -1808,7 +1763,7 @@ async function moveUser(ctx, oldId, newId) {
   const [oldSnap, newSnap] = await Promise.all([userRef(oldId).get(), userRef(newId).get()]);
   if (!oldSnap.exists) return ctx.reply("❌ পুরনো user পাওয়া যায়নি।");
   const old = oldSnap.data();
-  const nu = newSnap.exists ? newSnap.data() : null; // নতুন ID-তে আগে থেকে অ্যাকাউন্ট থাকলে মার্জ হবে
+  const nu = newSnap.exists ? newSnap.data() : null;
   const now = Timestamp.now();
   const sum = (k) => (Number(old[k]) || 0) + (Number(nu?.[k]) || 0);
   const earlier = [old.createdAt, nu?.createdAt]
@@ -1856,7 +1811,7 @@ async function moveUser(ctx, oldId, newId) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  ADMIN: TASKS  (website না থাকলে task এখান থেকেই বানাতে হবে)         */
+/*  ADMIN: TASKS                                                      */
 /* ------------------------------------------------------------------ */
 const PLATFORMS = ["Facebook", "Twitter", "Instagram", "LinkedIn", "TikTok", "Gmail", "WhatsApp", "Other"];
 const ADDTASK_FORMAT =
@@ -1943,7 +1898,6 @@ bot.command(
   })
 );
 
-// সময় শেষ হওয়া task অটো active:false হয়ে যায় এবং লিস্ট থেকে সরে যায়
 bot.hears(
   ABTN.tasks,
   adminOnly(async (ctx) => {
@@ -1986,9 +1940,9 @@ bot.action(
 );
 
 /* ------------------------------------------------------------------ */
-/*  ADMIN: WEBSITE DATA CLEANUP  (/cleanweb)                           */
+/*  ADMIN: WEBSITE DATA CLEANUP                                       */
 /* ------------------------------------------------------------------ */
-const isWebId = (id) => !/^\d+$/.test(String(id)); // Telegram ID = শুধু সংখ্যা, Firebase UID = অক্ষর+সংখ্যা
+const isWebId = (id) => !/^\d+$/.test(String(id));
 
 async function listAuthUids() {
   const uids = [];
@@ -2075,7 +2029,7 @@ async function doCleanWeb(ctx) {
     authDeleted += res.successCount;
   }
   await ctx.reply(
-    `✅ <b>Cleanup সম্পন্ন!</b>\n\n👥 Users: ${r.users.length}\n📤 Submissions: ${r.subs.length}\n?? Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 Security: ${r.sec.length}\n🎁 Refer earnings: ${r.refs.length}\n⚙️ Settings: ${r.settings.length}\n🔑 Auth accounts: ${authDeleted}`,
+    `✅ <b>Cleanup সম্পন্ন!</b>\n\n👥 Users: ${r.users.length}\n📤 Submissions: ${r.subs.length}\n💸 Withdrawals: ${r.wds.length}\n💬 Chats: ${r.chats.length}\n🔐 Security: ${r.sec.length}\n🎁 Refer earnings: ${r.refs.length}\n⚙️ Settings: ${r.settings.length}\n🔑 Auth accounts: ${authDeleted}`,
     { parse_mode: "HTML", reply_markup: adminMenu.reply_markup }
   );
 }
@@ -2349,12 +2303,11 @@ case "setref_wait": {
           await clearSession(id);
           return ctx.reply("❌ Unknown command.", await userKb(id));
         }
-        // মেসেজের আইডি সেভ করা হচ্ছে যাতে copyMessage করা যায়
         await setSession(id, { action: "bc_confirm", msgId: ctx.message.message_id, chatId: ctx.chat.id });
         const kb = Markup.inlineKeyboard([
           [ib("Send All", "bc_yes", "success"), ib("Cancel", "bc_no", "danger")],
         ]);
-        return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মেসেজটি (টেক্সট/ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
+        return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মেসেজটি (টেক্সট/ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
       }
 
       case "um_search": {
@@ -2479,7 +2432,7 @@ case "setref_wait": {
     }
   })
 );
-// ব্রডকাস্টের জন্য ভিডিও বা ছবি রিসিভ করা
+
 bot.on(["video", "photo"], safe(async (ctx, next) => {
   const s = await getSession(ctx.from.id);
   if (!s || s.action !== "bc_compose") return next();
@@ -2493,8 +2446,9 @@ bot.on(["video", "photo"], safe(async (ctx, next) => {
   const kb = Markup.inlineKeyboard([
     [ib("Send All", "bc_yes", "success"), ib("Cancel", "bc_no", "danger")],
   ]);
-  return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মিডিয়া (ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
+  return ctx.reply(`📢 <b>Preview:</b>\n\nআপনার পাঠানো মিডিয়া (ভিডিও/ছবি) রিসিভ হয়েছে।\n\nসব user-কে পাঠাবেন?`, kbx(kb));
 }));
+
 bot.on(
   "document",
   safe(async (ctx) => {
@@ -2545,7 +2499,6 @@ startBot();
 (async () => {
   try {
     await bot.telegram.setChatMenuButton({ menu_button: { type: "commands" } });
-    // /adqincomezone is intentionally NOT listed here
     await bot.telegram.setMyCommands([
       { command: "start", description: "অ্যাকাউন্ট তৈরি / শুরু" },
       { command: "menu", description: "মেইন মেনু" },
