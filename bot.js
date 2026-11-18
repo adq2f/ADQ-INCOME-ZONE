@@ -94,31 +94,11 @@ const ABTN = {
 };
 
 // Telegram-এর নিজস্ব button রঙ (Bot API 9.4+): "success" = সবুজ, "danger" = লাল, "primary" = নীল
-const STYLE = {
-  [BTN.task]: "success",
-  [BTN.balance]: "primary",
-  [BTN.withdraw]: "success",
-  [BTN.leaderboard]: "primary",
-  [BTN.profile]: "primary",
-  [BTN.history]: "primary",
-  [BTN.refer]: "success",
-  [BTN.help]: "primary",
-  [ABTN.stats]: "success",
-  [ABTN.users]: "primary",
-  [ABTN.files]: "danger",
-  [ABTN.bad]: "success",
-  [ABTN.wd]: "success",
-  [ABTN.badges]: "primary",
-  [ABTN.bc]: "danger",
-  [ABTN.settings]: "primary",
-  [ABTN.tasks]: "success",
-  [ABTN.manage]: "primary",
-  [ABTN.back]: "danger",
-  [ABTN.panel]: "danger",
-};
-// প্রতিটা button-এ রঙ থাকবে (নির্দিষ্ট না থাকলে নীল)
-const kbBtn = (label) => ({ text: label, style: STYLE[label] || "primary" });
-const ib = (text, data, style = "primary") => ({ text, callback_data: data, style });
+// র‍্যান্ডম কালার জেনারেটর
+const COLORS = ["primary", "success", "danger"];
+const getRandomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
+const kbBtn = (label) => ({ text: label, style: getRandomColor() });
+const ib = (text, data, style) => ({ text, callback_data: data, style: style || getRandomColor() });
 const ALL_LABELS = new Set([...Object.values(BTN), ...Object.values(ABTN)]);
 
 const METHODS = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
@@ -659,7 +639,14 @@ async function cmdTasks(ctx) {
   if (!(await needUser(ctx))) return;
   const tasks = await fetchOpenTasks();
   if (!tasks.length) return ctx.reply("📭 এখন কোনো task নেই।");
-  return ctx.reply("📋 <b>Available Tasks</b>\n\nনিচের বাটন থেকে টাস্ক সিলেক্ট করুন:", kbx(taskListKb(tasks)));
+  
+  // ইউনিক প্ল্যাটফর্ম (Facebook, Instagram) বের করা হচ্ছে
+  const platforms = [...new Set(tasks.map(t => t.platform || "Other"))];
+  
+  const kb = Markup.inlineKeyboard(
+    platforms.map(p => [ib(`📱 ${p}`, `task_plat:${p}`)])
+  );
+  return ctx.reply("📋 <b>Available Services</b>\n\nকোন সার্ভিসের টাস্ক দেখতে চান? নিচের বাটন থেকে সিলেক্ট করুন:", kbx(kb));
 }
 
 async function cmdBalance(ctx) {
@@ -843,6 +830,69 @@ bot.command("setwallet", safe(cmdSetWallet));
 /* ------------------------------------------------------------------ */
 /*  TASK CALLBACKS                                                     */
 /* ------------------------------------------------------------------ */
+bot.action(/^task_plat:(.+)$/, safe(async (ctx) => {
+  await ctx.answerCbQuery();
+  const platform = ctx.match[1];
+  const tasks = await fetchOpenTasks();
+  const platTasks = tasks.filter(t => (t.platform || "Other") === platform);
+  
+  if (!platTasks.length) {
+    return edit(ctx, "📭 এই সার্ভিসে এখন কোনো task নেই।", Markup.inlineKeyboard([[ib("⬅️ Back", "tasks:back", "danger")]]));
+  }
+  
+  const kb = Markup.inlineKeyboard(
+    platTasks.map(t => [ib(`${String(t.title || "").slice(0, 25)} — ৳${money(t.pricePerAccount)}`, `task:${t.id}`)])
+  );
+  kb.reply_markup.inline_keyboard.push([ib("⬅️ Back", "tasks:back", "danger")]);
+  
+  return edit(ctx, `📋 <b>${platform} Tasks</b>\n\nনিচের বাটন থেকে টাস্ক সিলেক্ট করুন:`, kb);
+}));
+
+bot.action(/^task:(.+)$/, safe(async (ctx) => {
+  await ctx.answerCbQuery();
+  const snap = await db.collection("tasks").doc(ctx.match[1]).get();
+  if (!snap.exists) return ctx.reply("❌ টাস্কটি পাওয়া যায়নি।");
+  const t = { id: snap.id, ...snap.data() };
+  const kb = Markup.inlineKeyboard([
+    [ib("Submit File", `sub:${t.id}`, "success")],
+    [ib("⬅️ Back", `task_plat:${t.platform || "Other"}`, "danger")],
+  ]);
+  return edit(ctx, taskText(t), kb);
+}));
+
+bot.action("tasks:back", safe(async (ctx) => {
+  await ctx.answerCbQuery();
+  const tasks = await fetchOpenTasks();
+  if (!tasks.length) return edit(ctx, "📭 এখন কোনো task নেই।");
+  
+  const platforms = [...new Set(tasks.map(t => t.platform || "Other"))];
+  const kb = Markup.inlineKeyboard(
+    platforms.map(p => [ib(`📱 ${p}`, `task_plat:${p}`)])
+  );
+  return edit(ctx, "📋 <b>Available Services</b>\n\nকোন সার্ভিসের টাস্ক দেখতে চান? নিচের বাটন থেকে সিলেক্ট করুন:", kb);
+}));
+
+bot.action(/^sub:(.+)$/, safe(async (ctx) => {
+  const snap = await db.collection("tasks").doc(ctx.match[1]).get();
+  if (!snap.exists) return ctx.answerCbQuery("❌ টাস্কটি পাওয়া যায়নি।", { show_alert: true });
+  const t = { id: snap.id, ...snap.data() };
+  const st = taskState(t);
+  if (st === "upcoming") return ctx.answerCbQuery("এখনো শুরু হয়নি।", { show_alert: true });
+  if (st === "closed" || t.active === false) {
+    return ctx.answerCbQuery("টাস্ক শেষ হয়েছে।", { show_alert: true });
+  }
+  if (!(await getUser(ctx.from.id))) {
+    return ctx.answerCbQuery("আগে /start দিন।", { show_alert: true });
+  }
+  await ctx.answerCbQuery();
+  await setSession(ctx.from.id, { action: "submit_file", taskId: t.id });
+  const fields = t.fields?.length ? t.fields : DEFAULT_FIELDS;
+  const fmt = fields.map((f) => f.label || f.key).join(" | ");
+  return ctx.reply(
+    `📤 <b>Submit File</b>\n\n📋 Task: ${esc(t.title)}\n💰 Rate: ৳${money(t.pricePerAccount)}/account\n\n📊 Format:\n<code>${esc(fmt)}</code>\n\n📎 Excel (.xlsx/.xls), CSV, বা TXT file পাঠান।\nপ্রতি রো = ১ অ্যাকাউন্ট\n\n❌ বাতিল: /menu`,
+    { parse_mode: "HTML" }
+  );
+}));
 bot.action(
   /^af_dl:(.+)$/,
   adminCb(async (ctx) => {
@@ -2483,10 +2533,13 @@ bot.catch((err, ctx) => {
 /* ------------------------------------------------------------------ */
 /*  LAUNCH + STARTUP SETUP                                             */
 /* ------------------------------------------------------------------ */
-bot.launch({ dropPendingUpdates: true }).catch((e) => {
-  console.error("Launch failed:", e);
-  process.exit(1);
-});
+function startBot() {
+  bot.launch({ dropPendingUpdates: true }).catch((e) => {
+    console.error("Launch failed, retrying in 5 seconds...", e.message);
+    setTimeout(startBot, 5000);
+  });
+}
+startBot();
 
 (async () => {
   try {
