@@ -32,7 +32,7 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import axios from "axios";
 import FormData from "form-data";
-
+import fs from "fs";
 /* ------------------------------------------------------------------ */
 /*  KEEP-ALIVE HTTP SERVER (Render + UptimeRobot)                      */
 /* ------------------------------------------------------------------ */
@@ -47,15 +47,14 @@ const server = http
 /*  ENV + FIREBASE                                                     */
 /* ------------------------------------------------------------------ */
 const BOT_TOKEN = process.env.BOT_TOKEN;
-if (!BOT_TOKEN || !process.env.FIREBASE_SERVICE_ACCOUNT_PART1) {
-  console.error("❌ BOT_TOKEN বা FIREBASE_SERVICE_ACCOUNT_PART1 সেট করা নেই।");
+if (!BOT_TOKEN) {
+  console.error("❌ BOT_TOKEN সেট করা নেই।");
   process.exit(1);
 }
 const EXPORT_SECRET = process.env.EXPORT_SECRET || BOT_TOKEN;
 
-const saPart1 = process.env.FIREBASE_SERVICE_ACCOUNT_PART1 || "";
-const saPart2 = process.env.FIREBASE_SERVICE_ACCOUNT_PART2 || "";
-const sa = JSON.parse(saPart1 + saPart2);
+// ফাইল থেকে সরাসরি Firebase JSON রিড করা হচ্ছে
+const sa = JSON.parse(fs.readFileSync("./firebase-key.json", "utf8"));
 sa.private_key = sa.private_key.replace(/\\n/g, "\n");
 admin.initializeApp({
   credential: admin.credential.cert(sa),
