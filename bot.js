@@ -1,11 +1,18 @@
 /*
  ============================================================================
-  ADQ INCOME ZONE — TELEGRAM BOT  (single file)
+  ADQ INCOME ZONE — TELEGRAM BOT  (Task Bot + 📱 NUMBER PANEL)
  ============================================================================
   Render Environment:
     BOT_TOKEN                = BotFather token
     FIREBASE_SERVICE_ACCOUNT = service account JSON (পুরো JSON, এক লাইনে)
     EXPORT_SECRET            = (optional)
+    --- Number Panel ---
+    MKNETWORK_API_KEY        = (বাধ্যতামূলক) MK Network API key
+    FORWARD_GROUP_ID         = (optional) OTP group post
+    CHANNEL_URL              = (optional) group post-এর JOIN CHANNEL লিংক
+    GET_NUMBER_URL           = (optional) group post-এর Get Number লিংক
+    POLL_INTERVAL            = (optional) default 6000
+    MAX_PENDING              = (optional) default 20
  ============================================================================
 */
 
@@ -17,6 +24,7 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import axios from "axios";
 import FormData from "form-data";
+import { createNumberPanel } from "./number_panel.js";
 
 /* ------------------------------------------------------------------ */
 /*  KEEP-ALIVE HTTP SERVER (Render + UptimeRobot)                      */
@@ -79,7 +87,7 @@ const BTN = {
   profile: "👤 Profile",
   history: "📜 History",
   refer: "🎁 Refer",
-  help: "❓ Help",
+  number: "📱 NUMBER PANEL",
 };
 const ABTN = {
   stats: "📊 Stats",
@@ -94,6 +102,7 @@ const ABTN = {
   manage: "👤 User Manage",
   back: "🔙 User Menu",
   panel: "🛠️ Admin Panel",
+  otp: "📱 OTP Admin",
 };
 
 // Telegram button রঙ: "success" = সবুজ, "danger" = লাল, "primary" = নীল
@@ -113,7 +122,7 @@ const buildMainMenu = (isAdm) => {
     [BTN.task, BTN.balance],
     [BTN.withdraw, BTN.leaderboard],
     [BTN.profile, BTN.history],
-    [BTN.refer, BTN.help],
+    [BTN.refer, BTN.number],
   ];
   if (isAdm) rows.push([ABTN.panel]);
   return Markup.keyboard(rows.map((row) => row.map(kbBtn))).resize();
@@ -125,6 +134,7 @@ const adminMenu = Markup.keyboard(
     [ABTN.files, ABTN.wd],
     [ABTN.badges, ABTN.bc],
     [ABTN.settings, ABTN.tasks],
+    [ABTN.otp],
     [ABTN.manage, ABTN.back],
   ].map((row) => row.map(kbBtn))
 ).resize();
@@ -571,6 +581,8 @@ async function cmdStart(ctx) {
       role: "user",
       authProvider: "telegram",
       balance: 0,
+      otpBalance: 0,
+      otpCount: 0,
       totalGood: 0,
       totalBad: 0,
       totalPending: 0,
@@ -594,7 +606,7 @@ async function cmdStart(ctx) {
       }
 
       return ctx.reply(
-        `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"Task Submit" বাটন থেকে আয় শুরু করুন।`,
+        `🎉 <b>স্বাগতম ADQ Income Zone-এ!</b>\n\n👤 নাম: ${esc(doc.username)}\n🆔 আপনার UID (Telegram ID): <code>${f.id}</code>\n🎁 Refer Code: <code>${code}</code>\n\n✅ অ্যাকাউন্ট তৈরি হয়েছে!\n"Task Submit" বাটন থেকে আয় শুরু করুন।\n📱 OTP থেকে আয় করতে "NUMBER PANEL" ব্যবহার করুন।`,
         await userKb(f.id)
       );
     } catch (e) {
@@ -603,7 +615,7 @@ async function cmdStart(ctx) {
     }
   }
   return ctx.reply(
-    `👋 <b>স্বাগতম ${esc(u.username)}!</b>\n\n💰 Balance: ${tk(u.balance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}`,
+    `👋 <b>স্বাগতম ${esc(u.username)}!</b>\n\n💰 Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}`,
     await userKb(f.id)
   );
 }
@@ -629,7 +641,7 @@ async function cmdBalance(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
   return ctx.reply(
-    `💰 <b>ব্যালেন্স</b>\n\nAvailable: <b>${tk(u.balance)}</b>\n\n🟢 Good: ${u.totalGood || 0}\n🔴 Bad: ${u.totalBad || 0}\n🟡 Pending: ${u.totalPending || 0}`,
+    `💰 <b>ব্যালেন্স</b>\n\nTask Balance: <b>${tk(u.balance)}</b>\n📱 OTP Balance: <b>${tk(u.otpBalance)}</b> (OTP: ${u.otpCount || 0})\n\n🟢 Good: ${u.totalGood || 0}\n🔴 Bad: ${u.totalBad || 0}\n🟡 Pending: ${u.totalPending || 0}`,
     { parse_mode: "HTML" }
   );
 }
@@ -669,7 +681,7 @@ async function cmdWithdraw(ctx) {
   if (!cfg.withdrawEnabled) return ctx.reply("🔴 এখন withdraw বন্ধ।");
   const bal = Number(u.balance) || 0;
   if (bal < cfg.minWithdraw) {
-    return ctx.reply(`🔴 Minimum ${tk(cfg.minWithdraw)} দরকার। আছে ${tk(bal)}।`);
+    return ctx.reply(`🔴 Minimum ${tk(cfg.minWithdraw)} দরকার। আছে ${tk(bal)}।\n\n<i>OTP Balance তুলতে NUMBER PANEL → OTP Withdraw ব্যবহার করুন।</i>`, { parse_mode: "HTML" });
   }
   const on = Object.keys(METHODS).filter((m) => cfg.methods[m] !== false);
   if (!on.length) return ctx.reply("🔴 এখন কোনো payment method চালু নেই।");
@@ -679,7 +691,7 @@ async function cmdWithdraw(ctx) {
   });
   rows.push([ib("Cancel", "wd_no", "danger")]);
   return ctx.reply(
-    `💸 <b>Withdraw</b>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}\n\nকোন method-এ তুলবেন? নম্বর সেট না থাকলে এখানেই সেট করতে পারবেন।`,
+    `💸 <b>Withdraw (Task Balance)</b>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}\n\nকোন method-এ তুলবেন? নম্বর সেট না থাকলে এখানেই সেট করতে পারবেন।\n<i>OTP Balance তুলতে NUMBER PANEL → OTP Withdraw ব্যবহার করুন।</i>`,
     kbx(Markup.inlineKeyboard(rows))
   );
 }
@@ -692,13 +704,13 @@ async function cmdLeaderboard(ctx) {
   const lines = rows.map(
     (u, i) => `${medals[i] || `${i + 1}.`} ${esc(u.username)} — 🟢 ${u.totalGood || 0}`
   );
-  return ctx.reply(`🏆 <b>Top 20</b>\n\n${lines.join("\n")}`, { parse_mode: "HTML" });
+  return ctx.reply(`🏆 <b>Top 20</b>\n\n${lines.join("\n")}\n\n<i>OTP Leaderboard: NUMBER PANEL → Leaderboard</i>`, { parse_mode: "HTML" });
 }
 
 async function cmdProfile(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
-  let s = `👤 <b>প্রোফাইল</b>\n\n👤 নাম: ${esc(u.username)}\n🆔 UID: <code>${u.telegramId ?? u.id}</code>\n💰 Balance: ${tk(u.balance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}\n🎁 Refer Code: <code>${esc(u.myReferCode)}</code>\n📅 জয়েন: ${fmtDate(u.createdAt)}`;
+  let s = `👤 <b>প্রোফাইল</b>\n\n👤 নাম: ${esc(u.username)}\n🆔 UID: <code>${u.telegramId ?? u.id}</code>\n💰 Task Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)} (OTP: ${u.otpCount || 0})\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}\n🎁 Refer Code: <code>${esc(u.myReferCode)}</code>\n📅 জয়েন: ${fmtDate(u.createdAt)}`;
   if (u.customBadge) s += `\n🎖️ Badge: ${esc(u.customBadge)}`;
   return ctx.reply(s, { parse_mode: "HTML" });
 }
@@ -707,7 +719,7 @@ async function cmdHistory(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
   return ctx.reply(
-    `📜 <b>History</b>\n\n✅ TOTAL GOOD = ${u.totalGood || 0}\n❌ TOTAL BAD = ${u.totalBad || 0}\n⏳ TOTAL PENDING = ${u.totalPending || 0}`,
+    `📜 <b>History</b>\n\n✅ TOTAL GOOD = ${u.totalGood || 0}\n❌ TOTAL BAD = ${u.totalBad || 0}\n⏳ TOTAL PENDING = ${u.totalPending || 0}\n\n📱 TOTAL OTP = ${u.otpCount || 0}\n<i>OTP হিস্ট্রি: NUMBER PANEL → History</i>`,
     { parse_mode: "HTML" }
   );
 }
@@ -716,11 +728,13 @@ async function cmdRefer(ctx) {
   const u = await needUser(ctx);
   if (!u) return;
   const rate = await getReferCommission();
+  const otpCfg = await db.collection("settings").doc("otp_config").get();
+  const otpComm = Number(u.customReferComm) || Number(otpCfg.exists ? otpCfg.data().referComm : 0.1) || 0;
   const botName = ctx.botInfo?.username || bot.botInfo?.username || (await ctx.telegram.getMe()).username;
   const link = `https://t.me/${botName}?start=${u.myReferCode}`;
 
   return ctx.reply(
-    `🎁 <b>Refer &amp; Earn</b>\n\n🔗 <b>Refer Link:</b>\n<code>${link}</code>\n\n👥 Total Refer: ${u.referCount || 0} জন\n📈 Commission Rate: <b>${rate}%</b>\n💰 Total Refer Commission: ${tk(u.totalReferEarning)}\n\n<i>বন্ধুকে আপনার লিংক দিন — সে Good Account দিলে আপনি কমিশন পাবেন!</i>`,
+    `🎁 <b>Refer &amp; Earn</b>\n\n🔗 <b>Refer Link:</b>\n<code>${link}</code>\n\n👥 Total Refer: ${u.referCount || 0} জন\n📈 Task Commission Rate: <b>${rate}%</b>\n💰 Total Task Commission: ${tk(u.totalReferEarning)}\n📱 OTP Commission: <b>৳${otpComm}</b> প্রতি OTP-তে\n💰 Total OTP Commission: ${tk(u.otpReferEarning)}\n\n<i>বন্ধুকে আপনার লিংক দিন — সে Good Account দিলে বা OTP নিলে আপনি কমিশন পাবেন!</i>`,
     { parse_mode: "HTML", disable_web_page_preview: true }
   );
 }
@@ -741,7 +755,7 @@ async function cmdWallet(ctx) {
 
 async function cmdHelp(ctx) {
   return ctx.reply(
-    "❓ <b>সাহায্য</b>\n\n🚀 /start — অ্যাকাউন্ট তৈরি\n📱 /menu — মেইন মেনু\n📋 /tasks — টাস্ক লিস্ট\n💰 /balance — ব্যালেন্স\n💸 /withdraw — টাকা তোলা\n📜 /history — হিস্টোরি\n🏆 /leaderboard — টপ\n👤 /profile — প্রোফাইল\n🎁 /refer — রেফার",
+    "❓ <b>সাহায্য</b>\n\n🚀 /start — অ্যাকাউন্ট তৈরি\n📱 /menu — মেইন মেনু\n📋 /tasks — টাস্ক লিস্ট\n💰 /balance — ব্যালেন্স\n💸 /withdraw — টাকা তোলা\n📜 /history — হিস্টোরি\n🏆 /leaderboard — টপ\n👤 /profile — প্রোফাইল\n🎁 /refer — রেফার\n📱 /number — Number Panel (OTP থেকে আয়)",
     { parse_mode: "HTML" }
   );
 }
@@ -766,6 +780,15 @@ async function cmdSetWallet(ctx) {
   return ctx.reply(`🟢 ${method.toUpperCase()} saved: ${number}`);
 }
 
+/* ------------------------------------------------------------------ */
+/*  📱 NUMBER PANEL (number_panel.js)                                  */
+/* ------------------------------------------------------------------ */
+const NP = createNumberPanel({
+  bot, db, FieldValue, Timestamp, Markup, ib, kbx, edit, esc, tk, round2, bn2en, METHODS,
+  userRef, getUser, needUser, isAdmin, getWdConfig, normAccount, accountPrompt,
+  setSession, clearSession, getSession, safe, adminOnly, adminCb, adminLabel: ABTN.otp, commitOps, dm,
+});
+
 const USER_ROUTES = [
   ["start", null, cmdStart],
   ["menu", null, cmdMenu],
@@ -776,8 +799,9 @@ const USER_ROUTES = [
   ["profile", BTN.profile, cmdProfile],
   ["history", BTN.history, cmdHistory],
   ["refer", BTN.refer, cmdRefer],
+  ["number", BTN.number, (ctx) => NP.open(ctx)],
   ["wallet", null, cmdWallet],
-  ["help", BTN.help, cmdHelp],
+  ["help", null, cmdHelp],
 ];
 for (const [cmd, label, fn] of USER_ROUTES) {
   bot.command(cmd, safe(fn));
@@ -1024,7 +1048,7 @@ async function submitFile(ctx, session) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  WITHDRAW CALLBACKS                                                 */
+/*  WITHDRAW CALLBACKS (Task Balance)                                  */
 /* ------------------------------------------------------------------ */
 const wdAmountText = (method, account, cfg, bal) =>
   `💳 <b>${METHODS[method]}</b> — <code>${esc(account)}</code>\n\n💰 Balance: ${tk(bal)}\n📉 Min: ${tk(cfg.minWithdraw)}  📈 Max: ${tk(cfg.maxWithdraw)}\n\nকত টাকা তুলবেন? (শুধু সংখ্যা):`;
@@ -1092,6 +1116,7 @@ bot.action(
           methodName: METHODS[method],
           amount,
           accountNum: account,
+          balanceType: "task",
           status: "pending",
           requestedAt: Timestamp.now(),
           source: "telegram",
@@ -1152,11 +1177,12 @@ bot.hears(
       db.collection("users").count().get(),
       db.collection("submissions").where("status", "==", "pending").count().get(),
       db.collection("withdrawals").where("status", "==", "pending").count().get(),
-      db.collection("users").select("balance").get(),
+      db.collection("users").select("balance", "otpBalance").get(),
     ]);
     const total = balSnap.docs.reduce((s, d) => s + (Number(d.get("balance")) || 0), 0);
+    const otpTotal = balSnap.docs.reduce((s, d) => s + (Number(d.get("otpBalance")) || 0), 0);
     return ctx.reply(
-      `📊 <b>Admin Stats</b>\n\n🎯 Active Tasks: ${tasks.length}\n👥 Users: ${usersCnt.data().count}\n🟡 Pending Subs: ${subsCnt.data().count}\n🟡 Pending Withdrawals: ${wdCnt.data().count}\n\n💰 Total User Balance: ${tk(total)}`,
+      `📊 <b>Admin Stats</b>\n\n🎯 Active Tasks: ${tasks.length}\n👥 Users: ${usersCnt.data().count}\n🟡 Pending Subs: ${subsCnt.data().count}\n🟡 Pending Withdrawals: ${wdCnt.data().count}\n\n💰 Total Task Balance: ${tk(total)}\n📱 Total OTP Balance: ${tk(otpTotal)}`,
       { parse_mode: "HTML" }
     );
   })
@@ -1170,7 +1196,7 @@ bot.hears(
     if (snap.empty) return ctx.reply("📭 কোনো user নেই।");
     const lines = snap.docs.map((d, i) => {
       const u = d.data();
-      return `${i + 1}. ${esc(u.username)} — 🟢 ${u.totalGood || 0} • ${tk(u.balance)}`;
+      return `${i + 1}. ${esc(u.username)} — 🟢 ${u.totalGood || 0} • ${tk(u.balance)} • 📱 ${tk(u.otpBalance)}`;
     });
     return sendLong(ctx, `👥 <b>Top 20 Users</b>\n\n${lines.join("\n")}`);
   })
@@ -1599,7 +1625,7 @@ async function processBad(ctx, session) {
   }
 }
 
-/* ---- Withdrawals ---- */
+/* ---- Withdrawals (Task + OTP দুটোই এখানে আসে) ---- */
 bot.hears(
   ABTN.wd,
   adminOnly(async (ctx) => {
@@ -1614,7 +1640,7 @@ bot.hears(
         [ib("Approve", `wdp_ok:${d.id}`, "success"), ib("Reject", `wdp_no:${d.id}`, "danger")],
       ]);
       await ctx.reply(
-        `💸 Withdraw Request\n\n👤 ${w.username}\n🆔 ${w.userId}\n💰 ${tk(w.amount)}\n💳 ${String(w.method).toUpperCase()}\n📱 ${w.accountNum}\n🕐 ${fmtDate(w.requestedAt)}`,
+        `💸 Withdraw Request ${w.balanceType === "otp" ? "(📱 OTP Balance)" : "(💰 Task Balance)"}\n\n👤 ${w.username}\n🆔 ${w.userId}\n💰 ${tk(w.amount)}\n💳 ${String(w.method).toUpperCase()}\n📱 ${w.accountNum}\n🕐 ${fmtDate(w.requestedAt)}`,
         { reply_markup: kb.reply_markup }
       );
     }
@@ -1666,7 +1692,11 @@ bot.action(
         const uref = userRef(w.userId);
         const us = await tx.get(uref);
         tx.update(ref, { status: "rejected", rejectedAt: Timestamp.now(), rejectedBy: ctx.from.id });
-        if (us.exists) tx.update(uref, { balance: round2((Number(us.get("balance")) || 0) + Number(w.amount)) });
+        if (us.exists) {
+          // OTP withdraw হলে otpBalance-এ, নইলে মূল balance-এ ফেরত
+          const field = w.balanceType === "otp" ? "otpBalance" : "balance";
+          tx.update(uref, { [field]: round2((Number(us.get(field)) || 0) + Number(w.amount)) });
+        }
       });
     } catch (e) {
       if (e.message === "NOT_FOUND" || e.message === "DONE") {
@@ -1680,7 +1710,7 @@ bot.action(
     await ctx.editMessageText(`${ctx.callbackQuery.message.text}\n\n🔴 REJECTED`).catch(() => {});
     await dm(
       w.userId,
-      `🔴 <b>Withdraw Rejected</b>\n\n💰 ${tk(w.amount)} আপনার ব্যালেন্সে ফেরত দেওয়া হয়েছে।\n\nপ্রশ্ন থাকলে admin-এর সাথে যোগাযোগ করুন।`
+      `🔴 <b>Withdraw Rejected</b>\n\n💰 ${tk(w.amount)} আপনার ${w.balanceType === "otp" ? "OTP Balance-এ" : "ব্যালেন্সে"} ফেরত দেওয়া হয়েছে।\n\nপ্রশ্ন থাকলে admin-এর সাথে যোগাযোগ করুন।`
     );
   })
 );
@@ -1788,10 +1818,11 @@ bot.hears(
 
     const kb = Markup.inlineKeyboard([
       [ib(`🎁 Referral Commission বদলান (এখন ${rate}%)`, "setref_prompt", "primary")],
+      [ib("📱 Number Panel (OTP) Settings", "npa_set", "success")],
     ]);
 
     return ctx.reply(
-      `⚙️ <b>Settings</b>\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🟢 Withdraw Enabled: ${c.withdrawEnabled ? "হ্যাঁ" : "না"}\n🎁 Referral Rate: <b>${rate}%</b>\n\n<i>Withdraw সেটিংস বদলাতে কমান্ড ব্যবহার করুন:</i>\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000\n/setcfg withdrawEnabled true`,
+      `⚙️ <b>Settings</b>\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🟢 Withdraw Enabled: ${c.withdrawEnabled ? "হ্যাঁ" : "না"}\n🎁 Referral Rate: <b>${rate}%</b>\n\n<i>Withdraw সেটিংস বদলাতে কমান্ড ব্যবহার করুন:</i>\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000\n/setcfg withdrawEnabled true\n\n<i>OTP সেটিংস (Per OTP rate, Min OTP...) → উপরের 📱 বাটন বা 📱 OTP Admin।</i>`,
       { parse_mode: "HTML", reply_markup: kb.reply_markup }
     );
   })
@@ -1849,12 +1880,13 @@ const userCard = (u) => {
   return (
     `👤 <b>${esc(u.username)}</b>\n🆔 UID: <code>${u.id}</code>\n` +
     (u.telegramUsername ? `📛 @${esc(u.telegramUsername)}\n` : "") +
-    `💰 Balance: ${tk(u.balance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}\n💳 Wallet: ${esc(w || "নেই")}`
+    `💰 Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)} (OTP: ${u.otpCount || 0})\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}\n💳 Wallet: ${esc(w || "নেই")}`
   );
 };
 const userCardKb = (id) =>
   Markup.inlineKeyboard([
     [ib("➕ Balance যোগ", `um_add:${id}`, "success"), ib("➖ Balance কাটুন", `um_sub:${id}`, "danger")],
+    [ib("📱 OTP Balance/Rate (OTP Admin)", `npa_u_${id}`, "success")],
     [ib("🔁 নতুন Telegram ID-তে সরান", `um_mv:${id}`, "primary")],
   ]);
 
@@ -1947,6 +1979,9 @@ async function moveUser(ctx, oldId, newId) {
     telegramLinkedAt: now,
     role: old.role === "admin" || nu?.role === "admin" ? "admin" : "user",
     balance: round2(sum("balance")),
+    otpBalance: round2(sum("otpBalance")),
+    otpCount: sum("otpCount"),
+    otpReferEarning: round2(sum("otpReferEarning")),
     totalGood: sum("totalGood"),
     totalBad: sum("totalBad"),
     totalPending: sum("totalPending"),
@@ -1972,12 +2007,12 @@ async function moveUser(ctx, oldId, newId) {
   await commitOps(ops);
 
   await ctx.reply(
-    `✅ <b>${nu ? "মার্জ সম্পন্ন!" : "সরানো সম্পন্ন!"}</b>\n\n👤 ${esc(old.username)}\n🆔 ${oldId} ➜ <code>${newId}</code>\n💰 Balance: ${nu ? `${tk(old.balance)} + ${tk(nu.balance)} = ${tk(data.balance)}` : tk(old.balance)}\n📋 ${subs.size} submissions • 💸 ${wds.size} withdrawals`,
+    `✅ <b>${nu ? "মার্জ সম্পন্ন!" : "সরানো সম্পন্ন!"}</b>\n\n👤 ${esc(old.username)}\n🆔 ${oldId} ➜ <code>${newId}</code>\n💰 Balance: ${nu ? `${tk(old.balance)} + ${tk(nu.balance)} = ${tk(data.balance)}` : tk(old.balance)}\n📱 OTP Balance: ${tk(data.otpBalance)}\n📋 ${subs.size} submissions • 💸 ${wds.size} withdrawals`,
     { parse_mode: "HTML", reply_markup: adminMenu.reply_markup }
   );
   await dm(
     newId,
-    `✅ <b>আপনার অ্যাকাউন্ট এই Telegram ID-তে সরানো হয়েছে!</b>\n\n💰 Balance: ${tk(data.balance)}\n🟢 Good: ${data.totalGood || 0}  🔴 Bad: ${data.totalBad || 0}\n\nমেনু দেখতে /menu দিন।`
+    `✅ <b>আপনার অ্যাকাউন্ট এই Telegram ID-তে সরানো হয়েছে!</b>\n\n💰 Balance: ${tk(data.balance)}\n📱 OTP Balance: ${tk(data.otpBalance)}\n🟢 Good: ${data.totalGood || 0}  🔴 Bad: ${data.totalBad || 0}\n\nমেনু দেখতে /menu দিন।`
   );
 }
 
@@ -2310,6 +2345,7 @@ async function importBackup(ctx) {
   if (existing) {
     const empty =
       !(Number(existing.balance) > 0) &&
+      !(Number(existing.otpBalance) > 0) &&
       !(Number(existing.totalGood) > 0) &&
       !(Number(existing.totalBad) > 0) &&
       !(Number(existing.totalPending) > 0);
@@ -2343,6 +2379,9 @@ async function importBackup(ctx) {
       role: existing?.role || "user",
       authProvider: "telegram",
       balance: Number(b.balance) || 0,
+      otpBalance: Number(b.otpBalance) || 0,
+      otpCount: Number(b.otpCount) || 0,
+      otpReferEarning: Number(b.otpReferEarning) || 0,
       totalGood: Number(b.totalGood) || 0,
       totalBad: Number(b.totalBad) || 0,
       totalPending: Number(b.totalPending) || 0,
@@ -2379,7 +2418,7 @@ async function importBackup(ctx) {
     await commitOps(ops);
     await clearSession(newId);
     return ctx.reply(
-      `✅ <b>Import সফল!</b>\n\n👤 ${esc(uname)}\n💰 Balance: ${tk(newUser.balance)}\n📋 ${subs.length} submissions\n💸 ${wds.length} withdrawals\n\n🆔 নতুন UID: <code>${newId}</code>`,
+      `✅ <b>Import সফল!</b>\n\n👤 ${esc(uname)}\n💰 Balance: ${tk(newUser.balance)}\n📱 OTP Balance: ${tk(newUser.otpBalance)}\n📋 ${subs.length} submissions\n💸 ${wds.length} withdrawals\n\n🆔 নতুন UID: <code>${newId}</code>`,
       await userKb(ctx.from.id)
     );
   } catch (e) {
@@ -2579,7 +2618,7 @@ bot.on(
         await setSession(id, { action: "um_mv_confirm", oldId: s.oldId, newId: nid });
         const kb = Markup.inlineKeyboard([[ib("হ্যাঁ, সরান", "um_mv_ok", "success"), ib("বাতিল", "um_no", "danger")]]);
         return ctx.reply(
-          `🔁 <b>নিশ্চিত করুন</b>\n\n👤 ${esc(oldU.username)}\n🆔 ${s.oldId} ➜ <code>${nid}</code>\n💰 Balance: ${newU ? `${tk(oldU.balance)} + ${tk(newU.balance)} = ${tk((Number(oldU.balance) || 0) + (Number(newU.balance) || 0))}` : tk(oldU.balance)}\n\n${newU ? "নতুন ID-তে আগে থেকেই অ্যাকাউন্ট আছে — দুটো মার্জ হবে (balance, Good/Bad, submissions, withdrawals সব যোগ হবে)। " : ""}পুরনো ID-র সব ডাটা নতুন ID-তে যাবে, আর পুরনো অ্যাকাউন্ট মুছে যাবে।`,
+          `🔁 <b>নিশ্চিত করুন</b>\n\n👤 ${esc(oldU.username)}\n🆔 ${s.oldId} ➜ <code>${nid}</code>\n💰 Balance: ${newU ? `${tk(oldU.balance)} + ${tk(newU.balance)} = ${tk((Number(oldU.balance) || 0) + (Number(newU.balance) || 0))}` : tk(oldU.balance)}\n📱 OTP Balance: ${tk((Number(oldU.otpBalance) || 0) + (Number(newU?.otpBalance) || 0))}\n\n${newU ? "নতুন ID-তে আগে থেকেই অ্যাকাউন্ট আছে — দুটো মার্জ হবে (balance, OTP balance, Good/Bad, submissions, withdrawals সব যোগ হবে)। " : ""}পুরনো ID-র সব ডাটা নতুন ID-তে যাবে, আর পুরনো অ্যাকাউন্ট মুছে যাবে।`,
           kbx(kb)
         );
       }
@@ -2600,6 +2639,8 @@ bot.on(
         return ctx.reply("📎 এখন ফাইল পাঠান। বাতিল করতে /menu দিন।");
 
       default:
+        // 📱 Number Panel (np_* = user, npa_* = OTP Admin)
+        if (String(s.action).startsWith("np")) return NP.handleText(ctx, s, text);
         return next();
     }
   })
@@ -2709,6 +2750,9 @@ async function startBot() {
 }
 startBot();
 
+// 📱 Number Panel: OTP poller + group forward চালু
+NP.start().catch((e) => console.error("NumberPanel start failed:", e.message));
+
 (async () => {
   try {
     await bot.telegram.setChatMenuButton({ menu_button: { type: "commands" } });
@@ -2716,6 +2760,7 @@ startBot();
       { command: "start", description: "অ্যাকাউন্ট তৈরি / শুরু" },
       { command: "menu", description: "মেইন মেনু" },
       { command: "tasks", description: "টাস্ক লিস্ট" },
+      { command: "number", description: "Number Panel (OTP আয়)" },
       { command: "balance", description: "ব্যালেন্স" },
       { command: "withdraw", description: "টাকা তোলা" },
       { command: "history", description: "হিস্টোরি" },
