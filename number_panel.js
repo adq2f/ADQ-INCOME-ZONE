@@ -1,9 +1,9 @@
 /*
  ============================================================================
-  NUMBER PANEL MODULE v2 — VOLTEX SMS API  (Paginated + Facebook-only Work)
-  Get Number: Service → (FB: 4-5/6+) → Top 10 Countries (paged) → Ranges (paged) → Allocate
-  Live Traffic: Service → Top 10 Countries (paged) → Top 5 Ranges (paged) → Allocate
-  Admin: 📱 OTP Admin (Users • Settings • Stats • Bulk Rate • Customize • OTP Digit)
+  NUMBER PANEL MODULE v3 — VOLTEX SMS API
+  • Country display: 🇨🇲 CM (flag + 2-letter ISO) everywhere in lists
+  • Allocation success: flag + full name (as user allows)
+  • 2 numbers together with auto-retry (12s limit)
  ============================================================================
 */
 import axios from "axios";
@@ -30,10 +30,9 @@ const CHANNEL_URL = process.env.CHANNEL_URL || "";
 const GET_NUMBER_URL = process.env.GET_NUMBER_URL || "";
 const PAGE = 8;
 
-/* pagination sizes */
-const PP_SERVICES = 10;
-const PP_COUNTRIES = 10;
-const PP_RANGES_GET = 10;
+const PP_SERVICES = 8;
+const PP_COUNTRIES = 8;
+const PP_RANGES_GET = 8;
 const PP_RANGES_TRAFFIC = 5;
 
 /* ------------------------------------------------------------------ */
@@ -41,7 +40,6 @@ const PP_RANGES_TRAFFIC = 5;
 /* ------------------------------------------------------------------ */
 const V_BASE = "https://api.2oo9.cloud/MXS47FLFX0U/tnevs/@public/api";
 const V_KEY = (process.env.VOLTEX_API_KEY || "MMF2X6FDQ4I").trim();
-
 const vc = axios.create({
   baseURL: V_BASE,
   headers: { mauthapi: V_KEY, "Content-Type": "application/json", Accept: "application/json" },
@@ -83,6 +81,8 @@ const allocateNumber = async (range) => {
 /* ------------------------------------------------------------------ */
 /*  HELPERS                                                            */
 /* ------------------------------------------------------------------ */
+const tr = (s, n) => { const x = String(s ?? ""); return x.length > n ? x.slice(0, n - 1) + "…" : x; };
+
 function resolveCountry(name, number) {
   const n = String(name || "").trim();
   if (n && !/^(unknown|custom range)$/i.test(n)) {
@@ -114,7 +114,6 @@ const COUNTRIES = (() => {
   return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
 })();
 const rangeKey = (r) => String(r || "unknown").replace(/[.\/\[\]*`~\s]/g, "_").slice(0, 60);
-const isFacebookSid = (sid) => /^facebook$/i.test(String(sid || ""));
 
 const extractOtp = (text) => {
   const s = String(text || "");
@@ -139,7 +138,7 @@ function paginate(arr, page, per) {
   };
 }
 
-/* premium (custom) emoji helpers */
+/* premium emoji helpers */
 const ID_RE = /^\d{5,30}$/;
 const escH = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 function renderHtml(text, entities, start, end) {
@@ -174,7 +173,6 @@ function parseLabel(rawText, entities = []) {
 const LBL = {
   p_get: "📞 Get Number", p_custom: "🔥 Custom Range", p_search: "🔍 Search OTP", p_hist: "📊 History",
   p_traffic: "📈 Live Traffic", p_lead: "🏆 Leaderboard", p_wd: "💸 OTP Withdraw",
-  w_short: "🔢 Facebook 4-5 Digit OTP Work", w_long: "🔢 Facebook 6+ Digit OTP Work",
   g_join: "JOIN CHANNEL", g_copy: "{otp}", g_get: "📞 Get Number",
 };
 const EM = {
@@ -196,7 +194,6 @@ export function createNumberPanel(d) {
   } = d;
 
   const num = (t) => Number(bn2en(String(t)).trim().replace(/,/g, ""));
-  const money = (n) => round2(Number(n) || 0);
 
   /* ---------------- config ---------------- */
   const cfgRef = db.collection("settings").doc("otp_config");
@@ -354,6 +351,7 @@ export function createNumberPanel(d) {
   /* ---------------- live caches ---------------- */
   let liveCache = { at: 0, services: [] };
   let consoleCache = { at: 0, hits: [] };
+  let rangeCache = { at: 0, items: [] };
 
   async function getServices(force = false) {
     if (!force && Date.now() - liveCache.at < 15000 && liveCache.services.length) return liveCache.services;
@@ -367,8 +365,6 @@ export function createNumberPanel(d) {
     if (data?.hits) consoleCache = { at: Date.now(), hits: data.hits };
     return consoleCache.hits;
   }
-
-  let rangeCache = { at: 0, items: [] };
   async function getRanges(force = false) {
     if (!force && Date.now() - rangeCache.at < 15000 && rangeCache.items.length) return rangeCache.items;
     const services = await getServices();
@@ -377,12 +373,13 @@ export function createNumberPanel(d) {
       for (const r of svc.ranges || []) {
         const base = String(r).replace(/X+$/i, "");
         const c = detectCountry(base + "0000");
+        const hasCode = !!c.code;
         items.push({
           range: String(r).toUpperCase(),
           base,
-          country: c.code ? c.name : "Unknown",
+          country: hasCode ? c.name : "Unknown",
+          countryCode: hasCode ? String(c.code).toUpperCase() : "UN",
           flag: c.flag,
-          code: c.code || "",
           operator: svc.sid,
           sid: svc.sid,
           last_at: svc.last_at || 0,
@@ -403,12 +400,35 @@ export function createNumberPanel(d) {
     return map;
   }
 
+  function groupByCountry(ranges, hitMap) {
+    const map = new Map();
+    for (const r of ranges) {
+      if (!map.has(r.country)) {
+        map.set(r.country, {
+          name: r.country,
+          code: r.countryCode || "UN",
+          flag: r.flag,
+          ranges: [],
+          hits: 0,
+        });
+      }
+      const e = map.get(r.country);
+      e.ranges.push(r);
+      e.hits += hitMap.get(r.range) || 0;
+    }
+    return [...map.values()].sort((a, b) => {
+      if (b.hits !== a.hits) return b.hits - a.hits;
+      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
+      return a.name.localeCompare(b.name);
+    });
+  }
+
   const statsRef = db.collection("settings").doc("otp_range_stats");
   const getRangeStats = async () => { try { const s = await statsRef.get(); return s.exists ? s.data() : {}; } catch { return {}; } };
   const bumpRange = (range) => statsRef.set({ [rangeKey(range)]: FieldValue.increment(1) }, { merge: true }).catch(() => {});
 
   /* ---------------- OTP digit learning ---------------- */
-  const MODE = { s: { key: "short", name: "Facebook 4-5 Digit OTP" }, l: { key: "long", name: "Facebook 6+ Digit OTP" } };
+  const MODE = { s: { key: "short", name: "4-5 Digit" }, l: { key: "long", name: "6+ Digit" } };
   const isFbText = (t) => /facebook|\bfb-\d/i.test(String(t || ""));
   const digitsRef = db.collection("settings").doc("otp_range_digits");
   const classRef = db.collection("settings").doc("otp_range_class");
@@ -454,16 +474,13 @@ export function createNumberPanel(d) {
     if (l1 / t >= 0.8) return "long";
     return "both";
   }
-  function matchesMode(range, mode, cfg) {
-    if (!mode) return true;
+  function matchesMode(range, filter, cfg) {
+    if (!filter || filter === "a") return true;
     const c = classOf(range);
     if (c === "unknown") return cfg.showUnknown;
-    return c === "both" || c === MODE[mode].key;
+    if (c === "both") return true;
+    return c === (filter === "s" ? "short" : "long");
   }
-  const tagOf = (range) => {
-    const c = classOf(range);
-    return c === "short" ? " · 🔢4-5" : c === "long" ? " · 🔢6+" : c === "both" ? " · 🔢4-6+" : "";
-  };
 
   /* ---------------- feed learning ---------------- */
   const seenFeed = new Set();
@@ -558,29 +575,26 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  GET NUMBER FLOW  (Service → FB Work → Country → Range)          */
+  /*  GET NUMBER                                                      */
   /* ================================================================ */
 
   async function showServiceList(ctx, page = 0) {
     const services = await getServices(true);
     const live = services.filter((s) => (s.ranges || []).length);
     if (!live.length) {
-      return show(ctx, "❌ এখন কোনো সার্ভিস সচল নেই, একটু পর চেষ্টা করুন।",
+      return show(ctx, "❌ এখন কোনো সার্ভিস সচল নেই।",
         [[ib("🔄 Retry", "np_get", "success")], back]);
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
-    const btns = pg.items.map((s) => {
-      const fbTag = isFacebookSid(s.sid) ? " · 🔢" : "";
-      return ib(`📱 ${s.sid} (${s.ranges.length}${fbTag})`, `np_gsv:${s.sid}`, "success");
-    });
+    const btns = pg.items.map((s) => ib(`📱 ${tr(s.sid, 14)}`, `np_gsv:${s.sid}`, "success"));
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gsl:${pg.page - 1}`, `np_gsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_get", "primary")]);
-    rows.push(back);
-    const header = `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>\n\nযে সার্ভিসের নাম্বার নিতে চান সেটায় চাপুন:`;
-    return show(ctx, header, rows);
+    rows.push([ib("🔄 Refresh", "np_get", "primary"), back[0]]);
+    return show(ctx,
+      `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`,
+      rows);
   }
 
   bot.action("np_get", safe(async (ctx) => {
@@ -600,121 +614,106 @@ export function createNumberPanel(d) {
   bot.action(/^np_gsv:(.+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
-    const sid = ctx.match[1];
-    const all = await getRanges();
-    const svcRanges = all.filter((r) => r.sid === sid);
-    if (!svcRanges.length) return show(ctx, `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
-      [[ib("🔙 Services", "np_get", "primary")], back]);
-    if (isFacebookSid(sid)) {
-      return show(ctx,
-        `🔢 <b>Facebook — OTP Digit সিলেক্ট করুন</b>\n\n• <b>Facebook 4-5 Digit OTP Work</b> — শুধু সেই রেঞ্জ দেখাবে যেখানে Facebook-এর ৪-৫ ডিজিট OTP আসে\n• <b>Facebook 6+ Digit OTP Work</b> — শুধু সেই রেঞ্জ দেখাবে যেখানে ৬+ ডিজিট OTP আসে\n\n👇 আপনার প্রয়োজন অনুযায়ী বেছে নিন:`,
-        [
-          [bt("w_short", { callback_data: `np_wf:s`, style: "success" })],
-          [bt("w_long", { callback_data: `np_wf:l`, style: "primary" })],
-          [ib("🔙 Services", "np_get", "primary"), back[0]],
-        ]);
-    }
-    return showCountryList(ctx, sid, null, 0);
+    return showCountryList(ctx, ctx.match[1], "a", 0);
   }));
 
-  bot.action(/^np_wf:(s|l)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    const mode = ctx.match[1];
-    return showCountryList(ctx, "Facebook", mode, 0);
-  }));
-
-  async function showCountryList(ctx, sid, mode, page = 0) {
+  async function showCountryList(ctx, sid, filter = "a", page = 0) {
     const cfg = await getCfg();
     const all = await getRanges();
     const hitMap = await hitMapByRange();
-    const svcRanges = all.filter((r) => r.sid === sid && (!mode || matchesMode(r.range, mode, cfg)));
-    if (!svcRanges.length) {
-      const retryCb = isFacebookSid(sid) ? "np_gsv:Facebook" : "np_get";
-      return show(ctx, `❌ এই সার্ভিস${mode ? ` (${MODE[mode].name})` : ""}-এ এখন কোনো রেঞ্জ নেই।`,
-        [[ib("🔄 Retry", retryCb, "success")], [ib("🔙 Services", "np_get", "primary")], back]);
+    const sidLower = sid.toLowerCase();
+    const allSvcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
+    if (!allSvcRanges.length) {
+      return show(ctx, `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
+        [[ib("🔄 Retry", "np_get", "success")], back]);
     }
-    const byCountry = new Map();
-    for (const r of svcRanges) {
-      if (!byCountry.has(r.country)) byCountry.set(r.country, { name: r.country, flag: r.flag, ranges: [], hits: 0 });
-      const e = byCountry.get(r.country);
-      e.ranges.push(r);
-      e.hits += hitMap.get(r.range) || 0;
-    }
-    const countries = [...byCountry.values()].sort((a, b) => {
-      if (b.hits !== a.hits) return b.hits - a.hits;
-      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
-      return a.name.localeCompare(b.name);
-    });
+    const svcRanges = allSvcRanges.filter((r) => matchesMode(r.range, filter, cfg));
+    const countries = groupByCountry(svcRanges, hitMap);
     const pg = paginate(countries, page, PP_COUNTRIES);
-    const modeStr = mode || "n";
+
     const btns = pg.items.map((c) => {
-      const hitTag = c.hits ? ` · ${c.hits}🔥` : "";
-      return ib(`${c.flag} ${c.name} (${c.ranges.length}${hitTag})`, `np_grc:${sid}:${modeStr}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
+      const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
+      return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
     });
+
     const rows = [];
+    const cntS = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
+    const cntL = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
+    if (cntS > 0 || cntL > 0) {
+      const fRow = [ib(filter === "a" ? "✅ All" : "All", `np_gcl:${sid}:a:0`, filter === "a" ? "success" : "primary")];
+      if (cntS > 0) fRow.push(ib(filter === "s" ? "✅ 4-5" : "4-5", `np_gcl:${sid}:s:0`, filter === "s" ? "success" : "primary"));
+      if (cntL > 0) fRow.push(ib(filter === "l" ? "✅ 6+" : "6+", `np_gcl:${sid}:l:0`, filter === "l" ? "success" : "primary"));
+      rows.push(fRow);
+    }
+
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_gcl:${sid}:${modeStr}:${pg.page - 1}`, `np_gcl:${sid}:${modeStr}:${pg.page + 1}`));
-    const backSvc = isFacebookSid(sid) ? "np_gsv:Facebook" : "np_get";
-    rows.push([ib("🔙 Services", backSvc, "primary"), back[0]]);
-    const modeLine = mode ? `\n🔢 Work: <b>${MODE[mode].name}</b>` : "";
+    rows.push(...navRow(pg, `np_gcl:${sid}:${filter}:${pg.page - 1}`, `np_gcl:${sid}:${filter}:${pg.page + 1}`));
+    rows.push([ib("🔙 Services", "np_get", "primary"), back[0]]);
+
+    const filterName = filter === "s" ? " · 4-5 digit" : filter === "l" ? " · 6+ digit" : "";
     return show(ctx,
-      `🌍 <b>দেশ সিলেক্ট করুন</b>${modeLine}\n\n📱 Service: <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages}</i>`,
+      `🌍 <b>দেশ সিলেক্ট করুন</b>${filterName}\n\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages}</i>`,
       rows);
   }
 
-  bot.action(/^np_gcl:([^:]+):([^:]+):(\d+)$/, safe(async (ctx) => {
+  bot.action(/^np_gcl:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
-    const [, sid, modeStr, page] = ctx.match;
-    const mode = ["s", "l"].includes(modeStr) ? modeStr : null;
-    return showCountryList(ctx, sid, mode, Number(page));
+    const [, sid, filter, page] = ctx.match;
+    return showCountryList(ctx, sid, filter, Number(page));
   }));
 
-  bot.action(/^np_grc:([^:]+):([^:]+):(.+):(\d+)$/, safe(async (ctx) => {
+  bot.action(/^np_grc:([^:]+):([asl]):(.+):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
-    const [, sid, modeStr, country, page] = ctx.match;
-    const mode = ["s", "l"].includes(modeStr) ? modeStr : null;
+    const [, sid, filter, country, page] = ctx.match;
+    return showRangeList(ctx, sid, filter, country, Number(page));
+  }));
+
+  async function showRangeList(ctx, sid, filter, country, page = 0) {
     const cfg = await getCfg();
     const all = await getRanges();
     const hitMap = await hitMapByRange();
-    const countryRanges = all
-      .filter((r) => r.sid === sid && r.country === country && (!mode || matchesMode(r.range, mode, cfg)))
-      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }))
-      .sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+    const sidLower = sid.toLowerCase();
+
+    let countryRanges = all
+      .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
+      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
+    countryRanges = countryRanges.filter((r) => matchesMode(r.range, filter, cfg));
+    countryRanges.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+
     if (!countryRanges.length) {
       return show(ctx, "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
-        [[ib("🔙 Countries", `np_gwc:${sid}:${modeStr}:0`, "primary")], back]);
+        [[ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary")], back]);
     }
-    const pg = paginate(countryRanges, Number(page), PP_RANGES_GET);
+
+    const pg = paginate(countryRanges, page, PP_RANGES_GET);
     const btns = pg.items.map((r) => {
-      const hitTag = r.hits ? ` · ${r.hits}🔥` : "";
-      const tag = tagOf(r.range);
-      return ib(`${r.flag} ${r.range}${tag}${hitTag}`, `np_grab:${sid}:${modeStr}:${r.range}`, r.hits > 0 ? "danger" : "success");
+      const hitTag = r.hits > 0 ? ` 🔥${r.hits}` : "";
+      return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
     });
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_grc:${sid}:${modeStr}:${country}:${pg.page - 1}`, `np_grc:${sid}:${modeStr}:${country}:${pg.page + 1}`));
-    rows.push([ib("🔙 Countries", `np_gwc:${sid}:${modeStr}:0`, "primary"), back[0]]);
-    const flag = countryRanges[0].flag;
-    const modeLine = mode ? `\n🔢 Work: <b>${MODE[mode].name}</b>` : "";
-    return show(ctx,
-      `${flag} <b>${esc(country)}</b> — রেঞ্জ সিলেক্ট করুন${modeLine}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = লাইভ hit</i>`,
-      rows);
-  }));
+    rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${country}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${country}:${pg.page + 1}`));
+    rows.push([ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary"), back[0]]);
 
-  /* hidden helper used by gwc back buttons */
-  bot.action(/^np_gwc:([^:]+):([^:]+):(\d+)$/, safe(async (ctx) => {
+    const flag = countryRanges[0].flag;
+    const code = countryRanges[0].countryCode || "UN";
+    const filterName = filter === "s" ? " · 4-5" : filter === "l" ? " · 6+" : "";
+    return show(ctx,
+      `${flag} <b>${code}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
+      rows);
+  }
+
+  bot.action(/^np_gwc:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
-    const [, sid, modeStr, page] = ctx.match;
-    const mode = ["s", "l"].includes(modeStr) ? modeStr : null;
-    return showCountryList(ctx, sid, mode, Number(page));
+    const [, sid, filter, page] = ctx.match;
+    return showCountryList(ctx, sid, filter, Number(page));
   }));
 
   /* ================================================================ */
-  /*  LIVE TRAFFIC FLOW (Service → Country → Top 5 Ranges)            */
+  /*  LIVE TRAFFIC                                                    */
   /* ================================================================ */
 
   async function showTrafficServices(ctx, page = 0) {
@@ -726,14 +725,13 @@ export function createNumberPanel(d) {
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
-    const btns = pg.items.map((s) => ib(`🔥 ${s.sid} (${s.ranges.length})`, `np_tsv:${s.sid}`, "danger"));
+    const btns = pg.items.map((s) => ib(`🔥 ${tr(s.sid, 14)}`, `np_tsv:${s.sid}`, "danger"));
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tsl:${pg.page - 1}`, `np_tsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_traffic", "primary")]);
-    rows.push(back);
+    rows.push([ib("🔄 Refresh", "np_traffic", "primary"), back[0]]);
     return show(ctx,
-      `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>\n\nযে সার্ভিসের লাইভ রেঞ্জ দেখতে চান সেটায় চাপুন:`,
+      `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`,
       rows);
   }
 
@@ -749,45 +747,35 @@ export function createNumberPanel(d) {
     return showTrafficServices(ctx, Number(ctx.match[1]));
   }));
 
+  bot.action(/^np_tsv:(.+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery("⏳").catch(() => {});
+    if (!(await gate(ctx))) return;
+    return showTrafficCountries(ctx, ctx.match[1], 0);
+  }));
+
   async function showTrafficCountries(ctx, sid, page = 0) {
     const all = await getRanges();
-    const svcRanges = all.filter((r) => r.sid === sid);
+    const sidLower = sid.toLowerCase();
+    const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
     if (!svcRanges.length) {
       return show(ctx, `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
         [[ib("🔙 Traffic", "np_traffic", "primary")], back]);
     }
     const hitMap = await hitMapByRange();
-    const byCountry = new Map();
-    for (const r of svcRanges) {
-      if (!byCountry.has(r.country)) byCountry.set(r.country, { name: r.country, flag: r.flag, ranges: [], hits: 0 });
-      const e = byCountry.get(r.country);
-      e.ranges.push(r);
-      e.hits += hitMap.get(r.range) || 0;
-    }
-    const countries = [...byCountry.values()].sort((a, b) => {
-      if (b.hits !== a.hits) return b.hits - a.hits;
-      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
-      return a.name.localeCompare(b.name);
-    });
+    const countries = groupByCountry(svcRanges, hitMap);
     const pg = paginate(countries, page, PP_COUNTRIES);
     const btns = pg.items.map((c) => {
-      const hitTag = c.hits ? ` · ${c.hits}🔥` : "";
-      return ib(`${c.flag} ${c.name}${hitTag}`, `np_tc:${sid}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
+      const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
+      return ib(`${c.flag} ${c.code}${hitTag}`, `np_tc:${sid}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
     });
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tcl:${sid}:${pg.page - 1}`, `np_tcl:${sid}:${pg.page + 1}`));
     rows.push([ib("🔙 Traffic", "np_traffic", "primary"), back[0]]);
     return show(ctx,
-      `🌍 <b>${esc(sid)} — Top Countries</b>\n\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = লাইভ hit</i>`,
+      `🌍 <b>${esc(sid)} — Country</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
       rows);
   }
-
-  bot.action(/^np_tsv:(.+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showTrafficCountries(ctx, ctx.match[1], 0);
-  }));
 
   bot.action(/^np_tcl:([^:]+):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
@@ -801,9 +789,10 @@ export function createNumberPanel(d) {
     if (!(await gate(ctx))) return;
     const [, sid, country, page] = ctx.match;
     const all = await getRanges();
+    const sidLower = sid.toLowerCase();
     const hitMap = await hitMapByRange();
     const countryRanges = all
-      .filter((r) => r.sid === sid && r.country === country)
+      .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
       .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }))
       .sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
     if (!countryRanges.length) {
@@ -815,16 +804,16 @@ export function createNumberPanel(d) {
     const btns = pg.items.map((r, i) => {
       const rank = startRank + i + 1;
       const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
-      const hitTag = r.hits ? ` · ${r.hits}🔥` : "";
-      return ib(`${medal} ${r.range}${tagOf(r.range)}${hitTag}`, `np_grab:${sid}:n:${r.range}`, rank <= 3 ? "danger" : "success");
+      const hitTag = r.hits > 0 ? ` ·${r.hits}🔥` : "";
+      return ib(`${medal} ${r.flag} ${tr(r.range, 12)}${hitTag}`, `np_grab:${sid}:${r.range}`, rank <= 3 ? "danger" : "success");
     });
-    const rows = [];
-    for (const b of btns) rows.push([b]);
+    const rows = btns.map((b) => [b]);
     rows.push(...navRow(pg, `np_tc:${sid}:${country}:${pg.page - 1}`, `np_tc:${sid}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_tsv:${sid}`, "primary"), back[0]]);
     const flag = countryRanges[0].flag;
+    const code = countryRanges[0].countryCode || "UN";
     return show(ctx,
-      `${flag} <b>${esc(country)}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই নাম্বার allocate হবে`,
+      `${flag} <b>${code}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`,
       rows);
   }));
 
@@ -840,7 +829,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  ALLOCATE                                                        */
+  /*  ALLOCATE — always try to get 2 together                         */
   /* ================================================================ */
   const allocating = new Set();
   const lastNum = new Map();
@@ -848,23 +837,31 @@ export function createNumberPanel(d) {
   async function grabNumbers(range, want = 2) {
     const got = [];
     const seenNums = new Set();
-    for (let round = 0; round < 4 && got.length < want; round++) {
-      const results = await Promise.all(Array.from({ length: want - got.length }, () => allocateNumber(range)));
+    const deadline = Date.now() + 12000;
+    let round = 0;
+    while (got.length < want && Date.now() < deadline && round < 8) {
+      round++;
+      const need = want - got.length;
+      const tasks = Array.from({ length: need }, () => allocateNumber(range).catch(() => ({ ok: false })));
+      const results = await Promise.all(tasks);
       for (const res of results) {
-        if (!res.ok) continue;
+        if (!res || !res.ok) continue;
         const x = res.data;
         if (!x) continue;
         const full = String(x.no_plus_number || x.full_number || "").replace(/\D/g, "");
-        if (full && !seenNums.has(full)) {
+        if (full && !seenNums.has(full) && got.length < want) {
           seenNums.add(full);
           got.push({ number: full, country: x.country, operator: x.operator });
         }
       }
+      if (got.length >= want) break;
+      if (Date.now() >= deadline) break;
+      await wait(250);
     }
     return got;
   }
 
-  async function allocate(ctx, rangeId, sid, countryName = "Unknown", operatorName = "", mode = null, isCustom = false) {
+  async function allocate(ctx, rangeId, sid, countryName = "Unknown", operatorName = "", isCustom = false) {
     const uid = String(ctx.from.id);
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
@@ -872,17 +869,15 @@ export function createNumberPanel(d) {
     if (!rangeId) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [back]);
     if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
     if (userPending(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [back]);
-    lastNum.set(uid, { range: rangeId, sid, countryName, operator: operatorName, mode, isCustom });
-    const workLine = mode ? `\n🔢 Work: <b>${MODE[mode].name}</b>` : "";
+    lastNum.set(uid, { range: rangeId, sid, countryName, operator: operatorName, isCustom });
     allocating.add(uid);
     try {
       const range = String(rangeId).trim().toUpperCase();
-      await show(ctx, `⏳ <b>Allocating...</b>\nRange: <code>${esc(range)}</code>${workLine}`, [back]);
+      await show(ctx, `⏳ <b>Allocating...</b>\nRange: <code>${esc(range)}</code>`, [back]);
       const picked = await grabNumbers(range, 2);
       if (!picked.length) {
-        const retryCb = isCustom ? "np_custom" : (sid ? `np_grc:${sid}:${mode || "n"}:${encodeURIComponent(countryName)}:0` : "np_get");
         return show(ctx, `❌ <b>Allocate করা যায়নি</b> <code>${esc(range)}</code>\n\nএই রেঞ্জে এখন নাম্বার নেই।`,
-          [[ib("🔄 Try Again", "np_chg", "success")], [ib("🔙 ফিরে যান", retryCb, "primary")], back]);
+          [[ib("🔄 Try Again", "np_chg", "success")], [ib("🔙 ফিরে যান", isCustom ? "np_custom" : `np_gwc:${sid}:a:0`, "primary")], back]);
       }
       for (const p of picked) track(p.number, uid, p.country || countryName, p.operator || operatorName, range);
       const c = resolveCountry(picked[0].country || (isCustom ? "" : countryName), picked[0].number);
@@ -890,32 +885,30 @@ export function createNumberPanel(d) {
       rows.push([ib("🔄 Change Number", "np_chg", "danger")]);
       if (isCustom) {
         rows.push([ib("🔥 Custom Range", "np_custom", "primary")]);
-      } else if (sid && (sid === "Facebook")) {
-        rows.push([ib("🌍 Change Country", `np_gwc:${sid}:${mode || "n"}:0`, "primary")]);
       } else if (sid) {
-        rows.push([ib("🌍 Change Country", `np_gwc:${sid}:${mode || "n"}:0`, "primary")]);
+        rows.push([ib("🌍 Change Country", `np_gwc:${sid}:a:0`, "primary")]);
       }
       rows.push(back);
-      return show(ctx, `${c.flag} <b>${esc(c.name.toUpperCase())} Allocated</b> ✅${workLine}\n⏳ <b>OTP-র অপেক্ষায়...</b>\n\n👇 নাম্বারে ক্লিক করলেই কপি হবে:`, rows);
+      const partialNote = picked.length < 2 ? `\n\n⚠️ <i>মাত্র ${picked.length}টি নাম্বার পাওয়া গেছে (রেঞ্জ সীমিত)</i>` : "";
+      return show(ctx, `${c.flag} <b>${esc(c.name.toUpperCase())} Allocated</b> ✅${partialNote}\n⏳ <b>OTP-র অপেক্ষায়...</b>\n\n👇 নাম্বারে ক্লিক করলেই কপি হবে:`, rows);
     } finally {
       allocating.delete(uid);
     }
   }
 
-  bot.action(/^np_grab:([^:]+):([^:]+):(.+)$/, safe(async (ctx) => {
+  bot.action(/^np_grab:([^:]+):(.+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
-    const [, sid, modeStr, range] = ctx.match;
-    const mode = ["s", "l"].includes(modeStr) ? modeStr : null;
+    const [, sid, range] = ctx.match;
     const all = await getRanges();
     const it = all.find((r) => r.range === range);
-    return allocate(ctx, range, sid, it?.country || "Unknown", it?.operator || "", mode, false);
+    return allocate(ctx, range, sid, it?.country || "Unknown", it?.operator || "", false);
   }));
 
   bot.action("np_chg", safe(async (ctx) => {
     await ctx.answerCbQuery("🔄").catch(() => {});
     const last = lastNum.get(String(ctx.from.id));
     if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
-    return allocate(ctx, last.range, last.sid, last.countryName, last.operator, last.mode, last.isCustom);
+    return allocate(ctx, last.range, last.sid, last.countryName, last.operator, last.isCustom);
   }));
 
   /* ================================================================ */
@@ -1052,14 +1045,14 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  ADMIN (as in v2, unchanged)                                     */
+  /*  ADMIN (unchanged from working version)                          */
   /* ================================================================ */
   const aBack = [ib("🏠 OTP Admin", "npa_home", "primary")];
   async function adminHome(ctx) {
     return show(ctx, "📱 <b>OTP ADMIN PANEL</b>\n\n<i>Withdraw approve/reject → মূল Admin Panel-এর 💸 Withdrawals থেকে।\nBroadcast → 📢 Broadcast থেকে।</i>", [
       [ib("👥 Users", "npa_ul_0", "primary"), ib("⚙️ Settings", "npa_set", "primary")],
       [ib("📊 Stats", "npa_stats", "success"), ib("🎨 Customize", "npa_ui", "success")],
-      [ib("🌐 সব User-এ Rate সেট", "npa_bulk", "danger")],
+      [ib("🔢 OTP Digit (4-5 / 6+) Settings", "npa_dg", "success"), ib("🌐 Bulk Rate", "npa_bulk", "danger")],
     ]);
   }
   bot.hears(adminLabel, adminOnly(async (ctx) => adminHome(ctx)));
@@ -1070,21 +1063,21 @@ export function createNumberPanel(d) {
   async function cfgScreen(ctx) {
     const c = await getCfg(true);
     const text =
-      `⚙️ <b>Number Panel Settings</b>\n\n💵 Per OTP: <b>৳${c.perOtp}</b>\n🔢 Withdraw-এর জন্য Min OTP: <b>${c.minOtp}</b>\n⬇️ Min Withdraw: <b>${tk(c.minWithdraw)}</b>\n` +
-      `🎁 Refer Commission (প্রতি OTP): <b>৳${c.referComm}</b>\n🟢 Number Panel: <b>${c.enabled ? "ON" : "OFF"}</b>\n💸 OTP Withdraw: <b>${c.withdrawEnabled ? "ON" : "OFF"}</b>\n\n<i>Rate বদলালে শুধু পরের OTP-তে প্রযোজ্য।</i>`;
+      `⚙️ <b>Number Panel Settings</b>\n\n💵 Per OTP: <b>৳${c.perOtp}</b>\n🔢 Min OTP (Withdraw): <b>${c.minOtp}</b>\n⬇️ Min Withdraw: <b>${tk(c.minWithdraw)}</b>\n` +
+      `🎁 Refer: <b>৳${c.referComm}</b>\n🟢 Number Panel: <b>${c.enabled ? "ON" : "OFF"}</b>\n💸 OTP Withdraw: <b>${c.withdrawEnabled ? "ON" : "OFF"}</b>`;
     return show(ctx, text, [
       [ib(`💵 Per OTP (${c.perOtp})`, "npa_e_perOtp", "primary"), ib(`🔢 Min OTP (${c.minOtp})`, "npa_e_minOtp", "primary")],
       [ib(`⬇️ Min Withdraw (${c.minWithdraw})`, "npa_e_minWithdraw", "primary"), ib(`🎁 Refer (${c.referComm})`, "npa_e_referComm", "primary")],
-      [ib(`Number Panel: ${c.enabled ? "ON ✅" : "OFF ❌"}`, "npa_t_enabled", c.enabled ? "success" : "danger")],
-      [ib(`OTP Withdraw: ${c.withdrawEnabled ? "ON ✅" : "OFF ❌"}`, "npa_t_withdrawEnabled", c.withdrawEnabled ? "success" : "danger")],
-      [ib("🔢 OTP Digit (4-5 / 6+) Settings", "npa_dg", "primary")],
+      [ib(`Panel: ${c.enabled ? "ON ✅" : "OFF ❌"}`, "npa_t_enabled", c.enabled ? "success" : "danger")],
+      [ib(`Withdraw: ${c.withdrawEnabled ? "ON ✅" : "OFF ❌"}`, "npa_t_withdrawEnabled", c.withdrawEnabled ? "success" : "danger")],
+      [ib("🔢 OTP Digit Settings", "npa_dg", "primary")],
       aBack,
     ]);
   }
-  const CFG_LABEL = { perOtp: "Per OTP Rate (৳)", minOtp: "Withdraw-এর জন্য Minimum OTP সংখ্যা", minWithdraw: "Minimum Withdraw (৳)", referComm: "Refer Commission (৳ প্রতি OTP)" };
+  const CFG_LABEL = { perOtp: "Per OTP Rate (৳)", minOtp: "Min OTP সংখ্যা", minWithdraw: "Min Withdraw (৳)", referComm: "Refer Commission (৳)" };
   A("npa_set", cfgScreen);
   A(/^npa_e_(perOtp|minOtp|minWithdraw|referComm)$/, (ctx) =>
-    ask(ctx, { action: "npa_cfg", field: ctx.match[1] }, `✏️ <b>${CFG_LABEL[ctx.match[1]]}</b>\n\nনতুন মান লিখুন (শুধু সংখ্যা)\nবাতিল: /menu`, [aBack]));
+    ask(ctx, { action: "npa_cfg", field: ctx.match[1] }, `✏️ <b>${CFG_LABEL[ctx.match[1]]}</b>\n\nনতুন মান (শুধু সংখ্যা)\nবাতিল: /menu`, [aBack]));
   A(/^npa_t_(enabled|withdrawEnabled|showUnknown)$/, async (ctx) => {
     const c = await getCfg(true);
     await saveCfg({ [ctx.match[1]]: !c[ctx.match[1]] });
@@ -1098,9 +1091,9 @@ export function createNumberPanel(d) {
     for (const i of items) cnt[classOf(i.range)]++;
     return show(ctx,
       `🔢 <b>OTP Digit Settings</b>\n\nলাইভ রেঞ্জ: <b>${items.length}</b>\n• 4-5 Digit: <b>${cnt.short}</b>\n• 6+ Digit: <b>${cnt.long}</b>\n• মিশ্র: <b>${cnt.both}</b>\n• অজানা: <b>${cnt.unknown}</b>\n\n` +
-      `অজানা রেঞ্জ user-কে দেখানো: <b>${c.showUnknown ? "ON ✅" : "OFF ❌"}</b>\n\n` +
-      `<i>সিস্টেম প্রতিটা <b>Facebook</b> OTP আসার সাথে নিজে শেখে। হাতে ঠিক করতে:</i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\nমান: short • long • both • clear`,
-      [[ib(`অজানা রেঞ্জ: ${c.showUnknown ? "ON ✅" : "OFF ❌"}`, "npa_t_showUnknown", c.showUnknown ? "success" : "danger")],
+      `অজানা রেঞ্জ দেখানো: <b>${c.showUnknown ? "ON ✅" : "OFF ❌"}</b>\n\n` +
+      `<i>Auto-learned from Facebook OTPs. Manual: </i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>`,
+      [[ib(`অজানা: ${c.showUnknown ? "ON ✅" : "OFF ❌"}`, "npa_t_showUnknown", c.showUnknown ? "success" : "danger")],
        [ib("🔄 Refresh", "npa_dg", "primary")], [ib("⚙️ Settings", "npa_set", "primary"), aBack[0]]]);
   }
   A("npa_dg", digitScreen);
@@ -1123,7 +1116,7 @@ export function createNumberPanel(d) {
       const name = p.slice(1, -1).join(" ").toLowerCase();
       if (!name || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
       const items = (await getRanges()).filter((i) => String(i.country || "").toLowerCase() === name);
-      if (!items.length) return ctx.reply("❌ এই নামের দেশে কোনো লাইভ রেঞ্জ পাওয়া যায়নি।");
+      if (!items.length) return ctx.reply("❌ কোনো লাইভ রেঞ্জ নেই।");
       await apply(items.map((i) => i.range), val);
       return ctx.reply(`✅ ${items.length}টি রেঞ্জ → ${val}`);
     }
@@ -1150,7 +1143,7 @@ export function createNumberPanel(d) {
     const otpWds = wds.docs.filter((x) => x.get("balanceType") === "otp");
     const pendAmt = otpWds.reduce((s, x) => s + (Number(x.get("amount")) || 0), 0);
     return show(ctx,
-      `📊 <b>OTP Stats</b>\n\n👥 OTP নেওয়া user: <b>${active}</b> (🚫 ${banned} banned)\n🔑 মোট OTP: <b>${totalOtp}</b>\n💰 Users-এর মোট OTP Balance: <b>${tk(totalBal)}</b>\n💸 Pending OTP withdraw: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Waiting OTP numbers: <b>${pending.size}</b>`,
+      `📊 <b>OTP Stats</b>\n\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 OTP: <b>${totalOtp}</b>\n💰 Balance: <b>${tk(totalBal)}</b>\n💸 Pending: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>${pending.size}</b>`,
       [[ib("🔄 Refresh", "npa_stats", "primary")], aBack]);
   });
 
@@ -1166,7 +1159,7 @@ export function createNumberPanel(d) {
     const pages = Math.max(1, Math.ceil(list.length / PAGE));
     page = Math.min(Math.max(0, page), pages - 1);
     const slice = q ? list.slice(0, 10) : list.slice(page * PAGE, (page + 1) * PAGE);
-    const rows = slice.map((u) => [ib(`${u.otpBanned ? "🚫 " : ""}${nm(u)} · ${tk(u.otpBalance)} · ${u.otpCount || 0} OTP`.slice(0, 60), `npa_u_${u.id}`, "primary")]);
+    const rows = slice.map((u) => [ib(`${u.otpBanned ? "🚫 " : ""}${nm(u)} · ${tk(u.otpBalance)} · ${u.otpCount || 0}`.slice(0, 60), `npa_u_${u.id}`, "primary")]);
     if (!q && pages > 1) {
       const nav = [];
       if (page > 0) nav.push(ib("⬅️ Prev", `npa_ul_${page - 1}`, "primary"));
@@ -1174,30 +1167,30 @@ export function createNumberPanel(d) {
       rows.push(nav);
     }
     rows.push([ib("🔍 Search", "npa_us", "success"), aBack[0]]);
-    const head = q ? `🔍 <b>"${esc(q)}"</b> — ${list.length} found` : `👥 <b>Users</b> (${list.length}) — ${page + 1}/${pages}`;
-    return show(ctx, `${head}\n<i>OTP Balance অনুযায়ী সাজানো</i>`, rows);
+    const head = q ? `🔍 <b>"${esc(q)}"</b> — ${list.length}` : `👥 <b>Users</b> (${list.length}) — ${page + 1}/${pages}`;
+    return show(ctx, head, rows);
   }
   async function userView(ctx, id) {
     const u = await getUser(id);
     if (!u) return show(ctx, "❌ User পাওয়া যায়নি।", [[ib("🔙 Users", "npa_ul_0", "primary")]]);
     const c = await getCfg();
     const text =
-      `👤 <b>${esc(nm(u))}</b>\n🆔 <code>${esc(id)}</code>\n\n📱 OTP Balance: <b>${tk(u.otpBalance)}</b>\n🔑 OTPs: <b>${Number(u.otpCount) || 0}</b>\n` +
-      `💵 Rate: <b>${u.customPerOtp ?? "Global"}</b> (global ${c.perOtp})\n🎁 Refer comm: <b>${u.customReferComm ?? "Global"}</b> (global ${c.referComm})\n` +
-      `🎁 OTP Refer আয়: <b>${tk(u.otpReferEarning)}</b>\n📛 Number Panel: <b>${u.otpBanned ? "🚫 BANNED" : "✅ ACTIVE"}</b>\n💰 Task Balance: ${tk(u.balance)}`;
+      `👤 <b>${esc(nm(u))}</b>\n🆔 <code>${esc(id)}</code>\n\n📱 OTP Bal: <b>${tk(u.otpBalance)}</b>\n🔑 OTPs: <b>${Number(u.otpCount) || 0}</b>\n` +
+      `💵 Rate: <b>${u.customPerOtp ?? "Global"}</b> (${c.perOtp})\n🎁 Refer: <b>${u.customReferComm ?? "Global"}</b> (${c.referComm})\n` +
+      `🎁 Refer Income: <b>${tk(u.otpReferEarning)}</b>\n📛 Panel: <b>${u.otpBanned ? "🚫 BANNED" : "✅ ACTIVE"}</b>\n💰 Task: ${tk(u.balance)}`;
     return show(ctx, text, [
-      [ib("➕ OTP Balance", `npa_uadd_${id}`, "success"), ib("➖ OTP Balance", `npa_urem_${id}`, "danger")],
+      [ib("➕ OTP Bal", `npa_uadd_${id}`, "success"), ib("➖ OTP Bal", `npa_urem_${id}`, "danger")],
       [ib("⚙️ Custom Rate", `npa_ucs_${id}`, "primary")],
       [ib(u.otpBanned ? "✅ Unban" : "🚫 Ban", `npa_ubn_${id}`, u.otpBanned ? "success" : "danger")],
       [ib("🔙 Users", "npa_ul_0", "primary"), aBack[0]],
     ]);
   }
   A(/^npa_ul_(\d+)$/, (ctx) => usersView(ctx, Number(ctx.match[1])));
-  A("npa_us", (ctx) => ask(ctx, { action: "npa_usearch" }, "🔍 Name / @username / ID লিখুন:\n\nবাতিল: /menu", [aBack]));
+  A("npa_us", (ctx) => ask(ctx, { action: "npa_usearch" }, "🔍 Name / @username / ID:\n\nবাতিল: /menu", [aBack]));
   A(/^npa_u_(\d+)$/, (ctx) => userView(ctx, ctx.match[1]));
-  A(/^npa_uadd_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ubal", op: "add", uid: ctx.match[1] }, "➕ কত ৳ OTP Balance-এ যোগ করবেন? (সংখ্যা)\nবাতিল: /menu"));
-  A(/^npa_urem_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ubal", op: "rem", uid: ctx.match[1] }, "➖ কত ৳ OTP Balance থেকে কাটবেন? (সংখ্যা)\nবাতিল: /menu"));
-  A(/^npa_ucs_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ucust", uid: ctx.match[1], step: 1 }, "⚙️ <b>Custom Rate</b>\n\n1️⃣ প্রতি OTP-তে কত ৳?\n<i>Global ফেরত দিতে <code>-</code> লিখুন</i>"));
+  A(/^npa_uadd_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ubal", op: "add", uid: ctx.match[1] }, "➕ কত ৳?\nবাতিল: /menu"));
+  A(/^npa_urem_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ubal", op: "rem", uid: ctx.match[1] }, "➖ কত ৳?\nবাতিল: /menu"));
+  A(/^npa_ucs_(\d+)$/, (ctx) => ask(ctx, { action: "npa_ucust", uid: ctx.match[1], step: 1 }, "⚙️ <b>Custom Rate</b>\n\n1️⃣ প্রতি OTP ৳?\n<i>Global: <code>-</code></i>"));
   A(/^npa_ubn_(\d+)$/, async (ctx) => {
     const u = await getUser(ctx.match[1]);
     if (!u) return show(ctx, "❌ User পাওয়া যায়নি।", [aBack]);
@@ -1205,18 +1198,18 @@ export function createNumberPanel(d) {
     return userView(ctx, ctx.match[1]);
   });
 
-  A("npa_bulk", (ctx) => ask(ctx, { action: "npa_bulk", step: 1 }, "🌐 <b>সব User-এর জন্য</b>\n\n1️⃣ প্রতি OTP-তে কত ৳?"));
+  A("npa_bulk", (ctx) => ask(ctx, { action: "npa_bulk", step: 1 }, "🌐 <b>সব User</b>\n\n1️⃣ প্রতি OTP ৳?"));
   A("npa_bulkok", async (ctx) => {
     const s = await getSession(ctx.from.id);
     if (!s || s.action !== "npa_bulk_cf") return show(ctx, "❌ Draft নেই।", [aBack]);
     await clearSession(ctx.from.id);
     const snap = await db.collection("users").select().get();
     await commitOps(snap.docs.map((x) => (b) => b.update(x.ref, { customPerOtp: s.perOtp, customReferComm: s.referComm })));
-    return show(ctx, `✅ ${snap.size} জন User-এ প্রয়োগ হয়েছে।`, [aBack]);
+    return show(ctx, `✅ ${snap.size} জন User-এ প্রয়োগ।`, [aBack]);
   });
 
   A("npa_ui", (ctx) => show(ctx,
-    "🎨 <b>Customize</b>\n\nবাটনের নাম, OTP মেসেজের emoji ও দেশের flag এখান থেকে বদলান।\n\n💎 <b>Premium emoji:</b> লেখার সময় Premium account থেকে premium emoji সহ মেসেজ পাঠান।",
+    "🎨 <b>Customize</b>",
     [
       [ib("🔘 বাটনের নাম", "npa_ll", "primary")],
       [ib("😀 Bot OTP Emoji", "npa_em_user", "success"), ib("😀 Group OTP Emoji", "npa_em_group", "success")],
@@ -1228,28 +1221,28 @@ export function createNumberPanel(d) {
   A("npa_ll", (ctx) => {
     const rows = Object.keys(LBL).map((k) => [ib(`${lab(k)}`.slice(0, 30) || k, `npa_lb_${k}`, "primary")]);
     rows.push([uiBack, aBack[0]]);
-    return show(ctx, "🔘 <b>বাটন</b>\n\nযেটার নাম বদলাবেন সেটায় চাপুন:\n<i>p_ = Number Panel বাটন, g_ = OTP মেসেজের নিচের বাটন</i>", rows);
+    return show(ctx, "🔘 <b>বাটন</b>", rows);
   });
   async function labelView(ctx, key) {
     if (!LBL[key]) return;
-    const hint = key === "g_copy" ? "\nℹ️ <code>{otp}</code> লিখলে সেখানে OTP কোড বসবে।" : "";
+    const hint = key === "g_copy" ? "\nℹ️ <code>{otp}</code> → OTP কোড।" : "";
     return show(ctx,
-      `🔘 <b>বাটন এডিট</b>\n\nএখন: <b>${esc(lab(key))}</b>${ui.icons[key] ? " 💎" : ""}\n<i>ডিফল্ট: ${esc(LBL[key])}</i>${hint}`,
+      `🔘 <b>এডিট</b>\n\nএখন: <b>${esc(lab(key))}</b>${ui.icons[key] ? " 💎" : ""}\n<i>ডিফল্ট: ${esc(LBL[key])}</i>${hint}`,
       [[ib("✏️ Edit", `npa_le_${key}`, "success"), ib("♻️ Reset", `npa_lr_${key}`, "danger")], [ib("🔙 List", "npa_ll", "primary")]]);
   }
   A(/^npa_lb_([a-z_]+)$/, (ctx) => labelView(ctx, ctx.match[1]));
   A(/^npa_le_([a-z_]+)$/, (ctx) => ask(ctx, { action: "npa_lbl", key: ctx.match[1] },
-    `✏️ <b>নতুন নাম লিখুন</b> (সর্বোচ্চ ৪০ অক্ষর)\n\nএখন: <b>${esc(lab(ctx.match[1]))}</b>\n\n💎 শুরুতে premium emoji দিলে সেটা বাটনের আইকন হবে।`));
+    `✏️ <b>নতুন নাম</b> (৪০ অক্ষর)\n\nএখন: <b>${esc(lab(ctx.match[1]))}</b>`));
   A(/^npa_lr_([a-z_]+)$/, async (ctx) => { delete ui.labels[ctx.match[1]]; delete ui.icons[ctx.match[1]]; await saveUi(); return labelView(ctx, ctx.match[1]); });
 
   async function emojiView(ctx, scope) {
     let text = `😀 <b>${SCOPES[scope]}</b>\n\n`;
     for (const [slot, def] of Object.entries(EM)) text += `${def.label}: <b>${esc(describeEmoji(scope, slot))}</b>\n`;
-    text += "\n💎 = premium emoji আছে\nযেটা বদলাবেন সেটায় চাপুন:";
+    text += "\n💎 = premium emoji";
     const btns = Object.entries(EM).map(([slot, def]) => ib(`${def.label} ${describeEmoji(scope, slot).slice(0, 8)}`, `npa_ems_${scope}_${slot}`, "primary"));
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push([ib("👁 Preview", `npa_emp_${scope}`, "success"), ib("♻️ সব Reset", `npa_emr_${scope}`, "danger")]);
+    rows.push([ib("👁 Preview", `npa_emp_${scope}`, "success"), ib("♻️ Reset", `npa_emr_${scope}`, "danger")]);
     rows.push([uiBack, aBack[0]]);
     return show(ctx, text, rows);
   }
@@ -1257,15 +1250,15 @@ export function createNumberPanel(d) {
   A(/^npa_ems_(user|group)_([a-z]+)$/, (ctx) => {
     const [, scope, slot] = ctx.match;
     if (!EM[slot]) return;
-    const hint = slot === "head" ? "\n<code>random</code> অথবা দুইটা emoji space দিয়ে, যেমন <code>🔴 🟥</code>\n" : "";
-    return ask(ctx, { action: "npa_emo", scope, slot }, `✏️ <b>${esc(EM[slot].label)}</b> — নতুন লিখুন\n\nএখন: <b>${esc(describeEmoji(scope, slot))}</b>\n${hint}\n💎 Premium emoji চলবে।\n<code>reset</code> লিখলে ডিফল্টে ফিরবে।`);
+    const hint = slot === "head" ? "\n<code>random</code> বা ২টা emoji space দিয়ে।\n" : "";
+    return ask(ctx, { action: "npa_emo", scope, slot }, `✏️ <b>${esc(EM[slot].label)}</b>\n\nএখন: <b>${esc(describeEmoji(scope, slot))}</b>\n${hint}\n💎 Premium চলবে। <code>reset</code> → ডিফল্ট।`);
   });
   A(/^npa_emr_(user|group)$/, async (ctx) => { ui.emoji[ctx.match[1]] = {}; await saveUi(); return emojiView(ctx, ctx.match[1]); });
   A(/^npa_emp_(user|group)$/, async (ctx) => {
     const scope = ctx.match[1];
     const html = buildOtpMessage(scope, { number: "237624324691", otp: "123456", service: "Facebook", full: "123456 is your Facebook code", country: "Cameroon", masked: scope === "group" });
     try { await sendRich(ctx.chat.id, html, buildOtpKeyboard(scope, "123456")); }
-    catch (e) { await ctx.reply(`⚠️ Preview পাঠানো যায়নি: ${e.description || e.message}`); }
+    catch (e) { await ctx.reply(`⚠️ ${e.description || e.message}`); }
   });
 
   async function flagList(ctx, scope, page = 0, q = "") {
@@ -1280,19 +1273,18 @@ export function createNumberPanel(d) {
       if (page < pages - 1) nav.push(ib("Next ➡️", `npa_fl_${scope}_${page + 1}`, "primary"));
       rows.push(nav);
     }
-    rows.push([ib("🔍 Search", `npa_fls_${scope}`, "success"), ib("♻️ সব Reset", `npa_flr_${scope}`, "danger")]);
+    rows.push([ib("🔍 Search", `npa_fls_${scope}`, "success"), ib("♻️ Reset", `npa_flr_${scope}`, "danger")]);
     rows.push([uiBack, aBack[0]]);
-    const head = q ? `🔍 "${esc(q)}" — ${entries.length} found` : `${page + 1}/${pages}`;
-    return show(ctx, `🏳️ <b>${SCOPES[scope]} — Country Flags</b> (${head})\n\nযেটার flag বদলাবেন সেটায় চাপুন। 💎 = premium emoji`, rows);
+    return show(ctx, `🏳️ <b>${SCOPES[scope]}</b> (${page + 1}/${pages})`, rows);
   }
   A(/^npa_fl_(user|group)_(\d+)$/, (ctx) => flagList(ctx, ctx.match[1], Number(ctx.match[2])));
-  A(/^npa_fls_(user|group)$/, (ctx) => ask(ctx, { action: "npa_flsearch", scope: ctx.match[1] }, "🔍 দেশের নাম লিখুন (যেমন <code>tanz</code>):"));
+  A(/^npa_fls_(user|group)$/, (ctx) => ask(ctx, { action: "npa_flsearch", scope: ctx.match[1] }, "🔍 দেশের নাম:"));
   A(/^npa_flr_(user|group)$/, async (ctx) => { ui.flags[ctx.match[1]] = {}; await saveUi(); return flagList(ctx, ctx.match[1], 0); });
   A(/^npa_fle_(user|group)_(\d+)$/, (ctx) => {
     const [, scope, i] = ctx.match;
     const c = COUNTRIES[Number(i)];
     if (!c) return flagList(ctx, scope, 0);
-    return ask(ctx, { action: "npa_flag", scope, idx: Number(i) }, `🏳️ <b>${esc(c.name)}</b>\nএখন: ${esc(describeFlag(scope, c.name, c.flag))}   <i>(ডিফল্ট ${c.flag})</i>\n\nনতুন flag/emoji পাঠান — 💎 premium emoji-ও চলবে।\n<code>reset</code> লিখলে ডিফল্টে ফিরবে।`);
+    return ask(ctx, { action: "npa_flag", scope, idx: Number(i) }, `🏳️ <b>${esc(c.name)}</b>\nএখন: ${esc(describeFlag(scope, c.name, c.flag))} (ডিফল্ট ${c.flag})\n\nনতুন flag/emoji পাঠান। <code>reset</code> → ডিফল্ট।`);
   });
 
   /* ================================================================ */
@@ -1301,12 +1293,10 @@ export function createNumberPanel(d) {
   async function adminText(ctx, s, text) {
     const id = ctx.from.id;
     switch (s.action) {
-      case "npa_usearch":
-        await clearSession(id);
-        return usersView(ctx, 0, text);
+      case "npa_usearch": await clearSession(id); return usersView(ctx, 0, text);
       case "npa_ubal": {
         const amt = num(text);
-        if (!Number.isFinite(amt) || amt <= 0) return ctx.reply("⚠️ শুধু সংখ্যা লিখুন। যেমন: 100");
+        if (!Number.isFinite(amt) || amt <= 0) return ctx.reply("⚠️ শুধু সংখ্যা।");
         const uref = userRef(s.uid);
         let after = 0;
         try {
@@ -1321,21 +1311,21 @@ export function createNumberPanel(d) {
           });
         } catch (e) {
           await clearSession(id);
-          if (e.message === "LOW") return ctx.reply(`🔴 ইউজারের OTP balance ${tk(e.bal)} — এর বেশি কাটা যাবে না।`);
-          if (e.message === "NO_USER") return ctx.reply("❌ user পাওয়া যায়নি।");
+          if (e.message === "LOW") return ctx.reply(`🔴 Balance ${tk(e.bal)}`);
+          if (e.message === "NO_USER") return ctx.reply("❌ user নেই।");
           throw e;
         }
         await clearSession(id);
-        await dm(s.uid, `📱 <b>OTP Balance আপডেট</b>\n\nAdmin আপনার OTP Balance-এ ${tk(amt)} ${s.op === "add" ? "যোগ করেছে" : "কেটে নিয়েছে"}।\nনতুন OTP Balance: ${tk(after)}`);
+        await dm(s.uid, `📱 <b>OTP Balance আপডেট</b>\n\n${tk(amt)} ${s.op === "add" ? "যোগ" : "কাটা"} হয়েছে।\nনতুন: ${tk(after)}`);
         return userView(ctx, s.uid);
       }
       case "npa_ucust": {
         const dash = text.trim() === "-";
         const v = dash ? null : num(text);
-        if (!dash && (!Number.isFinite(v) || v < 0)) return ctx.reply("❌ সংখ্যা বা - লিখুন।");
+        if (!dash && (!Number.isFinite(v) || v < 0)) return ctx.reply("❌ সংখ্যা বা -");
         if (s.step === 1) {
           await setSession(id, { action: "npa_ucust", uid: s.uid, step: 2, perOtp: v });
-          return ctx.reply("2️⃣ Refer commission কত ৳? (প্রতি OTP)\n<i>Global-এর জন্য <code>-</code></i>", { parse_mode: "HTML" });
+          return ctx.reply("2️⃣ Refer commission ৳?\n<i>Global: <code>-</code></i>", { parse_mode: "HTML" });
         }
         await clearSession(id);
         await userRef(s.uid).update({ customPerOtp: s.perOtp ?? null, customReferComm: v });
@@ -1343,25 +1333,25 @@ export function createNumberPanel(d) {
       }
       case "npa_cfg": {
         const v = num(text);
-        if (!Number.isFinite(v) || v < 0) return ctx.reply("⚠️ সঠিক সংখ্যা লিখুন।");
+        if (!Number.isFinite(v) || v < 0) return ctx.reply("⚠️ সঠিক সংখ্যা।");
         await saveCfg({ [s.field]: s.field === "minOtp" ? Math.floor(v) : v });
         await clearSession(id);
         return cfgScreen(ctx);
       }
       case "npa_bulk": {
         const v = num(text);
-        if (!Number.isFinite(v) || v < 0) return ctx.reply("⚠️ সঠিক সংখ্যা লিখুন।");
+        if (!Number.isFinite(v) || v < 0) return ctx.reply("⚠️ সঠিক সংখ্যা।");
         if (s.step === 1) {
           await setSession(id, { action: "npa_bulk", step: 2, perOtp: v });
-          return ctx.reply("2️⃣ Refer commission কত ৳?");
+          return ctx.reply("2️⃣ Refer commission ৳?");
         }
         await setSession(id, { action: "npa_bulk_cf", perOtp: s.perOtp, referComm: v });
-        return show(ctx, `⚠️ <b>সব User-এ প্রয়োগ হবে</b>\n\n💵 Per OTP: <b>${s.perOtp}</b>\n🎁 Refer: <b>${v}</b>`,
+        return show(ctx, `⚠️ সব User-এ apply হবে\n💵 ${s.perOtp} / 🎁 ${v}`,
           [[ib("✅ নিশ্চিত", "npa_bulkok", "danger"), ib("❌ বাতিল", "npa_home", "primary")]]);
       }
       case "npa_lbl": {
         const { text: v, icon } = parseLabel(ctx.message.text, ctx.message.entities || []);
-        if (!v || v.length > 40) return ctx.reply("❌ নাম ১–৪০ অক্ষরের মধ্যে হতে হবে।");
+        if (!v || v.length > 40) return ctx.reply("❌ ১–৪০ অক্ষর।");
         await clearSession(id);
         ui.labels[s.key] = v;
         if (icon) ui.icons[s.key] = icon; else delete ui.icons[s.key];
@@ -1374,9 +1364,7 @@ export function createNumberPanel(d) {
         await clearSession(id);
         return emojiView(ctx, s.scope);
       }
-      case "npa_flsearch":
-        await clearSession(id);
-        return flagList(ctx, s.scope, 0, text);
+      case "npa_flsearch": await clearSession(id); return flagList(ctx, s.scope, 0, text);
       case "npa_flag": {
         const c = COUNTRIES[s.idx];
         if (!c) { await clearSession(id); return flagList(ctx, s.scope, 0); }
@@ -1385,8 +1373,7 @@ export function createNumberPanel(d) {
         await clearSession(id);
         return flagList(ctx, s.scope, Math.floor(s.idx / 10));
       }
-      default:
-        return ctx.reply("☝️ উপরের বাটন ব্যবহার করুন। বাতিল: /menu");
+      default: return ctx.reply("☝️ উপরের বাটন। /menu");
     }
   }
 
@@ -1400,38 +1387,38 @@ export function createNumberPanel(d) {
     switch (s.action) {
       case "np_range": {
         const r = text.replace(/\s/g, "").toUpperCase();
-        if (!/^[0-9X]{4,20}$/.test(r)) return ctx.reply("❌ রেঞ্জ ঠিক নেই। শুধু সংখ্যা ও X দিন।\nExample: <code>88017XXXX</code>", { parse_mode: "HTML" });
+        if (!/^[0-9X]{4,20}$/.test(r)) return ctx.reply("❌ রেঞ্জ ঠিক নেই।\nExample: <code>88017XXXX</code>", { parse_mode: "HTML" });
         await clearSession(id);
         const base = r.replace(/X+$/i, "");
         const c = detectCountry(base + "0000");
-        return allocate(ctx, r, "_custom", c.code ? c.name : "Custom Range", "", null, true);
+        return allocate(ctx, r, "_custom", c.code ? c.name : "Custom Range", "", true);
       }
       case "np_search": {
         const clean = bn2en(text).replace(/\D/g, "");
-        if (clean.length < 5) return ctx.reply("❌ সঠিক নাম্বার দিন।");
+        if (clean.length < 5) return ctx.reply("❌ সঠিক নাম্বার।");
         await clearSession(id);
         const snap = await userRef(id).collection("otp_logs").orderBy("at", "desc").limit(200).get();
         const own = snap.docs.map((x) => x.data()).filter((o) => String(o.number).includes(clean)).slice(0, 3);
         if (own.length) {
-          let msg = "✅ <b>আপনার হিস্ট্রিতে পাওয়া গেছে!</b>\n\n";
+          let msg = "✅ <b>History-তে পাওয়া গেছে!</b>\n\n";
           own.forEach((o) => { msg += `📱 <code>${esc(o.number)}</code>\n🔐 <code>${esc(o.otp)}</code>\n📩 ${esc(o.service || "OTP")}\n\n`; });
           return show(ctx, msg, [back]);
         }
         const pm = userPending(uid).find(([, v]) => String(v.number).includes(clean));
-        if (pm) return show(ctx, `⏳ <b>Pending number</b>\n\n📱 <code>${esc(pm[1].number)}</code>`, [back]);
-        return show(ctx, `❌ <code>${esc(clean)}</code> — কোনো OTP পাওয়া যায়নি।`, [back]);
+        if (pm) return show(ctx, `⏳ <b>Pending</b>\n\n📱 <code>${esc(pm[1].number)}</code>`, [back]);
+        return show(ctx, `❌ <code>${esc(clean)}</code> — পাওয়া যায়নি।`, [back]);
       }
       case "np_wd_acc": {
         const method = s.method;
-        if (!METHODS[method]) return ctx.reply("⚠️ আবার শুরু করুন।");
+        if (!METHODS[method]) return ctx.reply("⚠️ আবার শুরু।");
         const acc = normAccount(method, text);
-        if (!acc) return ctx.reply(method === "binance" ? "🔴 Binance ID কমপক্ষে ৪ অক্ষরের হতে হবে।" : "🔴 সঠিক মোবাইল নম্বর দিন (01XXXXXXXXX)।");
+        if (!acc) return ctx.reply(method === "binance" ? "🔴 Binance ID ≥4 chars।" : "🔴 সঠিক নম্বর (01XXXXXXXXX)।");
         const u = await needUser(ctx);
         if (!u) return;
         const cfg = await getCfg(true);
         await userRef(id).update({ [`wallets.${method}.number`]: acc });
         await setSession(id, { action: "np_wd_amt", method, account: acc });
-        return show(ctx, `✅ ${METHODS[method]} নম্বর সেভ হয়েছে।\n\n` + wdAmtText(method, acc, cfg, Number(u.otpBalance) || 0), wdAmtKb(method));
+        return show(ctx, `✅ সেভ হয়েছে।\n\n` + wdAmtText(method, acc, cfg, Number(u.otpBalance) || 0), wdAmtKb(method));
       }
       case "np_wd_amt": {
         const u = await gate(ctx);
@@ -1439,19 +1426,19 @@ export function createNumberPanel(d) {
         const [cfg, wcfg] = await Promise.all([getCfg(true), getWdConfig()]);
         const amount = num(text);
         const bal = Number(u.otpBalance) || 0;
-        if (!Number.isFinite(amount) || amount <= 0) return ctx.reply("⚠️ শুধু সংখ্যা লিখুন। যেমন: 100");
+        if (!Number.isFinite(amount) || amount <= 0) return ctx.reply("⚠️ শুধু সংখ্যা।");
         if ((Number(u.otpCount) || 0) < cfg.minOtp) return ctx.reply(lockMsg(cfg, Number(u.otpCount) || 0), { parse_mode: "HTML" });
-        if (amount < cfg.minWithdraw) return ctx.reply(`🔴 Minimum ${tk(cfg.minWithdraw)} তুলতে হবে।`);
-        if (amount > bal) return ctx.reply(`🔴 যথেষ্ট OTP balance নেই। আছে ${tk(bal)}।`);
-        if (!METHODS[s.method] || !s.account) return ctx.reply("⚠️ আবার শুরু করুন।");
-        if (wcfg.methods[s.method] === false) return ctx.reply("🔴 এই method এখন বন্ধ।");
+        if (amount < cfg.minWithdraw) return ctx.reply(`🔴 Min ${tk(cfg.minWithdraw)}।`);
+        if (amount > bal) return ctx.reply(`🔴 আছে ${tk(bal)}।`);
+        if (!METHODS[s.method] || !s.account) return ctx.reply("⚠️ আবার শুরু।");
+        if (wcfg.methods[s.method] === false) return ctx.reply("🔴 Method বন্ধ।");
         await setSession(id, { action: "np_wd_cf", amount: round2(amount), method: s.method, account: s.account });
         return show(ctx,
-          `💸 <b>Confirm OTP Withdraw</b>\n\n💰 Amount: ${tk(amount)}\n💳 Method: ${s.method.toUpperCase()}\n📱 Account: <code>${esc(s.account)}</code>\n\n🟢 Confirm করলে OTP Balance থেকে কাটা হবে।`,
+          `💸 <b>Confirm</b>\n\n💰 ${tk(amount)}\n💳 ${s.method.toUpperCase()}\n📱 <code>${esc(s.account)}</code>\n\n🟢 Confirm → কাটা হবে।`,
           [[ib("Confirm", "np_wd_ok", "success"), ib("Cancel", "np_wd_no", "danger")]]);
       }
       case "np_wd_cf":
-        return ctx.reply("☝️ উপরের Confirm বা Cancel বাটন চাপুন। বাতিল: /menu");
+        return ctx.reply("☝️ উপরের বাটন। /menu");
       default:
         return ctx.reply("⚠️ /menu দিন।");
     }
@@ -1474,7 +1461,6 @@ export function createNumberPanel(d) {
         const b = db.batch();
         b.update(uref, { otpBalance: FieldValue.increment(rate), otpCount: FieldValue.increment(1) });
         b.set(uref.collection("otp_logs").doc(), { number, otp, service, message: String(full || "").slice(0, 400), earned: rate, at: Timestamp.now() });
-
         const refId = snap.get("referredBy");
         if (refId && String(refId) !== String(info.userId)) {
           const rsnap = await userRef(refId).get();
@@ -1491,7 +1477,7 @@ export function createNumberPanel(d) {
           const cnt = (Number(snap.get("otpCount")) || 0) + 1;
           const left = Math.max(0, cfg.minOtp - cnt);
           const html = buildOtpMessage("user", { number, otp, service, full, country, masked: false });
-          const extra = `\n\n💰 +${tk(rate)} (OTP Balance)\n🔢 মোট OTP: ${cnt}/${cfg.minOtp}${left ? ` • আর ${left}টি বাকি` : " • 🟢 Withdraw আনলক"}`;
+          const extra = `\n\n💰 +${tk(rate)} (OTP Balance)\n🔢 মোট OTP: ${cnt}/${cfg.minOtp}${left ? ` • আর ${left}টি` : " • 🟢 Withdraw আনলক"}`;
           await sendRich(Number(info.userId), html + extra, buildOtpKeyboard("user", otp));
         } catch (e) { console.error("OTP DM failed:", e.description || e.message); }
       }
@@ -1523,7 +1509,6 @@ export function createNumberPanel(d) {
         const num = String(o.number || "").replace(/\D/g, "");
         const info = pending.get(num);
         if (!info) continue;
-
         try {
           await claimsCol.doc(o.otp_id).create({ number: num, time: o.time, userId: info.userId });
         } catch (e) {
@@ -1531,7 +1516,6 @@ export function createNumberPanel(d) {
           throw e;
         }
         seenOtps.add(o.otp_id);
-
         try {
           const otp = extractOtp(o.message);
           if (!otp) { await claimsCol.doc(o.otp_id).delete().catch(() => {}); seenOtps.delete(o.otp_id); continue; }
@@ -1552,11 +1536,11 @@ export function createNumberPanel(d) {
   /* ================================================================ */
   async function start() {
     if (!V_KEY) {
-      console.error("❌ VOLTEX_API_KEY সেট করা নেই — Number Panel কাজ করবে না।");
+      console.error("❌ VOLTEX_API_KEY সেট করা নেই।");
     } else {
       const test = await getLiveAccess();
       if (test?.services) console.log(`✅ Voltex API key OK (${test.services.length} services)`);
-      else console.error("❌ Voltex API key কাজ করছে না — key ভুল/মেয়াদোত্তীর্ণ");
+      else console.error("❌ Voltex API key কাজ করছে না।");
     }
     if (GROUP_RAW && !GROUP_ID) {
       console.error(`❌ FORWARD_GROUP_ID="${GROUP_RAW}" বোঝা যায়নি।`);
