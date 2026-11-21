@@ -1,4 +1,4 @@
-// country_flags.js — পৃথিবীর সব দেশ/টেরিটরি: নাম, ফোন কোড, flag, ISO।
+// country_flags.js — পৃথিবীর সব দেশ/টেরিটরি: নাম, ফোন কোড, flag।
 // number_panel.js এটা ব্যবহার করে: detectCountry(নাম বা নাম্বার/রেঞ্জ) এবং COUNTRY_DATA
 // Flag আসে ISO কোড থেকে (ভুল টাইপের ঝুঁকি নেই)। নতুন দেশ যোগ করতে TABLE-এ একটা লাইন বসান।
 
@@ -6,6 +6,7 @@ const flagOf = (iso) =>
   String.fromCodePoint(...[...String(iso).toUpperCase()].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
 
 // ISO | নাম | ফোন কোড (কমা দিয়ে একাধিক) | বিকল্প নাম (; দিয়ে)
+// নিয়ম: যে কোডটা একাধিক দেশ ভাগ করে, মূল দেশ আগে থাকবে (নিচে "শেয়ার্ড" অংশ দেখুন)
 const TABLE = `
 US|USA / Canada|1|usa;united states;united states of america;us;america;u s a
 RU|Russia|7|russian federation
@@ -265,29 +266,34 @@ for (const line of TABLE.split("\n")) {
   for (const code of codes.split(",")) COUNTRY_DATA.push({ code: code.trim(), flag, name, iso, alt });
 }
 
+// ---------- নাম মেলানোর জন্য ----------
 const normName = (s) =>
   String(s || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim();
 
-const NAME_INDEX = new Map();
+const NAME_INDEX = new Map(); // নাম/alias → দেশ
 for (const c of COUNTRY_DATA) {
   for (const n of [c.name, ...c.alt]) {
     const k = normName(n);
     if (k && !NAME_INDEX.has(k)) NAME_INDEX.set(k, c);
   }
 }
+// "USA / Canada" লিখলে USA-ই ধরবে, আলাদা করে "usa" ও "canada" দুটোই exact মেলে
 const NAMES_BY_LEN = [...NAME_INDEX.keys()].sort((a, b) => b.length - a.length);
-const SORTED = [...COUNTRY_DATA].sort((a, b) => b.code.length - a.code.length);
 
-// ⚡ FIX: iso যোগ করা হয়েছে (2-letter ISO code) — number_panel এর জন্য জরুরি
+const SORTED = [...COUNTRY_DATA].sort((a, b) => b.code.length - a.code.length); // দীর্ঘ কোড আগে (stable)
+
 const hit = (c) => ({ flag: c.flag, name: c.name, code: c.code, iso: c.iso });
 
+// ========== নাম বা নাম্বার/রেঞ্জ থেকে দেশ চেনা ==========
 export function detectCountry(input) {
-  if (!input) return { flag: "🌍", name: "Unknown", code: "", iso: "" };
+  if (!input) return { flag: "🌍", name: "Unknown", code: "" };
   const raw = String(input).trim();
-  if (!raw) return { flag: "🌍", name: "Unknown", code: "", iso: "" };
+  if (!raw) return { flag: "🌍", name: "Unknown", code: "" };
 
+  // 1) নাম: আগে হুবহু মিল, তারপর পুরো-শব্দ হিসেবে সবচেয়ে লম্বা নাম
+  //    (যেমন "Romania"-তে "Oman" মেলে না, "Equatorial Guinea"-তে "Guinea"-র আগে পুরোটা মেলে)
   const n = normName(raw);
   if (n && NAME_INDEX.has(n)) return hit(NAME_INDEX.get(n));
   if (n && /[a-z]{3,}/.test(n)) {
@@ -297,23 +303,27 @@ export function detectCountry(input) {
     }
   }
 
+  // 2) ডিজিট থেকে ফোন কোড (সবচেয়ে লম্বা prefix আগে — Jamaica 1876, Canada 1416 ইত্যাদি)
   const digits = raw.replace(/\D/g, "");
   if (digits) {
     for (const c of SORTED) if (digits.startsWith(c.code)) return hit(c);
   }
 
+  // 3) "237X6" / "880X01" ধরনের রেঞ্জ
   const beforeX = raw.match(/^\+?(\d+)X/i);
   if (beforeX) {
     for (const c of SORTED) if (beforeX[1].startsWith(c.code)) return hit(c);
   }
 
+  // 4) যেকোনো জায়গায় ৩+ ডিজিট
   const seqs = raw.match(/\d{3,}/g);
   if (seqs) {
     for (const seq of seqs) for (const c of SORTED) if (seq.startsWith(c.code)) return hit(c);
   }
 
+  // 5) চিনতে না পারলে raw নামই দেখাবে
   const fallbackName = raw.replace(/[^\w\s\-]/g, "").trim();
-  return { flag: "🌐", name: fallbackName || raw, code: "", iso: "" };
+  return { flag: "🌐", name: fallbackName || raw, code: "" };
 }
 
 export function formatWithFlag(input, { showName = true } = {}) {
