@@ -1,15 +1,15 @@
 /*
  ============================================================================
-  NUMBER PANEL MODULE v2 — ADQ Income Zone Task Bot-এর ভেতরে চলে
+  NUMBER PANEL MODULE v2 — VOLTEX SMS API
   User: Get Number • Custom Range • Live Traffic • Leaderboard • Search • History • OTP Withdraw
-  Admin: 📱 OTP Admin (Users • Settings • Stats • Bulk Rate • Customize)
+  Admin: 📱 OTP Admin (Users • Settings • Stats • Bulk Rate • Customize • OTP Digit)
   OTP Balance আলাদা (users.otpBalance) — Withdraw আনলক হয় minOtp (default 100) OTP-র পর
- ============================================================================
-  Render Environment (এই module-এর জন্য):
-    MKNETWORK_API_KEY = (বাধ্যতামূলক)
-    FORWARD_GROUP_ID  = (ঐচ্ছিক) OTP group post
+
+  Render Environment:
+    VOLTEX_API_KEY    = (বাধ্যতামূলক) Voltex API key (mauthapi header)
+    FORWARD_GROUP_ID  = (ঐচ্ছিক) OTP group/channel post target
     CHANNEL_URL       = (ঐচ্ছিক) group post-এর JOIN CHANNEL লিংক
-    GET_NUMBER_URL    = (ঐচ্ছিক) group post-এর Get Number লিংক (না দিলে এই bot-এর লিংক)
+    GET_NUMBER_URL    = (ঐচ্ছিক) group post-এর Get Number লিংক
     POLL_INTERVAL     = (ঐচ্ছিক) default 6000
     MAX_PENDING       = (ঐচ্ছিক) default 20
  ============================================================================
@@ -25,12 +25,12 @@ function normalizeChatId(v) {
   const x = String(v || "").trim().replace(/^['"]|['"]$/g, "");
   if (!x) return "";
   let m = x.match(/t\.me\/c\/(\d+)/i);
-  if (m) return `-100${m[1]}`;                       // https://t.me/c/123456789/1 → -100123456789
-  if (/t\.me\/(joinchat\/|\+)/i.test(x)) return ""; // প্রাইভেট invite লিংক দিয়ে bot পোস্ট করতে পারে না
+  if (m) return `-100${m[1]}`;
+  if (/t\.me\/(joinchat\/|\+)/i.test(x)) return "";
   m = x.match(/t\.me\/([A-Za-z0-9_]{4,})/i);
-  if (m) return `@${m[1]}`;                           // https://t.me/OTP_BOT_FIRE → @OTP_BOT_FIRE
+  if (m) return `@${m[1]}`;
   if (/^@[A-Za-z0-9_]{4,}$/.test(x)) return x;
-  if (/^-?\d+$/.test(x)) return x;                    // -1001234567890
+  if (/^-?\d+$/.test(x)) return x;
   return "";
 }
 const GROUP_ID = normalizeChatId(GROUP_RAW);
@@ -39,54 +39,52 @@ const GET_NUMBER_URL = process.env.GET_NUMBER_URL || "";
 const PAGE = 8;
 
 /* ------------------------------------------------------------------ */
-/*  MK NETWORK API                                                     */
+/*  VOLTEX API                                                         */
 /* ------------------------------------------------------------------ */
-const http = axios.create({ baseURL: "https://mknetworkbd.com/api/v3/public", timeout: 20000 });
-const mkKey = () =>
-  String(process.env.MKNETWORK_API_KEY || process.env.MK_NETWORK_API_KEY || process.env.MKNETWORK_KEY || process.env.MK_API_KEY || "")
-    .trim().replace(/^['"]|['"]$/g, "");
-const headers = () => ({ "mknetwork-key": mkKey(), "Content-Type": "application/json" });
+const V_BASE = "https://api.2oo9.cloud/MXS47FLFX0U/tnevs/@public/api";
+const V_KEY = (process.env.VOLTEX_API_KEY || "MMF2X6FDQ4I").trim();
+
+const vc = axios.create({
+  baseURL: V_BASE,
+  headers: { mauthapi: V_KEY, "Content-Type": "application/json", Accept: "application/json" },
+  timeout: 25000,
+});
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function apiReq(label, fn, tries = 2) {
-  if (!mkKey()) return null; // key নেই → বারবার 401 না খেয়ে চুপ (শুরুতে একবার লগ হয়)
+async function vreq(method, path, body, tries = 2) {
   for (let i = 1; i <= tries; i++) {
     try {
-      return (await fn()).data;
-    } catch (err) {
-      const st = err.response?.status;
-      console.error(`❌ MK ${label} [${i}/${tries}]:`, st || "", err.message);
-      const retriable = !st || st >= 500 || st === 429;
-      if (!retriable || i === tries) return null;
-      await wait(800 * i);
+      const res = await vc.request({ method, url: path, data: body });
+      const j = res.data || {};
+      if (j.meta?.code !== 200) {
+        const err = new Error(j.message || `voltex ${j.meta?.code}`);
+        err.code = j.meta?.code;
+        err.isOutOfStock = j.meta?.code === 2946;
+        return { ok: false, err };
+      }
+      return { ok: true, data: j.data };
+    } catch (e) {
+      const st = e.response?.status;
+      console.error(`❌ Voltex ${path} [${i}/${tries}]:`, st || "", e.message);
+      if (st && st < 500 && st !== 429) return { ok: false, err: e };
+      if (i === tries) return { ok: false, err: e };
+      await wait(600 * i);
     }
   }
-  return null;
+  return { ok: false, err: new Error("max retries") };
 }
-const whoami = () => apiReq("whoami", () => http.get("/whoami", { headers: headers() }), 1);
-const getAccessList = (limit = 500) => apiReq("access_list", () => http.get(`/access_list?limit=${limit}`, { headers: headers() }));
-const allocateNumber = (range) =>
-  apiReq(`allocate ${range}`, () => http.post("/getnum/number", { range }, { headers: headers() }), 1);
-const checkStatus = (ids) => {
-  const list = ids.map(Number).filter((n) => !isNaN(n));
-  if (!list.length) return null;
-  return apiReq("check_status", () => http.post("/check/status", { request_ids: list }, { headers: headers() }));
+
+const getLiveAccess = async () => (await vreq("GET", "/liveaccess")).data || null;
+const getConsoleFeed = async () => (await vreq("GET", "/console")).data || null;
+const getSuccessOtp = async () => (await vreq("GET", "/success-otp")).data || null;
+const allocateNumber = async (range) => {
+  const rid = String(range || "").replace(/X+$/i, "");
+  return vreq("POST", "/getnum", { rid }, 1);
 };
-const getRadar = (limit = 100) => apiReq("radar", () => http.get(`/radar?limit=${limit}&charts=true`, { headers: headers() }));
 
 /* ------------------------------------------------------------------ */
 /*  HELPERS                                                            */
 /* ------------------------------------------------------------------ */
-const RANGE_RE = /^\+?\d{3,}[xX*]{2,}$/;
-function rangeOf(it) {
-  if (!it || typeof it !== "object") return "";
-  for (const k of ["range", "range_id", "rangeId", "prefix", "pattern", "name", "code", "access", "id"]) {
-    const v = it[k];
-    if (typeof v === "string" && RANGE_RE.test(v.trim())) return v.trim().toUpperCase();
-  }
-  for (const v of Object.values(it)) if (typeof v === "string" && RANGE_RE.test(v.trim())) return v.trim().toUpperCase();
-  return "";
-}
 function resolveCountry(name, number) {
   const n = String(name || "").trim();
   if (n && !/^(unknown|custom range)$/i.test(n)) {
@@ -118,8 +116,17 @@ const COUNTRIES = (() => {
   return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
 })();
 const rangeKey = (r) => String(r || "unknown").replace(/[.\/\[\]*`~\s]/g, "_").slice(0, 60);
-const leadDigits = (v) => { const m = String(v ?? "").match(/^\+?(\d+)/); return m ? m[1] : ""; };
-const feedNumber = (f) => leadDigits(f.number ?? f.phone ?? f.msisdn ?? f.to ?? "");
+
+const extractOtp = (text) => {
+  const s = String(text || "");
+  let m = s.match(/\b(\d{3})[-\s](\d{3})\b/);
+  if (m) return m[1] + m[2];
+  m = s.match(/(?:code|otp)[\s:]+(\d{4,8})/i);
+  if (m) return m[1];
+  m = s.match(/\b(\d{4,8})\b/);
+  if (m) return m[1];
+  return "";
+};
 
 /* ---- premium (custom) emoji helpers ---- */
 const ID_RE = /^\d{5,30}$/;
@@ -300,17 +307,25 @@ export function createNumberPanel(d) {
     }
   }
 
-  /* ---------------- pending requests ---------------- */
-  const pending = new Map();
-  const pendCol = db.collection("pending_requests");
+  /* ---------------- pending (by NUMBER for Voltex) ---------------- */
+  const pending = new Map(); // number → { userId, number, country, operator, range, allocatedAt }
+  const pendCol = db.collection("voltex_pending_numbers");
+  const claimsCol = db.collection("voltex_otp_claims");
+  const seenOtps = new Set();
   const userPending = (uid) => [...pending.entries()].filter(([, v]) => v.userId === uid);
-  function track(rid, uid, number, country, operator, range, expiresAt) {
-    const id = String(rid);
-    const v = { userId: String(uid), number: String(number), country: country || "Unknown", operator: operator || "", range: range || "", allocatedAt: Date.now(), expiresAt: expiresAt || null };
-    pending.set(id, v);
-    pendCol.doc(id).set(v).catch((e) => console.error("persist pending:", e.message));
+
+  function track(number, uid, country, operator, range) {
+    const n = String(number).replace(/\D/g, "");
+    if (!n) return;
+    const v = { userId: String(uid), number: n, country: country || "Unknown", operator: operator || "", range: range || "", allocatedAt: Date.now() };
+    pending.set(n, v);
+    pendCol.doc(n).set(v).catch((e) => console.error("persist pending:", e.message));
   }
-  function done(rid) { pending.delete(String(rid)); pendCol.doc(String(rid)).delete().catch(() => {}); }
+  function done(number) {
+    const n = String(number).replace(/\D/g, "");
+    pending.delete(n);
+    pendCol.doc(n).delete().catch(() => {});
+  }
   async function loadPending() {
     try {
       const snap = await pendCol.get();
@@ -320,31 +335,62 @@ export function createNumberPanel(d) {
         if (now - (v.allocatedAt || 0) > MAX_AGE) doc.ref.delete().catch(() => {});
         else if (!pending.has(doc.id)) pending.set(doc.id, v);
       });
+      const cutoff = Date.now() - 60 * 60 * 1000;
+      const cs = await claimsCol.where("time", ">=", cutoff).select().get();
+      cs.forEach((d) => seenOtps.add(d.id));
     } catch (e) { console.error("loadPending:", e.message); }
   }
 
-  /* ---------------- ranges + stats ---------------- */
+  /* ---------------- live cache: services + console ---------------- */
+  let liveCache = { at: 0, services: [] };
+  let consoleCache = { at: 0, hits: [] };
+
+  async function getServices(force = false) {
+    if (!force && Date.now() - liveCache.at < 15000 && liveCache.services.length) return liveCache.services;
+    const data = await getLiveAccess();
+    if (data?.services) liveCache = { at: Date.now(), services: data.services };
+    return liveCache.services;
+  }
+  async function getConsoleHits(force = false) {
+    if (!force && Date.now() - consoleCache.at < 15000 && consoleCache.hits.length) return consoleCache.hits;
+    const data = await getConsoleFeed();
+    if (data?.hits) consoleCache = { at: Date.now(), hits: data.hits };
+    return consoleCache.hits;
+  }
+
+  /* ---------------- ranges (flatten liveaccess) ---------------- */
   let rangeCache = { at: 0, items: [] };
   async function getRanges() {
     if (Date.now() - rangeCache.at < 15000 && rangeCache.items.length) return rangeCache.items;
-    const res = await getAccessList(500);
-    const raw = res?.data?.items;
-    if (Array.isArray(raw) && raw.length) {
-      const items = raw.map((i) => ({ ...i, range: rangeOf(i) })).filter((i) => i.range);
-      if (items.length) rangeCache = { at: Date.now(), items };
-      else console.error("❌ access_list-এ range পাওয়া যায়নি:", JSON.stringify(raw[0]).slice(0, 300));
+    const services = await getServices();
+    const items = [];
+    for (const svc of services) {
+      for (const r of svc.ranges || []) {
+        const base = String(r).replace(/X+$/i, "");
+        const c = detectCountry(base + "0000");
+        items.push({
+          range: String(r).toUpperCase(),
+          base,
+          country: c.code ? c.name : "Unknown",
+          flag: c.flag,
+          code: c.code || "",
+          operator: svc.sid,
+          sid: svc.sid,
+          last_at: svc.last_at,
+        });
+      }
     }
+    if (items.length) rangeCache = { at: Date.now(), items };
     return rangeCache.items;
   }
+
   const statsRef = db.collection("settings").doc("otp_range_stats");
   const getRangeStats = async () => { try { const s = await statsRef.get(); return s.exists ? s.data() : {}; } catch { return {}; } };
   const bumpRange = (range) => statsRef.set({ [rangeKey(range)]: FieldValue.increment(1) }, { merge: true }).catch(() => {});
 
-  /* ---------------- OTP digit শেখা: কোন রেঞ্জে ৪-৫ ডিজিট, কোনটায় ৬+ ---------------- */
-  // settings/otp_range_digits = সিস্টেম নিজে শেখা { রেঞ্জ: {s: ৪-৫ ডিজিট কয়টা, l: ৬+ ডিজিট কয়টা} }
-  // settings/otp_range_class  = Admin-এর হাতে সেট করা { রেঞ্জ: "short" | "long" | "both" }
+  /* ---------------- OTP digit learning (short/long classification) ---------------- */
   const MODE = { s: { key: "short", name: "Facebook 4-5 Digit OTP" }, l: { key: "long", name: "Facebook 6+ Digit OTP" } };
-  const isFbText = (t) => /facebook|\bfb-\d/i.test(String(t || "")); // Work শুধু Facebook OTP-র জন্য
+  const isFbText = (t) => /facebook|\bfb-\d/i.test(String(t || ""));
   const digitsRef = db.collection("settings").doc("otp_range_digits");
   const classRef = db.collection("settings").doc("otp_range_class");
   let digitStats = {};
@@ -400,46 +446,33 @@ export function createNumberPanel(d) {
     return c === "short" ? " · 🔢4-5" : c === "long" ? " · 🔢6+" : c === "both" ? " · 🔢4-6+" : "";
   };
 
-  // radar feed থেকেও শেখা (feed-এ OTP/SMS থাকলে) — ব্যাকগ্রাউন্ডে প্রতি ২ মিনিটে
+  /* ---------------- OTP feed learning (Voltex /success-otp) ---------------- */
   const seenFeed = new Set();
-  let radarLogged = false;
-  function otpLenOf(f) {
-    for (const k of ["otp_code", "otp", "code", "otpCode", "verification_code"]) {
-      const v = f?.[k];
-      if (v != null) { const dgt = String(v).replace(/[\s-]/g, ""); if (/^\d{4,8}$/.test(dgt)) return dgt.length; }
-    }
-    for (const k of ["full_sms", "sms", "message", "text", "body", "content"]) {
-      const m = String(f?.[k] || "").match(/(?<!\d)(\d{3}[- ]?\d{3}|\d{4,8})(?!\d)/);
-      if (m) return m[1].replace(/\D/g, "").length;
-    }
-    return 0;
-  }
-  function rangeForFeed(f, items) {
-    const fr = rangeOf(f);
-    if (fr) return fr;
-    const dg = feedNumber(f);
-    if (dg.length < 5) return "";
+  function rangeForNumber(dg, items) {
+    if (!dg || dg.length < 5) return "";
     const known = items
       .filter((i) => { const p = String(i.range).replace(/X+$/i, ""); return p.length >= 4 && (dg.startsWith(p) || p.startsWith(dg)); })
       .sort((a, b) => b.range.replace(/X+$/i, "").length - a.range.replace(/X+$/i, "").length)[0];
     return known?.range || "";
   }
-  async function learnFromRadar() {
-    const res = await getRadar(100);
-    const feed = Array.isArray(res?.data?.feed) ? res.data.feed : [];
-    if (!feed.length) return;
-    if (!radarLogged) { radarLogged = true; console.log("ℹ️ radar feed sample:", JSON.stringify(feed[0]).slice(0, 400)); }
+  async function learnFromOtpFeed() {
+    const data = await getSuccessOtp();
+    const otps = data?.otps || [];
+    if (!otps.length) return;
     const items = await getRanges();
-    for (const f of feed) {
-      const fbInfo = [f.service, f.app, f.platform, f.sender, f.full_sms, f.sms, f.message, f.text, f.body, f.content].filter(Boolean).join(" ");
-      if (!isFbText(fbInfo)) continue; // feed-এ Facebook লেখা না থাকলে শিখব না
-      const len = otpLenOf(f);
-      if (!len) continue;
-      const id = String(f.id ?? f.request_id ?? f.sms_id ?? `${feedNumber(f)}_${f.time ?? f.timestamp ?? f.created_at ?? ""}_${len}`);
+    for (const o of otps) {
+      const id = String(o.otp_id);
       if (seenFeed.has(id)) continue;
+      const num = String(o.number || "").replace(/\D/g, "");
+      if (pending.has(num)) continue; // credit() এই OTP থেকে শিখবে — double count এড়াতে skip
       seenFeed.add(id);
-      const range = rangeForFeed(f, items);
-      if (range) learn(range, len);
+      const msg = String(o.message || "");
+      if (!isFbText(msg)) continue;
+      const range = rangeForNumber(num, items);
+      if (!range) continue;
+      const otp = extractOtp(msg);
+      if (!otp) continue;
+      learn(range, otp.length);
     }
     if (seenFeed.size > 5000) seenFeed.clear();
   }
@@ -499,7 +532,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  GET NUMBER                                                       */
+  /*  GET NUMBER (Work → Country → Range → Allocate)                  */
   /* ================================================================ */
   const workRows = (prefix) => [
     [bt("w_short", { callback_data: `${prefix}:s`, style: "success" })],
@@ -548,12 +581,12 @@ export function createNumberPanel(d) {
     const cfg = await getCfg();
     const items = (await getRanges()).filter((i) => i.country === country && matchesMode(i.range, mode, cfg));
     if (!items.length) return show(ctx, "❌ এই দেশে এই Work-এর কোনো রেঞ্জ এখন নেই।", [[ib("🔙 Back", `np_gw:${mode}`, "danger")]]);
-    const known = items.filter((i) => classOf(i.range) !== "unknown"); // শেখা/সেট করা রেঞ্জ আগে
+    const known = items.filter((i) => classOf(i.range) !== "unknown");
     const base = known.length ? known : items;
-    const ex = base.filter((r) => r.health === "excellent");
-    const gd = base.filter((r) => r.health === "good");
-    const pool = ex.length ? ex : gd.length ? gd : base;
-    const p = pool[Math.floor(Math.random() * pool.length)];
+    const stats = await getRangeStats();
+    const ranked = [...base].sort((a, b) => (stats[rangeKey(b.range)] || 0) - (stats[rangeKey(a.range)] || 0));
+    const top5 = ranked.slice(0, Math.min(5, ranked.length));
+    const p = top5[Math.floor(Math.random() * top5.length)];
     return allocate(ctx, p.range, country, p.operator || "", false, mode);
   }));
 
@@ -578,12 +611,13 @@ export function createNumberPanel(d) {
     for (let round = 0; round < 4 && got.length < want; round++) {
       const results = await Promise.all(Array.from({ length: want - got.length }, () => allocateNumber(range)));
       for (const res of results) {
-        const x = res?.data;
-        if (!x?.number || !x?.request_id) continue;
-        const full = String(x.full_number || x.number).replace(/\D/g, "");
+        if (!res.ok) continue;
+        const x = res.data;
+        if (!x) continue;
+        const full = String(x.no_plus_number || x.full_number || "").replace(/\D/g, "");
         if (full && !seenNums.has(full)) {
           seenNums.add(full);
-          got.push({ requestId: x.request_id, number: full, country: x.country, operator: x.operator, expiresAt: x.expires_at });
+          got.push({ number: full, country: x.country, operator: x.operator });
         }
       }
     }
@@ -608,7 +642,7 @@ export function createNumberPanel(d) {
       if (!picked.length) {
         return show(ctx, `❌ <b>Allocate করা যায়নি</b> <code>${esc(range)}</code>\n\nএই রেঞ্জে এখন নাম্বার নেই।`, [[ib("🔄 Try Again", retryData, "success")], back]);
       }
-      for (const p of picked) track(p.requestId, uid, p.number, p.country || countryName, p.operator || operatorName, range, p.expiresAt);
+      for (const p of picked) track(p.number, uid, p.country || countryName, p.operator || operatorName, range);
       const c = resolveCountry(picked[0].country || (isCustom ? "" : countryName), picked[0].number);
       lastNum.set(uid, { range, name: countryName, operator: operatorName, isCustom, mode });
       const rows = picked.map((p) => [{ text: `${c.flag} ${p.number}`, copy_text: { text: p.number }, style: "success" }]);
@@ -628,71 +662,55 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  LIVE TRAFFIC                                                     */
+  /*  LIVE TRAFFIC (from /console + /liveaccess)                      */
   /* ================================================================ */
-  async function computeTopRanges(feed, analytics, limit = 10) {
+  async function computeTopRanges(limit = 10) {
+    await getServices(true);
+    const hits = await getConsoleHits(true);
     const items = await getRanges();
+    const rangeMap = new Map();
+    for (const r of items) rangeMap.set(r.range, r);
+
     const map = new Map();
-    const add = (range, country, operator, n = 1) => {
-      if (!range) return;
-      const e = map.get(range) || { range, country: country || "Unknown", operator: operator || "", count: 0 };
-      e.count += n;
+    const byCountry = {};
+    for (const h of hits) {
+      const range = String(h.range || "").toUpperCase();
+      if (!range) continue;
+      const item = rangeMap.get(range);
+      const country = item?.country || "Unknown";
+      byCountry[country] = (byCountry[country] || 0) + 1;
+      const e = map.get(range) || { range, country, operator: item?.operator || "", count: 0 };
+      e.count++;
       map.set(range, e);
-    };
-    const list = analytics.by_range || analytics.top_ranges || analytics.ranges;
-    if (Array.isArray(list) && list.length) {
-      for (const r of list) {
-        const range = rangeOf(r);
-        if (!range) continue;
-        const known = items.find((i) => i.range === range);
-        add(range, r.country || known?.country, r.operator || known?.operator, Number(r.count) || 1);
-      }
-    } else {
-      for (const f of feed) {
-        const fr = rangeOf(f);
-        let known = fr ? items.find((i) => i.range === fr) : null;
-        if (!known) {
-          const dg = feedNumber(f);
-          if (dg.length >= 5) {
-            known = items
-              .filter((i) => { const p = String(i.range).replace(/X+$/i, ""); return p.length >= 4 && (dg.startsWith(p) || p.startsWith(dg)); })
-              .sort((a, b) => b.range.replace(/X+$/i, "").length - a.range.replace(/X+$/i, "").length)[0];
-          }
-        }
-        if (known) add(known.range, known.country, known.operator);
-        else if (fr) add(fr, f.country, f.operator);
-      }
     }
     let top = [...map.values()].sort((a, b) => b.count - a.count).slice(0, limit);
     let source = "live";
     if (!top.length) {
       const stats = await getRangeStats();
-      const rank = { excellent: 2, good: 1 };
-      top = items.filter((i) => rank[i.health])
-        .sort((a, b) => (rank[b.health] - rank[a.health]) || ((stats[rangeKey(b.range)] || 0) - (stats[rangeKey(a.range)] || 0)))
+      top = [...items]
+        .sort((a, b) => (stats[rangeKey(b.range)] || 0) - (stats[rangeKey(a.range)] || 0))
         .slice(0, limit)
         .map((i) => ({ range: i.range, country: i.country, operator: i.operator || "", count: stats[rangeKey(i.range)] || 0 }));
-      source = "health";
+      source = "stats";
     }
-    return { top, source };
+    return { top, source, byCountry };
   }
 
   bot.action("np_traffic", safe(async (ctx) => {
     await ctx.answerCbQuery("🔄").catch(() => {});
     if (!(await gate(ctx))) return;
-    const res = await getRadar(100);
-    if (!res?.data) return show(ctx, "❌ API Error বা কোনো ডেটা নেই।", [[ib("🔄 Retry", "np_traffic", "success")], back]);
-    const a = res.data.analytics || {};
-    const feed = Array.isArray(res.data.feed) ? res.data.feed : [];
-    const { top, source } = await computeTopRanges(feed, a, 10);
+    let result;
+    try { result = await computeTopRanges(10); }
+    catch (e) { return show(ctx, "❌ API Error — একটু পর আবার চেষ্টা করুন।", [[ib("🔄 Retry", "np_traffic", "success")], back]); }
+    const { top, source, byCountry } = result;
     let msg = "📈 <b>LIVE TRAFFIC — TOP RANGES</b>\n";
-    msg += source === "live" ? "🔥 এখন যে রেঞ্জে সবচেয়ে বেশি OTP আসছে\n\n" : "🔥 সবচেয়ে ভালো রেঞ্জ (health অনুযায়ী)\n\n";
+    msg += source === "live" ? "🔥 এখন যে রেঞ্জে সবচেয়ে বেশি OTP আসছে\n\n" : "🔥 সিস্টেম-শেখা ডেটা অনুযায়ী সেরা রেঞ্জ\n\n";
     top.forEach((r, i) => {
       msg += `${i < 3 ? "🔥" : "▫️"} <b>#${i + 1}</b> ${flagOf(r.country)} <b>${esc(r.country)}</b>\n    <code>${esc(r.range)}</code>${tagOf(r.range)}${r.operator ? " · " + esc(r.operator) : ""}${r.count ? ` — <b>${r.count}</b> OTP` : ""}\n`;
     });
     if (!top.length) msg += "❌ এখন কোনো রেঞ্জ ডেটা নেই।\n";
-    const byCountry = a.by_country || [];
-    if (byCountry.length) msg += "\n🌍 <b>Top Countries:</b> " + byCountry.slice(0, 5).map((c) => `${flagOf(c.country)} ${esc(c.country)} (${c.count})`).join(" • ");
+    const countryEntries = Object.entries(byCountry).sort((a, b) => b[1] - a[1]);
+    if (countryEntries.length) msg += "\n🌍 <b>Top Countries:</b> " + countryEntries.slice(0, 5).map(([c, n]) => `${flagOf(c)} ${esc(c)} (${n})`).join(" • ");
     msg += "\n\n👇 রেঞ্জে চাপলেই সরাসরি নাম্বার পাবেন";
     const btns = top.filter((r) => Buffer.byteLength(`np_tr:${r.range}`) <= 64)
       .map((r, i) => ib(`#${i + 1} ${flagOf(r.country)} ${r.country}`, `np_tr:${r.range}`, i < 3 ? "danger" : "success"));
@@ -711,7 +729,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  LEADERBOARD (OTP) — cached 2 min                                 */
+  /*  LEADERBOARD                                                     */
   /* ================================================================ */
   let lbCache = { at: 0, msg: "" };
   bot.action("np_lead", safe(async (ctx) => {
@@ -844,7 +862,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  ADMIN: 📱 OTP Admin  (Admin Panel-এর বাটন থেকে খোলে)             */
+  /*  ADMIN: 📱 OTP Admin                                              */
   /* ================================================================ */
   const aBack = [ib("🏠 OTP Admin", "npa_home", "primary")];
   async function adminHome(ctx) {
@@ -884,7 +902,7 @@ export function createNumberPanel(d) {
     return ctx.match[1] === "showUnknown" ? digitScreen(ctx) : cfgScreen(ctx);
   });
 
-  /* ---- OTP Digit Settings (4-5 / 6+) ---- */
+  /* ---- OTP Digit Settings ---- */
   async function digitScreen(ctx) {
     const c = await getCfg(true);
     const items = await getRanges();
@@ -1094,7 +1112,7 @@ export function createNumberPanel(d) {
   });
 
   /* ================================================================ */
-  /*  TEXT INPUT (bot.js-এর session dispatcher থেকে ডাকা হয়)           */
+  /*  TEXT INPUT                                                      */
   /* ================================================================ */
   async function adminText(ctx, s, text) {
     const id = ctx.from.id;
@@ -1277,7 +1295,7 @@ export function createNumberPanel(d) {
   }
 
   /* ================================================================ */
-  /*  OTP POLLER — OTP এলে user-এর OTP Balance-এ টাকা যোগ              */
+  /*  OTP CREDIT                                                       */
   /* ================================================================ */
   async function credit({ number, otp, full, info }) {
     const service = detectService(full);
@@ -1302,9 +1320,9 @@ export function createNumberPanel(d) {
             if (comm > 0) b.update(rsnap.ref, { otpBalance: FieldValue.increment(comm), otpReferEarning: FieldValue.increment(comm) });
           }
         }
-        await b.commit(); // এরপর আর throw হবে না (claim ফেরত গেলে double-credit হত)
+        await b.commit();
         bumpRange(info.range);
-        if (isFbText(full)) learn(info.range, String(otp).replace(/\D/g, "").length); // শুধু Facebook OTP থেকে শেখা
+        if (isFbText(full)) learn(info.range, String(otp).replace(/\D/g, "").length);
 
         try {
           const cnt = (Number(snap.get("otpCount")) || 0) + 1;
@@ -1324,47 +1342,58 @@ export function createNumberPanel(d) {
     }
   }
 
-  async function handleResult(r) {
-    const rid = String(r.request_id);
-    const info = pending.get(rid);
-    if (r.status === "success" && r.otp_code) {
-      try { await db.collection("otp_claims").doc(rid).create({ at: Date.now() }); }
-      catch (e) { if (e.code === 6) { done(rid); return; } throw e; }
-      const number = String(r.number || info?.number || "").replace(/\D/g, "");
-      try {
-        await credit({ number, otp: String(r.otp_code), full: r.full_sms || "", info });
-        done(rid);
-      } catch (e) {
-        console.error("OTP credit failed, retry হবে:", e.message);
-        await db.collection("otp_claims").doc(rid).delete().catch(() => {});
-      }
-    } else if (["expired", "not_found", "cancelled", "failed"].includes(r.status)) done(rid);
-  }
-
+  /* ================================================================ */
+  /*  POLLER — /success-otp                                       */
+  /* ================================================================ */
   let polling = false;
   async function poll() {
-    if (polling) return;
+    if (polling || !pending.size) return;
     polling = true;
     try {
       const now = Date.now();
-      for (const [rid, v] of pending) if (now - v.allocatedAt > MAX_AGE) done(rid);
-      const ids = [...pending.keys()];
-      for (let i = 0; i < ids.length; i += 100) {
-        const res = await checkStatus(ids.slice(i, i + 100));
-        const results = res?.data?.results;
-        if (!Array.isArray(results)) continue;
-        for (const r of results) { try { await handleResult(r); } catch (e) { console.error("result error:", e.message); } }
+      for (const [n, v] of pending) if (now - v.allocatedAt > MAX_AGE) done(n);
+
+      const data = await getSuccessOtp();
+      const otps = data?.otps || [];
+      for (const o of otps) {
+        if (seenOtps.has(o.otp_id)) continue;
+        const num = String(o.number || "").replace(/\D/g, "");
+        const info = pending.get(num);
+        if (!info) continue;
+
+        try {
+          await claimsCol.doc(o.otp_id).create({ number: num, time: o.time, userId: info.userId });
+        } catch (e) {
+          if (e.code === 6) { seenOtps.add(o.otp_id); continue; }
+          throw e;
+        }
+        seenOtps.add(o.otp_id);
+
+        try {
+          const otp = extractOtp(o.message);
+          if (!otp) { await claimsCol.doc(o.otp_id).delete().catch(() => {}); seenOtps.delete(o.otp_id); continue; }
+          await credit({ number: num, otp, full: o.message, info });
+          done(num);
+        } catch (e) {
+          console.error("credit failed:", e.message);
+          await claimsCol.doc(o.otp_id).delete().catch(() => {});
+          seenOtps.delete(o.otp_id);
+        }
       }
-    } catch (e) { console.error("❌ Poll error:", e.message); }
+    } catch (e) { console.error("Poll error:", e.message); }
     finally { polling = false; }
   }
 
+  /* ================================================================ */
+  /*  START                                                            */
+  /* ================================================================ */
   async function start() {
-    if (!mkKey()) {
-      console.error("❌ MKNETWORK_API_KEY সেট করা নেই — এই Render service-এর Environment-এ ঠিক এই নামে key দিন। (পুরনো number bot-এর service-এ দিলে এখানে আসবে না)");
+    if (!V_KEY) {
+      console.error("❌ VOLTEX_API_KEY সেট করা নেই — Number Panel কাজ করবে না। Render service-এর Environment-এ এই key দিন।");
     } else {
-      const w = await whoami();
-      console.log(w ? "✅ MK Network API key OK" : "❌ MK Network API key কাজ করছে না (401) — key ভুল/মেয়াদোত্তীর্ণ বা ভুল জায়গা থেকে কপি");
+      const test = await getLiveAccess();
+      if (test?.services) console.log(`✅ Voltex API key OK (${test.services.length} services)`);
+      else console.error("❌ Voltex API key কাজ করছে না — key ভুল/মেয়াদোত্তীর্ণ বা API blocked");
     }
     if (GROUP_RAW && !GROUP_ID) {
       console.error(`❌ FORWARD_GROUP_ID="${GROUP_RAW}" বোঝা যায়নি। দিন: সংখ্যা (-100xxxxxxxxxx) অথবা পাবলিক গ্রুপের @username/t.me লিংক। প্রাইভেট invite লিংক চলবে না।`);
@@ -1384,11 +1413,11 @@ export function createNumberPanel(d) {
     await loadPending();
     setInterval(poll, POLL_INTERVAL);
     setInterval(() => syncDigits().catch((e) => console.error("syncDigits:", e.message)), 2 * 60 * 1000);
-    setInterval(() => learnFromRadar().catch((e) => console.error("learnFromRadar:", e.message)), 2 * 60 * 1000);
-    setTimeout(() => learnFromRadar().catch(() => {}), 20000);
+    setInterval(() => learnFromOtpFeed().catch((e) => console.error("learnFromOtpFeed:", e.message)), 2 * 60 * 1000);
+    setTimeout(() => learnFromOtpFeed().catch(() => {}), 20000);
     setInterval(loadPending, 60 * 1000);
     setInterval(loadUi, 2 * 60 * 1000);
-    console.log(`✅ Number Panel started${GROUP_ID ? ` → group ${GROUP_ID}` : ""}`);
+    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""}`);
   }
 
   return { open, handleText, start };
