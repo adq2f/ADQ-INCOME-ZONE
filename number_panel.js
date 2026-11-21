@@ -1,10 +1,10 @@
 /*
  ============================================================================
   NUMBER PANEL MODULE v3 — VOLTEX SMS API
-  • Country display: 🇨🇲 CM (flag + ISO 2-letter) everywhere in lists
-  • Allocation success: flag + full name
+  • Country display: 🇨🇲 CM (flag + ISO 2-letter) everywhere
   • 2 numbers together with auto-retry (12s limit)
-  • Fixed: uses country_flags.js → iso field
+  • AUTO-REFRESH every 1s (safe: hash-diff, API gap, FLOOD_WAIT aware)
+    Env: AUTO_REFRESH_MS (default 1000), API_MIN_GAP_MS (default 900)
  ============================================================================
 */
 import axios from "axios";
@@ -34,6 +34,13 @@ const PP_SERVICES = 8;
 const PP_COUNTRIES = 8;
 const PP_RANGES_GET = 8;
 const PP_RANGES_TRAFFIC = 5;
+
+/* --- auto-refresh tunables --- */
+const AUTO_REFRESH_MS = Math.max(500, parseInt(process.env.AUTO_REFRESH_MS || "1000"));
+const API_MIN_GAP_MS = Math.max(500, parseInt(process.env.API_MIN_GAP_MS || "900"));
+const VIEW_IDLE_LIMIT = 180;                 // 180 idle ticks × 1s = 3 min no-change → stop
+const VIEW_MAX_AGE = 30 * 60 * 1000;         // 30 min hard cap
+const MAX_ACTIVE_VIEWS = 500;
 
 /* ------------------------------------------------------------------ */
 /*  VOLTEX API                                                         */
@@ -83,7 +90,6 @@ const allocateNumber = async (range) => {
 /* ------------------------------------------------------------------ */
 const tr = (s, n) => { const x = String(s ?? ""); return x.length > n ? x.slice(0, n - 1) + "…" : x; };
 
-/* ⚡ countryShort: ISO 2-letter চাই; না পেলে name-এর প্রথম 2 অক্ষর */
 function countryShort(iso, name) {
   const i = String(iso || "").toUpperCase().trim();
   if (/^[A-Z]{2,3}$/.test(i)) return i;
@@ -204,6 +210,90 @@ export function createNumberPanel(d) {
   } = d;
 
   const num = (t) => Number(bn2en(String(t)).trim().replace(/,/g, ""));
+
+  /* ---------------- AUTO-REFRESH ---------------- */
+  const activeViews = new Map(); // `${chatId}:${messageId}` → view
+  let floodUntil = 0;            // global FLOOD_WAIT gate
+  let lastApiAt = 0;             // Voltex batch refresh gate
+
+  function hashMsg(text, rows) {
+    const s = String(text) + "|" + JSON.stringify(rows);
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return h;
+  }
+
+  async function refreshSharedCaches() {
+    const now = Date.now();
+    if (now - lastApiAt < API_MIN_GAP_MS) return;
+    lastApiAt = now;
+    await getServices(true).catch(() => {});
+    await Promise.all([
+      getRanges(true).catch(() => {}),
+      getConsoleHits(true).catch(() => {}),
+    ]);
+  }
+
+  async function autoRefreshLoop() {
+    if (!activeViews.size) return;
+    if (Date.now() < floodUntil) return;
+
+    await refreshSharedCaches();
+
+    const now = Date.now();
+    for (const [key, view] of [...activeViews]) {
+      if (now - view.born > VIEW_MAX_AGE) { activeViews.delete(key); continue; }
+      if (view.idle >= VIEW_IDLE_LIMIT) { activeViews.delete(key); continue; }
+      if (view.busy) continue;
+      if (Date.now() < floodUntil) break;
+
+      view.busy = true;
+      try {
+        const { text, rows } = await view.rerender();
+        const newHash = hashMsg(text, rows);
+        if (newHash === view.lastHash) { view.idle++; continue; }
+        const kb = Markup.inlineKeyboard(rows);
+        try {
+          await bot.telegram.editMessageText(view.chatId, view.messageId, undefined, text, {
+            parse_mode: "HTML",
+            reply_markup: kb,
+            link_preview_options: { is_disabled: true },
+          });
+        } catch (e) {
+          const desc = String(e.description || e.message || "");
+          // "not modified" → ignore (hash mismatch but content same rendered)
+          if (desc.includes("message is not modified")) {
+            view.lastHash = newHash;
+            view.idle = 0;
+            continue;
+          }
+          // Flood wait → backoff globally, keep view
+          const m = desc.match(/retry after (\d+)/i);
+          if (m || desc.includes("Too Many Requests")) {
+            const sec = m ? parseInt(m[1]) : 3;
+            floodUntil = Date.now() + sec * 1000 + 500;
+            view.idle++;
+            continue;
+          }
+          // Permanent error → drop this view
+          if (desc.includes("message to edit not found") || desc.includes("chat not found") || desc.includes("MESSAGE_ID_INVALID") || desc.includes("message can't be edited")) {
+            activeViews.delete(key);
+            continue;
+          }
+          view.idle++;
+          continue;
+        }
+        view.lastHash = newHash;
+        view.lastAt = now;
+        view.idle = 0;
+      } catch (e) {
+        console.error("auto refresh:", e.message);
+        view.idle++;
+      } finally {
+        view.busy = false;
+      }
+    }
+  }
 
   /* ---------------- config ---------------- */
   const cfgRef = db.collection("settings").doc("otp_config");
@@ -358,33 +448,32 @@ export function createNumberPanel(d) {
     } catch (e) { console.error("loadPending:", e.message); }
   }
 
-  /* ---------------- live caches ---------------- */
+  /* ---------------- live caches (short TTL for 1s refresh) ---------------- */
+  const CACHE_TTL = Math.max(600, AUTO_REFRESH_MS - 100);
   let liveCache = { at: 0, services: [] };
   let consoleCache = { at: 0, hits: [] };
   let rangeCache = { at: 0, items: [] };
 
   async function getServices(force = false) {
-    if (!force && Date.now() - liveCache.at < 15000 && liveCache.services.length) return liveCache.services;
+    if (!force && Date.now() - liveCache.at < CACHE_TTL && liveCache.services.length) return liveCache.services;
     const data = await getLiveAccess();
     if (data?.services) liveCache = { at: Date.now(), services: data.services };
     return liveCache.services;
   }
   async function getConsoleHits(force = false) {
-    if (!force && Date.now() - consoleCache.at < 15000 && consoleCache.hits.length) return consoleCache.hits;
+    if (!force && Date.now() - consoleCache.at < CACHE_TTL && consoleCache.hits.length) return consoleCache.hits;
     const data = await getConsoleFeed();
     if (data?.hits) consoleCache = { at: Date.now(), hits: data.hits };
     return consoleCache.hits;
   }
-
   async function getRanges(force = false) {
-    if (!force && Date.now() - rangeCache.at < 15000 && rangeCache.items.length) return rangeCache.items;
+    if (!force && Date.now() - rangeCache.at < CACHE_TTL && rangeCache.items.length) return rangeCache.items;
     const services = await getServices();
     const items = [];
     for (const svc of services) {
       for (const r of svc.ranges || []) {
         const base = String(r).replace(/X+$/i, "");
         const info = detectCountry(base + "0000");
-        // ⚡ iso ফিল্ড ব্যবহার — 2-letter country code (CM, US, BD...)
         const iso = String(info.iso || "").toUpperCase().trim();
         const hasIso = /^[A-Z]{2,3}$/.test(iso);
         const countryName = info.name && info.name !== "Unknown" ? info.name : "Unknown";
@@ -404,8 +493,8 @@ export function createNumberPanel(d) {
     return rangeCache.items;
   }
 
-  async function hitMapByRange() {
-    const hits = await getConsoleHits(true);
+  async function hitMapByRange(force = false) {
+    const hits = await getConsoleHits(force);
     const map = new Map();
     for (const h of hits) {
       const r = String(h.range || "").toUpperCase();
@@ -530,16 +619,40 @@ export function createNumberPanel(d) {
 
   /* ---------------- ui helpers ---------------- */
   const back = [ib("🔙 Number Panel", "np_home", "danger")];
-  async function show(ctx, text, rows) {
+  async function show(ctx, text, rows, opts = {}) {
     const render = (rs) => {
       const kb = Markup.inlineKeyboard(rs);
       return ctx.callbackQuery ? edit(ctx, text, kb) : ctx.reply(text, kbx(kb));
     };
-    try { return await render(rows); }
+    let msg;
+    try { msg = await render(rows); }
     catch (e) {
-      if (JSON.stringify(rows).includes("icon_custom_emoji_id")) return render(rows.map((r) => r.map(stripIcon)));
-      throw e;
+      if (JSON.stringify(rows).includes("icon_custom_emoji_id")) msg = await render(rows.map((r) => r.map(stripIcon)));
+      else throw e;
     }
+    const cb = ctx.callbackQuery;
+    const mid = cb?.message?.message_id;
+    const cid = cb?.message?.chat?.id;
+    if (mid && cid) {
+      const key = `${cid}:${mid}`;
+      if (opts.auto) {
+        if (activeViews.size >= MAX_ACTIVE_VIEWS && !activeViews.has(key)) {
+          let oldestKey = null, oldestAt = Infinity;
+          for (const [k, v] of activeViews) if (v.lastAt < oldestAt) { oldestAt = v.lastAt; oldestKey = k; }
+          if (oldestKey) activeViews.delete(oldestKey);
+        }
+        activeViews.set(key, {
+          chatId: cid, messageId: mid,
+          rerender: opts.auto,
+          lastHash: hashMsg(text, rows),
+          lastAt: Date.now(), born: Date.now(),
+          idle: 0, busy: false,
+        });
+      } else {
+        activeViews.delete(key);
+      }
+    }
+    return msg;
   }
   const ask = async (ctx, session, text, rows = []) => { await setSession(ctx.from.id, session); return show(ctx, text, rows); };
   const lockMsg = (cfg, cnt) =>
@@ -589,15 +702,17 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  GET NUMBER                                                      */
+  /*  GET NUMBER (auto-refresh lists)                                 */
   /* ================================================================ */
 
-  async function showServiceList(ctx, page = 0) {
-    const services = await getServices(true);
+  async function buildServiceList(page, force = false) {
+    const services = await getServices(force);
     const live = services.filter((s) => (s.ranges || []).length);
     if (!live.length) {
-      return show(ctx, "❌ এখন কোনো সার্ভিস সচল নেই।",
-        [[ib("🔄 Retry", "np_get", "success")], back]);
+      return {
+        text: "❌ এখন কোনো সার্ভিস সচল নেই।",
+        rows: [[ib("🔄 Retry", "np_get", "success")], back],
+      };
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
@@ -606,9 +721,16 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gsl:${pg.page - 1}`, `np_gsl:${pg.page + 1}`));
     rows.push([ib("🔄 Refresh", "np_get", "primary"), back[0]]);
-    return show(ctx,
-      `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`,
-      rows);
+    const text = `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    return { text, rows };
+  }
+
+  async function showServiceList(ctx, page = 0, auto = false) {
+    const { text, rows } = await buildServiceList(page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildServiceList(page, false) });
+    }
+    return show(ctx, text, rows);
   }
 
   bot.action("np_get", safe(async (ctx) => {
@@ -616,41 +738,40 @@ export function createNumberPanel(d) {
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
     if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
-    return showServiceList(ctx, 0);
+    return showServiceList(ctx, 0, true);
   }));
 
   bot.action(/^np_gsl:(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
-    return showServiceList(ctx, Number(ctx.match[1]));
+    return showServiceList(ctx, Number(ctx.match[1]), true);
   }));
 
   bot.action(/^np_gsv:(.+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
-    return showCountryList(ctx, ctx.match[1], "a", 0);
+    return showCountryList(ctx, ctx.match[1], "a", 0, true);
   }));
 
-  async function showCountryList(ctx, sid, filter = "a", page = 0) {
+  async function buildCountryList(sid, filter, page, force = false) {
     const cfg = await getCfg();
-    const all = await getRanges();
-    const hitMap = await hitMapByRange();
+    const all = await getRanges(force);
+    const hitMap = await hitMapByRange(force);
     const sidLower = sid.toLowerCase();
     const allSvcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
     if (!allSvcRanges.length) {
-      return show(ctx, `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
-        [[ib("🔄 Retry", "np_get", "success")], back]);
+      return {
+        text: `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
+        rows: [[ib("🔄 Retry", "np_get", "success")], back],
+      };
     }
     const svcRanges = allSvcRanges.filter((r) => matchesMode(r.range, filter, cfg));
     const countries = groupByCountry(svcRanges, hitMap);
     const pg = paginate(countries, page, PP_COUNTRIES);
-
-    // ⚡ flag + ISO 2-letter code + hit
     const btns = pg.items.map((c) => {
       const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
       return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
     });
-
     const rows = [];
     const cntS = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
     const cntL = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
@@ -660,53 +781,48 @@ export function createNumberPanel(d) {
       if (cntL > 0) fRow.push(ib(filter === "l" ? "✅ 6+" : "6+", `np_gcl:${sid}:l:0`, filter === "l" ? "success" : "primary"));
       rows.push(fRow);
     }
-
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gcl:${sid}:${filter}:${pg.page - 1}`, `np_gcl:${sid}:${filter}:${pg.page + 1}`));
     rows.push([ib("🔙 Services", "np_get", "primary"), back[0]]);
-
     const filterName = filter === "s" ? " · 4-5 digit" : filter === "l" ? " · 6+ digit" : "";
-    return show(ctx,
-      `🌍 <b>দেশ সিলেক্ট করুন</b>${filterName}\n\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages}</i>`,
-      rows);
+    const text = `🌍 <b>দেশ সিলেক্ট করুন</b>${filterName}\n\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    return { text, rows };
+  }
+
+  async function showCountryList(ctx, sid, filter = "a", page = 0, auto = false) {
+    const { text, rows } = await buildCountryList(sid, filter, page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildCountryList(sid, filter, page, false) });
+    }
+    return show(ctx, text, rows);
   }
 
   bot.action(/^np_gcl:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
     const [, sid, filter, page] = ctx.match;
-    return showCountryList(ctx, sid, filter, Number(page));
+    return showCountryList(ctx, sid, filter, Number(page), true);
   }));
 
-  bot.action(/^np_grc:([^:]+):([asl]):(.+):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    const [, sid, filter, country, page] = ctx.match;
-    return showRangeList(ctx, sid, filter, country, Number(page));
-  }));
-
-  async function showRangeList(ctx, sid, filter, country, page = 0) {
+  async function buildRangeList(sid, filter, country, page, force = false) {
     const cfg = await getCfg();
-    const all = await getRanges();
-    const hitMap = await hitMapByRange();
+    const all = await getRanges(force);
+    const hitMap = await hitMapByRange(force);
     const sidLower = sid.toLowerCase();
-
     let countryRanges = all
       .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
       .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
     countryRanges = countryRanges.filter((r) => matchesMode(r.range, filter, cfg));
     countryRanges.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
-
     if (!countryRanges.length) {
-      return show(ctx, "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
-        [[ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary")], back]);
+      return {
+        text: "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
+        rows: [[ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary")], back],
+      };
     }
-
     const pg = paginate(countryRanges, page, PP_RANGES_GET);
     const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
     const headFlag = countryRanges[0].flag;
-
-    // ⚡ flag + range (country code already in header)
     const btns = pg.items.map((r) => {
       const hitTag = r.hits > 0 ? ` 🔥${r.hits}` : "";
       return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
@@ -715,30 +831,45 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${country}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary"), back[0]]);
-
     const filterName = filter === "s" ? " · 4-5" : filter === "l" ? " · 6+" : "";
-    return show(ctx,
-      `${headFlag} <b>${headCode}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
-      rows);
+    const text = `${headFlag} <b>${headCode}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`;
+    return { text, rows };
   }
+
+  async function showRangeList(ctx, sid, filter, country, page = 0, auto = false) {
+    const { text, rows } = await buildRangeList(sid, filter, country, page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildRangeList(sid, filter, country, page, false) });
+    }
+    return show(ctx, text, rows);
+  }
+
+  bot.action(/^np_grc:([^:]+):([asl]):(.+):(\d+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery("⏳").catch(() => {});
+    if (!(await gate(ctx))) return;
+    const [, sid, filter, country, page] = ctx.match;
+    return showRangeList(ctx, sid, filter, country, Number(page), true);
+  }));
 
   bot.action(/^np_gwc:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
     const [, sid, filter, page] = ctx.match;
-    return showCountryList(ctx, sid, filter, Number(page));
+    return showCountryList(ctx, sid, filter, Number(page), true);
   }));
 
   /* ================================================================ */
   /*  LIVE TRAFFIC                                                    */
   /* ================================================================ */
 
-  async function showTrafficServices(ctx, page = 0) {
-    const services = await getServices(true);
+  async function buildTrafficServices(page, force = false) {
+    const services = await getServices(force);
     const live = services.filter((s) => (s.ranges || []).length);
     if (!live.length) {
-      return show(ctx, "❌ এখন কোনো ট্রাফিক ডেটা নেই।",
-        [[ib("🔄 Retry", "np_traffic", "success")], back]);
+      return {
+        text: "❌ এখন কোনো ট্রাফিক ডেটা নেই।",
+        rows: [[ib("🔄 Retry", "np_traffic", "success")], back],
+      };
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
@@ -747,38 +878,47 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tsl:${pg.page - 1}`, `np_tsl:${pg.page + 1}`));
     rows.push([ib("🔄 Refresh", "np_traffic", "primary"), back[0]]);
-    return show(ctx,
-      `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`,
-      rows);
+    const text = `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    return { text, rows };
+  }
+
+  async function showTrafficServices(ctx, page = 0, auto = false) {
+    const { text, rows } = await buildTrafficServices(page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildTrafficServices(page, false) });
+    }
+    return show(ctx, text, rows);
   }
 
   bot.action("np_traffic", safe(async (ctx) => {
     await ctx.answerCbQuery("🔄").catch(() => {});
     if (!(await gate(ctx))) return;
-    return showTrafficServices(ctx, 0);
+    return showTrafficServices(ctx, 0, true);
   }));
 
   bot.action(/^np_tsl:(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
-    return showTrafficServices(ctx, Number(ctx.match[1]));
+    return showTrafficServices(ctx, Number(ctx.match[1]), true);
   }));
 
   bot.action(/^np_tsv:(.+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
-    return showTrafficCountries(ctx, ctx.match[1], 0);
+    return showTrafficCountries(ctx, ctx.match[1], 0, true);
   }));
 
-  async function showTrafficCountries(ctx, sid, page = 0) {
-    const all = await getRanges();
+  async function buildTrafficCountries(sid, page, force = false) {
+    const all = await getRanges(force);
     const sidLower = sid.toLowerCase();
     const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
     if (!svcRanges.length) {
-      return show(ctx, `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
-        [[ib("🔙 Traffic", "np_traffic", "primary")], back]);
+      return {
+        text: `❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`,
+        rows: [[ib("🔙 Traffic", "np_traffic", "primary")], back],
+      };
     }
-    const hitMap = await hitMapByRange();
+    const hitMap = await hitMapByRange(force);
     const countries = groupByCountry(svcRanges, hitMap);
     const pg = paginate(countries, page, PP_COUNTRIES);
     const btns = pg.items.map((c) => {
@@ -789,38 +929,50 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tcl:${sid}:${pg.page - 1}`, `np_tcl:${sid}:${pg.page + 1}`));
     rows.push([ib("🔙 Traffic", "np_traffic", "primary"), back[0]]);
-    return show(ctx,
-      `🌍 <b>${esc(sid)} — Country</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
-      rows);
+    const text = `🌍 <b>${esc(sid)} — Country</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`;
+    return { text, rows };
+  }
+
+  async function showTrafficCountries(ctx, sid, page = 0, auto = false) {
+    const { text, rows } = await buildTrafficCountries(sid, page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildTrafficCountries(sid, page, false) });
+    }
+    return show(ctx, text, rows);
   }
 
   bot.action(/^np_tcl:([^:]+):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
     const [, sid, page] = ctx.match;
-    return showTrafficCountries(ctx, sid, Number(page));
+    return showTrafficCountries(ctx, sid, Number(page), true);
   }));
 
   bot.action(/^np_tc:([^:]+):(.+):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
     const [, sid, country, page] = ctx.match;
-    const all = await getRanges();
+    return showTrafficRanges(ctx, sid, country, Number(page), true);
+  }));
+
+  async function buildTrafficRanges(sid, country, page, force = false) {
+    const all = await getRanges(force);
     const sidLower = sid.toLowerCase();
-    const hitMap = await hitMapByRange();
+    const hitMap = await hitMapByRange(force);
     const countryRanges = all
       .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
       .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }))
       .sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
     if (!countryRanges.length) {
-      return show(ctx, "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
-        [[ib("🔙 Countries", `np_tsv:${sid}`, "primary")], back]);
+      return {
+        text: "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
+        rows: [[ib("🔙 Countries", `np_tsv:${sid}`, "primary")], back],
+      };
     }
-    const pg = paginate(countryRanges, Number(page), PP_RANGES_TRAFFIC);
+    const pg = paginate(countryRanges, page, PP_RANGES_TRAFFIC);
     const startRank = pg.page * PP_RANGES_TRAFFIC;
     const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
     const headFlag = countryRanges[0].flag;
-
     const btns = pg.items.map((r, i) => {
       const rank = startRank + i + 1;
       const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
@@ -830,10 +982,17 @@ export function createNumberPanel(d) {
     const rows = btns.map((b) => [b]);
     rows.push(...navRow(pg, `np_tc:${sid}:${country}:${pg.page - 1}`, `np_tc:${sid}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_tsv:${sid}`, "primary"), back[0]]);
-    return show(ctx,
-      `${headFlag} <b>${headCode}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`,
-      rows);
-  }));
+    const text = `${headFlag} <b>${headCode}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`;
+    return { text, rows };
+  }
+
+  async function showTrafficRanges(ctx, sid, country, page = 0, auto = false) {
+    const { text, rows } = await buildTrafficRanges(sid, country, page, true);
+    if (auto && ctx.callbackQuery) {
+      return show(ctx, text, rows, { auto: () => buildTrafficRanges(sid, country, page, false) });
+    }
+    return show(ctx, text, rows);
+  }
 
   /* ================================================================ */
   /*  CUSTOM RANGE                                                    */
@@ -1142,7 +1301,6 @@ export function createNumberPanel(d) {
     return ctx.reply(`✅ ${range} → ${val}`);
   }));
 
-  // ⚡ Diagnostic: /dbgcountry 2370000
   bot.command("dbgcountry", adminOnly(async (ctx) => {
     const p = ctx.message.text.trim().split(/\s+/).slice(1);
     if (!p.length) return ctx.reply("Usage: <code>/dbgcountry 2370000</code>", { parse_mode: "HTML" });
@@ -1154,8 +1312,7 @@ export function createNumberPanel(d) {
       `flag: <code>${esc(raw.flag)}</code>\n` +
       `name: <code>${esc(raw.name)}</code>\n` +
       `code (phone): <code>${esc(raw.code)}</code>\n` +
-      `iso (2-letter): <code>${esc(raw.iso || "(empty)")}</code>\n\n` +
-      `✅ iso না থাকলে number_panel এ country code দেখাবে না।`,
+      `iso (2-letter): <code>${esc(raw.iso || "(empty)")}</code>`,
       { parse_mode: "HTML" });
   }));
 
@@ -1175,7 +1332,7 @@ export function createNumberPanel(d) {
     const otpWds = wds.docs.filter((x) => x.get("balanceType") === "otp");
     const pendAmt = otpWds.reduce((s, x) => s + (Number(x.get("amount")) || 0), 0);
     return show(ctx,
-      `📊 <b>OTP Stats</b>\n\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 OTP: <b>${totalOtp}</b>\n💰 Balance: <b>${tk(totalBal)}</b>\n💸 Pending: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>${pending.size}</b>`,
+      `📊 <b>OTP Stats</b>\n\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 OTP: <b>${totalOtp}</b>\n💰 Balance: <b>${tk(totalBal)}</b>\n💸 Pending: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>${pending.size}</b>\n🔄 Active auto-refresh: <b>${activeViews.size}</b>`,
       [[ib("🔄 Refresh", "npa_stats", "primary")], aBack]);
   });
 
@@ -1591,12 +1748,13 @@ export function createNumberPanel(d) {
     await loadDigits();
     await loadPending();
     setInterval(poll, POLL_INTERVAL);
+    setInterval(() => autoRefreshLoop().catch((e) => console.error("autoRefreshLoop:", e.message)), AUTO_REFRESH_MS);
     setInterval(() => syncDigits().catch((e) => console.error("syncDigits:", e.message)), 2 * 60 * 1000);
     setInterval(() => learnFromOtpFeed().catch((e) => console.error("learnFromOtpFeed:", e.message)), 2 * 60 * 1000);
     setTimeout(() => learnFromOtpFeed().catch(() => {}), 20000);
     setInterval(loadPending, 60 * 1000);
     setInterval(loadUi, 2 * 60 * 1000);
-    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""}`);
+    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms`);
   }
 
   return { open, handleText, start };
