@@ -1,9 +1,12 @@
 /*
  ============================================================================
   NUMBER PANEL MODULE v3 — VOLTEX SMS API
-  • Country display: 🇨🇲 CM (flag + ISO 2-letter) everywhere
-  • 2 numbers together with auto-retry (12s limit)
-  • AUTO-REFRESH every 1s (safe: hash-diff, API gap, FLOOD_WAIT aware)
+  • Country: 🇨🇲 CM (flag + ISO) | Allocation: flag + full name
+  • 2 numbers together (12s retry)
+  • AUTO-REFRESH 1s with LIVE SORTING (highest hit on top)
+    → Nav/back/refresh rows FIXED at bottom (row count constant)
+    → Hash-diff: no-op edits skipped (no spam)
+    → FLOOD_WAIT aware
     Env: AUTO_REFRESH_MS (default 1000), API_MIN_GAP_MS (default 900)
  ============================================================================
 */
@@ -35,11 +38,10 @@ const PP_COUNTRIES = 8;
 const PP_RANGES_GET = 8;
 const PP_RANGES_TRAFFIC = 5;
 
-/* --- auto-refresh tunables --- */
 const AUTO_REFRESH_MS = Math.max(500, parseInt(process.env.AUTO_REFRESH_MS || "1000"));
 const API_MIN_GAP_MS = Math.max(500, parseInt(process.env.API_MIN_GAP_MS || "900"));
-const VIEW_IDLE_LIMIT = 180;                 // 180 idle ticks × 1s = 3 min no-change → stop
-const VIEW_MAX_AGE = 30 * 60 * 1000;         // 30 min hard cap
+const VIEW_IDLE_LIMIT = 300;
+const VIEW_MAX_AGE = 30 * 60 * 1000;
 const MAX_ACTIVE_VIEWS = 500;
 
 /* ------------------------------------------------------------------ */
@@ -212,9 +214,9 @@ export function createNumberPanel(d) {
   const num = (t) => Number(bn2en(String(t)).trim().replace(/,/g, ""));
 
   /* ---------------- AUTO-REFRESH ---------------- */
-  const activeViews = new Map(); // `${chatId}:${messageId}` → view
-  let floodUntil = 0;            // global FLOOD_WAIT gate
-  let lastApiAt = 0;             // Voltex batch refresh gate
+  const activeViews = new Map();
+  let floodUntil = 0;
+  let lastApiAt = 0;
 
   function hashMsg(text, rows) {
     const s = String(text) + "|" + JSON.stringify(rows);
@@ -237,7 +239,6 @@ export function createNumberPanel(d) {
   async function autoRefreshLoop() {
     if (!activeViews.size) return;
     if (Date.now() < floodUntil) return;
-
     await refreshSharedCaches();
 
     const now = Date.now();
@@ -249,25 +250,20 @@ export function createNumberPanel(d) {
 
       view.busy = true;
       try {
-        const { text, rows } = await view.rerender();
-        const newHash = hashMsg(text, rows);
+        const built = await view.rerender();
+        if (!built || !Array.isArray(built.rows) || !built.rows.length) { view.idle++; continue; }
+        const newHash = hashMsg(built.text, built.rows);
         if (newHash === view.lastHash) { view.idle++; continue; }
-        const kb = Markup.inlineKeyboard(rows);
+        const kb = Markup.inlineKeyboard(built.rows);
         try {
-          await bot.telegram.editMessageText(view.chatId, view.messageId, undefined, text, {
+          await bot.telegram.editMessageText(view.chatId, view.messageId, undefined, built.text, {
             parse_mode: "HTML",
             reply_markup: kb,
             link_preview_options: { is_disabled: true },
           });
         } catch (e) {
           const desc = String(e.description || e.message || "");
-          // "not modified" → ignore (hash mismatch but content same rendered)
-          if (desc.includes("message is not modified")) {
-            view.lastHash = newHash;
-            view.idle = 0;
-            continue;
-          }
-          // Flood wait → backoff globally, keep view
+          if (desc.includes("message is not modified")) { view.lastHash = newHash; view.idle = 0; continue; }
           const m = desc.match(/retry after (\d+)/i);
           if (m || desc.includes("Too Many Requests")) {
             const sec = m ? parseInt(m[1]) : 3;
@@ -275,10 +271,8 @@ export function createNumberPanel(d) {
             view.idle++;
             continue;
           }
-          // Permanent error → drop this view
           if (desc.includes("message to edit not found") || desc.includes("chat not found") || desc.includes("MESSAGE_ID_INVALID") || desc.includes("message can't be edited")) {
-            activeViews.delete(key);
-            continue;
+            activeViews.delete(key); continue;
           }
           view.idle++;
           continue;
@@ -414,7 +408,7 @@ export function createNumberPanel(d) {
     }
   }
 
-  /* ---------------- pending (by NUMBER) ---------------- */
+  /* ---------------- pending ---------------- */
   const pending = new Map();
   const pendCol = db.collection("voltex_pending_numbers");
   const claimsCol = db.collection("voltex_otp_claims");
@@ -448,7 +442,7 @@ export function createNumberPanel(d) {
     } catch (e) { console.error("loadPending:", e.message); }
   }
 
-  /* ---------------- live caches (short TTL for 1s refresh) ---------------- */
+  /* ---------------- live caches ---------------- */
   const CACHE_TTL = Math.max(600, AUTO_REFRESH_MS - 100);
   let liveCache = { at: 0, services: [] };
   let consoleCache = { at: 0, hits: [] };
@@ -492,7 +486,6 @@ export function createNumberPanel(d) {
     if (items.length) rangeCache = { at: Date.now(), items };
     return rangeCache.items;
   }
-
   async function hitMapByRange(force = false) {
     const hits = await getConsoleHits(force);
     const map = new Map();
@@ -502,7 +495,6 @@ export function createNumberPanel(d) {
     }
     return map;
   }
-
   function groupByCountry(ranges, hitMap) {
     const map = new Map();
     for (const r of ranges) {
@@ -519,11 +511,7 @@ export function createNumberPanel(d) {
       e.ranges.push(r);
       e.hits += hitMap.get(r.range) || 0;
     }
-    return [...map.values()].sort((a, b) => {
-      if (b.hits !== a.hits) return b.hits - a.hits;
-      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
-      return a.name.localeCompare(b.name);
-    });
+    return [...map.values()];
   }
 
   const statsRef = db.collection("settings").doc("otp_range_stats");
@@ -620,6 +608,10 @@ export function createNumberPanel(d) {
   /* ---------------- ui helpers ---------------- */
   const back = [ib("🔙 Number Panel", "np_home", "danger")];
   async function show(ctx, text, rows, opts = {}) {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      console.warn("show() empty rows — falling back to back button");
+      rows = [back];
+    }
     const render = (rs) => {
       const kb = Markup.inlineKeyboard(rs);
       return ctx.callbackQuery ? edit(ctx, text, kb) : ctx.reply(text, kbx(kb));
@@ -702,7 +694,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  GET NUMBER (auto-refresh lists)                                 */
+  /*  GET NUMBER                                                      */
   /* ================================================================ */
 
   async function buildServiceList(page, force = false) {
@@ -721,16 +713,16 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gsl:${pg.page - 1}`, `np_gsl:${pg.page + 1}`));
     rows.push([ib("🔄 Refresh", "np_get", "primary"), back[0]]);
-    const text = `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    const text = `📱 <b>সার্ভিস সিলেক্ট করুন</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages} • 🔄 live</i>`;
     return { text, rows };
   }
 
   async function showServiceList(ctx, page = 0, auto = false) {
-    const { text, rows } = await buildServiceList(page, true);
+    const built = await buildServiceList(page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildServiceList(page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildServiceList(page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   bot.action("np_get", safe(async (ctx) => {
@@ -767,14 +759,24 @@ export function createNumberPanel(d) {
     }
     const svcRanges = allSvcRanges.filter((r) => matchesMode(r.range, filter, cfg));
     const countries = groupByCountry(svcRanges, hitMap);
+
+    // ⚡ LIVE SORT — highest hits on top (updates every refresh)
+    countries.sort((a, b) => {
+      if (b.hits !== a.hits) return b.hits - a.hits;
+      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
+      return a.name.localeCompare(b.name);
+    });
+
+    const cntS = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
+    const cntL = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
+
     const pg = paginate(countries, page, PP_COUNTRIES);
     const btns = pg.items.map((c) => {
       const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
       return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
     });
+
     const rows = [];
-    const cntS = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
-    const cntL = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
     if (cntS > 0 || cntL > 0) {
       const fRow = [ib(filter === "a" ? "✅ All" : "All", `np_gcl:${sid}:a:0`, filter === "a" ? "success" : "primary")];
       if (cntS > 0) fRow.push(ib(filter === "s" ? "✅ 4-5" : "4-5", `np_gcl:${sid}:s:0`, filter === "s" ? "success" : "primary"));
@@ -784,17 +786,18 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gcl:${sid}:${filter}:${pg.page - 1}`, `np_gcl:${sid}:${filter}:${pg.page + 1}`));
     rows.push([ib("🔙 Services", "np_get", "primary"), back[0]]);
+
     const filterName = filter === "s" ? " · 4-5 digit" : filter === "l" ? " · 6+ digit" : "";
-    const text = `🌍 <b>দেশ সিলেক্ট করুন</b>${filterName}\n\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    const text = `🌍 <b>দেশ সিলেক্ট করুন</b>${filterName}\n\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = live hit</i>`;
     return { text, rows };
   }
 
   async function showCountryList(ctx, sid, filter = "a", page = 0, auto = false) {
-    const { text, rows } = await buildCountryList(sid, filter, page, true);
+    const built = await buildCountryList(sid, filter, page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildCountryList(sid, filter, page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildCountryList(sid, filter, page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   bot.action(/^np_gcl:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
@@ -813,7 +816,10 @@ export function createNumberPanel(d) {
       .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
       .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
     countryRanges = countryRanges.filter((r) => matchesMode(r.range, filter, cfg));
+
+    // ⚡ LIVE SORT — highest hits on top
     countryRanges.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+
     if (!countryRanges.length) {
       return {
         text: "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
@@ -823,6 +829,7 @@ export function createNumberPanel(d) {
     const pg = paginate(countryRanges, page, PP_RANGES_GET);
     const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
     const headFlag = countryRanges[0].flag;
+
     const btns = pg.items.map((r) => {
       const hitTag = r.hits > 0 ? ` 🔥${r.hits}` : "";
       return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
@@ -831,17 +838,18 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${country}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary"), back[0]]);
+
     const filterName = filter === "s" ? " · 4-5" : filter === "l" ? " · 6+" : "";
-    const text = `${headFlag} <b>${headCode}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`;
+    const text = `${headFlag} <b>${headCode}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = live hit</i>`;
     return { text, rows };
   }
 
   async function showRangeList(ctx, sid, filter, country, page = 0, auto = false) {
-    const { text, rows } = await buildRangeList(sid, filter, country, page, true);
+    const built = await buildRangeList(sid, filter, country, page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildRangeList(sid, filter, country, page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildRangeList(sid, filter, country, page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   bot.action(/^np_grc:([^:]+):([asl]):(.+):(\d+)$/, safe(async (ctx) => {
@@ -878,16 +886,16 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tsl:${pg.page - 1}`, `np_tsl:${pg.page + 1}`));
     rows.push([ib("🔄 Refresh", "np_traffic", "primary"), back[0]]);
-    const text = `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages}</i>`;
+    const text = `📈 <b>LIVE TRAFFIC</b>\n\n<i>${pg.total}টি সার্ভিস • পেজ ${pg.page + 1}/${pg.pages} • 🔄 live</i>`;
     return { text, rows };
   }
 
   async function showTrafficServices(ctx, page = 0, auto = false) {
-    const { text, rows } = await buildTrafficServices(page, true);
+    const built = await buildTrafficServices(page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildTrafficServices(page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildTrafficServices(page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   bot.action("np_traffic", safe(async (ctx) => {
@@ -920,6 +928,14 @@ export function createNumberPanel(d) {
     }
     const hitMap = await hitMapByRange(force);
     const countries = groupByCountry(svcRanges, hitMap);
+
+    // ⚡ LIVE SORT — highest hits on top
+    countries.sort((a, b) => {
+      if (b.hits !== a.hits) return b.hits - a.hits;
+      if (b.ranges.length !== a.ranges.length) return b.ranges.length - a.ranges.length;
+      return a.name.localeCompare(b.name);
+    });
+
     const pg = paginate(countries, page, PP_COUNTRIES);
     const btns = pg.items.map((c) => {
       const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
@@ -929,16 +945,16 @@ export function createNumberPanel(d) {
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tcl:${sid}:${pg.page - 1}`, `np_tcl:${sid}:${pg.page + 1}`));
     rows.push([ib("🔙 Traffic", "np_traffic", "primary"), back[0]]);
-    const text = `🌍 <b>${esc(sid)} — Country</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`;
+    const text = `🌍 <b>${esc(sid)} — Country</b>\n<i>${pg.total}টি দেশ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = live hit</i>`;
     return { text, rows };
   }
 
   async function showTrafficCountries(ctx, sid, page = 0, auto = false) {
-    const { text, rows } = await buildTrafficCountries(sid, page, true);
+    const built = await buildTrafficCountries(sid, page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildTrafficCountries(sid, page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildTrafficCountries(sid, page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   bot.action(/^np_tcl:([^:]+):(\d+)$/, safe(async (ctx) => {
@@ -959,10 +975,13 @@ export function createNumberPanel(d) {
     const all = await getRanges(force);
     const sidLower = sid.toLowerCase();
     const hitMap = await hitMapByRange(force);
-    const countryRanges = all
+    let countryRanges = all
       .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
-      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }))
-      .sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
+
+    // ⚡ LIVE SORT
+    countryRanges.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+
     if (!countryRanges.length) {
       return {
         text: "❌ এই দেশে এখন কোনো রেঞ্জ নেই।",
@@ -973,6 +992,7 @@ export function createNumberPanel(d) {
     const startRank = pg.page * PP_RANGES_TRAFFIC;
     const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
     const headFlag = countryRanges[0].flag;
+
     const btns = pg.items.map((r, i) => {
       const rank = startRank + i + 1;
       const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
@@ -982,16 +1002,16 @@ export function createNumberPanel(d) {
     const rows = btns.map((b) => [b]);
     rows.push(...navRow(pg, `np_tc:${sid}:${country}:${pg.page - 1}`, `np_tc:${sid}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_tsv:${sid}`, "primary"), back[0]]);
-    const text = `${headFlag} <b>${headCode}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`;
+    const text = `${headFlag} <b>${headCode}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages} • 🔥 live</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`;
     return { text, rows };
   }
 
   async function showTrafficRanges(ctx, sid, country, page = 0, auto = false) {
-    const { text, rows } = await buildTrafficRanges(sid, country, page, true);
+    const built = await buildTrafficRanges(sid, country, page, true);
     if (auto && ctx.callbackQuery) {
-      return show(ctx, text, rows, { auto: () => buildTrafficRanges(sid, country, page, false) });
+      return show(ctx, built.text, built.rows, { auto: () => buildTrafficRanges(sid, country, page, false) });
     }
-    return show(ctx, text, rows);
+    return show(ctx, built.text, built.rows);
   }
 
   /* ================================================================ */
@@ -1754,7 +1774,7 @@ export function createNumberPanel(d) {
     setTimeout(() => learnFromOtpFeed().catch(() => {}), 20000);
     setInterval(loadPending, 60 * 1000);
     setInterval(loadUi, 2 * 60 * 1000);
-    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms`);
+    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms (live sort)`);
   }
 
   return { open, handleText, start };
