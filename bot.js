@@ -99,6 +99,7 @@ const ABTN = {
   bc: "📢 Broadcast",
   settings: "⚙️ Settings",
   tasks: "🎯 Tasks",
+  storage: "💾 Storage",
   manage: "👤 User Manage",
   back: "🔙 User Menu",
   panel: "🛠️ Admin Panel",
@@ -114,7 +115,24 @@ const ALL_LABELS = new Set([...Object.values(BTN), ...Object.values(ABTN)]);
 
 const METHODS = { bkash: "bKash", nagad: "Nagad", rocket: "Rocket", binance: "Binance" };
 const FILE_EXTS = ["xlsx", "xls", "csv", "txt", "tsv"];
-const MAX_FILE = 15 * 1024 * 1024;
+
+/* ═══════════════════════════════════════════════════════════════════
+   📊 PLATFORM & LIMITS — Render default, VPS হলে ENV দিয়ে বদলান
+   ═══════════════════════════════════════════════════════════════════ */
+const PLATFORM = {
+  name: process.env.PLATFORM_NAME || "Render (Free)",
+  maxIncomingMB: Number(process.env.MAX_INCOMING_MB) || 19,
+  maxOutgoingMB: Number(process.env.MAX_OUTGOING_MB) || 49,
+  chunkRows: Number(process.env.CHUNK_ROWS) || 15000,
+  linkFallback: process.env.USE_LINK_FALLBACK !== "false",
+  renderRamMB: Number(process.env.RENDER_RAM_MB) || 512,
+  firestoreFreeGB: 1,
+};
+PLATFORM.maxIncomingBytes = PLATFORM.maxIncomingMB * 1024 * 1024;
+PLATFORM.maxOutgoingBytes = PLATFORM.maxOutgoingMB * 1024 * 1024;
+const MAX_FILE = PLATFORM.maxIncomingBytes;
+const TF_LINK_MAX_BYTES = 100 * 1024 * 1024;
+const BOT_START_AT = Date.now();
 const ERR_MSG = "❌ কিছু একটা সমস্যা হয়েছে। একটু পরে আবার চেষ্টা করুন।";
 
 const buildMainMenu = (isAdm) => {
@@ -134,7 +152,7 @@ const adminMenu = Markup.keyboard(
     [ABTN.files, ABTN.wd],
     [ABTN.badges, ABTN.bc],
     [ABTN.settings, ABTN.tasks],
-    [ABTN.otp],
+    [ABTN.storage, ABTN.otp],
     [ABTN.manage, ABTN.back],
   ].map((row) => row.map(kbBtn))
 ).resize();
@@ -454,6 +472,10 @@ async function downloadTg(ctx, fileId) {
 
 /* ---- tmpfile.link upload (7 দিন সচল, 100MB পর্যন্ত) ---- */
 async function uploadToTfLink(buffer, filename) {
+  if (buffer.length > TF_LINK_MAX_BYTES) {
+    console.error(`uploadToTfLink: ${filename} = ${(buffer.length / 1024 / 1024).toFixed(1)}MB — exceeds 100MB limit`);
+    return null;
+  }
   try {
     const form = new FormData();
     form.append("file", buffer, filename);
@@ -908,8 +930,8 @@ async function submitFile(ctx, session) {
   if (!FILE_EXTS.includes(ext)) {
     return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
   }
-  if ((doc.file_size || 0) > 19 * 1024 * 1024) {
-    return ctx.reply("❌ ফাইল ১৯MB-এর বেশি হতে পারবে না। দয়া করে ছোট ফাইলে ভাগ করে পাঠান।");
+  if ((doc.file_size || 0) > PLATFORM.maxIncomingBytes) {
+    return ctx.reply(`❌ ফাইল ${PLATFORM.maxIncomingMB}MB-এর বেশি হতে পারবে না। দয়া করে ছোট ফাইলে ভাগ করে পাঠান।`);
   }
 
   const user = await getUser(ctx.from.id);
@@ -1161,6 +1183,161 @@ bot.action(
 /* ------------------------------------------------------------------ */
 /*  ADMIN PANEL                                                        */
 /* ------------------------------------------------------------------ */
+/* ═══════════════════════════════════════════════════════════════════
+   💾 SYSTEM STATS & STORAGE DASHBOARD
+   ═══════════════════════════════════════════════════════════════════ */
+const bar = (pct, len = 12) => {
+  const p = Math.min(100, Math.max(0, Number(pct) || 0));
+  const filled = Math.round((p / 100) * len);
+  return "█".repeat(filled) + "░".repeat(len - filled);
+};
+const fmtNum = (n) => Number(n || 0).toLocaleString("en-IN");
+const fmtUptime = (ms) => {
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return `${d}d ${h}h ${m}m`;
+};
+const fmtBytes = (b) => b < 1024 * 1024 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
+
+async function getSystemStats() {
+  const cols = ["users", "tasks", "submissions", "submitted_files", "withdrawals", "reports", "telegram_sessions", "import_logs", "notices"];
+  const counts = {};
+  await Promise.all(cols.map(async (c) => {
+    try {
+      const snap = await db.collection(c).count().get();
+      counts[c] = snap.data().count;
+    } catch { counts[c] = -1; }
+  }));
+
+  const mem = process.memoryUsage();
+  const uptimeMs = Date.now() - BOT_START_AT;
+
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayTS = Timestamp.fromDate(todayStart);
+
+  let todayUsers = 0, todayGood = 0, todayPaid = 0, todayPaidAmount = 0;
+  try {
+    const [uC, gC, pS] = await Promise.all([
+      db.collection("users").where("createdAt", ">=", todayTS).count().get().catch(() => null),
+      db.collection("submissions").where("status", "==", "good").where("checkedAt", ">=", todayTS).count().get().catch(() => null),
+      db.collection("withdrawals").where("status", "==", "approved").where("approvedAt", ">=", todayTS).get().catch(() => null),
+    ]);
+    if (uC) todayUsers = uC.data().count;
+    if (gC) todayGood = gC.data().count;
+    if (pS) {
+      todayPaid = pS.size;
+      todayPaidAmount = pS.docs.reduce((s, d) => s + (Number(d.get("amount")) || 0), 0);
+    }
+  } catch { /* ignore */ }
+
+  return {
+    counts,
+    totalDocs: Object.values(counts).filter((v) => v >= 0).reduce((a, b) => a + b, 0),
+    mem: {
+      usedMB: +(mem.heapUsed / 1024 / 1024).toFixed(1),
+      totalMB: +(mem.heapTotal / 1024 / 1024).toFixed(1),
+      rssMB: +(mem.rss / 1024 / 1024).toFixed(1),
+    },
+    uptimeMs,
+    today: { users: todayUsers, good: todayGood, paid: todayPaid, paidAmount: todayPaidAmount },
+  };
+}
+
+async function renderStoragePanel() {
+  const s = await getSystemStats();
+  const estMB = +((s.totalDocs * 1.5) / 1024).toFixed(2);
+  const estPct = Math.min(100, (estMB / (PLATFORM.firestoreFreeGB * 1024)) * 100);
+  const ramPct = (s.mem.usedMB / PLATFORM.renderRamMB) * 100;
+
+  const collectionLines = Object.entries(s.counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([k, v]) => {
+      const name = k.length > 18 ? k.slice(0, 17) + "…" : k.padEnd(18, "·");
+      return `  <code>${name}</code> ${v < 0 ? "❌" : fmtNum(v).padStart(8)}`;
+    }).join("\n");
+
+  const text =
+`💾 <b>Storage &amp; System</b>
+━━━━━━━━━━━━━━━━━━━━
+
+<b>🗄️ Firestore</b>  <i>(Free: ${PLATFORM.firestoreFreeGB} GB)</i>
+  ${bar(estPct)}  ~${estMB} MB
+  Total docs: <b>${fmtNum(s.totalDocs)}</b>
+
+<b>📁 Collections</b>
+${collectionLines}
+
+<b>🖥️ ${PLATFORM.name}</b>
+  RAM ${bar(ramPct, 10)} ${s.mem.usedMB}/${PLATFORM.renderRamMB}MB
+  Heap: ${s.mem.usedMB}MB used / ${s.mem.totalMB}MB total
+  RSS : ${s.mem.rssMB}MB
+  Uptime: <b>${fmtUptime(s.uptimeMs)}</b>
+
+<b>📥 File Limits</b>
+  Incoming:  <b>${PLATFORM.maxIncomingMB} MB</b>
+  Outgoing:  <b>${PLATFORM.maxOutgoingMB} MB</b>
+  Chunk:     <b>${fmtNum(PLATFORM.chunkRows)} rows</b>
+  Fallback:  ${PLATFORM.linkFallback ? "🔗 tmpfile.link (100MB)" : "❌ বন্ধ"}
+
+<i>🕒 Auto cleanup: প্রতিদিন নিজে নিজে expired sessions ও old import logs মুছে ফেলে।</i>
+<i>🧹 জরুরি হলে নিচের বাটন দিয়ে এখনই চালাতে পারেন।</i>
+<i>✅ ব্যবসার সব ডাটা (users, submissions, submitted_files, withdrawals, reports, tasks, notices) চিরকাল অক্ষত।</i>`;
+
+  const kb = Markup.inlineKeyboard([
+    [ib("🧹 Quick Cleanup", "clean_quick", "danger"), ib("🔄 Refresh", "clean_refresh", "primary")],
+    [ib("🗑️ Deep Cleanup Options", "clean_menu", "danger")],
+  ]);
+  return { text, kb };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🧹 CLEANUP — Safety-only collections (business data অক্ষত)
+   ═══════════════════════════════════════════════════════════════════ */
+const CLEANUP_TARGETS = {
+  sessions:   { col: "telegram_sessions", field: "updatedAt",  days: 7,  label: "📱 Telegram Sessions" },
+  importLogs: { col: "import_logs",       field: "importedAt", days: 30, label: "📥 Import Logs" },
+  notices:    { col: "notices",           field: "createdAt",  days: 90, label: "📢 Old Notices (broadcast history)" },
+  oldFiles:   { col: "submitted_files",   field: "processedAt", days: 60, label: "📄 Processed File Records" },
+};
+
+async function cleanupCollections(keys) {
+  const result = {};
+  for (const key of keys) {
+    const t = CLEANUP_TARGETS[key];
+    if (!t) continue;
+    try {
+      const cutoff = Timestamp.fromDate(new Date(Date.now() - t.days * 86400000));
+      const snap = await db.collection(t.col).where(t.field, "<", cutoff).get();
+      if (snap.size) {
+        await commitOps(snap.docs.map((d) => (b) => b.delete(d.ref)));
+      }
+      result[key] = { count: snap.size, label: t.label, days: t.days };
+    } catch (e) {
+      result[key] = { count: -1, label: t.label, days: t.days, error: e.message };
+    }
+  }
+  return result;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🕒 AUTO CLEANUP — প্রতিদিন নিজে নিজে garbage মুছবে
+   শুধু telegram_sessions (৭+ দিন) + import_logs (৩০+ দিন)।
+   কোনো ব্যবসার ডাটা স্পর্শ করবে না।
+   ═══════════════════════════════════════════════════════════════════ */
+async function autoCleanup() {
+  try {
+    const r = await cleanupCollections(["sessions", "importLogs"]);
+    const total = Object.values(r).reduce((s, v) => s + Math.max(0, v.count), 0);
+    const detail = Object.values(r).map((v) => `${v.label.split(" ")[0]}:${v.count}`).join(" ");
+    console.log(total > 0 ? `🧹 Auto cleanup: ${total} removed (${detail})` : `🧹 Auto cleanup: nothing (${detail})`);
+  } catch (e) {
+    console.error("autoCleanup failed:", e.message);
+  }
+}
+setTimeout(() => autoCleanup().catch(() => {}), 2 * 60 * 1000);
+setInterval(() => autoCleanup().catch(() => {}), 24 * 60 * 60 * 1000);
+
 bot.command(
   "adqincomezone",
   safe(async (ctx) => {
@@ -1188,19 +1365,46 @@ bot.hears(
 bot.hears(
   ABTN.stats,
   adminOnly(async (ctx) => {
-    const [tasks, usersCnt, subsCnt, wdCnt, balSnap] = await Promise.all([
+    const [tasks, usersCnt, subsCnt, wdCnt, filesCnt, balSnap, sys] = await Promise.all([
       fetchOpenTasks(),
       db.collection("users").count().get(),
       db.collection("submissions").where("status", "==", "pending").count().get(),
       db.collection("withdrawals").where("status", "==", "pending").count().get(),
+      db.collection("submitted_files").where("status", "==", "pending").count().get(),
       db.collection("users").select("balance", "otpBalance").get(),
+      getSystemStats().catch(() => null),
     ]);
     const total = balSnap.docs.reduce((s, d) => s + (Number(d.get("balance")) || 0), 0);
     const otpTotal = balSnap.docs.reduce((s, d) => s + (Number(d.get("otpBalance")) || 0), 0);
-    return ctx.reply(
-      `📊 <b>Admin Stats</b>\n\n🎯 Active Tasks: ${tasks.length}\n👥 Users: ${usersCnt.data().count}\n🟡 Pending Subs: ${subsCnt.data().count}\n🟡 Pending Withdrawals: ${wdCnt.data().count}\n\n💰 Total Task Balance: ${tk(total)}\n📱 Total OTP Balance: ${tk(otpTotal)}`,
-      { parse_mode: "HTML" }
-    );
+    const ramPct = sys ? (sys.mem.usedMB / PLATFORM.renderRamMB) * 100 : 0;
+
+    const text =
+`📊 <b>Admin Dashboard</b>
+━━━━━━━━━━━━━━━━━━━━
+
+<b>🎯 Activity</b>
+  Active Tasks      : <b>${tasks.length}</b>
+  Total Users       : <b>${fmtNum(usersCnt.data().count)}</b>
+
+<b>⏳ Pending Queue</b>
+  Submissions       : <b>${fmtNum(subsCnt.data().count)}</b>
+  Files             : <b>${fmtNum(filesCnt.data().count)}</b>
+  Withdrawals       : <b>${fmtNum(wdCnt.data().count)}</b>
+
+<b>💰 Balances</b>
+  Task Balance      : <b>${tk(total)}</b>
+  OTP Balance       : <b>${tk(otpTotal)}</b>
+
+<b>📈 Today</b>
+  New Users         : <b>${fmtNum(sys?.today.users || 0)}</b>
+  Good Accounts     : <b>${fmtNum(sys?.today.good || 0)}</b>
+  Payout            : <b>${tk(sys?.today.paidAmount || 0)}</b> (${sys?.today.paid || 0} WD)
+
+${sys ? `<b>🖥️ System</b>\n  RAM  ${bar(ramPct, 10)} ${sys.mem.usedMB}/${PLATFORM.renderRamMB}MB\n  Uptime: <b>${fmtUptime(sys.uptimeMs)}</b>` : ""}
+
+<i>💾 Storage বিস্তারিত: 💾 Storage বাটন</i>`;
+
+    return ctx.reply(text, { parse_mode: "HTML" });
   })
 );
 
@@ -1334,7 +1538,7 @@ bot.action(
         .map((d) => d.data())
         .sort((a, b) => (toDate(a.submittedAt)?.getTime() || 0) - (toDate(b.submittedAt)?.getTime() || 0));
 
-      const CHUNK_SIZE = 50000;
+      const CHUNK_SIZE = 15000;
       const n = fields.length;
       const newSheet = () => {
         const wb = new ExcelJS.Workbook();
@@ -1362,15 +1566,30 @@ bot.action(
         if (rowsInChunk === CHUNK_SIZE || i === subs.length - 1) {
           const buf = Buffer.from(await wb.xlsx.writeBuffer());
           const fileName = `${slugOf(task.title)}_ALL_PENDING_Part${chunkIndex}_${stampForFile()}.xlsx`;
-          const uploaded = await uploadToTfLink(buf, fileName);
 
-          if (uploaded) {
-            await ctx.reply(
-              `🔗 <b>All Files Download Link (Part ${chunkIndex}):</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Rows in this part: ${rowsInChunk}\n\n<i>⚠️ লিংকটি ৭ দিন সচল থাকবে। ফাইলটি ডাউনলোড করে সেভ করে রাখুন।</i>`,
-              { parse_mode: "HTML", disable_web_page_preview: true }
+          let sentOk = false;
+          // ১) আগে সরাসরি ফাইল পাঠানোর চেষ্টা
+          try {
+            await ctx.replyWithDocument(
+              { source: buf, filename: fileName },
+              { caption: `📋 ${esc(task.title)}\n📊 Rows in this part: ${rowsInChunk}\n📦 Part ${chunkIndex}` }
             );
-          } else {
-            await ctx.reply(`⚠️ Part ${chunkIndex} আপলোড করতে সমস্যা হয়েছে (Render logs দেখুন)।`);
+            sentOk = true;
+          } catch (sendErr) {
+            console.error(`af_dl sendDocument failed (part ${chunkIndex}):`, sendErr.description || sendErr.message);
+          }
+
+          // ২) সরাসরি না গেলে লিংক আপলোড করে পাঠাও
+          if (!sentOk) {
+            const uploaded = await uploadToTfLink(buf, fileName);
+            if (uploaded) {
+              await ctx.reply(
+                `🔗 <b>All Files Download Link (Part ${chunkIndex}):</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📊 Rows in this part: ${rowsInChunk}\n\n<i>⚠️ লিংকটি ৭ দিন সচল থাকবে।</i>`,
+                { parse_mode: "HTML", disable_web_page_preview: true }
+              );
+            } else {
+              await ctx.reply(`⚠️ Part ${chunkIndex} পাঠানো যায়নি (Render logs দেখুন)।`);
+            }
           }
 
           chunkIndex++;
@@ -1460,7 +1679,7 @@ async function processBad(ctx, session) {
   const doc = ctx.message.document;
   const ext = extOf(doc.file_name);
   if (!FILE_EXTS.includes(ext)) return ctx.reply("❌ শুধু .xlsx, .xls, .csv, .txt বা .tsv ফাইল দিন।");
-  if ((doc.file_size || 0) > 19 * 1024 * 1024) return ctx.reply("❌ ফাইল ১৯MB-এর বেশি হতে পারবে না।");
+  if ((doc.file_size || 0) > PLATFORM.maxIncomingBytes) return ctx.reply(`❌ ফাইল ${PLATFORM.maxIncomingMB}MB-এর বেশি হতে পারবে না।`);
 
   const waitMsg = await ctx.reply("⏳ Good file প্রসেস হচ্ছে...");
   const taskId = session.taskId;
@@ -1627,15 +1846,31 @@ async function processBad(ctx, session) {
     try {
       const rbuf = await buildUserReport(task, fieldsList, g, userItems.get(g.userId) || []);
       const fileName = `${slugOf(task.title)}_result_${g.userId}_${dateStr}.xlsx`;
+      const caption = `📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}`;
 
-      const uploaded = await uploadToTfLink(rbuf, fileName);
-      if (!uploaded) throw new Error("Link generation failed");
+      let sentOk = false;
+      // ১) আগে সরাসরি ফাইল পাঠানোর চেষ্টা
+      try {
+        await bot.telegram.sendDocument(
+          Number(g.userId),
+          { source: rbuf, filename: fileName },
+          { caption, parse_mode: "HTML" }
+        );
+        sentOk = true;
+      } catch (sendErr) {
+        console.error(`sendDocument failed (${g.userId}):`, sendErr.description || sendErr.message);
+      }
 
-      const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n📋 Task: ${esc(task.title)}\n📅 Date: ${stamp}\n\n${totals}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
-      await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
+      // ২) সরাসরি না গেলে লিংক আপলোড করে পাঠাও
+      if (!sentOk) {
+        const uploaded = await uploadToTfLink(rbuf, fileName);
+        if (!uploaded) throw new Error("Link generation failed");
+        const msgText = `🔗 <b>Report File Download Link:</b>\n${uploaded.link}\n\n${caption}\n\n<i>⚠️ Report File ৩ থেকে ৭ দিন সচল থাকবে। তাই ফাইলটি ডাউনলোড করে নিজের ডিভাইসে সেভ করে রাখুন।</i>`;
+        await bot.telegram.sendMessage(Number(g.userId), msgText, { parse_mode: "HTML", disable_web_page_preview: true });
+      }
     } catch (e) {
-      console.error(`report link failed (${g.userId}):`, e.message);
-      await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}\n\n⚠️ ফাইল লিংক তৈরি করতে সমস্যা হয়েছে।`);
+      console.error(`report send failed (${g.userId}):`, e.message);
+      await dm(g.userId, `📊 <b>রেজাল্ট প্রস্তুত!</b>\n\n📋 ${esc(task.title)}\n📅 ${stamp}\n\n${totals}\n\n⚠️ ফাইল পাঠাতে সমস্যা হয়েছে।`);
     }
     await sleep(3000);
   }
@@ -1730,7 +1965,107 @@ bot.action(
     );
   })
 );
+/* ═══════════════════════════════════════════════════════════════════
+   💾 ADMIN: STORAGE DASHBOARD
+   ═══════════════════════════════════════════════════════════════════ */
+bot.hears(
+  ABTN.storage,
+  adminOnly(async (ctx) => {
+    const { text, kb } = await renderStoragePanel();
+    return ctx.reply(text, kbx(kb));
+  })
+);
 
+bot.action(
+  "clean_refresh",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery("🔄 Refreshing...");
+    const { text, kb } = await renderStoragePanel();
+    return edit(ctx, text, kb);
+  })
+);
+
+bot.action(
+  "clean_quick",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery("🧹 Cleaning...");
+    const r = await cleanupCollections(["sessions", "importLogs"]);
+    const lines = Object.entries(r).map(([k, v]) =>
+      v.count < 0 ? `🔴 ${v.label}: error` : `🟢 ${v.label}: ${v.count} deleted (>${v.days}d old)`
+    );
+    return edit(
+      ctx,
+      `✅ <b>Quick Cleanup Complete</b>\n\n${lines.join("\n")}\n\n<i>ব্যবসার ডাটা অক্ষত।</i>`,
+      Markup.inlineKeyboard([[ib("⬅️ Back to Storage", "clean_refresh", "primary")]])
+    );
+  })
+);
+
+bot.action(
+  "clean_menu",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery();
+    const items = Object.entries(CLEANUP_TARGETS).map(([k, v]) =>
+      `• <b>${v.label}</b>\n  <i>${v.col} · ${v.days}+ দিন পুরনো</i>`
+    );
+    const text =
+      `🗑️ <b>Deep Cleanup Options</b>\n\n` +
+      `শুধু <b>১০০% garbage</b> মুছে ফেলা হবে:\n\n` +
+      items.join("\n\n") +
+      `\n\n⚠️ <i>users, submissions, submitted_files, withdrawals, reports, tasks, notices — সব চিরকাল অক্ষত।</i>`;
+    const kb = Markup.inlineKeyboard([
+      [ib("⚡ All Safe Cleanup", "clean_all", "danger")],
+      [ib("📱 Sessions Only", "clean_one_sessions", "danger")],
+      [ib("📥 Import Logs Only", "clean_one_importLogs", "danger")],
+      [ib("⬅️ Back", "clean_refresh", "primary")],
+    ]);
+    return edit(ctx, text, kb);
+  })
+);
+
+bot.action(
+  "clean_all",
+  adminCb(async (ctx) => {
+    await ctx.answerCbQuery("🧹 Deep cleaning...");
+    await edit(ctx, "⏳ সব safe collection পরিষ্কার হচ্ছে...");
+    const r = await cleanupCollections(Object.keys(CLEANUP_TARGETS));
+    const lines = Object.entries(r).map(([k, v]) =>
+      v.count < 0 ? `🔴 ${v.label}: error` : `🟢 ${v.label}: ${v.count} deleted (>${v.days}d)`
+    );
+    return edit(
+      ctx,
+      `✅ <b>Deep Cleanup Complete</b>\n\n${lines.join("\n")}\n\n<i>ব্যবসার ডাটা অক্ষত।</i>`,
+      Markup.inlineKeyboard([[ib("⬅️ Back to Storage", "clean_refresh", "primary")]])
+    );
+  })
+);
+
+bot.action(
+  /^clean_one_(\w+)$/,
+  adminCb(async (ctx) => {
+    const key = ctx.match[1];
+    if (!CLEANUP_TARGETS[key]) return ctx.answerCbQuery("❌ Invalid", { show_alert: true });
+    await ctx.answerCbQuery("🧹 Cleaning...");
+    const r = await cleanupCollections([key]);
+    const v = r[key];
+    const msg = v.count < 0
+      ? `🔴 <b>${v.label}</b>: error\n<code>${v.error}</code>`
+      : `✅ <b>${v.label}</b>: <b>${v.count}</b> records deleted (>${v.days}d old)`;
+    return edit(ctx, msg, Markup.inlineKeyboard([[ib("⬅️ Back to Storage", "clean_refresh", "primary")]]));
+  })
+);
+
+bot.command(
+  "cleanup",
+  adminOnly(async (ctx) => {
+    const { text } = await renderStoragePanel();
+    const kb = Markup.inlineKeyboard([
+      [ib("🧹 Quick Cleanup", "clean_quick", "danger")],
+      [ib("🗑️ Deep Options", "clean_menu", "danger")],
+    ]);
+    return ctx.reply(text, kbx(kb));
+  })
+);
 /* ---- Badges ---- */
 bot.hears(
   ABTN.badges,
@@ -1938,12 +2273,25 @@ bot.command(
 const userCard = (u) => {
   const w = Object.entries(u.wallets || {})
     .filter(([m, x]) => METHODS[m] && x?.number)
-    .map(([m, x]) => `${METHODS[m]}: ${x.number}`)
-    .join(", ");
+    .map(([m, x]) => `  • ${METHODS[m]}: <code>${esc(x.number)}</code>`)
+    .join("\n") || "  • <i>নেই</i>";
+
   return (
-    `👤 <b>${esc(u.username)}</b>\n🆔 UID: <code>${u.id}</code>\n` +
-    (u.telegramUsername ? `📛 @${esc(u.telegramUsername)}\n` : "") +
-    `💰 Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)} (OTP: ${u.otpCount || 0})\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}\n💳 Wallet: ${esc(w || "নেই")}`
+`👤 <b>${esc(u.username)}</b>
+━━━━━━━━━━━━━━━━━━━━
+🆔 UID: <code>${u.id}</code>${u.telegramUsername ? `\n📛 @${esc(u.telegramUsername)}` : ""}${u.customBadge ? `\n🎖️ Badge: <b>${esc(u.customBadge)}</b>` : ""}
+
+<b>💰 Balances</b>
+  Task     : <b>${tk(u.balance)}</b>
+  OTP      : <b>${tk(u.otpBalance)}</b> (${u.otpCount || 0} OTP)
+
+<b>📊 Stats</b>
+  🟢 Good    : ${fmtNum(u.totalGood || 0)}
+  🔴 Bad     : ${fmtNum(u.totalBad || 0)}
+  🟡 Pending : ${fmtNum(u.totalPending || 0)}
+
+<b>💳 Wallets</b>
+${w}`
   );
 };
 const userCardKb = (id) =>
