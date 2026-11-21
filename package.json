@@ -1,7 +1,7 @@
 {
   "name": "adq-income-zone-bot",
-  "version": "1.0.0",
-  "description": "ADQ Income Zone Telegram Bot",
+  "version": "2.0.0",
+  "description": "ADQ Income Zone Telegram Bot (Task + Number Panel)",
   "main": "bot.js",
   "type": "module",
   "scripts": {
