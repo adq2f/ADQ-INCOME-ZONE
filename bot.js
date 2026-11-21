@@ -553,7 +553,9 @@ bot.use(async (ctx, next) => {
 async function cmdStart(ctx) {
   const f = ctx.from;
   let u = await getUser(f.id);
-  const payload = ctx.startPayload;
+  // ⚠️ Telegraf-এ ctx.startPayload শুধু bot.start() দিলে সেট হয়; bot.command("start") দিলে ফাঁকা থাকে।
+  // তাই মেসেজ থেকে নিজেই payload পড়ছি — এতেই আগে রেফার গণনা হচ্ছিল না।
+  const payload = String(ctx.startPayload || (ctx.message?.text || "").trim().split(/\s+/)[1] || "").trim();
 
   if (!u) {
     let code = genReferCode();
@@ -565,10 +567,16 @@ async function cmdStart(ctx) {
 
     let referrerId = null;
     if (payload) {
-      const refSnap = await db.collection("users").where("myReferCode", "==", payload).limit(1).get();
-      if (!refSnap.empty) {
-        referrerId = refSnap.docs[0].id;
-        if (referrerId === String(f.id)) referrerId = null;
+      if (/^ref_\d+$/i.test(payload)) {
+        // পুরনো Number bot-এর লিংক: ?start=ref_<telegramId>
+        const rid = payload.slice(4);
+        if (rid !== String(f.id) && (await userRef(rid).get()).exists) referrerId = rid;
+      } else {
+        const refSnap = await db.collection("users").where("myReferCode", "==", payload.toUpperCase()).limit(1).get();
+        if (!refSnap.empty) {
+          referrerId = refSnap.docs[0].id;
+          if (referrerId === String(f.id)) referrerId = null;
+        }
       }
     }
 
@@ -614,8 +622,11 @@ async function cmdStart(ctx) {
       u = await getUser(f.id);
     }
   }
+  const note = payload
+    ? "ℹ️ আপনার অ্যাকাউন্ট আগে থেকেই আছে, তাই এই রেফার লিংকে কাউন্ট হয়নি (শুধু একদম নতুন ইউজার কাউন্ট হয়)।\n\n"
+    : "";
   return ctx.reply(
-    `👋 <b>স্বাগতম ${esc(u.username)}!</b>\n\n💰 Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}`,
+    `${note}👋 <b>স্বাগতম ${esc(u.username)}!</b>\n\n💰 Balance: ${tk(u.balance)}\n📱 OTP Balance: ${tk(u.otpBalance)}\n🟢 Good: ${u.totalGood || 0}  🔴 Bad: ${u.totalBad || 0}  🟡 Pending: ${u.totalPending || 0}`,
     await userKb(f.id)
   );
 }
@@ -657,11 +668,16 @@ async function getWdConfig() {
     db.collection("settings").doc("payment_methods").get(),
   ]);
   const d = s.exists ? s.data() : {};
+  const methods = { bkash: true, nagad: true, rocket: true, binance: true, ...(pm.exists ? pm.data() : {}) };
+  const anyMethod = Object.keys(METHODS).some((m) => methods[m] !== false);
+  const masterOn = d.withdrawEnabled !== false;
   return {
     minWithdraw: Number(d.minWithdraw ?? 100),
     maxWithdraw: Number(d.maxWithdraw ?? 50000),
-    withdrawEnabled: d.withdrawEnabled !== false,
-    methods: { bkash: true, nagad: true, rocket: true, binance: true, ...(pm.exists ? pm.data() : {}) },
+    masterOn,
+    anyMethod,
+    withdrawEnabled: masterOn && anyMethod, // মূল সুইচ ON এবং কমপক্ষে ১টা method ON হলেই withdraw চালু
+    methods,
   };
 }
 
@@ -1810,21 +1826,68 @@ bot.action(
 );
 
 /* ---- Settings ---- */
+async function renderSettings() {
+  const c = await getWdConfig();
+  const rate = await getReferCommission();
+  const mOn = (m) => c.methods[m] !== false;
+  const why = !c.masterOn ? " (মূল সুইচ OFF)" : !c.anyMethod ? " (সব method OFF)" : "";
+  const text =
+    `⚙️ <b>Settings</b>\n\n💸 Withdraw: <b>${c.withdrawEnabled ? "🟢 চালু" : "🔴 বন্ধ"}</b>${why}\n` +
+    Object.keys(METHODS).map((m) => `${mOn(m) ? "✅" : "❌"} ${METHODS[m]}`).join("   ") +
+    `\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🎁 Referral Rate: <b>${rate}%</b>\n\n` +
+    `<i>নিচের বাটনে চাপলেই ON/OFF হবে। সব method OFF করলে withdraw নিজে থেকেই বন্ধ হয়ে যায়। (Task ও OTP — দুই Withdraw-এই প্রযোজ্য)</i>\n\n` +
+    `<i>Min/Max বদলাতে:</i>\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000`;
+  const mb = Object.keys(METHODS).map((m) => ib(`${mOn(m) ? "✅" : "❌"} ${METHODS[m]}`, `pm_tog:${m}`, mOn(m) ? "success" : "danger"));
+  const kb = Markup.inlineKeyboard([
+    [ib(c.withdrawEnabled ? "🔴 Withdraw OFF করুন" : "🟢 Withdraw ON করুন", "wd_master", c.withdrawEnabled ? "danger" : "success")],
+    mb.slice(0, 2),
+    mb.slice(2, 4),
+    [ib(`🎁 Referral Commission বদলান (এখন ${rate}%)`, "setref_prompt", "primary")],
+    [ib("📱 Number Panel (OTP) Settings", "npa_set", "success")],
+  ]);
+  return { text, kb };
+}
+
 bot.hears(
   ABTN.settings,
   adminOnly(async (ctx) => {
+    const { text, kb } = await renderSettings();
+    return ctx.reply(text, kbx(kb));
+  })
+);
+
+bot.action(
+  "wd_master",
+  adminCb(async (ctx) => {
     const c = await getWdConfig();
-    const rate = await getReferCommission();
+    const cfgRef = db.collection("settings").doc("withdraw_config");
+    const pmRef = db.collection("settings").doc("payment_methods");
+    if (c.withdrawEnabled) {
+      await cfgRef.set({ withdrawEnabled: false }, { merge: true });
+      await ctx.answerCbQuery("🔴 Withdraw বন্ধ হয়েছে");
+    } else {
+      await cfgRef.set({ withdrawEnabled: true }, { merge: true });
+      // সব method OFF থাকলে ON করা অর্থহীন — তাই সবগুলো চালু করে দেওয়া হয়
+      if (!c.anyMethod) await pmRef.set({ bkash: true, nagad: true, rocket: true, binance: true }, { merge: true });
+      await ctx.answerCbQuery("🟢 Withdraw চালু হয়েছে");
+    }
+    const r = await renderSettings();
+    return edit(ctx, r.text, r.kb);
+  })
+);
 
-    const kb = Markup.inlineKeyboard([
-      [ib(`🎁 Referral Commission বদলান (এখন ${rate}%)`, "setref_prompt", "primary")],
-      [ib("📱 Number Panel (OTP) Settings", "npa_set", "success")],
-    ]);
-
-    return ctx.reply(
-      `⚙️ <b>Settings</b>\n\n💰 Min Withdraw: ${tk(c.minWithdraw)}\n📈 Max Withdraw: ${tk(c.maxWithdraw)}\n🟢 Withdraw Enabled: ${c.withdrawEnabled ? "হ্যাঁ" : "না"}\n🎁 Referral Rate: <b>${rate}%</b>\n\n<i>Withdraw সেটিংস বদলাতে কমান্ড ব্যবহার করুন:</i>\n/setcfg minWithdraw 100\n/setcfg maxWithdraw 50000\n/setcfg withdrawEnabled true\n\n<i>OTP সেটিংস (Per OTP rate, Min OTP...) → উপরের 📱 বাটন বা 📱 OTP Admin।</i>`,
-      { parse_mode: "HTML", reply_markup: kb.reply_markup }
-    );
+bot.action(
+  /^pm_tog:(.+)$/,
+  adminCb(async (ctx) => {
+    const m = ctx.match[1];
+    if (!METHODS[m]) return ctx.answerCbQuery("❌ method সঠিক নয়।", { show_alert: true });
+    const c = await getWdConfig();
+    const nowOn = c.methods[m] === false; // এখন বন্ধ ছিল → চালু হবে
+    await db.collection("settings").doc("payment_methods").set({ [m]: nowOn }, { merge: true });
+    const r = await renderSettings();
+    const allOff = !Object.keys(METHODS).some((k) => (k === m ? nowOn : c.methods[k] !== false));
+    await ctx.answerCbQuery(`${METHODS[m]} ${nowOn ? "চালু ✅" : "বন্ধ ❌"}${allOff ? " — সব method বন্ধ, তাই Withdraw বন্ধ" : ""}`, { show_alert: allOff });
+    return edit(ctx, r.text, r.kb);
   })
 );
 
