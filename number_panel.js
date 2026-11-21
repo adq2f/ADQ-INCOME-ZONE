@@ -1,9 +1,10 @@
 /*
  ============================================================================
   NUMBER PANEL MODULE v3 — VOLTEX SMS API
-  • Country display: 🇨🇲 CM (flag + 2-letter ISO) everywhere in lists
-  • Allocation success: flag + full name (as user allows)
+  • Country display: 🇨🇲 CM (flag + ISO 2-letter) everywhere in lists
+  • Allocation success: flag + full name
   • 2 numbers together with auto-retry (12s limit)
+  • Fixed: uses country_flags.js → iso field
  ============================================================================
 */
 import axios from "axios";
@@ -29,7 +30,6 @@ const GROUP_ID = normalizeChatId(GROUP_RAW);
 const CHANNEL_URL = process.env.CHANNEL_URL || "";
 const GET_NUMBER_URL = process.env.GET_NUMBER_URL || "";
 const PAGE = 8;
-
 const PP_SERVICES = 8;
 const PP_COUNTRIES = 8;
 const PP_RANGES_GET = 8;
@@ -83,16 +83,26 @@ const allocateNumber = async (range) => {
 /* ------------------------------------------------------------------ */
 const tr = (s, n) => { const x = String(s ?? ""); return x.length > n ? x.slice(0, n - 1) + "…" : x; };
 
+/* ⚡ countryShort: ISO 2-letter চাই; না পেলে name-এর প্রথম 2 অক্ষর */
+function countryShort(iso, name) {
+  const i = String(iso || "").toUpperCase().trim();
+  if (/^[A-Z]{2,3}$/.test(i)) return i;
+  const nm = String(name || "").trim();
+  if (!nm || nm === "Unknown") return "UN";
+  const w = nm.split(/\s+/)[0].slice(0, 2).toUpperCase();
+  return w.length >= 2 ? w : "UN";
+}
+
 function resolveCountry(name, number) {
   const n = String(name || "").trim();
   if (n && !/^(unknown|custom range)$/i.test(n)) {
     const d = detectCountry(n);
-    if (d.code) return { flag: d.flag, name: d.name };
+    if (d.code || d.iso) return { flag: d.flag, name: d.name };
   }
   const digits = String(number || "").replace(/\D/g, "");
   if (digits) {
     const d2 = detectCountry(digits);
-    if (d2.code) return { flag: d2.flag, name: d2.name };
+    if (d2.code || d2.iso) return { flag: d2.flag, name: d2.name };
   }
   return { flag: "🌐", name: n && !/^custom range$/i.test(n) ? n : "Unknown" };
 }
@@ -365,6 +375,7 @@ export function createNumberPanel(d) {
     if (data?.hits) consoleCache = { at: Date.now(), hits: data.hits };
     return consoleCache.hits;
   }
+
   async function getRanges(force = false) {
     if (!force && Date.now() - rangeCache.at < 15000 && rangeCache.items.length) return rangeCache.items;
     const services = await getServices();
@@ -372,14 +383,17 @@ export function createNumberPanel(d) {
     for (const svc of services) {
       for (const r of svc.ranges || []) {
         const base = String(r).replace(/X+$/i, "");
-        const c = detectCountry(base + "0000");
-        const hasCode = !!c.code;
+        const info = detectCountry(base + "0000");
+        // ⚡ iso ফিল্ড ব্যবহার — 2-letter country code (CM, US, BD...)
+        const iso = String(info.iso || "").toUpperCase().trim();
+        const hasIso = /^[A-Z]{2,3}$/.test(iso);
+        const countryName = info.name && info.name !== "Unknown" ? info.name : "Unknown";
         items.push({
           range: String(r).toUpperCase(),
           base,
-          country: hasCode ? c.name : "Unknown",
-          countryCode: hasCode ? String(c.code).toUpperCase() : "UN",
-          flag: c.flag,
+          country: countryName,
+          countryCode: hasIso ? iso : countryShort("", countryName),
+          flag: info.flag || "🌐",
           operator: svc.sid,
           sid: svc.sid,
           last_at: svc.last_at || 0,
@@ -631,6 +645,7 @@ export function createNumberPanel(d) {
     const countries = groupByCountry(svcRanges, hitMap);
     const pg = paginate(countries, page, PP_COUNTRIES);
 
+    // ⚡ flag + ISO 2-letter code + hit
     const btns = pg.items.map((c) => {
       const hitTag = c.hits > 0 ? ` 🔥${c.hits}` : "";
       return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${c.name}:0`, c.hits > 0 ? "danger" : "success");
@@ -688,6 +703,10 @@ export function createNumberPanel(d) {
     }
 
     const pg = paginate(countryRanges, page, PP_RANGES_GET);
+    const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
+    const headFlag = countryRanges[0].flag;
+
+    // ⚡ flag + range (country code already in header)
     const btns = pg.items.map((r) => {
       const hitTag = r.hits > 0 ? ` 🔥${r.hits}` : "";
       return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
@@ -697,11 +716,9 @@ export function createNumberPanel(d) {
     rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${country}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_gwc:${sid}:${filter}:0`, "primary"), back[0]]);
 
-    const flag = countryRanges[0].flag;
-    const code = countryRanges[0].countryCode || "UN";
     const filterName = filter === "s" ? " · 4-5" : filter === "l" ? " · 6+" : "";
     return show(ctx,
-      `${flag} <b>${code}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
+      `${headFlag} <b>${headCode}</b>${filterName}\n<i>${pg.total}টি রেঞ্জ • পেজ ${pg.page + 1}/${pg.pages} • 🔥 = hit</i>`,
       rows);
   }
 
@@ -801,6 +818,9 @@ export function createNumberPanel(d) {
     }
     const pg = paginate(countryRanges, Number(page), PP_RANGES_TRAFFIC);
     const startRank = pg.page * PP_RANGES_TRAFFIC;
+    const headCode = countryShort(countryRanges[0].countryCode, countryRanges[0].country);
+    const headFlag = countryRanges[0].flag;
+
     const btns = pg.items.map((r, i) => {
       const rank = startRank + i + 1;
       const medal = rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
@@ -810,10 +830,8 @@ export function createNumberPanel(d) {
     const rows = btns.map((b) => [b]);
     rows.push(...navRow(pg, `np_tc:${sid}:${country}:${pg.page - 1}`, `np_tc:${sid}:${country}:${pg.page + 1}`));
     rows.push([ib("🔙 Countries", `np_tsv:${sid}`, "primary"), back[0]]);
-    const flag = countryRanges[0].flag;
-    const code = countryRanges[0].countryCode || "UN";
     return show(ctx,
-      `${flag} <b>${code}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`,
+      `${headFlag} <b>${headCode}</b> — Top Ranges\n<i>📱 ${esc(sid)} • ${pg.total}টি • পেজ ${pg.page + 1}/${pg.pages}</i>\n\n👇 রেঞ্জে চাপলেই number allocate হবে`,
       rows);
   }));
 
@@ -829,7 +847,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  ALLOCATE — always try to get 2 together                         */
+  /*  ALLOCATE                                                        */
   /* ================================================================ */
   const allocating = new Set();
   const lastNum = new Map();
@@ -912,7 +930,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  LEADERBOARD                                                     */
+  /*  LEADERBOARD / SEARCH / HISTORY                                  */
   /* ================================================================ */
   let lbCache = { at: 0, msg: "" };
   bot.action("np_lead", safe(async (ctx) => {
@@ -936,9 +954,6 @@ export function createNumberPanel(d) {
     return show(ctx, lbCache.msg, [back]);
   }));
 
-  /* ================================================================ */
-  /*  SEARCH / HISTORY                                                */
-  /* ================================================================ */
   bot.action("np_search", safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
@@ -1045,7 +1060,7 @@ export function createNumberPanel(d) {
   }));
 
   /* ================================================================ */
-  /*  ADMIN (unchanged from working version)                          */
+  /*  ADMIN                                                           */
   /* ================================================================ */
   const aBack = [ib("🏠 OTP Admin", "npa_home", "primary")];
   async function adminHome(ctx) {
@@ -1125,6 +1140,23 @@ export function createNumberPanel(d) {
     if (!range || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
     await apply([range], val);
     return ctx.reply(`✅ ${range} → ${val}`);
+  }));
+
+  // ⚡ Diagnostic: /dbgcountry 2370000
+  bot.command("dbgcountry", adminOnly(async (ctx) => {
+    const p = ctx.message.text.trim().split(/\s+/).slice(1);
+    if (!p.length) return ctx.reply("Usage: <code>/dbgcountry 2370000</code>", { parse_mode: "HTML" });
+    const input = p.join(" ");
+    const raw = detectCountry(input);
+    return ctx.reply(
+      `🧪 <b>detectCountry Debug</b>\n\n` +
+      `Input: <code>${esc(input)}</code>\n\n` +
+      `flag: <code>${esc(raw.flag)}</code>\n` +
+      `name: <code>${esc(raw.name)}</code>\n` +
+      `code (phone): <code>${esc(raw.code)}</code>\n` +
+      `iso (2-letter): <code>${esc(raw.iso || "(empty)")}</code>\n\n` +
+      `✅ iso না থাকলে number_panel এ country code দেখাবে না।`,
+      { parse_mode: "HTML" });
   }));
 
   A("npa_stats", async (ctx) => {
@@ -1390,8 +1422,8 @@ export function createNumberPanel(d) {
         if (!/^[0-9X]{4,20}$/.test(r)) return ctx.reply("❌ রেঞ্জ ঠিক নেই।\nExample: <code>88017XXXX</code>", { parse_mode: "HTML" });
         await clearSession(id);
         const base = r.replace(/X+$/i, "");
-        const c = detectCountry(base + "0000");
-        return allocate(ctx, r, "_custom", c.code ? c.name : "Custom Range", "", true);
+        const info = detectCountry(base + "0000");
+        return allocate(ctx, r, "_custom", info.name || "Custom Range", "", true);
       }
       case "np_search": {
         const clean = bn2en(text).replace(/\D/g, "");
