@@ -20,7 +20,20 @@ import { detectCountry, COUNTRY_DATA } from "./country_flags.js";
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL || "6000");
 const MAX_PENDING = parseInt(process.env.MAX_PENDING || "20");
 const MAX_AGE = 16 * 60 * 1000;
-const GROUP_ID = process.env.FORWARD_GROUP_ID || "";
+const GROUP_RAW = process.env.FORWARD_GROUP_ID || "";
+function normalizeChatId(v) {
+  const x = String(v || "").trim().replace(/^['"]|['"]$/g, "");
+  if (!x) return "";
+  let m = x.match(/t\.me\/c\/(\d+)/i);
+  if (m) return `-100${m[1]}`;                       // https://t.me/c/123456789/1 → -100123456789
+  if (/t\.me\/(joinchat\/|\+)/i.test(x)) return ""; // প্রাইভেট invite লিংক দিয়ে bot পোস্ট করতে পারে না
+  m = x.match(/t\.me\/([A-Za-z0-9_]{4,})/i);
+  if (m) return `@${m[1]}`;                           // https://t.me/OTP_BOT_FIRE → @OTP_BOT_FIRE
+  if (/^@[A-Za-z0-9_]{4,}$/.test(x)) return x;
+  if (/^-?\d+$/.test(x)) return x;                    // -1001234567890
+  return "";
+}
+const GROUP_ID = normalizeChatId(GROUP_RAW);
 const CHANNEL_URL = process.env.CHANNEL_URL || "";
 const GET_NUMBER_URL = process.env.GET_NUMBER_URL || "";
 const PAGE = 8;
@@ -29,10 +42,14 @@ const PAGE = 8;
 /*  MK NETWORK API                                                     */
 /* ------------------------------------------------------------------ */
 const http = axios.create({ baseURL: "https://mknetworkbd.com/api/v3/public", timeout: 20000 });
-const headers = () => ({ "mknetwork-key": process.env.MKNETWORK_API_KEY, "Content-Type": "application/json" });
+const mkKey = () =>
+  String(process.env.MKNETWORK_API_KEY || process.env.MK_NETWORK_API_KEY || process.env.MKNETWORK_KEY || process.env.MK_API_KEY || "")
+    .trim().replace(/^['"]|['"]$/g, "");
+const headers = () => ({ "mknetwork-key": mkKey(), "Content-Type": "application/json" });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function apiReq(label, fn, tries = 2) {
+  if (!mkKey()) return null; // key নেই → বারবার 401 না খেয়ে চুপ (শুরুতে একবার লগ হয়)
   for (let i = 1; i <= tries; i++) {
     try {
       return (await fn()).data;
@@ -46,6 +63,7 @@ async function apiReq(label, fn, tries = 2) {
   }
   return null;
 }
+const whoami = () => apiReq("whoami", () => http.get("/whoami", { headers: headers() }), 1);
 const getAccessList = (limit = 500) => apiReq("access_list", () => http.get(`/access_list?limit=${limit}`, { headers: headers() }));
 const allocateNumber = (range) =>
   apiReq(`allocate ${range}`, () => http.post("/getnum/number", { range }, { headers: headers() }), 1);
@@ -139,7 +157,7 @@ function parseLabel(rawText, entities = []) {
 const LBL = {
   p_get: "📞 Get Number", p_custom: "🔥 Custom Range", p_search: "🔍 Search OTP", p_hist: "📊 History",
   p_traffic: "📈 Live Traffic", p_lead: "🏆 Leaderboard", p_wd: "💸 OTP Withdraw",
-  w_short: "🔢 4-5 Digit OTP Work", w_long: "🔢 6+ Digit OTP Work",
+  w_short: "🔢 Facebook 4-5 Digit OTP Work", w_long: "🔢 Facebook 6+ Digit OTP Work",
   g_join: "JOIN CHANNEL", g_copy: "{otp}", g_get: "📞 Get Number",
 };
 const EM = {
@@ -325,7 +343,8 @@ export function createNumberPanel(d) {
   /* ---------------- OTP digit শেখা: কোন রেঞ্জে ৪-৫ ডিজিট, কোনটায় ৬+ ---------------- */
   // settings/otp_range_digits = সিস্টেম নিজে শেখা { রেঞ্জ: {s: ৪-৫ ডিজিট কয়টা, l: ৬+ ডিজিট কয়টা} }
   // settings/otp_range_class  = Admin-এর হাতে সেট করা { রেঞ্জ: "short" | "long" | "both" }
-  const MODE = { s: { key: "short", name: "4-5 Digit OTP" }, l: { key: "long", name: "6+ Digit OTP" } };
+  const MODE = { s: { key: "short", name: "Facebook 4-5 Digit OTP" }, l: { key: "long", name: "Facebook 6+ Digit OTP" } };
+  const isFbText = (t) => /facebook|\bfb-\d/i.test(String(t || "")); // Work শুধু Facebook OTP-র জন্য
   const digitsRef = db.collection("settings").doc("otp_range_digits");
   const classRef = db.collection("settings").doc("otp_range_class");
   let digitStats = {};
@@ -412,6 +431,8 @@ export function createNumberPanel(d) {
     if (!radarLogged) { radarLogged = true; console.log("ℹ️ radar feed sample:", JSON.stringify(feed[0]).slice(0, 400)); }
     const items = await getRanges();
     for (const f of feed) {
+      const fbInfo = [f.service, f.app, f.platform, f.sender, f.full_sms, f.sms, f.message, f.text, f.body, f.content].filter(Boolean).join(" ");
+      if (!isFbText(fbInfo)) continue; // feed-এ Facebook লেখা না থাকলে শিখব না
       const len = otpLenOf(f);
       if (!len) continue;
       const id = String(f.id ?? f.request_id ?? f.sms_id ?? `${feedNumber(f)}_${f.time ?? f.timestamp ?? f.created_at ?? ""}_${len}`);
@@ -486,7 +507,7 @@ export function createNumberPanel(d) {
     back,
   ];
   const workText = (extra) =>
-    `🔢 <b>OTP Work সিলেক্ট করুন</b>\n\n• <b>4-5 Digit OTP Work</b> — শুধু সেই রেঞ্জের নাম্বার পাবেন যেখানে ৪-৫ ডিজিটের OTP আসে\n• <b>6+ Digit OTP Work</b> — শুধু সেই রেঞ্জের নাম্বার পাবেন যেখানে ৬+ ডিজিটের OTP আসে\n\n${extra}`;
+    `🔢 <b>OTP Work সিলেক্ট করুন</b>\n\n• <b>Facebook 4-5 Digit OTP Work</b> — শুধু সেই রেঞ্জের নাম্বার পাবেন যেখানে Facebook-এর ৪-৫ ডিজিট OTP আসে\n• <b>Facebook 6+ Digit OTP Work</b> — শুধু সেই রেঞ্জের নাম্বার পাবেন যেখানে Facebook-এর ৬+ ডিজিট OTP আসে\n<i>(এই Work শুধু Facebook-এর জন্য, অন্য সার্ভিসের জন্য নয়)</i>\n\n${extra}`;
 
   bot.action("np_get", safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
@@ -872,7 +893,7 @@ export function createNumberPanel(d) {
     return show(ctx,
       `🔢 <b>OTP Digit Settings</b>\n\nলাইভ রেঞ্জ: <b>${items.length}</b>\n• 4-5 Digit: <b>${cnt.short}</b>\n• 6+ Digit: <b>${cnt.long}</b>\n• মিশ্র (দুটোতেই দেখায়): <b>${cnt.both}</b>\n• এখনো জানা নেই: <b>${cnt.unknown}</b>\n\n` +
       `অজানা রেঞ্জ user-কে দেখানো: <b>${c.showUnknown ? "ON ✅" : "OFF ❌"}</b>\n<i>ON থাকলে যে রেঞ্জের digit এখনো শেখা হয়নি সেটা দুই Work-এই আসবে; OFF করলে শুধু নিশ্চিত রেঞ্জ আসবে।</i>\n\n` +
-      `<i>সিস্টেম প্রতিটা OTP আসার সাথে নিজে শেখে (৪-৫ নাকি ৬+)। হাতে ঠিক করতে:</i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\nমান: short (4-5) • long (6+) • both • clear`,
+      `<i>সিস্টেম প্রতিটা <b>Facebook</b> OTP আসার সাথে নিজে শেখে (৪-৫ নাকি ৬+) — অন্য সার্ভিসের OTP থেকে শেখে না। হাতে ঠিক করতে:</i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\nমান: short (4-5) • long (6+) • both • clear`,
       [[ib(`অজানা রেঞ্জ: ${c.showUnknown ? "ON ✅" : "OFF ❌"}`, "npa_t_showUnknown", c.showUnknown ? "success" : "danger")],
        [ib("🔄 Refresh", "npa_dg", "primary")], [ib("⚙️ Settings", "npa_set", "primary"), aBack[0]]]);
   }
@@ -1283,7 +1304,7 @@ export function createNumberPanel(d) {
         }
         await b.commit(); // এরপর আর throw হবে না (claim ফেরত গেলে double-credit হত)
         bumpRange(info.range);
-        learn(info.range, String(otp).replace(/\D/g, "").length);
+        if (isFbText(full)) learn(info.range, String(otp).replace(/\D/g, "").length); // শুধু Facebook OTP থেকে শেখা
 
         try {
           const cnt = (Number(snap.get("otpCount")) || 0) + 1;
@@ -1339,7 +1360,25 @@ export function createNumberPanel(d) {
   }
 
   async function start() {
-    if (!process.env.MKNETWORK_API_KEY) console.error("⚠️ MKNETWORK_API_KEY সেট করা নেই — Number Panel কাজ করবে না।");
+    if (!mkKey()) {
+      console.error("❌ MKNETWORK_API_KEY সেট করা নেই — এই Render service-এর Environment-এ ঠিক এই নামে key দিন। (পুরনো number bot-এর service-এ দিলে এখানে আসবে না)");
+    } else {
+      const w = await whoami();
+      console.log(w ? "✅ MK Network API key OK" : "❌ MK Network API key কাজ করছে না (401) — key ভুল/মেয়াদোত্তীর্ণ বা ভুল জায়গা থেকে কপি");
+    }
+    if (GROUP_RAW && !GROUP_ID) {
+      console.error(`❌ FORWARD_GROUP_ID="${GROUP_RAW}" বোঝা যায়নি। দিন: সংখ্যা (-100xxxxxxxxxx) অথবা পাবলিক গ্রুপের @username/t.me লিংক। প্রাইভেট invite লিংক চলবে না।`);
+    } else if (GROUP_ID) {
+      try {
+        const ch = await bot.telegram.getChat(GROUP_ID);
+        const me = await bot.telegram.getMe();
+        const cm = await bot.telegram.getChatMember(GROUP_ID, me.id).catch(() => null);
+        const okRole = cm && ["administrator", "creator", "member"].includes(cm.status);
+        console.log(`${okRole ? "✅" : "⚠️"} OTP group: ${ch.title || ch.username} (${GROUP_ID}) — bot ${cm?.status || "নেই"}${ch.type === "channel" && cm?.status !== "administrator" ? " ⚠️ channel-এ bot-কে admin করতে হবে" : ""}`);
+      } catch (e) {
+        console.error(`❌ OTP group-এ পৌঁছানো যাচ্ছে না (${GROUP_ID}): ${e.description || e.message} → bot-কে group-এ add করে admin দিন, আর সঠিক ID/@username দিন।`);
+      }
+    }
     await loadUi();
     await loadDigits();
     await loadPending();
