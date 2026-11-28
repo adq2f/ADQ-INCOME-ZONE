@@ -1,15 +1,17 @@
 /*
  ============================================================================
-  NUMBER PANEL MODULE v4 — VOLTEX SMS API  (Pro UI + auto-refresh fix)
-  • Auto-refresh: keyboard আর হারায় না (reply_markup ঠিকভাবে পাঠানো হয়)
-  • Live sort: সবচেয়ে বেশি hit উপরে • Hash-diff: পরিবর্তন না হলে edit হয় না
-  • Pagination: ◀️  1 / 5  ▶️  (নিচে ফিক্সড)
+  NUMBER PANEL MODULE v5
+  • V1 = Voltex API   • V2 = YE SMS API   • V3 = IVAS API
+  • ইউজার শুধু "V1 / V2 / V3" দেখে — কোনো প্যানেলের আসল নাম দেখে না
+  • 5 digit / 6+ digit সিস্টেম পুরোপুরি বাদ
   Render Environment:
-    VOLTEX_API_KEY   = (বাধ্যতামূলক) Voltex API key — কোডে লিখবেন না
-    VOLTEX_BASE      = (ঐচ্ছিক) API base URL (না দিলে ডিফল্ট)
-    IVAS_API_KEY     = (V2-এর জন্য) IVAS Developer API key (sk_live_…) — কোডে লিখবেন না
-    IVAS_WEBHOOK_SECRET = (ঐচ্ছিক, প্রস্তাবিত) IVAS Webhooks পেজের signing secret → OTP দ্রুত আসে
-    IVAS_POLL_MS, IVAS_MIN_GAP_MS, IVAS_LEASE_MIN, IVAS_BASE (সব ঐচ্ছিক)
+    VOLTEX_API_KEY      = (V1) Voltex API key
+    YESMS_API_KEY       = (V2) YE SMS "authkey"
+    YESMS_BASE          = (ঐচ্ছিক) default https://ye-sms.com/api
+    YESMS_TZ_OFFSET_MIN = (ঐচ্ছিক) YE SMS লগের টাইমজোন UTC থেকে কত মিনিট আগে (default 0)
+    IVAS_API_KEY        = (V3) IVAS Developer API key (sk_live_…)
+    IVAS_WEBHOOK_SECRET = (ঐচ্ছিক, প্রস্তাবিত) IVAS webhook signing secret
+    IVAS_POLL_MS, IVAS_MIN_GAP_MS, IVAS_LEASE_MIN, IVAS_BASE (ঐচ্ছিক)
     FORWARD_GROUP_ID, CHANNEL_URL, GET_NUMBER_URL, POLL_INTERVAL, MAX_PENDING
     AUTO_REFRESH_MS (default 1500), API_MIN_GAP_MS (default 900)
  ============================================================================
@@ -42,25 +44,28 @@ const PP_SERVICES = 8;
 const PP_COUNTRIES = 8;
 const PP_RANGES_GET = 8;
 const PP_RANGES_TRAFFIC = 5;
+const CACHE_TTL = 5000;
 
 const AUTO_REFRESH_MS = Math.max(800, parseInt(process.env.AUTO_REFRESH_MS || "1500"));
 const API_MIN_GAP_MS = Math.max(500, parseInt(process.env.API_MIN_GAP_MS || "900"));
-const VIEW_IDLE_LIMIT = 200;            // এতবার পরপর পরিবর্তন না হলে auto-refresh বন্ধ
+const VIEW_IDLE_LIMIT = 200;
 const VIEW_MAX_AGE = 30 * 60 * 1000;
 const MAX_ACTIVE_VIEWS = 500;
 const HR = "━━━━━━━━━━━━━━━━━━";
 
-/* IVAS (V2) */
+/* IVAS (V3) */
 const IVAS_BASE = (process.env.IVAS_BASE || "https://www.ivasms.com/api/v1").trim();
 const IVAS_KEY = (process.env.IVAS_API_KEY || "").trim().replace(/^['"]|['"]$/g, "");
 const IVAS_SECRET = (process.env.IVAS_WEBHOOK_SECRET || "").trim();
-const IVAS_MIN_GAP_MS = Math.max(5000, parseInt(process.env.IVAS_MIN_GAP_MS || "6500")); // IVAS সীমা: ১০ রিকোয়েস্ট/মিনিট
+const IVAS_MIN_GAP_MS = Math.max(5000, parseInt(process.env.IVAS_MIN_GAP_MS || "6500"));
 const IVAS_POLL_MS = Math.max(10000, parseInt(process.env.IVAS_POLL_MS || (IVAS_SECRET ? "30000" : "15000")));
 const LEASE_MS = Math.max(2, parseInt(process.env.IVAS_LEASE_MIN || "10")) * 60 * 1000;
 const HITS_WINDOW = 30 * 60 * 1000;
 
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
 /* ------------------------------------------------------------------ */
-/*  VOLTEX API                                                         */
+/*  V1 — VOLTEX API                                                    */
 /* ------------------------------------------------------------------ */
 const V_BASE = (process.env.VOLTEX_BASE || "https://api.2oo9.cloud/MXS47FLFX0U/tnevs/@public/api").trim();
 const V_KEY = (process.env.VOLTEX_API_KEY || "").trim().replace(/^['"]|['"]$/g, "");
@@ -69,7 +74,6 @@ const vc = axios.create({
   headers: { mauthapi: V_KEY, "Content-Type": "application/json", Accept: "application/json" },
   timeout: 25000,
 });
-const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function vreq(method, path, body, tries = 2) {
   if (!V_KEY) return { ok: false, err: new Error("VOLTEX_API_KEY নেই") };
@@ -80,13 +84,12 @@ async function vreq(method, path, body, tries = 2) {
       if (j.meta?.code !== 200) {
         const err = new Error(j.message || `voltex ${j.meta?.code}`);
         err.code = j.meta?.code;
-        err.isOutOfStock = j.meta?.code === 2946;
         return { ok: false, err };
       }
       return { ok: true, data: j.data };
     } catch (e) {
       const st = e.response?.status;
-      console.error(`❌ Voltex ${path} [${i}/${tries}]:`, st || "", e.message);
+      console.error(`❌ V1 ${path} [${i}/${tries}]:`, st || "", e.message);
       if (st && st < 500 && st !== 429) return { ok: false, err: e };
       if (i === tries) return { ok: false, err: e };
       await wait(600 * i);
@@ -94,7 +97,6 @@ async function vreq(method, path, body, tries = 2) {
   }
   return { ok: false, err: new Error("max retries") };
 }
-
 const getLiveAccess = async () => (await vreq("GET", "/liveaccess")).data || null;
 const getConsoleFeed = async () => (await vreq("GET", "/console")).data || null;
 const getSuccessOtp = async () => (await vreq("GET", "/success-otp")).data || null;
@@ -104,7 +106,48 @@ const allocateNumber = async (range) => {
 };
 
 /* ------------------------------------------------------------------ */
-/*  IVAS API (V2) — সীমা ১০/মিনিট, তাই সব কল একটা queue দিয়ে যায়          */
+/*  V2 — YE SMS API  (header: authkey)                                 */
+/* ------------------------------------------------------------------ */
+const Y_BASE = (process.env.YESMS_BASE || "https://ye-sms.com/api").trim();
+const Y_KEY = (process.env.YESMS_API_KEY || "").trim().replace(/^['"]|['"]$/g, "");
+const Y_TZ = parseInt(process.env.YESMS_TZ_OFFSET_MIN || "0") || 0;
+const yc = axios.create({
+  baseURL: Y_BASE,
+  headers: { authkey: Y_KEY, "Content-Type": "application/json", Accept: "application/json" },
+  timeout: 25000,
+});
+async function yreq(method, path, body, tries = 2) {
+  if (!Y_KEY) return { ok: false, err: new Error("YESMS_API_KEY নেই") };
+  for (let i = 1; i <= tries; i++) {
+    try {
+      const res = await yc.request({ method, url: path, data: body });
+      const j = res.data || {};
+      if (j.success === false) return { ok: false, err: new Error(j.message || j.error || "yesms failed") };
+      return { ok: true, data: j };
+    } catch (e) {
+      const st = e.response?.status;
+      console.error(`❌ V2 ${path} [${i}/${tries}]:`, st || "", e.message);
+      if (st && st < 500 && st !== 429) return { ok: false, err: e };
+      if (i === tries) return { ok: false, err: e };
+      await wait(600 * i);
+    }
+  }
+  return { ok: false, err: new Error("max retries") };
+}
+// "2026-11-28 07:01:06 AM" → ms (পোর্টালের সময় UTC ধরা হয়েছে)
+function yeTime(s) {
+  const m = String(s || "").match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})\s*([AP]M)?/i);
+  if (!m) return 0;
+  let h = +m[4];
+  const ap = (m[7] || "").toUpperCase();
+  if (ap === "PM" && h < 12) h += 12;
+  if (ap === "AM" && h === 12) h = 0;
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], h, +m[5], +m[6]) - Y_TZ * 60000;
+}
+const yLast = new Map(); // service(lower) → সর্বশেষ hit সময়
+
+/* ------------------------------------------------------------------ */
+/*  V3 — IVAS API  (সীমা ১০/মিনিট, তাই সব কল একটা queue দিয়ে যায়)       */
 /* ------------------------------------------------------------------ */
 const ivc = axios.create({
   baseURL: IVAS_BASE,
@@ -135,7 +178,7 @@ function ivreq(path, params) {
         ivState.limited++;
       }
       ivState.lastErr = `${st || "ERR"} ${body.code || e.message}`;
-      console.error(`❌ IVAS ${path}:`, ivState.lastErr);
+      console.error(`❌ V3 ${path}:`, ivState.lastErr);
       return { ok: false, status: st, err: e, code: body.code };
     }
   };
@@ -155,13 +198,11 @@ const bar = (n, total, len = 10) => {
 };
 const head = (icon, title, tag = "") => `${icon} <b>${title}</b>${tag ? ` ┃ ${tag}` : ""}\n${HR}`;
 
-// callback_data সীমা ৬৪ বাইট — বেশি লম্বা বাটন বাদ, খালি row বাদ
 const cleanRows = (rows) =>
   (rows || [])
     .map((r) => (r || []).filter((b) => b && (!b.callback_data || Buffer.byteLength(String(b.callback_data)) <= 64)))
     .filter((r) => r.length);
 
-// দেশের নাম → ছোট ডিটারমিনিস্টিক কী (callback_data ছোট রাখতে, রিস্টার্টেও একই থাকে)
 const ck = (s) => {
   let h = 5381;
   const x = String(s);
@@ -191,7 +232,6 @@ function resolveCountry(name, number) {
   }
   return { flag: "🌐", name: n && !/^custom range$/i.test(n) ? n : "Unknown" };
 }
-const flagOf = (name) => resolveCountry(name, "").flag;
 
 const SERVICES = [
   ["facebook", "Facebook"], ["instagram", "Instagram"], ["whatsapp", "WhatsApp"], ["telegram", "Telegram"],
@@ -262,7 +302,7 @@ function parseLabel(rawText, entities = []) {
 const LBL = {
   p_get: "📞 Get Number", p_custom: "🔥 Custom Range", p_search: "🔍 Search OTP", p_hist: "📊 History",
   p_traffic: "📈 Live Traffic", p_lead: "🏆 Leaderboard", p_wd: "💸 OTP Withdraw",
-  p_vone: "⚡ V1 Panel", p_vtwo: "📡 V2 Panel",
+  p_vone: "⚡ V1 Panel", p_vtwo: "⚡ V2 Panel", p_vthree: "📡 V3 Panel",
   g_join: "JOIN CHANNEL", g_copy: "{otp}", g_get: "📞 Get Number",
 };
 const EM = {
@@ -287,9 +327,10 @@ export function createNumberPanel(d) {
 
   /* ---------------- AUTO-REFRESH (live view) ---------------- */
   const activeViews = new Map();
+  const providers = {}; // v1, v2 (direct providers)
   let floodUntil = 0;
-  let lastApiAt = 0;
   let refreshing = false;
+  const allocating = new Set();
 
   function hashMsg(text, rows) {
     const s = String(text) + "|" + JSON.stringify(rows);
@@ -298,20 +339,13 @@ export function createNumberPanel(d) {
     return h;
   }
 
-  async function refreshSharedCaches() {
-    const now = Date.now();
-    if (now - lastApiAt < API_MIN_GAP_MS) return;
-    lastApiAt = now;
-    await getServices(true).catch(() => {});
-    await Promise.all([getRanges(true).catch(() => {}), getConsoleHits(true).catch(() => {})]);
-  }
-
   async function autoRefreshLoop() {
-    if (refreshing || !activeViews.size) return; // আগের রাউন্ড চলতে থাকলে নতুনটা শুরু হবে না
+    if (refreshing || !activeViews.size) return;
     if (Date.now() < floodUntil) return;
     refreshing = true;
     try {
-      if ([...activeViews.values()].some((v) => v.kind !== "v2")) await refreshSharedCaches();
+      const kinds = new Set([...activeViews.values()].map((v) => v.kind));
+      await Promise.all([...kinds].map((k) => (providers[k] ? providers[k].refresh().catch(() => {}) : null)));
       const now = Date.now();
       for (const [key, view] of [...activeViews]) {
         if (now - view.born > VIEW_MAX_AGE || view.idle >= VIEW_IDLE_LIMIT) { activeViews.delete(key); continue; }
@@ -326,8 +360,6 @@ export function createNumberPanel(d) {
           const newHash = hashMsg(built.text, rows);
           if (newHash === view.lastHash) { view.idle++; continue; }
 
-          // ✅ FIX: আগে এখানে Markup অবজেক্ট (kb) সরাসরি reply_markup-এ দেওয়া হত → Telegram কিবোর্ড মুছে ফেলত,
-          //         শুধু টেক্সট থাকত। এখন সঠিক { inline_keyboard } পাঠানো হয়।
           const send = (rs) => bot.telegram.editMessageText(view.chatId, view.messageId, undefined, built.text, {
             parse_mode: "HTML",
             reply_markup: { inline_keyboard: rs },
@@ -379,7 +411,6 @@ export function createNumberPanel(d) {
     const v = {
       perOtp: Number(x.perOtp ?? 0.25), minOtp: Number(x.minOtp ?? 100), minWithdraw: Number(x.minWithdraw ?? 50),
       referComm: Number(x.referComm ?? 0.1), enabled: x.enabled !== false, withdrawEnabled: x.withdrawEnabled !== false,
-      showUnknown: x.showUnknown !== false,
     };
     cfgCache = { at: Date.now(), v };
     return v;
@@ -488,196 +519,12 @@ export function createNumberPanel(d) {
     }
   }
 
-  /* ---------------- pending numbers ---------------- */
-  const pending = new Map();
-  const pendCol = db.collection("voltex_pending_numbers");
-  const claimsCol = db.collection("voltex_otp_claims");
-  const seenOtps = new Set();
-  const userPending = (uid) => [...pending.entries()].filter(([, v]) => v.userId === uid);
-
-  function track(number, uid, country, operator, range) {
-    const n = String(number).replace(/\D/g, "");
-    if (!n) return;
-    const v = { userId: String(uid), number: n, country: country || "Unknown", operator: operator || "", range: range || "", allocatedAt: Date.now() };
-    pending.set(n, v);
-    pendCol.doc(n).set(v).catch((e) => console.error("persist pending:", e.message));
-  }
-  function done(number) {
-    const n = String(number).replace(/\D/g, "");
-    pending.delete(n);
-    pendCol.doc(n).delete().catch(() => {});
-  }
-  async function loadPending() {
-    try {
-      const snap = await pendCol.get();
-      const now = Date.now();
-      snap.forEach((doc) => {
-        const v = doc.data();
-        if (now - (v.allocatedAt || 0) > MAX_AGE) doc.ref.delete().catch(() => {});
-        else if (!pending.has(doc.id)) pending.set(doc.id, v);
-      });
-      const cutoff = Date.now() - 60 * 60 * 1000;
-      const cs = await claimsCol.where("time", ">=", cutoff).select().get();
-      cs.forEach((x) => seenOtps.add(x.id));
-    } catch (e) { console.error("loadPending:", e.message); }
-  }
-
-  /* ---------------- live caches ---------------- */
-  // refreshSharedCaches প্রতি টিকে একবার API থেকে আনে; বাকি সবাই এই cache পড়ে (API হ্যামার হয় না)
-  const CACHE_TTL = 5000;
-  let liveCache = { at: 0, services: [] };
-  let consoleCache = { at: 0, hits: [] };
-  let rangeCache = { at: 0, items: [] };
-
-  async function getServices(force = false) {
-    if (!force && Date.now() - liveCache.at < CACHE_TTL && liveCache.services.length) return liveCache.services;
-    const data = await getLiveAccess();
-    if (data?.services) liveCache = { at: Date.now(), services: data.services };
-    return liveCache.services;
-  }
-  async function getConsoleHits(force = false) {
-    if (!force && Date.now() - consoleCache.at < CACHE_TTL && consoleCache.hits.length) return consoleCache.hits;
-    const data = await getConsoleFeed();
-    if (data?.hits) consoleCache = { at: Date.now(), hits: data.hits };
-    return consoleCache.hits;
-  }
-  async function getRanges(force = false) {
-    if (!force && Date.now() - rangeCache.at < CACHE_TTL && rangeCache.items.length) return rangeCache.items;
-    const services = await getServices(force);
-    const items = [];
-    for (const svc of services) {
-      for (const r of svc.ranges || []) {
-        const base = String(r).replace(/X+$/i, "");
-        const info = detectCountry(base + "0000");
-        const iso = String(info.iso || "").toUpperCase().trim();
-        const hasIso = /^[A-Z]{2,3}$/.test(iso);
-        const countryName = info.name && info.name !== "Unknown" ? info.name : "Unknown";
-        items.push({
-          range: String(r).toUpperCase(), base, country: countryName,
-          countryCode: hasIso ? iso : countryShort("", countryName),
-          flag: info.flag || "🌐", operator: svc.sid, sid: svc.sid, last_at: svc.last_at || 0,
-        });
-      }
-    }
-    if (items.length) rangeCache = { at: Date.now(), items };
-    return rangeCache.items;
-  }
-  async function hitMapByRange(force = false) {
-    const hits = await getConsoleHits(force);
-    const map = new Map();
-    for (const h of hits) {
-      const r = String(h.range || "").toUpperCase();
-      if (r) map.set(r, (map.get(r) || 0) + 1);
-    }
-    return map;
-  }
-  function groupByCountry(ranges, hitMap) {
-    const map = new Map();
-    for (const r of ranges) {
-      if (!map.has(r.country)) map.set(r.country, { name: r.country, code: r.countryCode || "UN", flag: r.flag, ranges: [], hits: 0 });
-      const e = map.get(r.country);
-      e.ranges.push(r);
-      e.hits += hitMap.get(r.range) || 0;
-    }
-    return [...map.values()];
-  }
-  const countryNameByKey = async (key) => {
-    const all = await getRanges();
-    return [...new Set(all.map((r) => r.country))].find((n) => ck(n) === key) || "";
-  };
-
   const statsRef = db.collection("settings").doc("otp_range_stats");
   const bumpRange = (range) => statsRef.set({ [rangeKey(range)]: FieldValue.increment(1) }, { merge: true }).catch(() => {});
 
-  /* ---------------- OTP digit learning (শুধু Facebook OTP থেকে) ---------------- */
-  const isFbText = (t) => /facebook|\bfb-\d/i.test(String(t || ""));
-  const digitsRef = db.collection("settings").doc("otp_range_digits");
-  const classRef = db.collection("settings").doc("otp_range_class");
-  let digitStats = {};
-  let classOv = {};
-  const incBuf = {};
-  async function loadDigits() {
-    try {
-      const [a, b] = await Promise.all([digitsRef.get(), classRef.get()]);
-      digitStats = a.exists ? a.data() : {};
-      classOv = b.exists ? b.data() : {};
-    } catch (e) { console.error("loadDigits:", e.message); }
-  }
-  function learn(range, len) {
-    if (!range || len < 5) return; // ৫ ডিজিট → s, ৬ বা তার বেশি → l
-    const k = rangeKey(range);
-    const t = len === 5 ? "s" : "l";
-    (digitStats[k] ||= { s: 0, l: 0 })[t]++;
-    (incBuf[k] ||= { s: 0, l: 0 })[t]++;
-  }
-  async function flushDigits() {
-    const keys = Object.keys(incBuf);
-    if (!keys.length) return;
-    const patch = {};
-    for (const k of keys) {
-      const b = incBuf[k];
-      patch[k] = {};
-      if (b.s) patch[k].s = FieldValue.increment(b.s);
-      if (b.l) patch[k].l = FieldValue.increment(b.l);
-      delete incBuf[k];
-    }
-    try { await digitsRef.set(patch, { merge: true }); } catch (e) { console.error("flushDigits:", e.message); }
-  }
-  function classOf(range) {
-    const k = rangeKey(range);
-    if (classOv[k]) return classOv[k];
-    const e = digitStats[k];
-    if (!e || (e.s || 0) + (e.l || 0) === 0) return "unknown";
-    const s1 = e.s || 0, l1 = e.l || 0, t = s1 + l1;
-    if (s1 && !l1) return "short";
-    if (l1 && !s1) return "long";
-    if (s1 / t >= 0.8) return "short";
-    if (l1 / t >= 0.8) return "long";
-    return "both";
-  }
-  function matchesMode(range, filter, cfg) {
-    if (!filter || filter === "a") return true;
-    const c = classOf(range);
-    if (c === "unknown") return cfg.showUnknown;
-    if (c === "both") return true;
-    return c === (filter === "s" ? "short" : "long");
-  }
-
-  const seenFeed = new Set();
-  function rangeForNumber(dg, items) {
-    if (!dg || dg.length < 5) return "";
-    const known = items
-      .filter((i) => { const p = String(i.range).replace(/X+$/i, ""); return p.length >= 4 && (dg.startsWith(p) || p.startsWith(dg)); })
-      .sort((a, b) => b.range.replace(/X+$/i, "").length - a.range.replace(/X+$/i, "").length)[0];
-    return known?.range || "";
-  }
-  async function learnFromOtpFeed() {
-    const data = await getSuccessOtp();
-    const otps = data?.otps || [];
-    if (!otps.length) return;
-    const items = await getRanges();
-    for (const o of otps) {
-      const id = String(o.otp_id);
-      if (seenFeed.has(id)) continue;
-      const num = String(o.number || "").replace(/\D/g, "");
-      if (pending.has(num)) continue;
-      seenFeed.add(id);
-      const msg = String(o.message || "");
-      if (!isFbText(msg)) continue;
-      const range = rangeForNumber(num, items);
-      if (!range) continue;
-      const otp = extractOtp(msg);
-      if (!otp) continue;
-      learn(range, otp.length);
-    }
-    if (seenFeed.size > 5000) seenFeed.clear();
-  }
-  async function syncDigits() { await flushDigits(); await loadDigits(); }
-
   /* ---------------- ui helpers ---------------- */
   const back = [ib("🏠 Number Panel", "np_home", "danger")];
-  const backV1 = [ib("🏠 V1 Panel", "np_v1", "danger")];
-  const backV2 = [ib("🏠 V2 Panel", "np_v2", "danger")];
+  const backV3 = [ib("🏠 V3 Panel", "np_v3", "danger")];
   async function show(ctx, text, rows, opts = {}) {
     rows = cleanRows(rows);
     if (!rows.length) rows = [back];
@@ -716,7 +563,6 @@ export function createNumberPanel(d) {
   const lockMsg = (cfg, cnt) =>
     `🔒 OTP Balance withdraw করতে কমপক্ষে <b>${cfg.minOtp}টি</b> OTP রিসিভ করতে হবে।\nআপনার আছে: <b>${cnt}টি</b> (আর ${Math.max(0, cfg.minOtp - cnt)}টি বাকি)`;
 
-  // ◀️  2 / 5  ▶️ — পেজ ১টা হলে দেখায় না; প্রথম/শেষ পেজে ফাঁকা ঘর (লেআউট নড়ে না)
   function navRow(pg, prevCb, nextCb) {
     if (pg.pages <= 1) return [];
     return [[
@@ -727,14 +573,23 @@ export function createNumberPanel(d) {
   }
   bot.action("np_noop", safe(async (ctx) => { await ctx.answerCbQuery().catch(() => {}); }));
 
-  const filterLabel = (f) => (f === "s" ? "5 digit" : f === "l" ? "6+ digit" : "");
-  const medalOf = (rank) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "");
+  function userPendingAll(uid) {
+    const out = [];
+    for (const pr of Object.values(providers)) out.push(...pr.userPending(uid));
+    out.push(...[...pending2.entries()].filter(([, v]) => v.userId === uid));
+    return out;
+  }
 
+  /* ---------------- HOME ---------------- */
+  const ivOn = () => !!IVAS_KEY;
   async function homeText(u) {
     const cfg = await getCfg();
     const cnt = Number(u.otpCount) || 0;
     const rate = Number(u.customPerOtp) || cfg.perOtp;
     const unlocked = cnt >= cfg.minOtp;
+    const lines = ["⚡ <b>V1</b> — সার্ভিস, দেশ ও রেঞ্জ বেছে নাম্বার"];
+    if (Y_KEY) lines.push("⚡ <b>V2</b> — সার্ভিস, দেশ ও রেঞ্জ বেছে নাম্বার");
+    if (ivOn()) lines.push("📡 <b>V3</b> — দেশ ও রেঞ্জ বেছে ফ্রি নাম্বার");
     return (
       `${head("📱", "NUMBER PANEL", cfg.enabled ? "🟢 ONLINE" : "🔴 OFFLINE")}\n` +
       `💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n` +
@@ -742,15 +597,22 @@ export function createNumberPanel(d) {
       `🎁 Refer আয় ▸ <b>${tk(u.otpReferEarning)}</b>\n\n` +
       `🔑 OTP ▸ <b>${cnt}</b> / ${cfg.minOtp}\n<code>${bar(Math.min(cnt, cfg.minOtp), cfg.minOtp)}</code>\n` +
       `${unlocked ? "🟢 <b>Withdraw আনলক হয়েছে</b>" : `🔒 আর <b>${cfg.minOtp - cnt}টি</b> OTP-তে Withdraw আনলক`}\n\n` +
-      `<blockquote>⚡ <b>V1</b> · Voltex — সার্ভিস, দেশ ও রেঞ্জ বেছে নাম্বার\n📡 <b>V2</b> · IVAS — দেশ ও রেঞ্জ বেছে ফ্রি নাম্বার</blockquote>\n` +
+      `<blockquote>${lines.join("\n")}</blockquote>\n` +
       `<i>OTP Balance আর Task Balance আলাদা।</i>`
     );
   }
-  const homeRows = () => [
-    [bt("p_vone", { callback_data: "np_v1", style: "success" }), bt("p_vtwo", { callback_data: "np_v2", style: "primary" })],
-    [bt("p_lead", { callback_data: "np_lead", style: "success" }), bt("p_hist", { callback_data: "np_hist", style: "primary" })],
-    [bt("p_search", { callback_data: "np_search", style: "primary" }), bt("p_wd", { callback_data: "np_wd", style: "success" })],
-  ];
+  const homeRows = () => {
+    const panels = [bt("p_vone", { callback_data: "np_v1", style: "success" })];
+    if (Y_KEY) panels.push(bt("p_vtwo", { callback_data: "np_v2", style: "primary" }));
+    const rows = [panels];
+    const r2 = [];
+    if (ivOn()) r2.push(bt("p_vthree", { callback_data: "np_v3", style: "danger" }));
+    r2.push(bt("p_lead", { callback_data: "np_lead", style: "success" }));
+    rows.push(r2);
+    rows.push([bt("p_hist", { callback_data: "np_hist", style: "primary" }), bt("p_search", { callback_data: "np_search", style: "primary" })]);
+    rows.push([bt("p_wd", { callback_data: "np_wd", style: "success" })]);
+    return rows;
+  };
   async function gate(ctx) {
     const u = await needUser(ctx);
     if (!u) return null;
@@ -771,387 +633,584 @@ export function createNumberPanel(d) {
     return show(ctx, await homeText(u), homeRows());
   }));
 
-  bot.action("np_v1", safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    const u = await gate(ctx);
-    if (!u) return;
-    await clearSession(ctx.from.id);
-    return show(ctx,
-      `${head("⚡", "V1 PANEL", "Voltex")}\n💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n🔑 OTP ▸ <b>${Number(u.otpCount) || 0}</b>\n\n` +
-      `<blockquote>📞 Get Number — সার্ভিস → দেশ → রেঞ্জ\n🔥 Custom Range — নিজে রেঞ্জ লিখুন\n📈 Live Traffic — এখন যেখানে বেশি hit</blockquote>`,
-      [
-        [bt("p_get", { callback_data: "np_get", style: "success" }), bt("p_custom", { callback_data: "np_custom", style: "danger" })],
-        [bt("p_traffic", { callback_data: "np_traffic", style: "primary" })],
-        [ib("⬅️ Number Panel", "np_home", "primary")],
-      ]);
-  }));
+  /* ================================================================ */
+  /*  DIRECT PROVIDER (V1 & V2): Service → Country → Range → Number    */
+  /* ================================================================ */
+  function makeDirect(P) {
+    const p = P.p;
+    const backP = [ib(`🏠 ${P.name} Panel`, `np_${P.key}`, "danger")];
+    const pending = new Map();
+    const pendCol = db.collection(P.pendCol);
+    const claimsCol = db.collection(P.claimCol);
+    const seenOtps = new Set();
+    const lastNum = new Map();
+    let liveCache = { at: 0, services: [] };
+    let consoleCache = { at: 0, hits: [] };
+    let rangeCache = { at: 0, items: [] };
+    let lastApiAt = 0;
+    const RE = (s) => new RegExp(`^${p}_${s}$`);
+    const userPending = (uid) => [...pending.entries()].filter(([, v]) => v.userId === uid);
 
-  /* ================================================================ */
-  /*  GET NUMBER  (Service → Country → Range)                          */
-  /* ================================================================ */
-  async function buildServiceList(page, force = false) {
-    const services = await getServices(force);
-    const live = services.filter((s) => (s.ranges || []).length);
-    if (!live.length) {
-      return { text: `${head("📱", "SERVICES")}\n❌ এখন কোনো সার্ভিস সচল নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], backV1] };
+    /* ---- pending ---- */
+    function track(number, uid, country, operator, range) {
+      const n = String(number).replace(/\D/g, "");
+      if (!n) return;
+      const v = { userId: String(uid), number: n, country: country || "Unknown", operator: operator || "", range: range || "", allocatedAt: Date.now() };
+      pending.set(n, v);
+      pendCol.doc(n).set(v).catch((e) => console.error("persist pending:", e.message));
     }
-    const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
-    const pg = paginate(sorted, page, PP_SERVICES);
-    const btns = pg.items.map((s) => ib(`📱 ${tr(s.sid, 14)}`, `np_gsv:${s.sid}`, "success"));
-    const rows = [];
-    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_gsl:${pg.page - 1}`, `np_gsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_get", "primary"), backV1[0]]);
-    const text = `${head("📱", "SERVICES", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন — তারপর দেশ ও রেঞ্জ</blockquote>`;
-    return { text, rows };
-  }
-  async function showServiceList(ctx, page = 0, auto = false) {
-    const built = await buildServiceList(page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildServiceList(page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action("np_get", safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    const cfg = await getCfg();
-    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backV1]);
-    return showServiceList(ctx, 0, true);
-  }));
-  bot.action(/^np_gsl:(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showServiceList(ctx, Number(ctx.match[1]), true);
-  }));
-  bot.action(/^np_gsv:(.+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showCountryList(ctx, ctx.match[1], "a", 0, true);
-  }));
-
-  async function buildCountryList(sid, filter, page, force = false) {
-    const cfg = await getCfg();
-    const all = await getRanges(force);
-    const hitMap = await hitMapByRange(force);
-    const sidLower = sid.toLowerCase();
-    const allSvcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
-    if (!allSvcRanges.length) {
-      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], backV1] };
+    function done(number) {
+      const n = String(number).replace(/\D/g, "");
+      pending.delete(n);
+      pendCol.doc(n).delete().catch(() => {});
     }
-    const svcRanges = allSvcRanges.filter((r) => matchesMode(r.range, filter, cfg));
-    const countries = groupByCountry(svcRanges, hitMap);
-    countries.sort((a, b) => (b.hits - a.hits) || (b.ranges.length - a.ranges.length) || a.name.localeCompare(b.name)); // ⚡ live sort
-
-    const cntS = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
-    const cntL = allSvcRanges.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
-
-    const pg = paginate(countries, page, PP_COUNTRIES);
-    const btns = pg.items.map((c, i) => {
-      const rank = pg.page * PP_COUNTRIES + i + 1;
-      const medal = c.hits > 0 ? medalOf(rank) : "";
-      const hitTag = c.hits > 0 ? ` · 🔥${c.hits}` : "";
-      return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
-    });
-    const rows = [];
-    if (cntS > 0 || cntL > 0) {
-      const f = [ib(filter === "a" ? "✅ All" : "All", `np_gcl:${sid}:a:0`, filter === "a" ? "success" : "primary")];
-      if (cntS > 0) f.push(ib(filter === "s" ? "✅ 5" : "5", `np_gcl:${sid}:s:0`, filter === "s" ? "success" : "primary"));
-      if (cntL > 0) f.push(ib(filter === "l" ? "✅ 6+" : "6+", `np_gcl:${sid}:l:0`, filter === "l" ? "success" : "primary"));
-      rows.push(f);
+    async function loadPending() {
+      try {
+        const snap = await pendCol.get();
+        const now = Date.now();
+        snap.forEach((doc) => {
+          const v = doc.data();
+          if (now - (v.allocatedAt || 0) > MAX_AGE) doc.ref.delete().catch(() => {});
+          else if (!pending.has(doc.id)) pending.set(doc.id, v);
+        });
+        const cutoff = Date.now() - 60 * 60 * 1000;
+        const cs = await claimsCol.where("time", ">=", cutoff).select().get();
+        cs.forEach((x) => seenOtps.add(x.id));
+      } catch (e) { console.error(`loadPending ${P.name}:`, e.message); }
     }
-    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_gcl:${sid}:${filter}:${pg.page - 1}`, `np_gcl:${sid}:${filter}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Services", "np_get", "primary"), backV1[0]]);
 
-    const fl = filterLabel(filter);
-    const text = `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📱 Service ▸ <b>${esc(sid)}</b>${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`;
-    return { text, rows };
-  }
-  async function showCountryList(ctx, sid, filter = "a", page = 0, auto = false) {
-    const built = await buildCountryList(sid, filter, page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildCountryList(sid, filter, page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np_gcl:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    const [, sid, filter, page] = ctx.match;
-    return showCountryList(ctx, sid, filter, Number(page), true);
-  }));
-  bot.action(/^np_gwc:([^:]+):([asl]):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    const [, sid, filter, page] = ctx.match;
-    return showCountryList(ctx, sid, filter, Number(page), true);
-  }));
-
-  async function buildRangeList(sid, filter, country, page, force = false) {
-    const cfg = await getCfg();
-    const all = await getRanges(force);
-    const hitMap = await hitMapByRange(force);
-    const sidLower = sid.toLowerCase();
-    let list = all
-      .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
-      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }))
-      .filter((r) => matchesMode(r.range, filter, cfg));
-    list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range)); // ⚡ live sort
-    if (!list.length) {
-      return { text: `${head("📞", "RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary")], backV1] };
+    /* ---- caches ---- */
+    async function getServices(force = false) {
+      if (!force && Date.now() - liveCache.at < CACHE_TTL && liveCache.services.length) return liveCache.services;
+      const s = await P.fetchServices().catch(() => null);
+      if (s) liveCache = { at: Date.now(), services: s };
+      return liveCache.services;
     }
-    const pg = paginate(list, page, PP_RANGES_GET);
-    const headCode = countryShort(list[0].countryCode, list[0].country);
-    const btns = pg.items.map((r, i) => {
-      const rank = pg.page * PP_RANGES_GET + i + 1;
-      const medal = r.hits > 0 ? medalOf(rank) : "";
-      const hitTag = r.hits > 0 ? ` · 🔥${r.hits}` : "";
-      return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
-    });
-    const rows = [];
-    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${ck(country)}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${ck(country)}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary"), backV1[0]]);
-    const fl = filterLabel(filter);
-    const text = `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`;
-    return { text, rows };
-  }
-  async function showRangeList(ctx, sid, filter, country, page = 0, auto = false) {
-    const built = await buildRangeList(sid, filter, country, page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildRangeList(sid, filter, country, page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np_grc:([^:]+):([asl]):([a-z0-9]+):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    const [, sid, filter, key, page] = ctx.match;
-    const country = await countryNameByKey(key);
-    if (!country) return showCountryList(ctx, sid, filter, 0, true);
-    return showRangeList(ctx, sid, filter, country, Number(page), true);
-  }));
-
-  /* ================================================================ */
-  /*  LIVE TRAFFIC  (Service → Country → Top Ranges)                   */
-  /* ================================================================ */
-  async function buildTrafficServices(page, force = false) {
-    const services = await getServices(force);
-    const live = services.filter((s) => (s.ranges || []).length);
-    if (!live.length) {
-      return { text: `${head("📈", "LIVE TRAFFIC")}\n❌ এখন কোনো ট্রাফিক ডেটা নেই।`, rows: [[ib("🔄 Retry", "np_traffic", "success")], backV1] };
+    async function getConsoleHits(force = false) {
+      if (!force && Date.now() - consoleCache.at < CACHE_TTL && consoleCache.hits.length) return consoleCache.hits;
+      const h = await P.fetchConsole().catch(() => null);
+      if (h) consoleCache = { at: Date.now(), hits: h };
+      return consoleCache.hits;
     }
-    const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
-    const pg = paginate(sorted, page, PP_SERVICES);
-    const btns = pg.items.map((s) => ib(`🔥 ${tr(s.sid, 14)}`, `np_tsv:${s.sid}`, "danger"));
-    const rows = [];
-    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_tsl:${pg.page - 1}`, `np_tsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_traffic", "primary"), backV1[0]]);
-    return { text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন</blockquote>`, rows };
-  }
-  async function showTrafficServices(ctx, page = 0, auto = false) {
-    const built = await buildTrafficServices(page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildTrafficServices(page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action("np_traffic", safe(async (ctx) => {
-    await ctx.answerCbQuery("🔄").catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showTrafficServices(ctx, 0, true);
-  }));
-  bot.action(/^np_tsl:(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showTrafficServices(ctx, Number(ctx.match[1]), true);
-  }));
-  bot.action(/^np_tsv:(.+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showTrafficCountries(ctx, ctx.match[1], 0, true);
-  }));
-
-  async function buildTrafficCountries(sid, page, force = false) {
-    const all = await getRanges(force);
-    const sidLower = sid.toLowerCase();
-    const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
-    if (!svcRanges.length) {
-      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Traffic", "np_traffic", "primary")], backV1] };
-    }
-    const hitMap = await hitMapByRange(force);
-    const countries = groupByCountry(svcRanges, hitMap);
-    countries.sort((a, b) => (b.hits - a.hits) || (b.ranges.length - a.ranges.length) || a.name.localeCompare(b.name)); // ⚡ live sort
-    const pg = paginate(countries, page, PP_COUNTRIES);
-    const btns = pg.items.map((c, i) => {
-      const rank = pg.page * PP_COUNTRIES + i + 1;
-      const medal = c.hits > 0 ? medalOf(rank) : "";
-      const hitTag = c.hits > 0 ? ` · 🔥${c.hits}` : "";
-      return ib(`${c.flag} ${c.code}${hitTag}`, `np_tc:${sid}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
-    });
-    const rows = [];
-    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np_tcl:${sid}:${pg.page - 1}`, `np_tcl:${sid}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Traffic", "np_traffic", "primary"), backV1[0]]);
-    return { text: `${head("🌍", "TRAFFIC · COUNTRY", "🟢 LIVE")}\n📱 Service ▸ <b>${esc(sid)}</b>\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`, rows };
-  }
-  async function showTrafficCountries(ctx, sid, page = 0, auto = false) {
-    const built = await buildTrafficCountries(sid, page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildTrafficCountries(sid, page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np_tcl:([^:]+):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    return showTrafficCountries(ctx, ctx.match[1], Number(ctx.match[2]), true);
-  }));
-
-  async function buildTrafficRanges(sid, country, page, force = false) {
-    const all = await getRanges(force);
-    const sidLower = sid.toLowerCase();
-    const hitMap = await hitMapByRange(force);
-    const list = all
-      .filter((r) => r.sid && r.sid.toLowerCase() === sidLower && r.country === country)
-      .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
-    list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range)); // ⚡ live sort
-    if (!list.length) {
-      return { text: `${head("📈", "TOP RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_tsv:${sid}`, "primary")], backV1] };
-    }
-    const pg = paginate(list, page, PP_RANGES_TRAFFIC);
-    const start = pg.page * PP_RANGES_TRAFFIC;
-    const headCode = countryShort(list[0].countryCode, list[0].country);
-    const rows = pg.items.map((r, i) => {
-      const rank = start + i + 1;
-      const medal = `#${rank}`;
-      const hitTag = r.hits > 0 ? ` · 🔥${r.hits}` : "";
-      return [ib(`${medal} ${r.flag} ${tr(r.range, 12)}${hitTag}`, `np_grab:${sid}:${r.range}`, rank <= 3 ? "danger" : "success")];
-    });
-    rows.push(...navRow(pg, `np_tc:${sid}:${ck(country)}:${pg.page - 1}`, `np_tc:${sid}:${ck(country)}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Countries", `np_tsv:${sid}`, "primary"), backV1[0]]);
-    return {
-      text: `${head("📈", "TOP RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>live hit অনুযায়ী সাজানো  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
-      rows,
-    };
-  }
-  async function showTrafficRanges(ctx, sid, country, page = 0, auto = false) {
-    const built = await buildTrafficRanges(sid, country, page, true);
-    if (auto && ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildTrafficRanges(sid, country, page, false) });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np_tc:([^:]+):([a-z0-9]+):(\d+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    if (!(await gate(ctx))) return;
-    const [, sid, key, page] = ctx.match;
-    const country = await countryNameByKey(key);
-    if (!country) return showTrafficCountries(ctx, sid, 0, true);
-    return showTrafficRanges(ctx, sid, country, Number(page), true);
-  }));
-
-  /* ================================================================ */
-  /*  CUSTOM RANGE                                                     */
-  /* ================================================================ */
-  bot.action("np_custom", safe(async (ctx) => {
-    await ctx.answerCbQuery().catch(() => {});
-    if (!(await gate(ctx))) return;
-    return ask(ctx, { action: "np_range" },
-      `${head("🔥", "CUSTOM RANGE")}\nরেঞ্জ লিখে পাঠান\nExample: <code>88017XXXX</code>\n\n<i>শুধু সংখ্যা ও X দিন। শেষে X দিয়ে বাকি ডিজিট বোঝান।</i>\n\nবাতিল: /menu`,
-      [backV1]);
-  }));
-
-  /* ================================================================ */
-  /*  ALLOCATE                                                         */
-  /* ================================================================ */
-  const allocating = new Set();
-  const lastNum = new Map();
-
-  async function grabNumbers(range, want = 2) {
-    const got = [];
-    const seenNums = new Set();
-    const deadline = Date.now() + 12000;
-    let round = 0;
-    while (got.length < want && Date.now() < deadline && round < 8) {
-      round++;
-      const need = want - got.length;
-      const results = await Promise.all(Array.from({ length: need }, () => allocateNumber(range).catch(() => ({ ok: false }))));
-      for (const res of results) {
-        if (!res || !res.ok) continue;
-        const x = res.data;
-        if (!x) continue;
-        const full = String(x.no_plus_number || x.full_number || "").replace(/\D/g, "");
-        if (full && !seenNums.has(full) && got.length < want) {
-          seenNums.add(full);
-          got.push({ number: full, country: x.country, operator: x.operator });
+    function buildRanges() {
+      const items = [];
+      for (const svc of liveCache.services) {
+        for (const raw of svc.ranges || []) {
+          const pr = P.parseRange(raw);
+          if (!pr.range) continue;
+          const base = pr.range.replace(/X+$/i, "");
+          let info = pr.country ? detectCountry(pr.country) : null;
+          if (!(info && (info.code || info.iso))) info = detectCountry(base + "0000");
+          const iso = String(info.iso || "").toUpperCase().trim();
+          const hasIso = /^[A-Z]{2,3}$/.test(iso);
+          const countryName = info.name && info.name !== "Unknown" ? info.name : "Unknown";
+          items.push({
+            range: pr.range, base, country: countryName,
+            countryCode: hasIso ? iso : countryShort("", countryName),
+            flag: info.flag || "🌐", operator: svc.sid, sid: svc.sid, last_at: svc.last_at || 0,
+          });
         }
       }
-      if (got.length >= want || Date.now() >= deadline) break;
-      await wait(250);
+      if (items.length) rangeCache = { at: Date.now(), items };
+      return rangeCache.items;
     }
-    return got;
-  }
-
-  async function allocate(ctx, rangeId, sid, countryName = "Unknown", operatorName = "", isCustom = false) {
-    const uid = String(ctx.from.id);
-    if (!(await gate(ctx))) return;
-    const cfg = await getCfg();
-    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backV1]);
-    if (!rangeId) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backV1]);
-    if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
-    if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backV1]);
-    lastNum.set(uid, { range: rangeId, sid, countryName, operator: operatorName, isCustom });
-    allocating.add(uid);
-    try {
-      const range = String(rangeId).trim().toUpperCase();
-      await show(ctx, `${head("⏳", "ALLOCATING")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>নাম্বার আনা হচ্ছে, একটু অপেক্ষা করুন…</blockquote>`, [backV1]);
-      const picked = await grabNumbers(range, 2);
-      if (!picked.length) {
-        return show(ctx, `${head("❌", "ALLOCATE FAILED")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>এই রেঞ্জে এখন নাম্বার নেই।</blockquote>`,
-          [[ib("🔄 Try Again", "np_chg", "success")], [ib("⬅️ ফিরে যান", isCustom ? "np_custom" : `np_gwc:${sid}:a:0`, "primary")], backV1]);
+    async function getRanges(force = false) {
+      if (!force && Date.now() - rangeCache.at < CACHE_TTL && rangeCache.items.length) return rangeCache.items;
+      await getServices(force);
+      return buildRanges();
+    }
+    async function refresh() {
+      const now = Date.now();
+      if (now - lastApiAt < API_MIN_GAP_MS) return;
+      lastApiAt = now;
+      await Promise.all([getServices(true).catch(() => {}), getConsoleHits(true).catch(() => {})]);
+      buildRanges();
+    }
+    async function hitMapByRange(force = false) {
+      const hits = await getConsoleHits(force);
+      const map = new Map();
+      for (const h of hits) {
+        const r = String(h.range || "").toUpperCase();
+        if (r) map.set(r, (map.get(r) || 0) + 1);
       }
-      for (const p of picked) track(p.number, uid, p.country || countryName, p.operator || operatorName, range);
-      const c = resolveCountry(picked[0].country || (isCustom ? "" : countryName), picked[0].number);
-      const rows = picked.map((p) => [{ text: `${c.flag} ${p.number}`, copy_text: { text: p.number }, style: "success" }]);
-      rows.push([ib("🔄 Change Number", "np_chg", "danger")]);
-      if (isCustom) rows.push([ib("🔥 Custom Range", "np_custom", "primary")]);
-      else if (sid) rows.push([ib("🌍 Change Country", `np_gwc:${sid}:a:0`, "primary")]);
-      rows.push(backV1);
-      const partial = picked.length < 2 ? `\n⚠️ <i>মাত্র ${picked.length}টি নাম্বার পাওয়া গেছে (রেঞ্জ সীমিত)</i>` : "";
-      const svcLine = !isCustom && sid ? `📱 Service ▸ <b>${esc(sid)}</b>\n` : "";
-      return show(ctx,
-        `${c.flag} <b>${esc(c.name.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>V1 · Voltex</b>\n${svcLine}🌐 Range ▸ <code>${esc(range)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
-        rows);
-    } finally {
-      allocating.delete(uid);
+      return map;
     }
+    function groupByCountry(ranges, hitMap) {
+      const map = new Map();
+      for (const r of ranges) {
+        if (!map.has(r.country)) map.set(r.country, { name: r.country, code: r.countryCode || "UN", flag: r.flag, ranges: [], hits: 0 });
+        const e = map.get(r.country);
+        e.ranges.push(r);
+        e.hits += hitMap.get(r.range) || 0;
+      }
+      return [...map.values()];
+    }
+    const countryNameByKey = async (key) => {
+      const all = await getRanges();
+      return [...new Set(all.map((r) => r.country))].find((n) => ck(n) === key) || "";
+    };
+    const view = (ctx, built, rebuild) =>
+      auto(ctx, built, rebuild);
+    function auto(ctx, built, rebuild) {
+      if (ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: rebuild, kind: P.key });
+      return show(ctx, built.text, built.rows);
+    }
+
+    /* ---- menu ---- */
+    bot.action(`np_${P.key}`, safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      const u = await gate(ctx);
+      if (!u) return;
+      await clearSession(ctx.from.id);
+      return show(ctx,
+        `${head("⚡", `${P.name} PANEL`)}\n💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n🔑 OTP ▸ <b>${Number(u.otpCount) || 0}</b>\n\n` +
+        `<blockquote>📞 Get Number — সার্ভিস → দেশ → রেঞ্জ\n🔥 Custom Range — নিজে রেঞ্জ লিখুন\n📈 Live Traffic — এখন যেখানে বেশি hit</blockquote>`,
+        [
+          [bt("p_get", { callback_data: `${p}_get`, style: "success" }), bt("p_custom", { callback_data: `${p}_custom`, style: "danger" })],
+          [bt("p_traffic", { callback_data: `${p}_traffic`, style: "primary" })],
+          [ib("⬅️ Number Panel", "np_home", "primary")],
+        ]);
+    }));
+
+    /* ---- GET NUMBER: services ---- */
+    async function buildServiceList(page, force = false) {
+      const services = await getServices(force);
+      const live = services.filter((s) => (s.ranges || []).length);
+      if (!live.length) {
+        return { text: `${head("📱", "SERVICES")}\n❌ এখন কোনো সার্ভিস সচল নেই।`, rows: [[ib("🔄 Retry", `${p}_get`, "success")], backP] };
+      }
+      const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0) || String(a.sid).localeCompare(String(b.sid)));
+      const pg = paginate(sorted, page, PP_SERVICES);
+      const btns = pg.items.map((s) => ib(`📱 ${tr(s.sid, 14)}`, `${p}_gsv:${s.sid}`, "success"));
+      const rows = [];
+      for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+      rows.push(...navRow(pg, `${p}_gsl:${pg.page - 1}`, `${p}_gsl:${pg.page + 1}`));
+      rows.push([ib("🔄 Refresh", `${p}_get`, "primary"), backP[0]]);
+      const text = `${head("📱", "SERVICES", "🟢 LIVE")}\n📡 Panel ▸ <b>${P.name}</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন — তারপর দেশ ও রেঞ্জ</blockquote>`;
+      return { text, rows };
+    }
+    async function showServiceList(ctx, page = 0) {
+      const built = await buildServiceList(page, true);
+      return view(ctx, built, () => buildServiceList(page, false));
+    }
+    bot.action(`${p}_get`, safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      const cfg = await getCfg();
+      if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backP]);
+      return showServiceList(ctx, 0);
+    }));
+    bot.action(RE("gsl:(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showServiceList(ctx, Number(ctx.match[1]));
+    }));
+    bot.action(RE("gsv:(.+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery("⏳").catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showCountryList(ctx, ctx.match[1], 0);
+    }));
+
+    /* ---- GET NUMBER: countries ---- */
+    async function buildCountryList(sid, page, force = false) {
+      const all = await getRanges(force);
+      const hitMap = await hitMapByRange(force);
+      const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sid.toLowerCase());
+      if (!svcRanges.length) {
+        return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("🔄 Retry", `${p}_get`, "success")], backP] };
+      }
+      const countries = groupByCountry(svcRanges, hitMap);
+      countries.sort((a, b) => (b.hits - a.hits) || (b.ranges.length - a.ranges.length) || a.name.localeCompare(b.name));
+      const pg = paginate(countries, page, PP_COUNTRIES);
+      const btns = pg.items.map((c) =>
+        ib(`${c.flag} ${c.code}${c.hits > 0 ? ` · 🔥${c.hits}` : ""}`, `${p}_grc:${sid}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success"));
+      const rows = [];
+      for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+      rows.push(...navRow(pg, `${p}_gcl:${sid}:${pg.page - 1}`, `${p}_gcl:${sid}:${pg.page + 1}`));
+      rows.push([ib("⬅️ Services", `${p}_get`, "primary"), backP[0]]);
+      const text = `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>${P.name}</b>\n📱 Service ▸ <b>${esc(sid)}</b>\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`;
+      return { text, rows };
+    }
+    async function showCountryList(ctx, sid, page = 0) {
+      const built = await buildCountryList(sid, page, true);
+      return view(ctx, built, () => buildCountryList(sid, page, false));
+    }
+    bot.action(RE("gcl:([^:]+):(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showCountryList(ctx, ctx.match[1], Number(ctx.match[2]));
+    }));
+
+    /* ---- GET NUMBER: ranges ---- */
+    async function buildRangeList(sid, country, page, force = false) {
+      const all = await getRanges(force);
+      const hitMap = await hitMapByRange(force);
+      const list = all
+        .filter((r) => r.sid && r.sid.toLowerCase() === sid.toLowerCase() && r.country === country)
+        .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
+      list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+      if (!list.length) {
+        return { text: `${head("📞", "RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `${p}_gcl:${sid}:0`, "primary")], backP] };
+      }
+      const pg = paginate(list, page, PP_RANGES_GET);
+      const headCode = countryShort(list[0].countryCode, list[0].country);
+      const btns = pg.items.map((r) =>
+        ib(`${r.flag} ${tr(r.range, 14)}${r.hits > 0 ? ` · 🔥${r.hits}` : ""}`, `${p}_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success"));
+      const rows = [];
+      for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+      rows.push(...navRow(pg, `${p}_grc:${sid}:${ck(country)}:${pg.page - 1}`, `${p}_grc:${sid}:${ck(country)}:${pg.page + 1}`));
+      rows.push([ib("⬅️ Countries", `${p}_gcl:${sid}:0`, "primary"), backP[0]]);
+      const text = `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`;
+      return { text, rows };
+    }
+    async function showRangeList(ctx, sid, country, page = 0) {
+      const built = await buildRangeList(sid, country, page, true);
+      return view(ctx, built, () => buildRangeList(sid, country, page, false));
+    }
+    bot.action(RE("grc:([^:]+):([a-z0-9]+):(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery("⏳").catch(() => {});
+      if (!(await gate(ctx))) return;
+      const [, sid, key, page] = ctx.match;
+      const country = await countryNameByKey(key);
+      if (!country) return showCountryList(ctx, sid, 0);
+      return showRangeList(ctx, sid, country, Number(page));
+    }));
+
+    /* ---- LIVE TRAFFIC ---- */
+    async function buildTrafficServices(page, force = false) {
+      const services = await getServices(force);
+      const live = services.filter((s) => (s.ranges || []).length);
+      if (!live.length) {
+        return { text: `${head("📈", "LIVE TRAFFIC")}\n❌ এখন কোনো ট্রাফিক ডেটা নেই।`, rows: [[ib("🔄 Retry", `${p}_traffic`, "success")], backP] };
+      }
+      const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0) || String(a.sid).localeCompare(String(b.sid)));
+      const pg = paginate(sorted, page, PP_SERVICES);
+      const btns = pg.items.map((s) => ib(`🔥 ${tr(s.sid, 14)}`, `${p}_tsv:${s.sid}`, "danger"));
+      const rows = [];
+      for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+      rows.push(...navRow(pg, `${p}_tsl:${pg.page - 1}`, `${p}_tsl:${pg.page + 1}`));
+      rows.push([ib("🔄 Refresh", `${p}_traffic`, "primary"), backP[0]]);
+      return { text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>${P.name}</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন</blockquote>`, rows };
+    }
+    async function showTrafficServices(ctx, page = 0) {
+      const built = await buildTrafficServices(page, true);
+      return view(ctx, built, () => buildTrafficServices(page, false));
+    }
+    bot.action(`${p}_traffic`, safe(async (ctx) => {
+      await ctx.answerCbQuery("🔄").catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showTrafficServices(ctx, 0);
+    }));
+    bot.action(RE("tsl:(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showTrafficServices(ctx, Number(ctx.match[1]));
+    }));
+    bot.action(RE("tsv:(.+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery("⏳").catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showTrafficCountries(ctx, ctx.match[1], 0);
+    }));
+
+    async function buildTrafficCountries(sid, page, force = false) {
+      const all = await getRanges(force);
+      const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sid.toLowerCase());
+      if (!svcRanges.length) {
+        return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Traffic", `${p}_traffic`, "primary")], backP] };
+      }
+      const hitMap = await hitMapByRange(force);
+      const countries = groupByCountry(svcRanges, hitMap);
+      countries.sort((a, b) => (b.hits - a.hits) || (b.ranges.length - a.ranges.length) || a.name.localeCompare(b.name));
+      const pg = paginate(countries, page, PP_COUNTRIES);
+      const btns = pg.items.map((c) =>
+        ib(`${c.flag} ${c.code}${c.hits > 0 ? ` · 🔥${c.hits}` : ""}`, `${p}_tc:${sid}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success"));
+      const rows = [];
+      for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+      rows.push(...navRow(pg, `${p}_tcl:${sid}:${pg.page - 1}`, `${p}_tcl:${sid}:${pg.page + 1}`));
+      rows.push([ib("⬅️ Traffic", `${p}_traffic`, "primary"), backP[0]]);
+      return { text: `${head("🌍", "TRAFFIC · COUNTRY", "🟢 LIVE")}\n📱 Service ▸ <b>${esc(sid)}</b>\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`, rows };
+    }
+    async function showTrafficCountries(ctx, sid, page = 0) {
+      const built = await buildTrafficCountries(sid, page, true);
+      return view(ctx, built, () => buildTrafficCountries(sid, page, false));
+    }
+    bot.action(RE("tcl:([^:]+):(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      return showTrafficCountries(ctx, ctx.match[1], Number(ctx.match[2]));
+    }));
+
+    async function buildTrafficRanges(sid, country, page, force = false) {
+      const all = await getRanges(force);
+      const hitMap = await hitMapByRange(force);
+      const list = all
+        .filter((r) => r.sid && r.sid.toLowerCase() === sid.toLowerCase() && r.country === country)
+        .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
+      list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range));
+      if (!list.length) {
+        return { text: `${head("📈", "TOP RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `${p}_tsv:${sid}`, "primary")], backP] };
+      }
+      const pg = paginate(list, page, PP_RANGES_TRAFFIC);
+      const start = pg.page * PP_RANGES_TRAFFIC;
+      const headCode = countryShort(list[0].countryCode, list[0].country);
+      const rows = pg.items.map((r, i) => {
+        const rank = start + i + 1;
+        return [ib(`#${rank} ${r.flag} ${tr(r.range, 12)}${r.hits > 0 ? ` · 🔥${r.hits}` : ""}`, `${p}_grab:${sid}:${r.range}`, rank <= 3 ? "danger" : "success")];
+      });
+      rows.push(...navRow(pg, `${p}_tc:${sid}:${ck(country)}:${pg.page - 1}`, `${p}_tc:${sid}:${ck(country)}:${pg.page + 1}`));
+      rows.push([ib("⬅️ Countries", `${p}_tsv:${sid}`, "primary"), backP[0]]);
+      return {
+        text: `${head("📈", "TOP RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>live hit অনুযায়ী সাজানো  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
+        rows,
+      };
+    }
+    async function showTrafficRanges(ctx, sid, country, page = 0) {
+      const built = await buildTrafficRanges(sid, country, page, true);
+      return view(ctx, built, () => buildTrafficRanges(sid, country, page, false));
+    }
+    bot.action(RE("tc:([^:]+):([a-z0-9]+):(\\d+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery("⏳").catch(() => {});
+      if (!(await gate(ctx))) return;
+      const [, sid, key, page] = ctx.match;
+      const country = await countryNameByKey(key);
+      if (!country) return showTrafficCountries(ctx, sid, 0);
+      return showTrafficRanges(ctx, sid, country, Number(page));
+    }));
+
+    /* ---- CUSTOM RANGE ---- */
+    bot.action(`${p}_custom`, safe(async (ctx) => {
+      await ctx.answerCbQuery().catch(() => {});
+      if (!(await gate(ctx))) return;
+      return ask(ctx, { action: "np_range", prov: P.key },
+        `${head("🔥", "CUSTOM RANGE")}\nরেঞ্জ লিখে পাঠান\nExample: <code>88017XXXX</code>\n\n<i>শুধু সংখ্যা ও X দিন। শেষে X দিয়ে বাকি ডিজিট বোঝান।</i>\n\nবাতিল: /menu`,
+        [backP]);
+    }));
+
+    /* ---- ALLOCATE ---- */
+    async function grabNumbers(range, want = 2) {
+      const got = [];
+      const seenNums = new Set();
+      const deadline = Date.now() + 12000;
+      let round = 0;
+      while (got.length < want && Date.now() < deadline && round < 8) {
+        round++;
+        const need = want - got.length;
+        const results = await Promise.all(Array.from({ length: need }, () => P.allocate(range).catch(() => ({ ok: false }))));
+        for (const res of results) {
+          if (!res || !res.ok || !res.data) continue;
+          const full = String(res.data.number || "").replace(/\D/g, "");
+          if (full && !seenNums.has(full) && got.length < want) {
+            seenNums.add(full);
+            got.push({ number: full, country: res.data.country, operator: res.data.operator });
+          }
+        }
+        if (got.length >= want || Date.now() >= deadline) break;
+        await wait(250);
+      }
+      return got;
+    }
+
+    async function allocate(ctx, rangeId, sid, countryName = "Unknown", operatorName = "", isCustom = false) {
+      const uid = String(ctx.from.id);
+      if (!(await gate(ctx))) return;
+      const cfg = await getCfg();
+      if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backP]);
+      if (!rangeId) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backP]);
+      if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
+      if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backP]);
+      lastNum.set(uid, { range: rangeId, sid, countryName, operator: operatorName, isCustom });
+      allocating.add(uid);
+      try {
+        const range = String(rangeId).trim().toUpperCase();
+        await show(ctx, `${head("⏳", "ALLOCATING")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>নাম্বার আনা হচ্ছে, একটু অপেক্ষা করুন…</blockquote>`, [backP]);
+        const picked = await grabNumbers(range, 2);
+        if (!picked.length) {
+          return show(ctx, `${head("❌", "ALLOCATE FAILED")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>এই রেঞ্জে এখন নাম্বার নেই।</blockquote>`,
+            [[ib("🔄 Try Again", `${p}_chg`, "success")], [ib("⬅️ ফিরে যান", isCustom ? `${p}_custom` : `${p}_gcl:${sid}:0`, "primary")], backP]);
+        }
+        for (const x of picked) track(x.number, uid, x.country || countryName, x.operator || operatorName, range);
+        const c = resolveCountry(picked[0].country || (isCustom ? "" : countryName), picked[0].number);
+        const rows = picked.map((x) => [{ text: `${c.flag} ${x.number}`, copy_text: { text: x.number }, style: "success" }]);
+        rows.push([ib("🔄 Change Number", `${p}_chg`, "danger")]);
+        if (isCustom) rows.push([ib("🔥 Custom Range", `${p}_custom`, "primary")]);
+        else if (sid) rows.push([ib("🌍 Change Country", `${p}_gcl:${sid}:0`, "primary")]);
+        rows.push(backP);
+        const partial = picked.length < 2 ? `\n⚠️ <i>মাত্র ${picked.length}টি নাম্বার পাওয়া গেছে (রেঞ্জ সীমিত)</i>` : "";
+        const svcLine = !isCustom && sid ? `📱 Service ▸ <b>${esc(sid)}</b>\n` : "";
+        return show(ctx,
+          `${c.flag} <b>${esc(c.name.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>${P.name}</b>\n${svcLine}🌐 Range ▸ <code>${esc(range)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
+          rows);
+      } finally {
+        allocating.delete(uid);
+      }
+    }
+    bot.action(RE("grab:([^:]+):(.+)"), safe(async (ctx) => {
+      await ctx.answerCbQuery("⏳").catch(() => {});
+      const [, sid, range] = ctx.match;
+      const all = await getRanges();
+      const it = all.find((r) => r.range === range);
+      return allocate(ctx, range, sid, it?.country || "Unknown", it?.operator || "", false);
+    }));
+    bot.action(`${p}_chg`, safe(async (ctx) => {
+      await ctx.answerCbQuery("🔄").catch(() => {});
+      const last = lastNum.get(String(ctx.from.id));
+      if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
+      return allocate(ctx, last.range, last.sid, last.countryName, last.operator, last.isCustom);
+    }));
+
+    /* ---- POLLER ---- */
+    let polling = false;
+    async function poll() {
+      if (polling || !pending.size) return;
+      polling = true;
+      try {
+        const now = Date.now();
+        for (const [n, v] of pending) if (now - v.allocatedAt > MAX_AGE) done(n);
+        const feed = (await P.fetchFeed()) || [];
+        for (const o of feed) {
+          const oid = o.id;
+          if (!oid || seenOtps.has(oid)) continue;
+          const info = pending.get(o.number);
+          if (!info) continue;
+          if (o.t && o.t < info.allocatedAt - 120000) continue; // নাম্বার নেওয়ার আগের পুরনো OTP
+          try {
+            await claimsCol.doc(oid).create({ number: o.number, time: Date.now(), userId: info.userId });
+          } catch (e) {
+            if (e.code === 6) { seenOtps.add(oid); continue; }
+            throw e;
+          }
+          seenOtps.add(oid);
+          try {
+            const otp = extractOtp(o.message) || String(o.otp || "");
+            if (!otp) { await claimsCol.doc(oid).delete().catch(() => {}); seenOtps.delete(oid); continue; }
+            await credit({ number: o.number, otp, full: o.message, info });
+            done(o.number);
+          } catch (e) {
+            console.error("credit failed:", e.message);
+            await claimsCol.doc(oid).delete().catch(() => {});
+            seenOtps.delete(oid);
+          }
+        }
+      } catch (e) { console.error(`Poll error ${P.name}:`, e.message); }
+      finally { polling = false; }
+    }
+
+    async function start() {
+      if (!P.enabled()) { console.log(`ℹ️ ${P.name} বন্ধ — ${P.envName} সেট করা নেই।`); return; }
+      const ok = await P.fetchServices().catch(() => null);
+      if (ok) console.log(`✅ ${P.name} API key OK (${ok.length} services)`);
+      else console.error(`❌ ${P.name} API key কাজ করছে না / API সাড়া দিচ্ছে না।`);
+      await loadPending();
+      setInterval(poll, POLL_INTERVAL);
+      setInterval(loadPending, 60 * 1000);
+    }
+
+    return { refresh, start, userPending, pending, allocate, enabled: P.enabled };
   }
 
-  bot.action(/^np_grab:([^:]+):(.+)$/, safe(async (ctx) => {
-    await ctx.answerCbQuery("⏳").catch(() => {});
-    const [, sid, range] = ctx.match;
-    const all = await getRanges();
-    const it = all.find((r) => r.range === range);
-    return allocate(ctx, range, sid, it?.country || "Unknown", it?.operator || "", false);
-  }));
-  bot.action("np_chg", safe(async (ctx) => {
-    await ctx.answerCbQuery("🔄").catch(() => {});
-    const last = lastNum.get(String(ctx.from.id));
-    if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
-    return allocate(ctx, last.range, last.sid, last.countryName, last.operator, last.isCustom);
-  }));
+  /* ---- V1 definition (Voltex) ---- */
+  providers.v1 = makeDirect({
+    key: "v1", p: "n1", name: "V1", envName: "VOLTEX_API_KEY",
+    pendCol: "voltex_pending_numbers", claimCol: "voltex_otp_claims",
+    enabled: () => !!V_KEY,
+    fetchServices: async () => (await getLiveAccess())?.services || null,
+    fetchConsole: async () => (await getConsoleFeed())?.hits || null,
+    parseRange: (r) => ({ range: String(r || "").trim().toUpperCase(), country: "" }),
+    allocate: async (range) => {
+      const r = await allocateNumber(range);
+      if (!r.ok || !r.data) return { ok: false };
+      const x = r.data;
+      return { ok: true, data: { number: x.no_plus_number || x.full_number, country: x.country, operator: x.operator } };
+    },
+    fetchFeed: async () => {
+      const data = await getSuccessOtp();
+      if (!data) return null;
+      return (data.otps || []).map((o) => ({
+        id: String(o.otp_id), number: String(o.number || "").replace(/\D/g, ""), message: String(o.message || ""), t: 0,
+      }));
+    },
+  });
+
+  /* ---- V2 definition (YE SMS) ---- */
+  providers.v2 = makeDirect({
+    key: "v2", p: "n2", name: "V2", envName: "YESMS_API_KEY",
+    pendCol: "yesms_pending_numbers", claimCol: "yesms_otp_claims",
+    enabled: () => !!Y_KEY,
+    fetchServices: async () => {
+      const r = await yreq("GET", "/live_access_data");
+      const m = r.ok ? r.data?.ranges : null;
+      if (!m || typeof m !== "object") return null;
+      return Object.entries(m)
+        .filter(([, a]) => Array.isArray(a) && a.length)
+        .map(([sid, arr]) => ({ sid, ranges: arr, last_at: yLast.get(sid.toLowerCase()) || 0 }));
+    },
+    fetchConsole: async () => {
+      const r = await yreq("GET", "/console_data");
+      const table = r.ok ? r.data?.table : null;
+      if (!Array.isArray(table)) return null;
+      const seen = new Set();
+      const out = [];
+      for (const row of table) {
+        if (!Array.isArray(row)) continue;
+        const k = `${row[0]}|${row[2]}|${row[4]}`;
+        if (seen.has(k)) continue; // পোর্টাল একই মেসেজ বারবার পাঠায় — একবারই গোনা
+        seen.add(k);
+        const t = Number(row[4]) || 0;
+        const sv = String(row[3] || "").toLowerCase();
+        if (sv && t > (yLast.get(sv) || 0)) yLast.set(sv, t);
+        out.push({ range: String(row[0] || "").toUpperCase(), service: row[3], t });
+      }
+      return out;
+    },
+    // "🔥 🇳🇬 Nigeria | 234X70" → { range: "234X70", country: "Nigeria" }
+    parseRange: (raw) => {
+      const s = String(raw || "");
+      const i = s.lastIndexOf("|");
+      const range = (i >= 0 ? s.slice(i + 1) : s).trim().toUpperCase();
+      const left = i >= 0 ? s.slice(0, i) : "";
+      const country = left
+        .replace(/[\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .replace(/[^\p{L}\p{M}\s'’.\-()]/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return { range, country };
+    },
+    allocate: async (range) => {
+      const r = await yreq("POST", "/allocate_number", { range_id: String(range || "").trim() }, 1);
+      if (!r.ok) return { ok: false };
+      const x = r.data?.data;
+      if (!x) return { ok: false };
+      return { ok: true, data: { number: x.no_plus_number || x.full_number, country: x.country, operator: x.operator } };
+    },
+    fetchFeed: async () => {
+      const r = await yreq("GET", "/user_numbers");
+      if (!r.ok) return null;
+      return (r.data?.logs || []).map((l) => {
+        const number = String(l.number || "").replace(/\D/g, "");
+        return {
+          id: crypto.createHash("md5").update(`${number}|${l.otp_code}|${l.time}`).digest("hex"),
+          number, message: String(l.full_message || ""), otp: String(l.otp_code || ""), t: yeTime(l.time),
+        };
+      });
+    },
+  });
 
   /* ================================================================ */
-  /*  V2 — IVAS PANEL  (account-এর নাম্বার পুল থেকে ধার দেওয়া হয়)       */
+  /*  V3 — IVAS PANEL  (account-এর নাম্বার পুল থেকে ধার দেওয়া হয়)       */
   /*  IVAS API শুধু পড়ার (numbers / messages) — তাই bot নিজে নাম্বার     */
   /*  "lease" দেয়, মেসেজ এলে যার lease তাকে OTP + টাকা দেয়।              */
   /* ================================================================ */
-  const ivOn = () => !!IVAS_KEY;
-  let ivNumbers = [];                       // [{number, range, country, flag, code}]
-  const pending2 = new Map();               // number → { userId, range, country, allocatedAt }
+  let ivNumbers = [];
+  const pending2 = new Map();
   const pend2Col = db.collection("ivas_pending_numbers");
   const claims2Col = db.collection("ivas_claims");
-  const lastLeased = new Map();             // number → সর্বশেষ কখন দেওয়া হয়েছে (ঘুরিয়ে দেওয়ার জন্য)
-  const lastNum2 = new Map();               // uid → { range, numbers }
+  const lastLeased = new Map();
+  const lastNum2 = new Map();
   const seenMsgs = new Set();
   const seenDeliveries = new Set();
-  let hits2 = [];                           // [{ range, t }]
+  let hits2 = [];
   const ivSt = { numbersAt: 0, msgAt: 0, polls: 0, webhooks: 0, lastWebhookAt: 0, lastHookErr: "" };
 
-  function userPendingAll(uid) {
-    return [...userPending(uid), ...[...pending2.entries()].filter(([, v]) => v.userId === uid)];
-  }
   const errText = (r) => `${r?.status || "ERR"} ${r?.code || r?.err?.message || ""}`.trim();
 
   function ivInfoOf(n) {
@@ -1175,7 +1234,6 @@ export function createNumberPanel(d) {
     return dsv !== "OTP" ? dsv : (s || "OTP");
   };
 
-  /* ---- lease (pending2) ---- */
   function track2(number, uid, country, range) {
     const v = { userId: String(uid), number, country: country || "Unknown", range: range || "", allocatedAt: Date.now() };
     pending2.set(number, v);
@@ -1201,7 +1259,6 @@ export function createNumberPanel(d) {
     } catch (e) { console.error("loadPending2:", e.message); }
   }
 
-  /* ---- numbers / messages ---- */
   async function syncIvasNumbers() {
     if (!ivOn()) return;
     const all = [];
@@ -1247,10 +1304,7 @@ export function createNumberPanel(d) {
         await claims2Col.doc(fp).delete().catch(() => {});
         seenMsgs.delete(fp);
       }
-      return;
     }
-    // কারো lease নেই → শুধু Facebook OTP থেকে রেঞ্জের digit শেখা
-    if (otp && range && (isFbText(text) || /facebook/i.test(m.source || ""))) learn(range, otp.length);
   }
 
   let ivPolling = false;
@@ -1259,12 +1313,12 @@ export function createNumberPanel(d) {
     ivPolling = true;
     try {
       cleanupLeases();
-      const start = new Date(Date.now() - 86400000).toISOString().slice(0, 10); // গতকাল + আজ (UTC)
+      const start = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
       const r = await ivreq("/messages", { per_page: 200, start_date: start });
       if (!r.ok) return;
       ivSt.msgAt = Date.now();
       ivSt.polls++;
-      for (const m of (r.data?.data || []).slice().reverse()) await processIvasMessage(m); // পুরনো আগে
+      for (const m of (r.data?.data || []).slice().reverse()) await processIvasMessage(m);
       hits2 = hits2.filter((h) => h.t > Date.now() - HITS_WINDOW);
     } catch (e) { console.error("pollIvasMessages:", e.message); }
     finally { ivPolling = false; }
@@ -1279,16 +1333,16 @@ export function createNumberPanel(d) {
     }
     ivSt.webhooks++;
     ivSt.lastWebhookAt = Date.now();
-    const d = ev?.data || {};
+    const dd = ev?.data || {};
     switch (ev?.event) {
-      case "message.received": return processIvasMessage(d);
+      case "message.received": return processIvasMessage(dd);
       case "number.assigned": {
-        const n = ivInfoOf({ number: d.number, range_name: d.range_name });
+        const n = ivInfoOf({ number: dd.number, range_name: dd.range_name });
         if (n.number && !ivNumbers.some((x) => x.number === n.number)) ivNumbers.push(n);
         return;
       }
       case "number.removed": {
-        const num2 = String(d.number || "").replace(/\D/g, "");
+        const num2 = String(dd.number || "").replace(/\D/g, "");
         ivNumbers = ivNumbers.filter((x) => x.number !== num2);
         return;
       }
@@ -1315,7 +1369,7 @@ export function createNumberPanel(d) {
         res.writeHead(401);
         return res.end();
       }
-      res.writeHead(200, { "Content-Type": "text/plain" }); // ৫ সেকেন্ডের মধ্যে আগে উত্তর
+      res.writeHead(200, { "Content-Type": "text/plain" });
       res.end("ok");
       let ev;
       try { ev = JSON.parse(raw); } catch { return; }
@@ -1323,12 +1377,12 @@ export function createNumberPanel(d) {
     });
   }
 
-  async function startV2() {
-    if (!ivOn()) { console.log("ℹ️ V2 (IVAS) বন্ধ — IVAS_API_KEY সেট করা নেই।"); return; }
+  async function startV3() {
+    if (!ivOn()) { console.log("ℹ️ V3 বন্ধ — IVAS_API_KEY সেট করা নেই।"); return; }
     await loadPending2();
     const r = await ivreq("/numbers", { per_page: 1 });
-    if (r.ok) console.log(`✅ IVAS API OK (${r.data?.pagination?.total ?? "?"} numbers)`);
-    else console.error(`❌ IVAS API সমস্যা: ${errText(r)} — IVAS_API_KEY ঠিক আছে? (401 = key ভুল/regenerate হয়েছে)`);
+    if (r.ok) console.log(`✅ V3 API OK (${r.data?.pagination?.total ?? "?"} numbers)`);
+    else console.error(`❌ V3 API সমস্যা: ${errText(r)} — IVAS_API_KEY ঠিক আছে? (401 = key ভুল/regenerate হয়েছে)`);
     console.log(IVAS_SECRET
       ? `✅ IVAS webhook চালু → ${(process.env.RENDER_EXTERNAL_URL || "https://<আপনার-render-url>")}/ivas-webhook`
       : "ℹ️ IVAS_WEBHOOK_SECRET নেই — শুধু polling চলছে (webhook দিলে OTP আরও দ্রুত আসবে)");
@@ -1337,7 +1391,6 @@ export function createNumberPanel(d) {
     setInterval(() => pollIvasMessages().catch((e) => console.error("pollIvasMessages:", e.message)), IVAS_POLL_MS);
   }
 
-  /* ---- pool helpers ---- */
   const isFree = (n) => !pending2.has(n.number);
   function hitMap2() {
     const cutoff = Date.now() - HITS_WINDOW;
@@ -1345,11 +1398,10 @@ export function createNumberPanel(d) {
     for (const h of hits2) if (h.t > cutoff) m.set(h.range, (m.get(h.range) || 0) + 1);
     return m;
   }
-  function groupRanges(filter, cfg) {
+  function groupRanges() {
     const hm = hitMap2();
     const byRange = new Map();
     for (const n of ivNumbers) {
-      if (!matchesMode(n.range, filter, cfg)) continue;
       const e = byRange.get(n.range) || { range: n.range, country: n.country, code: n.code, flag: n.flag, total: 0, avail: 0, hits: hm.get(n.range) || 0 };
       e.total++;
       if (isFree(n)) e.avail++;
@@ -1360,188 +1412,165 @@ export function createNumberPanel(d) {
   const rangeNameByKey = (key) => [...new Set(ivNumbers.map((n) => n.range))].find((r) => ck(r) === key) || "";
   const countryNameByKey2 = (key) => [...new Set(ivNumbers.map((n) => n.country))].find((c) => ck(c) === key) || "";
 
-  /* ---- V2 menu ---- */
-  async function v2Text(u) {
-    if (!ivOn()) return `${head("📡", "V2 PANEL", "IVAS")}\n🔴 V2 এখনো চালু হয়নি।\n<blockquote>Admin: Render Environment-এ <code>IVAS_API_KEY</code> দিন।</blockquote>`;
+  async function v3Text(u) {
+    if (!ivOn()) return `${head("📡", "V3 PANEL")}\n🔴 V3 এখনো চালু হয়নি।`;
     const free = ivNumbers.filter(isFree).length;
     const hits = [...hitMap2().values()].reduce((a, b) => a + b, 0);
     return (
-      `${head("📡", "V2 PANEL", "IVAS")}\n` +
+      `${head("📡", "V3 PANEL")}\n` +
       `💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n🔑 OTP ▸ <b>${Number(u.otpCount) || 0}</b>\n\n` +
       `📦 পুল ▸ <b>${ivNumbers.length}</b> নাম্বার  •  🟢 ফ্রি <b>${free}</b>\n🔥 শেষ ৩০ মিনিটে hit ▸ <b>${hits}</b>\n\n` +
       `<blockquote>📞 Get Number — দেশ → রেঞ্জ বেছে ফ্রি নাম্বার\n📈 Live Traffic — এখন যেসব রেঞ্জে OTP আসছে\n⏱ নাম্বার ${Math.round(LEASE_MS / 60000)} মিনিট আপনার নামে থাকে</blockquote>` +
       (ivNumbers.length ? "" : "\n\n⏳ <i>নাম্বার লিস্ট লোড হচ্ছে… ১ মিনিট পর আবার দেখুন।</i>")
     );
   }
-  bot.action("np_v2", safe(async (ctx) => {
+  bot.action("np_v3", safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     const u = await gate(ctx);
     if (!u) return;
     await clearSession(ctx.from.id);
-    return show(ctx, await v2Text(u), [
-      [bt("p_get", { callback_data: "np2_cl:a:0", style: "success" }), bt("p_traffic", { callback_data: "np2_tp:0", style: "danger" })],
+    return show(ctx, await v3Text(u), [
+      [bt("p_get", { callback_data: "np3_cl:0", style: "success" }), bt("p_traffic", { callback_data: "np3_tp:0", style: "danger" })],
       [ib("⬅️ Number Panel", "np_home", "primary")],
     ]);
   }));
 
-  /* ---- V2 Get Number: Country → Range ---- */
-  async function buildV2Countries(filter, page) {
-    const cfg = await getCfg();
+  async function buildV3Countries(page) {
     if (!ivNumbers.length) {
-      return { text: `${head("🌍", "COUNTRY", "IVAS")}\n❌ পুলে এখন কোনো নাম্বার নেই।`, rows: [[ib("🔄 Retry", "np2_cl:a:0", "success")], backV2] };
+      return { text: `${head("🌍", "COUNTRY")}\n❌ পুলে এখন কোনো নাম্বার নেই।`, rows: [[ib("🔄 Retry", "np3_cl:0", "success")], backV3] };
     }
-    const all = groupRanges("a", cfg);
-    const ranges = groupRanges(filter, cfg);
     const byC = new Map();
-    for (const r of ranges) {
+    for (const r of groupRanges()) {
       const e = byC.get(r.country) || { name: r.country, code: r.code, flag: r.flag, hits: 0, avail: 0, ranges: 0 };
       e.hits += r.hits; e.avail += r.avail; e.ranges++;
       byC.set(r.country, e);
     }
-    const list = [...byC.values()].sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.name.localeCompare(b.name)); // ⚡ live sort
-    const cntS = all.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
-    const cntL = all.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
-
+    const list = [...byC.values()].sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.name.localeCompare(b.name));
     const pg = paginate(list, page, PP_COUNTRIES);
     const btns = pg.items.map((c) =>
-      ib(`${c.flag} ${c.code}${c.hits ? ` · 🔥${c.hits}` : ""} · ${c.avail}`, `np2_rl:${filter}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success"));
+      ib(`${c.flag} ${c.code}${c.hits ? ` · 🔥${c.hits}` : ""} · ${c.avail}`, `np3_rl:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success"));
     const rows = [];
-    if (cntS > 0 || cntL > 0) {
-      const f = [ib(filter === "a" ? "✅ All" : "All", "np2_cl:a:0", filter === "a" ? "success" : "primary")];
-      if (cntS > 0) f.push(ib(filter === "s" ? "✅ 5" : "5", "np2_cl:s:0", filter === "s" ? "success" : "primary"));
-      if (cntL > 0) f.push(ib(filter === "l" ? "✅ 6+" : "6+", "np2_cl:l:0", filter === "l" ? "success" : "primary"));
-      rows.push(f);
-    }
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np2_cl:${filter}:${pg.page - 1}`, `np2_cl:${filter}:${pg.page + 1}`));
-    rows.push([ib("⬅️ V2 Panel", "np_v2", "primary"), back[0]]);
-    const fl = filterLabel(filter);
+    rows.push(...navRow(pg, `np3_cl:${pg.page - 1}`, `np3_cl:${pg.page + 1}`));
+    rows.push([ib("⬅️ V3 Panel", "np_v3", "primary"), back[0]]);
     const text =
-      `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>V2 · IVAS</b>${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n🗺 দেশ ▸ <b>${pg.total}</b>\n` +
+      `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>V3</b>\n🗺 দেশ ▸ <b>${pg.total}</b>\n` +
       `<blockquote>🔥 = live hit  •  শেষের সংখ্যা = ফ্রি নাম্বার</blockquote>`;
     return { text, rows };
   }
-  async function showV2Countries(ctx, filter = "a", page = 0) {
-    const built = await buildV2Countries(filter, page);
-    if (ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildV2Countries(filter, page), kind: "v2" });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np2_cl:([asl]):(\d+)$/, safe(async (ctx) => {
+  bot.action(/^np3_cl:(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
     if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
-    return showV2Countries(ctx, ctx.match[1], Number(ctx.match[2]));
+    const page = Number(ctx.match[1]);
+    const built = await buildV3Countries(page);
+    return show(ctx, built.text, built.rows, { auto: () => buildV3Countries(page), kind: "v3" });
   }));
 
-  async function buildV2Ranges(filter, country, page) {
-    const cfg = await getCfg();
-    const list = groupRanges(filter, cfg).filter((r) => r.country === country)
-      .sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range)); // ⚡ live sort
+  async function buildV3Ranges(country, page) {
+    const list = groupRanges().filter((r) => r.country === country)
+      .sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range));
     if (!list.length) {
-      return { text: `${head("📞", "RANGES", "IVAS")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np2_cl:${filter}:0`, "primary")], backV2] };
+      return { text: `${head("📞", "RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", "np3_cl:0", "primary")], backV3] };
     }
     const pg = paginate(list, page, PP_RANGES_GET);
     const btns = pg.items.map((r) =>
-      ib(`${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np2_grab:${ck(r.range)}`, r.hits > 0 ? "danger" : "success"));
+      ib(`${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np3_grab:${ck(r.range)}`, r.hits > 0 ? "danger" : "success"));
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
-    rows.push(...navRow(pg, `np2_rl:${filter}:${ck(country)}:${pg.page - 1}`, `np2_rl:${filter}:${ck(country)}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Countries", `np2_cl:${filter}:0`, "primary"), back[0]]);
-    const fl = filterLabel(filter);
+    rows.push(...navRow(pg, `np3_rl:${ck(country)}:${pg.page - 1}`, `np3_rl:${ck(country)}:${pg.page + 1}`));
+    rows.push([ib("⬅️ Countries", "np3_cl:0", "primary"), back[0]]);
     const text =
-      `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${list[0].code}</b> · ${esc(country)}${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n` +
+      `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${list[0].code}</b> · ${esc(country)}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n` +
       `<blockquote>🔥 = live hit  •  শেষের সংখ্যা = ফ্রি নাম্বার\n👇 রেঞ্জে চাপলেই ২টি নাম্বার পাবেন</blockquote>`;
     return { text, rows };
   }
-  async function showV2Ranges(ctx, filter, country, page = 0) {
-    const built = await buildV2Ranges(filter, country, page);
-    if (ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildV2Ranges(filter, country, page), kind: "v2" });
-    return show(ctx, built.text, built.rows);
-  }
-  bot.action(/^np2_rl:([asl]):([a-z0-9]+):(\d+)$/, safe(async (ctx) => {
+  bot.action(/^np3_rl:([a-z0-9]+):(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
     if (!(await gate(ctx))) return;
-    const [, filter, key, page] = ctx.match;
+    const [, key, pageS] = ctx.match;
     const country = countryNameByKey2(key);
-    if (!country) return showV2Countries(ctx, filter, 0);
-    return showV2Ranges(ctx, filter, country, Number(page));
+    if (!country) {
+      const b0 = await buildV3Countries(0);
+      return show(ctx, b0.text, b0.rows, { auto: () => buildV3Countries(0), kind: "v3" });
+    }
+    const page = Number(pageS);
+    const built = await buildV3Ranges(country, page);
+    return show(ctx, built.text, built.rows, { auto: () => buildV3Ranges(country, page), kind: "v3" });
   }));
 
-  /* ---- V2 Live Traffic: সব রেঞ্জ, hit অনুযায়ী ---- */
   const PP_TOP2 = 6;
-  async function buildV2Top(page) {
-    const cfg = await getCfg();
-    const list = groupRanges("a", cfg).sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range));
-    if (!list.length) return { text: `${head("📈", "LIVE TRAFFIC", "IVAS")}\n❌ এখন কোনো ডেটা নেই।`, rows: [[ib("🔄 Retry", "np2_tp:0", "success")], backV2] };
+  async function buildV3Top(page) {
+    const list = groupRanges().sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range));
+    if (!list.length) return { text: `${head("📈", "LIVE TRAFFIC")}\n❌ এখন কোনো ডেটা নেই।`, rows: [[ib("🔄 Retry", "np3_tp:0", "success")], backV3] };
     const pg = paginate(list, page, PP_TOP2);
     const start = pg.page * PP_TOP2;
-    const rows = pg.items.map((r, i) => [ib(`#${start + i + 1} ${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np2_grab:${ck(r.range)}`, start + i < 3 && r.hits > 0 ? "danger" : "success")]);
-    rows.push(...navRow(pg, `np2_tp:${pg.page - 1}`, `np2_tp:${pg.page + 1}`));
-    rows.push([ib("⬅️ V2 Panel", "np_v2", "primary"), back[0]]);
+    const rows = pg.items.map((r, i) => [ib(`#${start + i + 1} ${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np3_grab:${ck(r.range)}`, start + i < 3 && r.hits > 0 ? "danger" : "success")]);
+    rows.push(...navRow(pg, `np3_tp:${pg.page - 1}`, `np3_tp:${pg.page + 1}`));
+    rows.push([ib("⬅️ V3 Panel", "np_v3", "primary"), back[0]]);
     const total = [...hitMap2().values()].reduce((a, b) => a + b, 0);
     return {
-      text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>V2 · IVAS</b>\n🔥 শেষ ৩০ মিনিটে hit ▸ <b>${total}</b>\n<blockquote>hit অনুযায়ী সাজানো  •  শেষের সংখ্যা = ফ্রি নাম্বার\n👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
+      text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>V3</b>\n🔥 শেষ ৩০ মিনিটে hit ▸ <b>${total}</b>\n<blockquote>hit অনুযায়ী সাজানো  •  শেষের সংখ্যা = ফ্রি নাম্বার\n👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
       rows,
     };
   }
-  bot.action(/^np2_tp:(\d+)$/, safe(async (ctx) => {
+  bot.action(/^np3_tp:(\d+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("🔄").catch(() => {});
     if (!(await gate(ctx))) return;
     const page = Number(ctx.match[1]);
-    const built = await buildV2Top(page);
-    return show(ctx, built.text, built.rows, { auto: () => buildV2Top(page), kind: "v2" });
+    const built = await buildV3Top(page);
+    return show(ctx, built.text, built.rows, { auto: () => buildV3Top(page), kind: "v3" });
   }));
 
-  /* ---- V2 Allocate ---- */
-  async function allocate2(ctx, rangeName) {
+  async function allocate3(ctx, rangeName) {
     const uid = String(ctx.from.id);
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
     if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
-    if (!ivOn()) return show(ctx, "🔴 V2 এখনো চালু হয়নি।", [back]);
-    if (!rangeName) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backV2]);
+    if (!ivOn()) return show(ctx, "🔴 V3 এখনো চালু হয়নি।", [back]);
+    if (!rangeName) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backV3]);
     if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
-    if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backV2]);
+    if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backV3]);
     allocating.add(uid);
     try {
       cleanupLeases();
       const free = ivNumbers
         .filter((n) => n.range === rangeName && isFree(n))
-        .sort((a, b) => ((lastLeased.get(a.number) || 0) - (lastLeased.get(b.number) || 0)) || (Math.random() - 0.5)); // যেটা সবচেয়ে কম ব্যবহৃত
+        .sort((a, b) => ((lastLeased.get(a.number) || 0) - (lastLeased.get(b.number) || 0)) || (Math.random() - 0.5));
       const picked = free.slice(0, 2);
       if (!picked.length) {
         return show(ctx, `${head("❌", "কোনো ফ্রি নাম্বার নেই")}\n🌐 Range ▸ <code>${esc(rangeName)}</code>\n<blockquote>এই রেঞ্জের সব নাম্বার এখন অন্যদের কাছে। একটু পরে চেষ্টা করুন বা অন্য রেঞ্জ নিন।</blockquote>`,
-          [[ib("🔄 Try Again", "np2_chg", "success")], [ib("⬅️ ফিরে যান", "np2_cl:a:0", "primary")], backV2]);
+          [[ib("🔄 Try Again", "np3_chg", "success")], [ib("⬅️ ফিরে যান", "np3_cl:0", "primary")], backV3]);
       }
       for (const n of picked) { track2(n.number, uid, n.country, n.range); lastLeased.set(n.number, Date.now()); }
-      lastNum2.set(uid, { range: rangeName, numbers: picked.map((p) => p.number) });
+      lastNum2.set(uid, { range: rangeName, numbers: picked.map((x) => x.number) });
       const c = picked[0];
-      const rows = picked.map((p) => [{ text: `${p.flag} ${p.number}`, copy_text: { text: p.number }, style: "success" }]);
-      rows.push([ib("🔄 Change Number", "np2_chg", "danger")]);
-      rows.push([ib("🌍 Change Country", "np2_cl:a:0", "primary")]);
-      rows.push(backV2);
+      const rows = picked.map((x) => [{ text: `${x.flag} ${x.number}`, copy_text: { text: x.number }, style: "success" }]);
+      rows.push([ib("🔄 Change Number", "np3_chg", "danger")]);
+      rows.push([ib("🌍 Change Country", "np3_cl:0", "primary")]);
+      rows.push(backV3);
       const partial = picked.length < 2 ? `\n⚠️ <i>মাত্র ${picked.length}টি ফ্রি নাম্বার ছিল</i>` : "";
       return show(ctx,
-        `${c.flag} <b>${esc(c.country.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>V2 · IVAS</b>\n🌐 Range ▸ <code>${esc(rangeName)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>\n⏱ মেয়াদ ▸ <b>${Math.round(LEASE_MS / 60000)} মিনিট</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
+        `${c.flag} <b>${esc(c.country.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>V3</b>\n🌐 Range ▸ <code>${esc(rangeName)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>\n⏱ মেয়াদ ▸ <b>${Math.round(LEASE_MS / 60000)} মিনিট</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
         rows);
     } finally {
       allocating.delete(uid);
     }
   }
-  bot.action(/^np2_grab:([a-z0-9]+)$/, safe(async (ctx) => {
+  bot.action(/^np3_grab:([a-z0-9]+)$/, safe(async (ctx) => {
     await ctx.answerCbQuery("⏳").catch(() => {});
-    return allocate2(ctx, rangeNameByKey(ctx.match[1]));
+    return allocate3(ctx, rangeNameByKey(ctx.match[1]));
   }));
-  bot.action("np2_chg", safe(async (ctx) => {
+  bot.action("np3_chg", safe(async (ctx) => {
     await ctx.answerCbQuery("🔄").catch(() => {});
     const uid = String(ctx.from.id);
     const last = lastNum2.get(uid);
     if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
-    for (const n of last.numbers) {                 // আগের নাম্বার ছেড়ে দিন (OTP না এলে) — অন্যরা নিতে পারবে
+    for (const n of last.numbers) {
       if (pending2.get(n)?.userId === uid) { done2(n); lastLeased.set(n, Date.now()); }
     }
-    return allocate2(ctx, last.range);
+    return allocate3(ctx, last.range);
   }));
 
   /* ================================================================ */
@@ -1682,8 +1711,7 @@ export function createNumberPanel(d) {
     return show(ctx, `${head("📱", "OTP ADMIN PANEL")}\n<i>Withdraw approve/reject → মূল Admin Panel-এর 💸 Withdrawals থেকে।\nBroadcast → 📢 Broadcast থেকে।</i>`, [
       [ib("👥 Users", "npa_ul_0", "primary"), ib("⚙️ Settings", "npa_set", "primary")],
       [ib("📊 Stats", "npa_stats", "success"), ib("🎨 Customize", "npa_ui", "success")],
-      [ib("🔢 OTP Digit (5 / 6+)", "npa_dg", "success"), ib("🌐 Bulk Rate", "npa_bulk", "danger")],
-      [ib("📡 V2 (IVAS) Status", "npa_iv", "primary")],
+      [ib("🌐 Bulk Rate", "npa_bulk", "danger"), ib("📡 Panels Status", "npa_iv", "primary")],
     ]);
   }
   bot.hears(adminLabel, adminOnly(async (ctx) => adminHome(ctx)));
@@ -1701,7 +1729,6 @@ export function createNumberPanel(d) {
       [ib(`⬇️ Min Withdraw (${c.minWithdraw})`, "npa_e_minWithdraw", "primary"), ib(`🎁 Refer (${c.referComm})`, "npa_e_referComm", "primary")],
       [ib(`Panel: ${c.enabled ? "ON ✅" : "OFF ❌"}`, "npa_t_enabled", c.enabled ? "success" : "danger")],
       [ib(`Withdraw: ${c.withdrawEnabled ? "ON ✅" : "OFF ❌"}`, "npa_t_withdrawEnabled", c.withdrawEnabled ? "success" : "danger")],
-      [ib("🔢 OTP Digit Settings", "npa_dg", "primary")],
       aBack,
     ]);
   }
@@ -1709,55 +1736,11 @@ export function createNumberPanel(d) {
   A("npa_set", cfgScreen);
   A(/^npa_e_(perOtp|minOtp|minWithdraw|referComm)$/, (ctx) =>
     ask(ctx, { action: "npa_cfg", field: ctx.match[1] }, `${head("✏️", CFG_LABEL[ctx.match[1]])}\nনতুন মান (শুধু সংখ্যা)\nবাতিল: /menu`, [aBack]));
-  A(/^npa_t_(enabled|withdrawEnabled|showUnknown)$/, async (ctx) => {
+  A(/^npa_t_(enabled|withdrawEnabled)$/, async (ctx) => {
     const c = await getCfg(true);
     await saveCfg({ [ctx.match[1]]: !c[ctx.match[1]] });
-    return ctx.match[1] === "showUnknown" ? digitScreen(ctx) : cfgScreen(ctx);
+    return cfgScreen(ctx);
   });
-
-  async function digitScreen(ctx) {
-    const c = await getCfg(true);
-    const items = await getRanges();
-    const cnt = { short: 0, long: 0, both: 0, unknown: 0 };
-    for (const i of items) cnt[classOf(i.range)]++;
-    return show(ctx,
-      `${head("🔢", "OTP DIGIT SETTINGS")}\nলাইভ রেঞ্জ: <b>${items.length}</b>\n• 5 Digit: <b>${cnt.short}</b>\n• 6+ Digit: <b>${cnt.long}</b>\n• মিশ্র: <b>${cnt.both}</b>\n• অজানা: <b>${cnt.unknown}</b>\n\n` +
-      `অজানা রেঞ্জ দেখানো: <b>${c.showUnknown ? "ON ✅" : "OFF ❌"}</b>\n\n` +
-      `<i>Facebook OTP থেকে নিজে শেখে। হাতে ঠিক করতে:</i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>`,
-      [[ib(`অজানা: ${c.showUnknown ? "ON ✅" : "OFF ❌"}`, "npa_t_showUnknown", c.showUnknown ? "success" : "danger")],
-       [ib("🔄 Refresh", "npa_dg", "primary")], [ib("⚙️ Settings", "npa_set", "primary"), aBack[0]]]);
-  }
-  A("npa_dg", digitScreen);
-
-  bot.command("rangedigits", adminOnly(async (ctx) => {
-    const p = ctx.message.text.trim().split(/\s+/).slice(1);
-    const valid = ["short", "long", "both", "clear"];
-    const normV = (v) => ({ "5": "short", "6": "long", "6+": "long" }[v] || v); // 5 = ৫ ডিজিট, 6 = ৬+ ডিজিট
-    const usage = "⚠️ ব্যবহার:\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\n\nমান: short (5) • long (6+) • both • clear";
-    const apply = async (ranges, val) => {
-      const patch = {};
-      for (const r of ranges) {
-        const k = rangeKey(r);
-        if (val === "clear") { delete classOv[k]; patch[k] = FieldValue.delete(); }
-        else { classOv[k] = val; patch[k] = val; }
-      }
-      await classRef.set(patch, { merge: true });
-    };
-    if (p[0] === "country") {
-      const val = normV((p[p.length - 1] || "").toLowerCase());
-      const name = p.slice(1, -1).join(" ").toLowerCase();
-      if (!name || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
-      const items = (await getRanges()).filter((i) => String(i.country || "").toLowerCase() === name);
-      if (!items.length) return ctx.reply("❌ কোনো লাইভ রেঞ্জ নেই।");
-      await apply(items.map((i) => i.range), val);
-      return ctx.reply(`✅ ${items.length}টি রেঞ্জ → ${val}`);
-    }
-    const range = (p[0] || "").toUpperCase();
-    const val = normV((p[1] || "").toLowerCase());
-    if (!range || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
-    await apply([range], val);
-    return ctx.reply(`✅ ${range} → ${val}`);
-  }));
 
   bot.command("dbgcountry", adminOnly(async (ctx) => {
     const p = ctx.message.text.trim().split(/\s+/).slice(1);
@@ -1769,18 +1752,22 @@ export function createNumberPanel(d) {
       { parse_mode: "HTML" });
   }));
 
+  // অ্যাডমিন-ওনলি: এখানে আসল প্যানেলের নাম দেখানো হয় (ইউজার দেখে না)
   async function ivasScreen(ctx) {
     const free = ivNumbers.filter(isFree).length;
     const hits = [...hitMap2().values()].reduce((a, b) => a + b, 0);
     const ago = (t) => (t ? `${Math.round((Date.now() - t) / 1000)}s আগে` : "—");
     const base = process.env.RENDER_EXTERNAL_URL || "https://<আপনার-render-url>";
     return show(ctx,
-      `${head("📡", "V2 · IVAS STATUS")}\n🔑 API key ▸ <b>${IVAS_KEY ? "✅ সেট আছে" : "❌ নেই"}</b>\n🪝 Webhook ▸ <b>${IVAS_SECRET ? "✅ secret সেট" : "❌ secret নেই"}</b>\n\n` +
-      `📦 পুল ▸ <b>${ivNumbers.length}</b> • ফ্রি <b>${free}</b> • lease <b>${pending2.size}</b>\n🔥 hit (৩০ মি) ▸ <b>${hits}</b>\n\n` +
+      `${head("📡", "PANELS STATUS")}\n` +
+      `⚡ V1 (Voltex) key ▸ <b>${V_KEY ? "✅" : "❌"}</b> • pending <b>${providers.v1.pending.size}</b>\n` +
+      `⚡ V2 (YE SMS) key ▸ <b>${Y_KEY ? "✅" : "❌"}</b> • pending <b>${providers.v2.pending.size}</b>\n` +
+      `📡 V3 (IVAS) key ▸ <b>${IVAS_KEY ? "✅" : "❌"}</b> • webhook ▸ <b>${IVAS_SECRET ? "✅" : "❌"}</b>\n\n` +
+      `<b>V3 details</b>\n📦 পুল ▸ <b>${ivNumbers.length}</b> • ফ্রি <b>${free}</b> • lease <b>${pending2.size}</b>\n🔥 hit (৩০ মি) ▸ <b>${hits}</b>\n` +
       `🔄 numbers sync ▸ ${ago(ivSt.numbersAt)}\n📨 messages poll ▸ ${ago(ivSt.msgAt)} (${ivSt.polls}বার)\n🪝 webhook ▸ ${ivSt.webhooks}টি, শেষ ${ago(ivSt.lastWebhookAt)}\n` +
       `📊 API call ▸ ${ivState.calls} • 429 ▸ ${ivState.limited}\n⚠️ শেষ error ▸ <code>${esc(ivState.lastErr || ivSt.lastHookErr || "নেই")}</code>\n\n` +
-      `<blockquote>Webhook URL (IVAS → Webhooks পেজে দিন):\n<code>${esc(base)}/ivas-webhook</code>\nEvent: message.received</blockquote>`,
-      [[ib("🔄 Refresh", "npa_iv", "primary"), ib("♻️ Numbers Sync", "npa_ivsync", "success")], aBack]);
+      `<blockquote>IVAS Webhook URL:\n<code>${esc(base)}/ivas-webhook</code>\nEvent: message.received</blockquote>`,
+      [[ib("🔄 Refresh", "npa_iv", "primary"), ib("♻️ V3 Numbers Sync", "npa_ivsync", "success")], aBack]);
   }
   A("npa_iv", ivasScreen);
   A("npa_ivsync", async (ctx) => { await syncIvasNumbers(); return ivasScreen(ctx); });
@@ -1802,7 +1789,7 @@ export function createNumberPanel(d) {
     const otpWds = wds.docs.filter((x) => x.get("balanceType") === "otp");
     const pendAmt = otpWds.reduce((s, x) => s + (Number(x.get("amount")) || 0), 0);
     return show(ctx,
-      `${head("📊", "OTP STATS")}\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 মোট OTP: <b>${totalOtp}</b>\n💰 মোট Balance: <b>${tk(totalBal)}</b>\n💸 Pending withdraw: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>V1 ${pending.size} • V2 ${pending2.size}</b>\n📡 IVAS পুল: <b>${ivNumbers.length}</b>\n🔄 Live views: <b>${activeViews.size}</b>`,
+      `${head("📊", "OTP STATS")}\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 মোট OTP: <b>${totalOtp}</b>\n💰 মোট Balance: <b>${tk(totalBal)}</b>\n💸 Pending withdraw: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>V1 ${providers.v1.pending.size} • V2 ${providers.v2.pending.size} • V3 ${pending2.size}</b>\n📡 V3 পুল: <b>${ivNumbers.length}</b>\n🔄 Live views: <b>${activeViews.size}</b>`,
       [[ib("🔄 Refresh", "npa_stats", "primary")], aBack]);
   });
 
@@ -2037,8 +2024,9 @@ export function createNumberPanel(d) {
         const r = text.replace(/\s/g, "").toUpperCase();
         if (!/^[0-9X]{4,20}$/.test(r)) return ctx.reply("❌ রেঞ্জ ঠিক নেই। শুধু সংখ্যা ও X দিন।\nExample: <code>88017XXXX</code>", { parse_mode: "HTML" });
         await clearSession(id);
+        const pr = providers[s.prov] || providers.v1;
         const info = detectCountry(r.replace(/X+$/i, "") + "0000");
-        return allocate(ctx, r, "_custom", info.name || "Custom Range", "", true);
+        return pr.allocate(ctx, r, "_custom", info.name || "Custom Range", "", true);
       }
       case "np_search": {
         const clean = bn2en(text).replace(/\D/g, "");
@@ -2117,7 +2105,6 @@ export function createNumberPanel(d) {
         }
         await b.commit(); // এরপর আর throw হবে না (claim ফেরত গেলে double-credit হত)
         bumpRange(info.range);
-        if (isFbText(full) || service === "Facebook") learn(info.range, String(otp).replace(/\D/g, "").length);
 
         try {
           const cnt = (Number(snap.get("otpCount")) || 0) + 1;
@@ -2138,57 +2125,9 @@ export function createNumberPanel(d) {
   }
 
   /* ================================================================ */
-  /*  POLLER                                                           */
-  /* ================================================================ */
-  let polling = false;
-  async function poll() {
-    if (polling || !pending.size) return;
-    polling = true;
-    try {
-      const now = Date.now();
-      for (const [n, v] of pending) if (now - v.allocatedAt > MAX_AGE) done(n);
-
-      const data = await getSuccessOtp();
-      const otps = data?.otps || [];
-      for (const o of otps) {
-        const oid = String(o.otp_id);
-        if (seenOtps.has(oid)) continue;
-        const num2 = String(o.number || "").replace(/\D/g, "");
-        const info = pending.get(num2);
-        if (!info) continue;
-        try {
-          await claimsCol.doc(oid).create({ number: num2, time: o.time, userId: info.userId });
-        } catch (e) {
-          if (e.code === 6) { seenOtps.add(oid); continue; }
-          throw e;
-        }
-        seenOtps.add(oid);
-        try {
-          const otp = extractOtp(o.message);
-          if (!otp) { await claimsCol.doc(oid).delete().catch(() => {}); seenOtps.delete(oid); continue; }
-          await credit({ number: num2, otp, full: o.message, info });
-          done(num2);
-        } catch (e) {
-          console.error("credit failed:", e.message);
-          await claimsCol.doc(oid).delete().catch(() => {});
-          seenOtps.delete(oid);
-        }
-      }
-    } catch (e) { console.error("Poll error:", e.message); }
-    finally { polling = false; }
-  }
-
-  /* ================================================================ */
   /*  START                                                            */
   /* ================================================================ */
   async function start() {
-    if (!V_KEY) {
-      console.error("❌ VOLTEX_API_KEY সেট করা নেই — Render → Environment-এ VOLTEX_API_KEY দিন।");
-    } else {
-      const test = await getLiveAccess();
-      if (test?.services) console.log(`✅ Voltex API key OK (${test.services.length} services)`);
-      else console.error("❌ Voltex API key কাজ করছে না / API সাড়া দিচ্ছে না।");
-    }
     if (GROUP_RAW && !GROUP_ID) {
       console.error(`❌ FORWARD_GROUP_ID="${GROUP_RAW}" বোঝা যায়নি। সংখ্যা (-100…) অথবা পাবলিক @username দিন।`);
     } else if (GROUP_ID) {
@@ -2203,17 +2142,12 @@ export function createNumberPanel(d) {
       }
     }
     await loadUi();
-    await loadDigits();
-    await loadPending();
-    await startV2();
-    setInterval(poll, POLL_INTERVAL);
+    await providers.v1.start();
+    await providers.v2.start();
+    await startV3();
     setInterval(() => autoRefreshLoop().catch((e) => console.error("autoRefreshLoop:", e.message)), AUTO_REFRESH_MS);
-    setInterval(() => syncDigits().catch((e) => console.error("syncDigits:", e.message)), 2 * 60 * 1000);
-    setInterval(() => learnFromOtpFeed().catch((e) => console.error("learnFromOtpFeed:", e.message)), 2 * 60 * 1000);
-    setTimeout(() => learnFromOtpFeed().catch(() => {}), 20000);
-    setInterval(loadPending, 60 * 1000);
     setInterval(loadUi, 2 * 60 * 1000);
-    console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms`);
+    console.log(`✅ Number Panel started (V1/V2/V3)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms`);
   }
 
   return { open, handleText, start, handleWebhook };
