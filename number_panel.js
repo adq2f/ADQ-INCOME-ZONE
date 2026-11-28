@@ -7,11 +7,15 @@
   Render Environment:
     VOLTEX_API_KEY   = (বাধ্যতামূলক) Voltex API key — কোডে লিখবেন না
     VOLTEX_BASE      = (ঐচ্ছিক) API base URL (না দিলে ডিফল্ট)
+    IVAS_API_KEY     = (V2-এর জন্য) IVAS Developer API key (sk_live_…) — কোডে লিখবেন না
+    IVAS_WEBHOOK_SECRET = (ঐচ্ছিক, প্রস্তাবিত) IVAS Webhooks পেজের signing secret → OTP দ্রুত আসে
+    IVAS_POLL_MS, IVAS_MIN_GAP_MS, IVAS_LEASE_MIN, IVAS_BASE (সব ঐচ্ছিক)
     FORWARD_GROUP_ID, CHANNEL_URL, GET_NUMBER_URL, POLL_INTERVAL, MAX_PENDING
     AUTO_REFRESH_MS (default 1500), API_MIN_GAP_MS (default 900)
  ============================================================================
 */
 import axios from "axios";
+import crypto from "crypto";
 import { detectCountry, COUNTRY_DATA } from "./country_flags.js";
 
 const POLL_INTERVAL = parseInt(process.env.POLL_INTERVAL || "6000");
@@ -45,6 +49,15 @@ const VIEW_IDLE_LIMIT = 200;            // এতবার পরপর পর�
 const VIEW_MAX_AGE = 30 * 60 * 1000;
 const MAX_ACTIVE_VIEWS = 500;
 const HR = "━━━━━━━━━━━━━━━━━━";
+
+/* IVAS (V2) */
+const IVAS_BASE = (process.env.IVAS_BASE || "https://www.ivasms.com/api/v1").trim();
+const IVAS_KEY = (process.env.IVAS_API_KEY || "").trim().replace(/^['"]|['"]$/g, "");
+const IVAS_SECRET = (process.env.IVAS_WEBHOOK_SECRET || "").trim();
+const IVAS_MIN_GAP_MS = Math.max(5000, parseInt(process.env.IVAS_MIN_GAP_MS || "6500")); // IVAS সীমা: ১০ রিকোয়েস্ট/মিনিট
+const IVAS_POLL_MS = Math.max(10000, parseInt(process.env.IVAS_POLL_MS || (IVAS_SECRET ? "30000" : "15000")));
+const LEASE_MS = Math.max(2, parseInt(process.env.IVAS_LEASE_MIN || "10")) * 60 * 1000;
+const HITS_WINDOW = 30 * 60 * 1000;
 
 /* ------------------------------------------------------------------ */
 /*  VOLTEX API                                                         */
@@ -91,6 +104,47 @@ const allocateNumber = async (range) => {
 };
 
 /* ------------------------------------------------------------------ */
+/*  IVAS API (V2) — সীমা ১০/মিনিট, তাই সব কল একটা queue দিয়ে যায়          */
+/* ------------------------------------------------------------------ */
+const ivc = axios.create({
+  baseURL: IVAS_BASE,
+  headers: { Authorization: `Bearer ${IVAS_KEY}`, Accept: "application/json" },
+  timeout: 20000,
+});
+let ivChain = Promise.resolve();
+let ivNextAt = 0;
+let ivBlockedUntil = 0;
+const ivState = { lastErr: "", calls: 0, limited: 0 };
+function ivreq(path, params) {
+  const run = async () => {
+    if (!IVAS_KEY) return { ok: false, status: 0, err: new Error("IVAS_API_KEY নেই") };
+    const w = Math.max(ivNextAt - Date.now(), ivBlockedUntil - Date.now(), 0);
+    if (w) await wait(w);
+    ivNextAt = Date.now() + IVAS_MIN_GAP_MS;
+    ivState.calls++;
+    try {
+      const res = await ivc.get(path, { params });
+      ivState.lastErr = "";
+      return { ok: true, data: res.data };
+    } catch (e) {
+      const st = e.response?.status || 0;
+      const body = e.response?.data?.error || {};
+      if (st === 429) {
+        const ra = Number(body.retry_after || e.response?.headers?.["retry-after"] || 30);
+        ivBlockedUntil = Date.now() + ra * 1000 + 500;
+        ivState.limited++;
+      }
+      ivState.lastErr = `${st || "ERR"} ${body.code || e.message}`;
+      console.error(`❌ IVAS ${path}:`, ivState.lastErr);
+      return { ok: false, status: st, err: e, code: body.code };
+    }
+  };
+  const p = ivChain.then(run, run);
+  ivChain = p.catch(() => {});
+  return p;
+}
+
+/* ------------------------------------------------------------------ */
 /*  HELPERS                                                            */
 /* ------------------------------------------------------------------ */
 const tr = (s, n) => { const x = String(s ?? ""); return x.length > n ? x.slice(0, n - 1) + "…" : x; };
@@ -99,7 +153,7 @@ const bar = (n, total, len = 10) => {
   const f = Math.round(p * len);
   return "▰".repeat(f) + "▱".repeat(len - f) + ` ${Math.round(p * 100)}%`;
 };
-const head = (icon, title, tag = "") => `${icon} <b>${title}</b>${tag ? `  ${tag}` : ""}\n${HR}`;
+const head = (icon, title, tag = "") => `${icon} <b>${title}</b>${tag ? ` ┃ ${tag}` : ""}\n${HR}`;
 
 // callback_data সীমা ৬৪ বাইট — বেশি লম্বা বাটন বাদ, খালি row বাদ
 const cleanRows = (rows) =>
@@ -208,6 +262,7 @@ function parseLabel(rawText, entities = []) {
 const LBL = {
   p_get: "📞 Get Number", p_custom: "🔥 Custom Range", p_search: "🔍 Search OTP", p_hist: "📊 History",
   p_traffic: "📈 Live Traffic", p_lead: "🏆 Leaderboard", p_wd: "💸 OTP Withdraw",
+  p_vone: "⚡ V1 Panel", p_vtwo: "📡 V2 Panel",
   g_join: "JOIN CHANNEL", g_copy: "{otp}", g_get: "📞 Get Number",
 };
 const EM = {
@@ -256,7 +311,7 @@ export function createNumberPanel(d) {
     if (Date.now() < floodUntil) return;
     refreshing = true;
     try {
-      await refreshSharedCaches();
+      if ([...activeViews.values()].some((v) => v.kind !== "v2")) await refreshSharedCaches();
       const now = Date.now();
       for (const [key, view] of [...activeViews]) {
         if (now - view.born > VIEW_MAX_AGE || view.idle >= VIEW_IDLE_LIMIT) { activeViews.delete(key); continue; }
@@ -549,9 +604,9 @@ export function createNumberPanel(d) {
     } catch (e) { console.error("loadDigits:", e.message); }
   }
   function learn(range, len) {
-    if (!range || len < 4) return;
+    if (!range || len < 5) return; // ৫ ডিজিট → s, ৬ বা তার বেশি → l
     const k = rangeKey(range);
-    const t = len <= 5 ? "s" : "l";
+    const t = len === 5 ? "s" : "l";
     (digitStats[k] ||= { s: 0, l: 0 })[t]++;
     (incBuf[k] ||= { s: 0, l: 0 })[t]++;
   }
@@ -621,6 +676,8 @@ export function createNumberPanel(d) {
 
   /* ---------------- ui helpers ---------------- */
   const back = [ib("🏠 Number Panel", "np_home", "danger")];
+  const backV1 = [ib("🏠 V1 Panel", "np_v1", "danger")];
+  const backV2 = [ib("🏠 V2 Panel", "np_v2", "danger")];
   async function show(ctx, text, rows, opts = {}) {
     rows = cleanRows(rows);
     if (!rows.length) rows = [back];
@@ -647,7 +704,7 @@ export function createNumberPanel(d) {
         }
         activeViews.set(key, {
           chatId: cid, messageId: mid, rerender: opts.auto,
-          lastHash: hashMsg(text, rows), lastAt: Date.now(), born: Date.now(), idle: 0, busy: false,
+          kind: opts.kind || "v1", lastHash: hashMsg(text, rows), lastAt: Date.now(), born: Date.now(), idle: 0, busy: false,
         });
       } else {
         activeViews.delete(key);
@@ -670,29 +727,29 @@ export function createNumberPanel(d) {
   }
   bot.action("np_noop", safe(async (ctx) => { await ctx.answerCbQuery().catch(() => {}); }));
 
-  const filterLabel = (f) => (f === "s" ? "4-5 digit" : f === "l" ? "6+ digit" : "");
+  const filterLabel = (f) => (f === "s" ? "5 digit" : f === "l" ? "6+ digit" : "");
   const medalOf = (rank) => (rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : "");
 
-  async function panelText(u) {
+  async function homeText(u) {
     const cfg = await getCfg();
     const cnt = Number(u.otpCount) || 0;
     const rate = Number(u.customPerOtp) || cfg.perOtp;
     const unlocked = cnt >= cfg.minOtp;
     return (
       `${head("📱", "NUMBER PANEL", cfg.enabled ? "🟢 ONLINE" : "🔴 OFFLINE")}\n` +
-      `💰 <b>OTP Balance:</b> ${tk(u.otpBalance)}\n` +
-      `💵 <b>Rate:</b> ৳${rate} / OTP\n` +
-      `🎁 <b>Refer আয়:</b> ${tk(u.otpReferEarning)}\n${HR}\n` +
-      `🔑 <b>OTP:</b> ${cnt} / ${cfg.minOtp}\n<code>${bar(Math.min(cnt, cfg.minOtp), cfg.minOtp)}</code>\n` +
-      `${unlocked ? "🟢 <b>Withdraw আনলক</b>" : `🔒 Withdraw আনলক হতে আর <b>${cfg.minOtp - cnt}টি</b> OTP বাকি`}\n\n` +
+      `💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n` +
+      `💵 Rate ▸ <b>৳${rate}</b> / OTP\n` +
+      `🎁 Refer আয় ▸ <b>${tk(u.otpReferEarning)}</b>\n\n` +
+      `🔑 OTP ▸ <b>${cnt}</b> / ${cfg.minOtp}\n<code>${bar(Math.min(cnt, cfg.minOtp), cfg.minOtp)}</code>\n` +
+      `${unlocked ? "🟢 <b>Withdraw আনলক হয়েছে</b>" : `🔒 আর <b>${cfg.minOtp - cnt}টি</b> OTP-তে Withdraw আনলক`}\n\n` +
+      `<blockquote>⚡ <b>V1</b> · Voltex — সার্ভিস, দেশ ও রেঞ্জ বেছে নাম্বার\n📡 <b>V2</b> · IVAS — দেশ ও রেঞ্জ বেছে ফ্রি নাম্বার</blockquote>\n` +
       `<i>OTP Balance আর Task Balance আলাদা।</i>`
     );
   }
-  const panelRows = () => [
-    [bt("p_get", { callback_data: "np_get", style: "success" }), bt("p_custom", { callback_data: "np_custom", style: "danger" })],
-    [bt("p_traffic", { callback_data: "np_traffic", style: "primary" }), bt("p_lead", { callback_data: "np_lead", style: "success" })],
-    [bt("p_search", { callback_data: "np_search", style: "primary" }), bt("p_hist", { callback_data: "np_hist", style: "primary" })],
-    [bt("p_wd", { callback_data: "np_wd", style: "success" })],
+  const homeRows = () => [
+    [bt("p_vone", { callback_data: "np_v1", style: "success" }), bt("p_vtwo", { callback_data: "np_v2", style: "primary" })],
+    [bt("p_lead", { callback_data: "np_lead", style: "success" }), bt("p_hist", { callback_data: "np_hist", style: "primary" })],
+    [bt("p_search", { callback_data: "np_search", style: "primary" }), bt("p_wd", { callback_data: "np_wd", style: "success" })],
   ];
   async function gate(ctx) {
     const u = await needUser(ctx);
@@ -704,14 +761,29 @@ export function createNumberPanel(d) {
     const u = await gate(ctx);
     if (!u) return;
     await clearSession(ctx.from.id);
-    return show(ctx, await panelText(u), panelRows());
+    return show(ctx, await homeText(u), homeRows());
   }
   bot.action("np_home", safe(async (ctx) => {
     await ctx.answerCbQuery().catch(() => {});
     const u = await gate(ctx);
     if (!u) return;
     await clearSession(ctx.from.id);
-    return show(ctx, await panelText(u), panelRows());
+    return show(ctx, await homeText(u), homeRows());
+  }));
+
+  bot.action("np_v1", safe(async (ctx) => {
+    await ctx.answerCbQuery().catch(() => {});
+    const u = await gate(ctx);
+    if (!u) return;
+    await clearSession(ctx.from.id);
+    return show(ctx,
+      `${head("⚡", "V1 PANEL", "Voltex")}\n💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n🔑 OTP ▸ <b>${Number(u.otpCount) || 0}</b>\n\n` +
+      `<blockquote>📞 Get Number — সার্ভিস → দেশ → রেঞ্জ\n🔥 Custom Range — নিজে রেঞ্জ লিখুন\n📈 Live Traffic — এখন যেখানে বেশি hit</blockquote>`,
+      [
+        [bt("p_get", { callback_data: "np_get", style: "success" }), bt("p_custom", { callback_data: "np_custom", style: "danger" })],
+        [bt("p_traffic", { callback_data: "np_traffic", style: "primary" })],
+        [ib("⬅️ Number Panel", "np_home", "primary")],
+      ]);
   }));
 
   /* ================================================================ */
@@ -721,7 +793,7 @@ export function createNumberPanel(d) {
     const services = await getServices(force);
     const live = services.filter((s) => (s.ranges || []).length);
     if (!live.length) {
-      return { text: `${head("📱", "SERVICES")}\n❌ এখন কোনো সার্ভিস সচল নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], back] };
+      return { text: `${head("📱", "SERVICES")}\n❌ এখন কোনো সার্ভিস সচল নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], backV1] };
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
@@ -729,8 +801,8 @@ export function createNumberPanel(d) {
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gsl:${pg.page - 1}`, `np_gsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_get", "primary"), back[0]]);
-    const text = `${head("📱", "SERVICES", "🟢 LIVE")}\n<i>${pg.total}টি সার্ভিস সচল</i>\n\n👇 সার্ভিস বেছে নিন`;
+    rows.push([ib("🔄 Refresh", "np_get", "primary"), backV1[0]]);
+    const text = `${head("📱", "SERVICES", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন — তারপর দেশ ও রেঞ্জ</blockquote>`;
     return { text, rows };
   }
   async function showServiceList(ctx, page = 0, auto = false) {
@@ -742,7 +814,7 @@ export function createNumberPanel(d) {
     await ctx.answerCbQuery().catch(() => {});
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
-    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
+    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backV1]);
     return showServiceList(ctx, 0, true);
   }));
   bot.action(/^np_gsl:(\d+)$/, safe(async (ctx) => {
@@ -763,7 +835,7 @@ export function createNumberPanel(d) {
     const sidLower = sid.toLowerCase();
     const allSvcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
     if (!allSvcRanges.length) {
-      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], back] };
+      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("🔄 Retry", "np_get", "success")], backV1] };
     }
     const svcRanges = allSvcRanges.filter((r) => matchesMode(r.range, filter, cfg));
     const countries = groupByCountry(svcRanges, hitMap);
@@ -776,22 +848,22 @@ export function createNumberPanel(d) {
     const btns = pg.items.map((c, i) => {
       const rank = pg.page * PP_COUNTRIES + i + 1;
       const medal = c.hits > 0 ? medalOf(rank) : "";
-      const hitTag = c.hits > 0 ? ` · ${c.hits}🔥` : "";
-      return ib(`${medal || c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
+      const hitTag = c.hits > 0 ? ` · 🔥${c.hits}` : "";
+      return ib(`${c.flag} ${c.code}${hitTag}`, `np_grc:${sid}:${filter}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
     });
     const rows = [];
     if (cntS > 0 || cntL > 0) {
       const f = [ib(filter === "a" ? "✅ All" : "All", `np_gcl:${sid}:a:0`, filter === "a" ? "success" : "primary")];
-      if (cntS > 0) f.push(ib(filter === "s" ? "✅ 4-5" : "4-5", `np_gcl:${sid}:s:0`, filter === "s" ? "success" : "primary"));
+      if (cntS > 0) f.push(ib(filter === "s" ? "✅ 5" : "5", `np_gcl:${sid}:s:0`, filter === "s" ? "success" : "primary"));
       if (cntL > 0) f.push(ib(filter === "l" ? "✅ 6+" : "6+", `np_gcl:${sid}:l:0`, filter === "l" ? "success" : "primary"));
       rows.push(f);
     }
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_gcl:${sid}:${filter}:${pg.page - 1}`, `np_gcl:${sid}:${filter}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Services", "np_get", "primary"), back[0]]);
+    rows.push([ib("⬅️ Services", "np_get", "primary"), backV1[0]]);
 
     const fl = filterLabel(filter);
-    const text = `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📱 <b>${esc(sid)}</b>${fl ? `  ·  🔢 ${fl}` : ""}\n<i>${pg.total}টি দেশ • 🔥 = live hit</i>\n\n👇 দেশ বেছে নিন`;
+    const text = `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📱 Service ▸ <b>${esc(sid)}</b>${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`;
     return { text, rows };
   }
   async function showCountryList(ctx, sid, filter = "a", page = 0, auto = false) {
@@ -823,22 +895,22 @@ export function createNumberPanel(d) {
       .filter((r) => matchesMode(r.range, filter, cfg));
     list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range)); // ⚡ live sort
     if (!list.length) {
-      return { text: `${head("📞", "RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary")], back] };
+      return { text: `${head("📞", "RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary")], backV1] };
     }
     const pg = paginate(list, page, PP_RANGES_GET);
     const headCode = countryShort(list[0].countryCode, list[0].country);
     const btns = pg.items.map((r, i) => {
       const rank = pg.page * PP_RANGES_GET + i + 1;
       const medal = r.hits > 0 ? medalOf(rank) : "";
-      const hitTag = r.hits > 0 ? ` · ${r.hits}🔥` : "";
-      return ib(`${medal || r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
+      const hitTag = r.hits > 0 ? ` · 🔥${r.hits}` : "";
+      return ib(`${r.flag} ${tr(r.range, 14)}${hitTag}`, `np_grab:${sid}:${r.range}`, r.hits > 0 ? "danger" : "success");
     });
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_grc:${sid}:${filter}:${ck(country)}:${pg.page - 1}`, `np_grc:${sid}:${filter}:${ck(country)}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary"), back[0]]);
+    rows.push([ib("⬅️ Countries", `np_gwc:${sid}:${filter}:0`, "primary"), backV1[0]]);
     const fl = filterLabel(filter);
-    const text = `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}${fl ? ` · 🔢 ${fl}` : ""}\n<i>${pg.total}টি রেঞ্জ • 🔥 = live hit</i>\n\n👇 রেঞ্জ বেছে নিন — নাম্বার পাবেন`;
+    const text = `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`;
     return { text, rows };
   }
   async function showRangeList(ctx, sid, filter, country, page = 0, auto = false) {
@@ -862,7 +934,7 @@ export function createNumberPanel(d) {
     const services = await getServices(force);
     const live = services.filter((s) => (s.ranges || []).length);
     if (!live.length) {
-      return { text: `${head("📈", "LIVE TRAFFIC")}\n❌ এখন কোনো ট্রাফিক ডেটা নেই।`, rows: [[ib("🔄 Retry", "np_traffic", "success")], back] };
+      return { text: `${head("📈", "LIVE TRAFFIC")}\n❌ এখন কোনো ট্রাফিক ডেটা নেই।`, rows: [[ib("🔄 Retry", "np_traffic", "success")], backV1] };
     }
     const sorted = [...live].sort((a, b) => (b.last_at || 0) - (a.last_at || 0));
     const pg = paginate(sorted, page, PP_SERVICES);
@@ -870,8 +942,8 @@ export function createNumberPanel(d) {
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tsl:${pg.page - 1}`, `np_tsl:${pg.page + 1}`));
-    rows.push([ib("🔄 Refresh", "np_traffic", "primary"), back[0]]);
-    return { text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n<i>${pg.total}টি সার্ভিস</i>\n\n👇 সার্ভিস বেছে নিন`, rows };
+    rows.push([ib("🔄 Refresh", "np_traffic", "primary"), backV1[0]]);
+    return { text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>V1 · Voltex</b>\n📦 সার্ভিস ▸ <b>${pg.total}</b>\n<blockquote>👇 সার্ভিস বেছে নিন</blockquote>`, rows };
   }
   async function showTrafficServices(ctx, page = 0, auto = false) {
     const built = await buildTrafficServices(page, true);
@@ -899,7 +971,7 @@ export function createNumberPanel(d) {
     const sidLower = sid.toLowerCase();
     const svcRanges = all.filter((r) => r.sid && r.sid.toLowerCase() === sidLower);
     if (!svcRanges.length) {
-      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Traffic", "np_traffic", "primary")], back] };
+      return { text: `${head("🌍", "COUNTRY")}\n❌ <b>${esc(sid)}</b>-এ এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Traffic", "np_traffic", "primary")], backV1] };
     }
     const hitMap = await hitMapByRange(force);
     const countries = groupByCountry(svcRanges, hitMap);
@@ -908,14 +980,14 @@ export function createNumberPanel(d) {
     const btns = pg.items.map((c, i) => {
       const rank = pg.page * PP_COUNTRIES + i + 1;
       const medal = c.hits > 0 ? medalOf(rank) : "";
-      const hitTag = c.hits > 0 ? ` · ${c.hits}🔥` : "";
-      return ib(`${medal || c.flag} ${c.code}${hitTag}`, `np_tc:${sid}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
+      const hitTag = c.hits > 0 ? ` · 🔥${c.hits}` : "";
+      return ib(`${c.flag} ${c.code}${hitTag}`, `np_tc:${sid}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success");
     });
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     rows.push(...navRow(pg, `np_tcl:${sid}:${pg.page - 1}`, `np_tcl:${sid}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Traffic", "np_traffic", "primary"), back[0]]);
-    return { text: `${head("🌍", "TRAFFIC · COUNTRY", "🟢 LIVE")}\n📱 <b>${esc(sid)}</b>\n<i>${pg.total}টি দেশ • 🔥 = live hit</i>\n\n👇 দেশ বেছে নিন`, rows };
+    rows.push([ib("⬅️ Traffic", "np_traffic", "primary"), backV1[0]]);
+    return { text: `${head("🌍", "TRAFFIC · COUNTRY", "🟢 LIVE")}\n📱 Service ▸ <b>${esc(sid)}</b>\n🗺 দেশ ▸ <b>${pg.total}</b>\n<blockquote>🔥 = live hit  •  বেশি hit উপরে</blockquote>`, rows };
   }
   async function showTrafficCountries(ctx, sid, page = 0, auto = false) {
     const built = await buildTrafficCountries(sid, page, true);
@@ -937,21 +1009,21 @@ export function createNumberPanel(d) {
       .map((r) => ({ ...r, hits: hitMap.get(r.range) || 0 }));
     list.sort((a, b) => b.hits - a.hits || a.range.localeCompare(b.range)); // ⚡ live sort
     if (!list.length) {
-      return { text: `${head("📈", "TOP RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_tsv:${sid}`, "primary")], back] };
+      return { text: `${head("📈", "TOP RANGES")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np_tsv:${sid}`, "primary")], backV1] };
     }
     const pg = paginate(list, page, PP_RANGES_TRAFFIC);
     const start = pg.page * PP_RANGES_TRAFFIC;
     const headCode = countryShort(list[0].countryCode, list[0].country);
     const rows = pg.items.map((r, i) => {
       const rank = start + i + 1;
-      const medal = medalOf(rank) || `#${rank}`;
-      const hitTag = r.hits > 0 ? ` · ${r.hits}🔥` : "";
+      const medal = `#${rank}`;
+      const hitTag = r.hits > 0 ? ` · 🔥${r.hits}` : "";
       return [ib(`${medal} ${r.flag} ${tr(r.range, 12)}${hitTag}`, `np_grab:${sid}:${r.range}`, rank <= 3 ? "danger" : "success")];
     });
     rows.push(...navRow(pg, `np_tc:${sid}:${ck(country)}:${pg.page - 1}`, `np_tc:${sid}:${ck(country)}:${pg.page + 1}`));
-    rows.push([ib("⬅️ Countries", `np_tsv:${sid}`, "primary"), back[0]]);
+    rows.push([ib("⬅️ Countries", `np_tsv:${sid}`, "primary"), backV1[0]]);
     return {
-      text: `${head("📈", "TOP RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}\n<i>${pg.total}টি রেঞ্জ • live hit অনুযায়ী সাজানো</i>\n\n👇 রেঞ্জে চাপলেই নাম্বার পাবেন`,
+      text: `${head("📈", "TOP RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${headCode}</b> · 📱 ${esc(sid)}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n<blockquote>live hit অনুযায়ী সাজানো  •  👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
       rows,
     };
   }
@@ -977,7 +1049,7 @@ export function createNumberPanel(d) {
     if (!(await gate(ctx))) return;
     return ask(ctx, { action: "np_range" },
       `${head("🔥", "CUSTOM RANGE")}\nরেঞ্জ লিখে পাঠান\nExample: <code>88017XXXX</code>\n\n<i>শুধু সংখ্যা ও X দিন। শেষে X দিয়ে বাকি ডিজিট বোঝান।</i>\n\nবাতিল: /menu`,
-      [back]);
+      [backV1]);
   }));
 
   /* ================================================================ */
@@ -1015,19 +1087,19 @@ export function createNumberPanel(d) {
     const uid = String(ctx.from.id);
     if (!(await gate(ctx))) return;
     const cfg = await getCfg();
-    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
-    if (!rangeId) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [back]);
+    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [backV1]);
+    if (!rangeId) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backV1]);
     if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
-    if (userPending(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [back]);
+    if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backV1]);
     lastNum.set(uid, { range: rangeId, sid, countryName, operator: operatorName, isCustom });
     allocating.add(uid);
     try {
       const range = String(rangeId).trim().toUpperCase();
-      await show(ctx, `${head("⏳", "ALLOCATING")}\n🌐 Range: <code>${esc(range)}</code>\n\n<i>নাম্বার আনা হচ্ছে, একটু অপেক্ষা করুন…</i>`, [back]);
+      await show(ctx, `${head("⏳", "ALLOCATING")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>নাম্বার আনা হচ্ছে, একটু অপেক্ষা করুন…</blockquote>`, [backV1]);
       const picked = await grabNumbers(range, 2);
       if (!picked.length) {
-        return show(ctx, `${head("❌", "ALLOCATE FAILED")}\n🌐 Range: <code>${esc(range)}</code>\n\nএই রেঞ্জে এখন নাম্বার নেই।`,
-          [[ib("🔄 Try Again", "np_chg", "success")], [ib("⬅️ ফিরে যান", isCustom ? "np_custom" : `np_gwc:${sid}:a:0`, "primary")], back]);
+        return show(ctx, `${head("❌", "ALLOCATE FAILED")}\n🌐 Range ▸ <code>${esc(range)}</code>\n<blockquote>এই রেঞ্জে এখন নাম্বার নেই।</blockquote>`,
+          [[ib("🔄 Try Again", "np_chg", "success")], [ib("⬅️ ফিরে যান", isCustom ? "np_custom" : `np_gwc:${sid}:a:0`, "primary")], backV1]);
       }
       for (const p of picked) track(p.number, uid, p.country || countryName, p.operator || operatorName, range);
       const c = resolveCountry(picked[0].country || (isCustom ? "" : countryName), picked[0].number);
@@ -1035,11 +1107,11 @@ export function createNumberPanel(d) {
       rows.push([ib("🔄 Change Number", "np_chg", "danger")]);
       if (isCustom) rows.push([ib("🔥 Custom Range", "np_custom", "primary")]);
       else if (sid) rows.push([ib("🌍 Change Country", `np_gwc:${sid}:a:0`, "primary")]);
-      rows.push(back);
+      rows.push(backV1);
       const partial = picked.length < 2 ? `\n⚠️ <i>মাত্র ${picked.length}টি নাম্বার পাওয়া গেছে (রেঞ্জ সীমিত)</i>` : "";
-      const svcLine = !isCustom && sid ? `📱 Service: <b>${esc(sid)}</b>\n` : "";
+      const svcLine = !isCustom && sid ? `📱 Service ▸ <b>${esc(sid)}</b>\n` : "";
       return show(ctx,
-        `${c.flag} <b>${esc(c.name.toUpperCase())}</b>  ✅ Allocated\n${HR}\n${svcLine}🌐 Range: <code>${esc(range)}</code>\n⏳ <b>OTP-র অপেক্ষায়…</b>${partial}\n\n👇 নাম্বারে ট্যাপ করলে কপি হবে`,
+        `${c.flag} <b>${esc(c.name.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>V1 · Voltex</b>\n${svcLine}🌐 Range ▸ <code>${esc(range)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
         rows);
     } finally {
       allocating.delete(uid);
@@ -1058,6 +1130,418 @@ export function createNumberPanel(d) {
     const last = lastNum.get(String(ctx.from.id));
     if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
     return allocate(ctx, last.range, last.sid, last.countryName, last.operator, last.isCustom);
+  }));
+
+  /* ================================================================ */
+  /*  V2 — IVAS PANEL  (account-এর নাম্বার পুল থেকে ধার দেওয়া হয়)       */
+  /*  IVAS API শুধু পড়ার (numbers / messages) — তাই bot নিজে নাম্বার     */
+  /*  "lease" দেয়, মেসেজ এলে যার lease তাকে OTP + টাকা দেয়।              */
+  /* ================================================================ */
+  const ivOn = () => !!IVAS_KEY;
+  let ivNumbers = [];                       // [{number, range, country, flag, code}]
+  const pending2 = new Map();               // number → { userId, range, country, allocatedAt }
+  const pend2Col = db.collection("ivas_pending_numbers");
+  const claims2Col = db.collection("ivas_claims");
+  const lastLeased = new Map();             // number → সর্বশেষ কখন দেওয়া হয়েছে (ঘুরিয়ে দেওয়ার জন্য)
+  const lastNum2 = new Map();               // uid → { range, numbers }
+  const seenMsgs = new Set();
+  const seenDeliveries = new Set();
+  let hits2 = [];                           // [{ range, t }]
+  const ivSt = { numbersAt: 0, msgAt: 0, polls: 0, webhooks: 0, lastWebhookAt: 0, lastHookErr: "" };
+
+  function userPendingAll(uid) {
+    return [...userPending(uid), ...[...pending2.entries()].filter(([, v]) => v.userId === uid)];
+  }
+  const errText = (r) => `${r?.status || "ERR"} ${r?.code || r?.err?.message || ""}`.trim();
+
+  function ivInfoOf(n) {
+    const range = String(n.range_name || "").trim().toUpperCase();
+    const number = String(n.number || "").replace(/\D/g, "");
+    const nameOnly = range.replace(/[0-9]+/g, " ").replace(/\s+/g, " ").trim();
+    let info = nameOnly ? detectCountry(nameOnly) : { code: "", iso: "" };
+    if (!(info.code || info.iso)) info = detectCountry(number);
+    const known = !!(info.code || info.iso);
+    const iso = String(info.iso || "").toUpperCase();
+    const country = known ? info.name : (nameOnly || "Unknown");
+    return {
+      number, range, country,
+      flag: known ? info.flag : "🌐",
+      code: /^[A-Z]{2,3}$/.test(iso) ? iso : countryShort("", country),
+    };
+  }
+  const ivService = (m) => {
+    const s = String(m.source || "").trim();
+    const dsv = detectService(`${s} ${m.message || ""}`);
+    return dsv !== "OTP" ? dsv : (s || "OTP");
+  };
+
+  /* ---- lease (pending2) ---- */
+  function track2(number, uid, country, range) {
+    const v = { userId: String(uid), number, country: country || "Unknown", range: range || "", allocatedAt: Date.now() };
+    pending2.set(number, v);
+    pend2Col.doc(number).set(v).catch((e) => console.error("persist pending2:", e.message));
+  }
+  function done2(number) {
+    pending2.delete(number);
+    pend2Col.doc(number).delete().catch(() => {});
+  }
+  function cleanupLeases() {
+    const now = Date.now();
+    for (const [n, v] of pending2) if (now - v.allocatedAt > LEASE_MS) done2(n);
+  }
+  async function loadPending2() {
+    try {
+      const snap = await pend2Col.get();
+      const now = Date.now();
+      snap.forEach((x) => {
+        const v = x.data();
+        if (now - (v.allocatedAt || 0) > LEASE_MS) x.ref.delete().catch(() => {});
+        else if (!pending2.has(x.id)) pending2.set(x.id, v);
+      });
+    } catch (e) { console.error("loadPending2:", e.message); }
+  }
+
+  /* ---- numbers / messages ---- */
+  async function syncIvasNumbers() {
+    if (!ivOn()) return;
+    const all = [];
+    let page = 1, last = 1;
+    do {
+      const r = await ivreq("/numbers", { per_page: 100, page });
+      if (!r.ok) return;
+      for (const n of r.data?.data || []) all.push(ivInfoOf(n));
+      last = r.data?.pagination?.last_page || 1;
+      page++;
+    } while (page <= last && page <= 15);
+    ivNumbers = all.filter((n) => n.number);
+    ivSt.numbersAt = Date.now();
+  }
+
+  const fpOf = (m) => crypto.createHash("md5").update(`${m.received_at}${m.number}${m.source}${m.message}`).digest("hex");
+
+  async function processIvasMessage(m) {
+    if (!m || !m.number) return;
+    if (m.status && m.status !== "delivered") return;
+    const fp = fpOf(m);
+    if (seenMsgs.has(fp)) return;
+    seenMsgs.add(fp);
+    if (seenMsgs.size > 20000) [...seenMsgs].slice(0, 10000).forEach((x) => seenMsgs.delete(x));
+
+    const number = String(m.number).replace(/\D/g, "");
+    const range = String(m.range_name || "").trim().toUpperCase();
+    const t = Date.parse(m.received_at) || Date.now();
+    if (range && Date.now() - t < HITS_WINDOW) hits2.push({ range, t });
+
+    const text = String(m.message || "");
+    const otp = extractOtp(text);
+    const lease = pending2.get(number);
+
+    if (lease && otp && t >= lease.allocatedAt - 10000) {
+      try { await claims2Col.doc(fp).create({ number, userId: lease.userId, t }); }
+      catch (e) { if (e.code === 6) return; throw e; }
+      try {
+        await credit({ number, otp, full: text, service: ivService(m), info: { userId: lease.userId, country: lease.country, range: lease.range || range } });
+        done2(number);
+      } catch (e) {
+        console.error("ivas credit failed:", e.message);
+        await claims2Col.doc(fp).delete().catch(() => {});
+        seenMsgs.delete(fp);
+      }
+      return;
+    }
+    // কারো lease নেই → শুধু Facebook OTP থেকে রেঞ্জের digit শেখা
+    if (otp && range && (isFbText(text) || /facebook/i.test(m.source || ""))) learn(range, otp.length);
+  }
+
+  let ivPolling = false;
+  async function pollIvasMessages() {
+    if (!ivOn() || ivPolling) return;
+    ivPolling = true;
+    try {
+      cleanupLeases();
+      const start = new Date(Date.now() - 86400000).toISOString().slice(0, 10); // গতকাল + আজ (UTC)
+      const r = await ivreq("/messages", { per_page: 200, start_date: start });
+      if (!r.ok) return;
+      ivSt.msgAt = Date.now();
+      ivSt.polls++;
+      for (const m of (r.data?.data || []).slice().reverse()) await processIvasMessage(m); // পুরনো আগে
+      hits2 = hits2.filter((h) => h.t > Date.now() - HITS_WINDOW);
+    } catch (e) { console.error("pollIvasMessages:", e.message); }
+    finally { ivPolling = false; }
+  }
+
+  async function handleIvasEvent(ev) {
+    const id = String(ev?.id || "");
+    if (id) {
+      if (seenDeliveries.has(id)) return;
+      seenDeliveries.add(id);
+      if (seenDeliveries.size > 5000) seenDeliveries.clear();
+    }
+    ivSt.webhooks++;
+    ivSt.lastWebhookAt = Date.now();
+    const d = ev?.data || {};
+    switch (ev?.event) {
+      case "message.received": return processIvasMessage(d);
+      case "number.assigned": {
+        const n = ivInfoOf({ number: d.number, range_name: d.range_name });
+        if (n.number && !ivNumbers.some((x) => x.number === n.number)) ivNumbers.push(n);
+        return;
+      }
+      case "number.removed": {
+        const num2 = String(d.number || "").replace(/\D/g, "");
+        ivNumbers = ivNumbers.filter((x) => x.number !== num2);
+        return;
+      }
+      default: return;
+    }
+  }
+
+  // bot.js-এর http server থেকে ডাকা হয়: POST /ivas-webhook
+  function handleWebhook(req, res) {
+    if (!IVAS_SECRET) { res.writeHead(503); return res.end("webhook not configured"); }
+    const chunks = [];
+    let size = 0;
+    req.on("data", (c) => { size += c.length; if (size > 1_000_000) { req.destroy(); return; } chunks.push(c); });
+    req.on("error", () => {});
+    req.on("end", () => {
+      const raw = Buffer.concat(chunks).toString("utf8");
+      const ts = String(req.headers["x-ivas-timestamp"] || "");
+      const sig = String(req.headers["x-ivas-signature"] || "");
+      const expected = "sha256=" + crypto.createHmac("sha256", IVAS_SECRET).update(`${ts}.${raw}`).digest("hex");
+      const okSig = sig.length === expected.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected));
+      const fresh = Math.abs(Date.now() / 1000 - Number(ts)) <= 300;
+      if (!okSig || !fresh) {
+        ivSt.lastHookErr = !okSig ? "signature মেলেনি (IVAS_WEBHOOK_SECRET ঠিক আছে?)" : "timestamp পুরনো";
+        res.writeHead(401);
+        return res.end();
+      }
+      res.writeHead(200, { "Content-Type": "text/plain" }); // ৫ সেকেন্ডের মধ্যে আগে উত্তর
+      res.end("ok");
+      let ev;
+      try { ev = JSON.parse(raw); } catch { return; }
+      handleIvasEvent(ev).catch((e) => console.error("ivas webhook:", e.message));
+    });
+  }
+
+  async function startV2() {
+    if (!ivOn()) { console.log("ℹ️ V2 (IVAS) বন্ধ — IVAS_API_KEY সেট করা নেই।"); return; }
+    await loadPending2();
+    const r = await ivreq("/numbers", { per_page: 1 });
+    if (r.ok) console.log(`✅ IVAS API OK (${r.data?.pagination?.total ?? "?"} numbers)`);
+    else console.error(`❌ IVAS API সমস্যা: ${errText(r)} — IVAS_API_KEY ঠিক আছে? (401 = key ভুল/regenerate হয়েছে)`);
+    console.log(IVAS_SECRET
+      ? `✅ IVAS webhook চালু → ${(process.env.RENDER_EXTERNAL_URL || "https://<আপনার-render-url>")}/ivas-webhook`
+      : "ℹ️ IVAS_WEBHOOK_SECRET নেই — শুধু polling চলছে (webhook দিলে OTP আরও দ্রুত আসবে)");
+    syncIvasNumbers().then(() => pollIvasMessages()).catch(() => {});
+    setInterval(() => syncIvasNumbers().catch((e) => console.error("syncIvasNumbers:", e.message)), 3 * 60 * 1000);
+    setInterval(() => pollIvasMessages().catch((e) => console.error("pollIvasMessages:", e.message)), IVAS_POLL_MS);
+  }
+
+  /* ---- pool helpers ---- */
+  const isFree = (n) => !pending2.has(n.number);
+  function hitMap2() {
+    const cutoff = Date.now() - HITS_WINDOW;
+    const m = new Map();
+    for (const h of hits2) if (h.t > cutoff) m.set(h.range, (m.get(h.range) || 0) + 1);
+    return m;
+  }
+  function groupRanges(filter, cfg) {
+    const hm = hitMap2();
+    const byRange = new Map();
+    for (const n of ivNumbers) {
+      if (!matchesMode(n.range, filter, cfg)) continue;
+      const e = byRange.get(n.range) || { range: n.range, country: n.country, code: n.code, flag: n.flag, total: 0, avail: 0, hits: hm.get(n.range) || 0 };
+      e.total++;
+      if (isFree(n)) e.avail++;
+      byRange.set(n.range, e);
+    }
+    return [...byRange.values()];
+  }
+  const rangeNameByKey = (key) => [...new Set(ivNumbers.map((n) => n.range))].find((r) => ck(r) === key) || "";
+  const countryNameByKey2 = (key) => [...new Set(ivNumbers.map((n) => n.country))].find((c) => ck(c) === key) || "";
+
+  /* ---- V2 menu ---- */
+  async function v2Text(u) {
+    if (!ivOn()) return `${head("📡", "V2 PANEL", "IVAS")}\n🔴 V2 এখনো চালু হয়নি।\n<blockquote>Admin: Render Environment-এ <code>IVAS_API_KEY</code> দিন।</blockquote>`;
+    const free = ivNumbers.filter(isFree).length;
+    const hits = [...hitMap2().values()].reduce((a, b) => a + b, 0);
+    return (
+      `${head("📡", "V2 PANEL", "IVAS")}\n` +
+      `💰 Balance ▸ <b>${tk(u.otpBalance)}</b>\n🔑 OTP ▸ <b>${Number(u.otpCount) || 0}</b>\n\n` +
+      `📦 পুল ▸ <b>${ivNumbers.length}</b> নাম্বার  •  🟢 ফ্রি <b>${free}</b>\n🔥 শেষ ৩০ মিনিটে hit ▸ <b>${hits}</b>\n\n` +
+      `<blockquote>📞 Get Number — দেশ → রেঞ্জ বেছে ফ্রি নাম্বার\n📈 Live Traffic — এখন যেসব রেঞ্জে OTP আসছে\n⏱ নাম্বার ${Math.round(LEASE_MS / 60000)} মিনিট আপনার নামে থাকে</blockquote>` +
+      (ivNumbers.length ? "" : "\n\n⏳ <i>নাম্বার লিস্ট লোড হচ্ছে… ১ মিনিট পর আবার দেখুন।</i>")
+    );
+  }
+  bot.action("np_v2", safe(async (ctx) => {
+    await ctx.answerCbQuery().catch(() => {});
+    const u = await gate(ctx);
+    if (!u) return;
+    await clearSession(ctx.from.id);
+    return show(ctx, await v2Text(u), [
+      [bt("p_get", { callback_data: "np2_cl:a:0", style: "success" }), bt("p_traffic", { callback_data: "np2_tp:0", style: "danger" })],
+      [ib("⬅️ Number Panel", "np_home", "primary")],
+    ]);
+  }));
+
+  /* ---- V2 Get Number: Country → Range ---- */
+  async function buildV2Countries(filter, page) {
+    const cfg = await getCfg();
+    if (!ivNumbers.length) {
+      return { text: `${head("🌍", "COUNTRY", "IVAS")}\n❌ পুলে এখন কোনো নাম্বার নেই।`, rows: [[ib("🔄 Retry", "np2_cl:a:0", "success")], backV2] };
+    }
+    const all = groupRanges("a", cfg);
+    const ranges = groupRanges(filter, cfg);
+    const byC = new Map();
+    for (const r of ranges) {
+      const e = byC.get(r.country) || { name: r.country, code: r.code, flag: r.flag, hits: 0, avail: 0, ranges: 0 };
+      e.hits += r.hits; e.avail += r.avail; e.ranges++;
+      byC.set(r.country, e);
+    }
+    const list = [...byC.values()].sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.name.localeCompare(b.name)); // ⚡ live sort
+    const cntS = all.filter((r) => { const c = classOf(r.range); return c === "short" || c === "both"; }).length;
+    const cntL = all.filter((r) => { const c = classOf(r.range); return c === "long" || c === "both"; }).length;
+
+    const pg = paginate(list, page, PP_COUNTRIES);
+    const btns = pg.items.map((c) =>
+      ib(`${c.flag} ${c.code}${c.hits ? ` · 🔥${c.hits}` : ""} · ${c.avail}`, `np2_rl:${filter}:${ck(c.name)}:0`, c.hits > 0 ? "danger" : "success"));
+    const rows = [];
+    if (cntS > 0 || cntL > 0) {
+      const f = [ib(filter === "a" ? "✅ All" : "All", "np2_cl:a:0", filter === "a" ? "success" : "primary")];
+      if (cntS > 0) f.push(ib(filter === "s" ? "✅ 5" : "5", "np2_cl:s:0", filter === "s" ? "success" : "primary"));
+      if (cntL > 0) f.push(ib(filter === "l" ? "✅ 6+" : "6+", "np2_cl:l:0", filter === "l" ? "success" : "primary"));
+      rows.push(f);
+    }
+    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+    rows.push(...navRow(pg, `np2_cl:${filter}:${pg.page - 1}`, `np2_cl:${filter}:${pg.page + 1}`));
+    rows.push([ib("⬅️ V2 Panel", "np_v2", "primary"), back[0]]);
+    const fl = filterLabel(filter);
+    const text =
+      `${head("🌍", "COUNTRY", "🟢 LIVE")}\n📡 Panel ▸ <b>V2 · IVAS</b>${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n🗺 দেশ ▸ <b>${pg.total}</b>\n` +
+      `<blockquote>🔥 = live hit  •  শেষের সংখ্যা = ফ্রি নাম্বার</blockquote>`;
+    return { text, rows };
+  }
+  async function showV2Countries(ctx, filter = "a", page = 0) {
+    const built = await buildV2Countries(filter, page);
+    if (ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildV2Countries(filter, page), kind: "v2" });
+    return show(ctx, built.text, built.rows);
+  }
+  bot.action(/^np2_cl:([asl]):(\d+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery().catch(() => {});
+    if (!(await gate(ctx))) return;
+    const cfg = await getCfg();
+    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
+    return showV2Countries(ctx, ctx.match[1], Number(ctx.match[2]));
+  }));
+
+  async function buildV2Ranges(filter, country, page) {
+    const cfg = await getCfg();
+    const list = groupRanges(filter, cfg).filter((r) => r.country === country)
+      .sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range)); // ⚡ live sort
+    if (!list.length) {
+      return { text: `${head("📞", "RANGES", "IVAS")}\n❌ এই দেশে এখন কোনো রেঞ্জ নেই।`, rows: [[ib("⬅️ Countries", `np2_cl:${filter}:0`, "primary")], backV2] };
+    }
+    const pg = paginate(list, page, PP_RANGES_GET);
+    const btns = pg.items.map((r) =>
+      ib(`${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np2_grab:${ck(r.range)}`, r.hits > 0 ? "danger" : "success"));
+    const rows = [];
+    for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
+    rows.push(...navRow(pg, `np2_rl:${filter}:${ck(country)}:${pg.page - 1}`, `np2_rl:${filter}:${ck(country)}:${pg.page + 1}`));
+    rows.push([ib("⬅️ Countries", `np2_cl:${filter}:0`, "primary"), back[0]]);
+    const fl = filterLabel(filter);
+    const text =
+      `${head("📞", "RANGES", "🟢 LIVE")}\n${list[0].flag} <b>${list[0].code}</b> · ${esc(country)}${fl ? `\n🔢 Filter ▸ <b>${fl}</b>` : ""}\n📦 রেঞ্জ ▸ <b>${pg.total}</b>\n` +
+      `<blockquote>🔥 = live hit  •  শেষের সংখ্যা = ফ্রি নাম্বার\n👇 রেঞ্জে চাপলেই ২টি নাম্বার পাবেন</blockquote>`;
+    return { text, rows };
+  }
+  async function showV2Ranges(ctx, filter, country, page = 0) {
+    const built = await buildV2Ranges(filter, country, page);
+    if (ctx.callbackQuery) return show(ctx, built.text, built.rows, { auto: () => buildV2Ranges(filter, country, page), kind: "v2" });
+    return show(ctx, built.text, built.rows);
+  }
+  bot.action(/^np2_rl:([asl]):([a-z0-9]+):(\d+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery("⏳").catch(() => {});
+    if (!(await gate(ctx))) return;
+    const [, filter, key, page] = ctx.match;
+    const country = countryNameByKey2(key);
+    if (!country) return showV2Countries(ctx, filter, 0);
+    return showV2Ranges(ctx, filter, country, Number(page));
+  }));
+
+  /* ---- V2 Live Traffic: সব রেঞ্জ, hit অনুযায়ী ---- */
+  const PP_TOP2 = 6;
+  async function buildV2Top(page) {
+    const cfg = await getCfg();
+    const list = groupRanges("a", cfg).sort((a, b) => (b.hits - a.hits) || (b.avail - a.avail) || a.range.localeCompare(b.range));
+    if (!list.length) return { text: `${head("📈", "LIVE TRAFFIC", "IVAS")}\n❌ এখন কোনো ডেটা নেই।`, rows: [[ib("🔄 Retry", "np2_tp:0", "success")], backV2] };
+    const pg = paginate(list, page, PP_TOP2);
+    const start = pg.page * PP_TOP2;
+    const rows = pg.items.map((r, i) => [ib(`#${start + i + 1} ${r.flag} ${tr(r.range, 16)}${r.hits ? ` · 🔥${r.hits}` : ""} · ${r.avail}`, `np2_grab:${ck(r.range)}`, start + i < 3 && r.hits > 0 ? "danger" : "success")]);
+    rows.push(...navRow(pg, `np2_tp:${pg.page - 1}`, `np2_tp:${pg.page + 1}`));
+    rows.push([ib("⬅️ V2 Panel", "np_v2", "primary"), back[0]]);
+    const total = [...hitMap2().values()].reduce((a, b) => a + b, 0);
+    return {
+      text: `${head("📈", "LIVE TRAFFIC", "🟢 LIVE")}\n📡 Panel ▸ <b>V2 · IVAS</b>\n🔥 শেষ ৩০ মিনিটে hit ▸ <b>${total}</b>\n<blockquote>hit অনুযায়ী সাজানো  •  শেষের সংখ্যা = ফ্রি নাম্বার\n👇 রেঞ্জে চাপলেই নাম্বার পাবেন</blockquote>`,
+      rows,
+    };
+  }
+  bot.action(/^np2_tp:(\d+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery("🔄").catch(() => {});
+    if (!(await gate(ctx))) return;
+    const page = Number(ctx.match[1]);
+    const built = await buildV2Top(page);
+    return show(ctx, built.text, built.rows, { auto: () => buildV2Top(page), kind: "v2" });
+  }));
+
+  /* ---- V2 Allocate ---- */
+  async function allocate2(ctx, rangeName) {
+    const uid = String(ctx.from.id);
+    if (!(await gate(ctx))) return;
+    const cfg = await getCfg();
+    if (!cfg.enabled) return show(ctx, "🔴 Number Panel এখন বন্ধ আছে।", [back]);
+    if (!ivOn()) return show(ctx, "🔴 V2 এখনো চালু হয়নি।", [back]);
+    if (!rangeName) return show(ctx, "❌ রেঞ্জ পাওয়া যায়নি, আবার চেষ্টা করুন।", [backV2]);
+    if (allocating.has(uid)) { if (ctx.callbackQuery) ctx.answerCbQuery("⏳ অপেক্ষা করুন...").catch(() => {}); return; }
+    if (userPendingAll(uid).length >= MAX_PENDING) return show(ctx, "⚠️ অনেকগুলো নাম্বার pending আছে। কিছু OTP আসা বা মেয়াদ শেষ হওয়া পর্যন্ত অপেক্ষা করুন।", [backV2]);
+    allocating.add(uid);
+    try {
+      cleanupLeases();
+      const free = ivNumbers
+        .filter((n) => n.range === rangeName && isFree(n))
+        .sort((a, b) => ((lastLeased.get(a.number) || 0) - (lastLeased.get(b.number) || 0)) || (Math.random() - 0.5)); // যেটা সবচেয়ে কম ব্যবহৃত
+      const picked = free.slice(0, 2);
+      if (!picked.length) {
+        return show(ctx, `${head("❌", "কোনো ফ্রি নাম্বার নেই")}\n🌐 Range ▸ <code>${esc(rangeName)}</code>\n<blockquote>এই রেঞ্জের সব নাম্বার এখন অন্যদের কাছে। একটু পরে চেষ্টা করুন বা অন্য রেঞ্জ নিন।</blockquote>`,
+          [[ib("🔄 Try Again", "np2_chg", "success")], [ib("⬅️ ফিরে যান", "np2_cl:a:0", "primary")], backV2]);
+      }
+      for (const n of picked) { track2(n.number, uid, n.country, n.range); lastLeased.set(n.number, Date.now()); }
+      lastNum2.set(uid, { range: rangeName, numbers: picked.map((p) => p.number) });
+      const c = picked[0];
+      const rows = picked.map((p) => [{ text: `${p.flag} ${p.number}`, copy_text: { text: p.number }, style: "success" }]);
+      rows.push([ib("🔄 Change Number", "np2_chg", "danger")]);
+      rows.push([ib("🌍 Change Country", "np2_cl:a:0", "primary")]);
+      rows.push(backV2);
+      const partial = picked.length < 2 ? `\n⚠️ <i>মাত্র ${picked.length}টি ফ্রি নাম্বার ছিল</i>` : "";
+      return show(ctx,
+        `${c.flag} <b>${esc(c.country.toUpperCase())}</b> ┃ ✅ ALLOCATED\n${HR}\n📡 Panel ▸ <b>V2 · IVAS</b>\n🌐 Range ▸ <code>${esc(rangeName)}</code>\n⏳ Status ▸ <b>OTP-র অপেক্ষায়…</b>\n⏱ মেয়াদ ▸ <b>${Math.round(LEASE_MS / 60000)} মিনিট</b>${partial}\n\n<blockquote>👇 নাম্বারে ট্যাপ করলেই কপি হবে</blockquote>`,
+        rows);
+    } finally {
+      allocating.delete(uid);
+    }
+  }
+  bot.action(/^np2_grab:([a-z0-9]+)$/, safe(async (ctx) => {
+    await ctx.answerCbQuery("⏳").catch(() => {});
+    return allocate2(ctx, rangeNameByKey(ctx.match[1]));
+  }));
+  bot.action("np2_chg", safe(async (ctx) => {
+    await ctx.answerCbQuery("🔄").catch(() => {});
+    const uid = String(ctx.from.id);
+    const last = lastNum2.get(uid);
+    if (!last) return ctx.answerCbQuery("❌ আগে number নিন", { show_alert: true }).catch(() => {});
+    for (const n of last.numbers) {                 // আগের নাম্বার ছেড়ে দিন (OTP না এলে) — অন্যরা নিতে পারবে
+      if (pending2.get(n)?.userId === uid) { done2(n); lastLeased.set(n, Date.now()); }
+    }
+    return allocate2(ctx, last.range);
   }));
 
   /* ================================================================ */
@@ -1198,7 +1682,8 @@ export function createNumberPanel(d) {
     return show(ctx, `${head("📱", "OTP ADMIN PANEL")}\n<i>Withdraw approve/reject → মূল Admin Panel-এর 💸 Withdrawals থেকে।\nBroadcast → 📢 Broadcast থেকে।</i>`, [
       [ib("👥 Users", "npa_ul_0", "primary"), ib("⚙️ Settings", "npa_set", "primary")],
       [ib("📊 Stats", "npa_stats", "success"), ib("🎨 Customize", "npa_ui", "success")],
-      [ib("🔢 OTP Digit (4-5 / 6+)", "npa_dg", "success"), ib("🌐 Bulk Rate", "npa_bulk", "danger")],
+      [ib("🔢 OTP Digit (5 / 6+)", "npa_dg", "success"), ib("🌐 Bulk Rate", "npa_bulk", "danger")],
+      [ib("📡 V2 (IVAS) Status", "npa_iv", "primary")],
     ]);
   }
   bot.hears(adminLabel, adminOnly(async (ctx) => adminHome(ctx)));
@@ -1236,7 +1721,7 @@ export function createNumberPanel(d) {
     const cnt = { short: 0, long: 0, both: 0, unknown: 0 };
     for (const i of items) cnt[classOf(i.range)]++;
     return show(ctx,
-      `${head("🔢", "OTP DIGIT SETTINGS")}\nলাইভ রেঞ্জ: <b>${items.length}</b>\n• 4-5 Digit: <b>${cnt.short}</b>\n• 6+ Digit: <b>${cnt.long}</b>\n• মিশ্র: <b>${cnt.both}</b>\n• অজানা: <b>${cnt.unknown}</b>\n\n` +
+      `${head("🔢", "OTP DIGIT SETTINGS")}\nলাইভ রেঞ্জ: <b>${items.length}</b>\n• 5 Digit: <b>${cnt.short}</b>\n• 6+ Digit: <b>${cnt.long}</b>\n• মিশ্র: <b>${cnt.both}</b>\n• অজানা: <b>${cnt.unknown}</b>\n\n` +
       `অজানা রেঞ্জ দেখানো: <b>${c.showUnknown ? "ON ✅" : "OFF ❌"}</b>\n\n` +
       `<i>Facebook OTP থেকে নিজে শেখে। হাতে ঠিক করতে:</i>\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>`,
       [[ib(`অজানা: ${c.showUnknown ? "ON ✅" : "OFF ❌"}`, "npa_t_showUnknown", c.showUnknown ? "success" : "danger")],
@@ -1247,7 +1732,8 @@ export function createNumberPanel(d) {
   bot.command("rangedigits", adminOnly(async (ctx) => {
     const p = ctx.message.text.trim().split(/\s+/).slice(1);
     const valid = ["short", "long", "both", "clear"];
-    const usage = "⚠️ ব্যবহার:\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\n\nমান: short (4-5) • long (6+) • both • clear";
+    const normV = (v) => ({ "5": "short", "6": "long", "6+": "long" }[v] || v); // 5 = ৫ ডিজিট, 6 = ৬+ ডিজিট
+    const usage = "⚠️ ব্যবহার:\n<code>/rangedigits 88017XXXX short</code>\n<code>/rangedigits country Cameroon long</code>\n\nমান: short (5) • long (6+) • both • clear";
     const apply = async (ranges, val) => {
       const patch = {};
       for (const r of ranges) {
@@ -1258,7 +1744,7 @@ export function createNumberPanel(d) {
       await classRef.set(patch, { merge: true });
     };
     if (p[0] === "country") {
-      const val = (p[p.length - 1] || "").toLowerCase();
+      const val = normV((p[p.length - 1] || "").toLowerCase());
       const name = p.slice(1, -1).join(" ").toLowerCase();
       if (!name || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
       const items = (await getRanges()).filter((i) => String(i.country || "").toLowerCase() === name);
@@ -1267,7 +1753,7 @@ export function createNumberPanel(d) {
       return ctx.reply(`✅ ${items.length}টি রেঞ্জ → ${val}`);
     }
     const range = (p[0] || "").toUpperCase();
-    const val = (p[1] || "").toLowerCase();
+    const val = normV((p[1] || "").toLowerCase());
     if (!range || !valid.includes(val)) return ctx.reply(usage, { parse_mode: "HTML" });
     await apply([range], val);
     return ctx.reply(`✅ ${range} → ${val}`);
@@ -1282,6 +1768,23 @@ export function createNumberPanel(d) {
       `🧪 <b>detectCountry Debug</b>\n\nInput: <code>${esc(input)}</code>\n\nflag: <code>${esc(raw.flag)}</code>\nname: <code>${esc(raw.name)}</code>\ncode (phone): <code>${esc(raw.code)}</code>\niso: <code>${esc(raw.iso || "(empty)")}</code>`,
       { parse_mode: "HTML" });
   }));
+
+  async function ivasScreen(ctx) {
+    const free = ivNumbers.filter(isFree).length;
+    const hits = [...hitMap2().values()].reduce((a, b) => a + b, 0);
+    const ago = (t) => (t ? `${Math.round((Date.now() - t) / 1000)}s আগে` : "—");
+    const base = process.env.RENDER_EXTERNAL_URL || "https://<আপনার-render-url>";
+    return show(ctx,
+      `${head("📡", "V2 · IVAS STATUS")}\n🔑 API key ▸ <b>${IVAS_KEY ? "✅ সেট আছে" : "❌ নেই"}</b>\n🪝 Webhook ▸ <b>${IVAS_SECRET ? "✅ secret সেট" : "❌ secret নেই"}</b>\n\n` +
+      `📦 পুল ▸ <b>${ivNumbers.length}</b> • ফ্রি <b>${free}</b> • lease <b>${pending2.size}</b>\n🔥 hit (৩০ মি) ▸ <b>${hits}</b>\n\n` +
+      `🔄 numbers sync ▸ ${ago(ivSt.numbersAt)}\n📨 messages poll ▸ ${ago(ivSt.msgAt)} (${ivSt.polls}বার)\n🪝 webhook ▸ ${ivSt.webhooks}টি, শেষ ${ago(ivSt.lastWebhookAt)}\n` +
+      `📊 API call ▸ ${ivState.calls} • 429 ▸ ${ivState.limited}\n⚠️ শেষ error ▸ <code>${esc(ivState.lastErr || ivSt.lastHookErr || "নেই")}</code>\n\n` +
+      `<blockquote>Webhook URL (IVAS → Webhooks পেজে দিন):\n<code>${esc(base)}/ivas-webhook</code>\nEvent: message.received</blockquote>`,
+      [[ib("🔄 Refresh", "npa_iv", "primary"), ib("♻️ Numbers Sync", "npa_ivsync", "success")], aBack]);
+  }
+  A("npa_iv", ivasScreen);
+  A("npa_ivsync", async (ctx) => { await syncIvasNumbers(); return ivasScreen(ctx); });
+  bot.command("ivasstatus", adminOnly(async (ctx) => ivasScreen(ctx)));
 
   A("npa_stats", async (ctx) => {
     const [users, wds] = await Promise.all([
@@ -1299,7 +1802,7 @@ export function createNumberPanel(d) {
     const otpWds = wds.docs.filter((x) => x.get("balanceType") === "otp");
     const pendAmt = otpWds.reduce((s, x) => s + (Number(x.get("amount")) || 0), 0);
     return show(ctx,
-      `${head("📊", "OTP STATS")}\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 মোট OTP: <b>${totalOtp}</b>\n💰 মোট Balance: <b>${tk(totalBal)}</b>\n💸 Pending withdraw: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>${pending.size}</b>\n🔄 Live views: <b>${activeViews.size}</b>`,
+      `${head("📊", "OTP STATS")}\n👥 Active: <b>${active}</b> (🚫 ${banned})\n🔑 মোট OTP: <b>${totalOtp}</b>\n💰 মোট Balance: <b>${tk(totalBal)}</b>\n💸 Pending withdraw: <b>${otpWds.length}</b> (${tk(pendAmt)})\n⏳ Pending numbers: <b>V1 ${pending.size} • V2 ${pending2.size}</b>\n📡 IVAS পুল: <b>${ivNumbers.length}</b>\n🔄 Live views: <b>${activeViews.size}</b>`,
       [[ib("🔄 Refresh", "npa_stats", "primary")], aBack]);
   });
 
@@ -1548,7 +2051,7 @@ export function createNumberPanel(d) {
           own.forEach((o) => { msg += `\n📱 <code>${esc(o.number)}</code>\n🔐 <code>${esc(o.otp)}</code> · 📩 ${esc(o.service || "OTP")}\n`; });
           return show(ctx, msg, [back]);
         }
-        const pm = userPending(uid).find(([, v]) => String(v.number).includes(clean));
+        const pm = userPendingAll(uid).find(([, v]) => String(v.number).includes(clean));
         if (pm) return show(ctx, `${head("⏳", "PENDING")}\n📱 <code>${esc(pm[1].number)}</code>\n\nOTP এখনো আসেনি।`, [back]);
         return show(ctx, `❌ <code>${esc(clean)}</code> — কোনো OTP পাওয়া যায়নি।`, [back]);
       }
@@ -1591,8 +2094,8 @@ export function createNumberPanel(d) {
   /* ================================================================ */
   /*  OTP CREDIT                                                       */
   /* ================================================================ */
-  async function credit({ number, otp, full, info }) {
-    const service = detectService(full);
+  async function credit({ number, otp, full, info, service: svcOverride }) {
+    const service = svcOverride || detectService(full);
     const country = info?.country || "";
 
     if (info?.userId) {
@@ -1614,7 +2117,7 @@ export function createNumberPanel(d) {
         }
         await b.commit(); // এরপর আর throw হবে না (claim ফেরত গেলে double-credit হত)
         bumpRange(info.range);
-        if (isFbText(full)) learn(info.range, String(otp).replace(/\D/g, "").length);
+        if (isFbText(full) || service === "Facebook") learn(info.range, String(otp).replace(/\D/g, "").length);
 
         try {
           const cnt = (Number(snap.get("otpCount")) || 0) + 1;
@@ -1702,6 +2205,7 @@ export function createNumberPanel(d) {
     await loadUi();
     await loadDigits();
     await loadPending();
+    await startV2();
     setInterval(poll, POLL_INTERVAL);
     setInterval(() => autoRefreshLoop().catch((e) => console.error("autoRefreshLoop:", e.message)), AUTO_REFRESH_MS);
     setInterval(() => syncDigits().catch((e) => console.error("syncDigits:", e.message)), 2 * 60 * 1000);
@@ -1712,5 +2216,5 @@ export function createNumberPanel(d) {
     console.log(`✅ Number Panel started (VOLTEX)${GROUP_ID ? ` → group ${GROUP_ID}` : ""} • auto-refresh ${AUTO_REFRESH_MS}ms`);
   }
 
-  return { open, handleText, start };
+  return { open, handleText, start, handleWebhook };
 }
